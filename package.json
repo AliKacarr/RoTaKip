@@ -2,7 +2,6 @@
   "name": "reading-tracker",
   "version": "1.0.0",
   "description": "Book reading tracker application",
-  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
