@@ -318,6 +318,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 0;
+  border-bottom: none;
 }
 
 .profile-avatar-modal-close-btn {

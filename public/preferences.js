@@ -13,6 +13,11 @@ document.addEventListener('DOMContentLoaded', function () { //Tablonun ilk gün�
 
         // Add event listener for combobox changes
         firstDaySelect.addEventListener('change', function () {
+            // Tablonun ilk günü değiştirme işlemini logla
+            if (typeof logUnauthorizedAccess === 'function') {
+                logUnauthorizedAccess('Tablonun ilk günü değiştirme');
+            }
+            
             window.firstDayOfWeek = parseInt(this.value);
             localStorage.setItem('firstDayOfWeek', this.value);
             weekOffset = 0;

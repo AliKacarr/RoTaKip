@@ -501,13 +501,22 @@ if (uploadBtn) {
 // Avatar seç butonu event listener
 const addUserAvatarBtn = document.getElementById('addUserAvatarBtn');
 if (addUserAvatarBtn) {
-    addUserAvatarBtn.addEventListener('click', toggleAddUserAvatarModal);
+    addUserAvatarBtn.addEventListener('click', () => {
+        if (typeof logUnauthorizedAccess === 'function') {
+            logUnauthorizedAccess('Kullanıcı ekleme avatar seçimi');
+        }
+        toggleAddUserAvatarModal();
+    });
 }
 
 // Sil butonu event listener
 const addUserRemoveBtn = document.getElementById('addUserRemoveBtn');
 if (addUserRemoveBtn) {
     addUserRemoveBtn.addEventListener('click', function() {
+        if (typeof logUnauthorizedAccess === 'function') {
+            logUnauthorizedAccess('Kullanıcı ekleme resim silme');
+        }
+        
         // Profil önizlemesini varsayılan resme döndür
         const previewImg = document.getElementById('addUserInputProfileImage');
         if (previewImg) {
@@ -901,6 +910,11 @@ function updateUserSelectDropdownForSingleUser(userId, newName) {
 
 // Seçili kullanıcıyı davet et
 async function inviteSelectedUser() {
+    // Kullanıcı davet etme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Kullanıcı davet etme');
+    }
+    
     const userSelect = document.getElementById('userSelectForInvite');
     const inviteBtn = document.querySelector('.invite-selected-btn');
     
@@ -1167,6 +1181,11 @@ async function preloadMainAreaAvatars() {
 
 // Hazır görseller modal'ını aç/kapat
 function toggleReadyImagesModal() {
+    // Hazır görseller modal açma işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Hazır görseller modal açma');
+    }
+    
     const modal = document.getElementById('readyImagesModal');
     if (modal.classList.contains('show')) {
         modal.classList.remove('show');
@@ -1279,6 +1298,11 @@ async function saveGroupSettings() {
     if (!LocalStorageManager.isAdmin()) {
         showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
         return;
+    }
+
+    // Grup bilgilerini kaydetme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Grup bilgilerini kaydetme');
     }
 
     const groupName = document.getElementById('groupName').value.trim();
@@ -1725,6 +1749,11 @@ function displayJoinRequests(requests) {
 
 // Katılma isteğini kabul et
 async function acceptJoinRequest(requestId) {
+    // Katılma isteği kabul etme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Katılma isteği kabul etme');
+    }
+    
     try {
         const response = await fetch(`/api/accept-join-request/${requestId}`, {
             method: 'POST',
@@ -1773,6 +1802,11 @@ async function acceptJoinRequest(requestId) {
 async function rejectJoinRequest(requestId) {
     if (!confirm('Bu katılma isteğini reddetmek istediğinizden emin misiniz?')) {
         return;
+    }
+
+    // Katılma isteği reddetme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Katılma isteği reddetme');
     }
 
     try {

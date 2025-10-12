@@ -414,7 +414,17 @@ async function toggleStatus(userId, date) {
         if (rowEl) {
             const lastTd = rowEl.querySelector('td:last-child');
             if (lastTd) {
+                // Eski seri sayısını al
+                const oldStreakText = lastTd.textContent || lastTd.innerText;
+                const oldStreak = oldStreakText === '-' ? 0 : parseInt(oldStreakText.replace('⭐', '').trim()) || 0;
+                
+                // Yeni seri sayısını ayarla
                 lastTd.innerHTML = newStreak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${newStreak}` : '-';
+                
+                // Seri artışı varsa animasyon ekle
+                if (newStreak > oldStreak && newStreak > 0) {
+                    animateStreakIncrease(lastTd, oldStreak, newStreak);
+                }
             }
         }
     } catch (e) {
@@ -490,6 +500,24 @@ async function updateUserBackgroundColor(userId) {
         }
     } catch (error) {
         console.error('Kullanıcı background rengi güncellenemedi:', error);
+    }
+}
+
+// Seri artış animasyonu fonksiyonu
+function animateStreakIncrease(streakElement, oldStreak, newStreak) {
+    // Yıldız ve sayıyı ayrı ayrı animasyonla
+    const starElement = streakElement.querySelector('.weekly-fire-emoji');
+    
+    if (starElement) {
+        starElement.classList.add('streak-star-animation');
+        setTimeout(() => {
+            starElement.classList.remove('streak-star-animation');
+        }, 600);
+    }
+    
+    // Başarı efekti için hafif titreşim (destekleyen cihazlarda)
+    if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
     }
 }
 

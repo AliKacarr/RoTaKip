@@ -1500,6 +1500,11 @@ async function loadProfileSettings() {
 
 async function saveProfileSettings() {
     try {
+        // Kullanıcı bilgileri güncelleme işlemini logla
+        if (typeof logUnauthorizedAccess === 'function') {
+            logUnauthorizedAccess('Kullanıcı bilgileri güncelleme');
+        }
+        
         const userInfo = LocalStorageManager.getCurrentUserInfo();
         if (!userInfo) return;
 

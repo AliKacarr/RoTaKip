@@ -23,6 +23,11 @@ class ArticlesManager {
         // Kategori butonları
         document.addEventListener('click', (e) => {
             if (e.target.closest('.category-btn')) {
+                // Makale kategori değiştirme işlemini logla
+                if (typeof logUnauthorizedAccess === 'function') {
+                    logUnauthorizedAccess('Makale kategori değiştirme');
+                }
+                
                 const btn = e.target.closest('.category-btn');
                 const category = btn.dataset.category;
                 this.filterByCategory(category);
@@ -33,6 +38,11 @@ class ArticlesManager {
         const loadMoreBtn = document.getElementById('loadMoreArticles');
         if (loadMoreBtn) {
             loadMoreBtn.addEventListener('click', () => {
+                // Daha fazla makale yükleme işlemini logla
+                if (typeof logUnauthorizedAccess === 'function') {
+                    logUnauthorizedAccess('Daha fazla makale yükleme');
+                }
+                
                 this.loadMoreArticles();
             });
         }

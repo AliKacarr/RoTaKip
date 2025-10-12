@@ -239,12 +239,34 @@ async function showRandomVideos() {
 }
 
 // Butonlara tıklama olayları
-document.getElementById('latestBtn').addEventListener('click', showLatestVideos);
-document.getElementById('mostViewedBtn').addEventListener('click', showMostViewedVideos);
-document.getElementById('randomBtn').addEventListener('click', showRandomVideos);
+document.getElementById('latestBtn').addEventListener('click', () => {
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('En son eklenen videoları görüntüleme');
+    }
+    showLatestVideos();
+});
+
+document.getElementById('mostViewedBtn').addEventListener('click', () => {
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('En çok izlenen videoları görüntüleme');
+    }
+    showMostViewedVideos();
+});
+
+document.getElementById('randomBtn').addEventListener('click', () => {
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Rastgele videoları görüntüleme');
+    }
+    showRandomVideos();
+});
 
 // Yenile butonuna tıklandığında aktif kategoriye göre videoları yenile
 document.getElementById('refreshBtn').addEventListener('click', () => {
+    // Video yenileme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Video listesini yenileme');
+    }
+    
     // Aktif olan butonu bul
     const activeButton = document.querySelector('.top-bar button.active');
 

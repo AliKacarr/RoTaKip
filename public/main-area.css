@@ -1045,6 +1045,8 @@ input[type="file"] {
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: 0;
+    border-bottom: none;
 }
 
 .ready-images-modal-content .modal-header h3 i {
