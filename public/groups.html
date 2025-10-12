@@ -1255,6 +1255,169 @@
     </div>
   </div>
 
+    <!-- Profil Modal -->
+    <div id="profileModal" class="profile-modal">
+      <div class="profile-modal-content">
+        <div class="profile-modal-header">
+          <h2 class="profile-modal-title">
+            <i class="fa-solid fa-user"></i>
+            Profil Bilgileri
+          </h2>
+          <button class="profile-modal-close-btn" onclick="closeProfileModal()">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="profile-modal-body">
+          <!-- Profil Resmi Bölümü -->
+          <div class="profile-modal-image-section">
+            <div class="profile-modal-image-container">
+              <img id="profileImagePreview" class="profile-modal-image">
+              <div class="profile-modal-image-overlay">
+                <button class="profile-modal-image-btn profile-modal-image-select" onclick="selectProfileImage()">
+                  <i class="fa-solid fa-camera"></i>
+                  Resim Seç
+                </button>
+                <button class="profile-modal-image-btn profile-modal-image-avatar" onclick="openProfileAvatarModal()">
+                  <i class="fa-solid fa-images"></i>
+                  Avatar Seç
+                </button>
+                <button class="profile-modal-image-btn profile-modal-image-remove" onclick="removeProfileImage()">
+                  <i class="fa-solid fa-trash"></i>
+                  Sil
+                </button>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Kullanıcı Bilgileri -->
+          <div class="profile-info-section">
+            <div class="profile-info-item">
+              <div class="profile-info-label">
+                <i class="fa-solid fa-user"></i>
+                Kullanıcı Adı
+              </div>
+              <div id="profileUsername" class="profile-info-value">-</div>
+            </div>
+            
+            <div class="profile-info-item">
+              <div class="profile-info-label">
+                <i class="fa-solid fa-id-card"></i>
+                Üye Adı
+              </div>
+              <div id="profileMemberName" class="profile-info-value">-</div>
+            </div>
+            
+            <div class="profile-info-item">
+              <div class="profile-info-label">
+                <i class="fa-solid fa-star"></i>
+                Toplam Okuma Skoru
+              </div>
+              <div id="profileReadingScore" class="profile-info-value profile-score">
+                <span class="score-number">0</span>
+                <span class="score-star">⭐</span>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Aksiyon Butonları -->
+          <div class="profile-actions-section">
+            <button class="profile-action-btn profile-settings-btn" onclick="openProfileSettingsModal()">
+              <i class="fa-solid fa-cog"></i>
+              Hesap Ayarları
+            </button>
+            
+            <button class="profile-action-btn profile-logout-btn" onclick="logoutFromProfile()">
+              <i class="fa-solid fa-sign-out-alt"></i>
+              Çıkış Yap
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Profil Avatar Seçim Modal -->
+    <div id="profileAvatarModal" class="profile-avatar-modal">
+      <div class="profile-avatar-modal-content">
+        <div class="profile-avatar-modal-header">
+          <h3>
+            <i class="fa-solid fa-images"></i>
+            Avatar Seç
+          </h3>
+          <button class="profile-avatar-modal-close-btn" onclick="closeProfileAvatarModal()">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+        <div class="profile-avatar-modal-body">
+          <div class="profile-modal-avatar-grid" id="profileAvatarGrid">
+            <!-- Avatarlar JavaScript ile yüklenecek -->
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Profil Ayarları Modal -->
+    <div id="profileSettingsModal" class="profile-settings-modal">
+      <div class="profile-settings-modal-content">
+        <div class="profile-settings-modal-header">
+          <h3>
+            <i class="fa-solid fa-cog"></i>
+            Hesap Ayarları
+          </h3>
+          <button class="profile-settings-modal-close-btn" onclick="closeProfileSettingsModal()">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+        <div class="profile-settings-modal-body">
+          <form id="profileSettingsForm" class="profile-settings-form-container">
+            <div class="profile-settings-group">
+              <label for="settingsUsername" class="profile-settings-label">
+                <i class="fa-solid fa-user"></i>
+                Kullanıcı Adı
+              </label>
+              <input type="text" id="settingsUsername" class="profile-settings-field" placeholder="Kullanıcı adınızı girin" maxlength="40">
+            </div>
+            
+            <div class="profile-settings-group">
+              <label for="settingsMemberName" class="profile-settings-label">
+                <i class="fa-solid fa-id-card"></i>
+                Üye Adı
+              </label>
+              <input type="text" id="settingsMemberName" class="profile-settings-field" placeholder="Üye adınızı girin" maxlength="40">
+            </div>
+            
+            <div class="profile-settings-group">
+              <label for="settingsPassword" class="profile-settings-label">
+                <i class="fa-solid fa-lock"></i>
+                Yeni Şifre
+              </label>
+              <input type="password" id="settingsPassword" class="profile-settings-field" placeholder="Yeni şifrenizi girin" maxlength="40">
+            </div>
+            
+            <div class="profile-settings-group">
+              <label for="settingsPasswordConfirm" class="profile-settings-label">
+                <i class="fa-solid fa-lock"></i>
+                Şifre Tekrar
+              </label>
+              <input type="password" id="settingsPasswordConfirm" class="profile-settings-field" placeholder="Şifrenizi tekrar girin" maxlength="40">
+            </div>
+            
+            <div class="profile-settings-actions">
+              <button type="button" class="profile-settings-btn profile-settings-delete" onclick="deleteAccount()">
+                <i class="fa-solid fa-trash"></i>
+                Hesabımı Sil
+              </button>
+              <button type="button" class="profile-settings-btn profile-settings-save" onclick="saveProfileSettings()">
+                <i class="fa-solid fa-save"></i>
+                Kaydet
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -1273,168 +1436,6 @@
   <script src="quete.js"></script>
   <script src="videos.js"></script>
   <script src="main-area.js"></script>
-  <!-- Profil Modal -->
-  <div id="profileModal" class="profile-modal">
-    <div class="profile-modal-content">
-      <div class="profile-modal-header">
-        <h2 class="profile-modal-title">
-          <i class="fa-solid fa-user"></i>
-          Profil Bilgileri
-        </h2>
-        <button class="profile-modal-close-btn" onclick="closeProfileModal()">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      </div>
-      
-      <div class="profile-modal-body">
-        <!-- Profil Resmi Bölümü -->
-        <div class="profile-modal-image-section">
-          <div class="profile-modal-image-container">
-            <img id="profileImagePreview" class="profile-modal-image">
-            <div class="profile-modal-image-overlay">
-              <button class="profile-modal-image-btn profile-modal-image-select" onclick="selectProfileImage()">
-                <i class="fa-solid fa-camera"></i>
-                Resim Seç
-              </button>
-              <button class="profile-modal-image-btn profile-modal-image-avatar" onclick="openProfileAvatarModal()">
-                <i class="fa-solid fa-images"></i>
-                Avatar Seç
-              </button>
-              <button class="profile-modal-image-btn profile-modal-image-remove" onclick="removeProfileImage()">
-                <i class="fa-solid fa-trash"></i>
-                Sil
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Kullanıcı Bilgileri -->
-        <div class="profile-info-section">
-          <div class="profile-info-item">
-            <div class="profile-info-label">
-              <i class="fa-solid fa-user"></i>
-              Kullanıcı Adı
-            </div>
-            <div id="profileUsername" class="profile-info-value">-</div>
-          </div>
-          
-          <div class="profile-info-item">
-            <div class="profile-info-label">
-              <i class="fa-solid fa-id-card"></i>
-              Üye Adı
-            </div>
-            <div id="profileMemberName" class="profile-info-value">-</div>
-          </div>
-          
-          <div class="profile-info-item">
-            <div class="profile-info-label">
-              <i class="fa-solid fa-star"></i>
-              Toplam Okuma Skoru
-            </div>
-            <div id="profileReadingScore" class="profile-info-value profile-score">
-              <span class="score-number">0</span>
-              <span class="score-star">⭐</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Aksiyon Butonları -->
-        <div class="profile-actions-section">
-          <button class="profile-action-btn profile-settings-btn" onclick="openProfileSettingsModal()">
-            <i class="fa-solid fa-cog"></i>
-            Hesap Ayarları
-          </button>
-          
-          <button class="profile-action-btn profile-logout-btn" onclick="logoutFromProfile()">
-            <i class="fa-solid fa-sign-out-alt"></i>
-            Çıkış Yap
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profil Avatar Seçim Modal -->
-  <div id="profileAvatarModal" class="profile-avatar-modal">
-    <div class="profile-avatar-modal-content">
-      <div class="profile-avatar-modal-header">
-        <h3>
-          <i class="fa-solid fa-images"></i>
-          Avatar Seç
-        </h3>
-        <button class="profile-avatar-modal-close-btn" onclick="closeProfileAvatarModal()">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      </div>
-      <div class="profile-avatar-modal-body">
-        <div class="profile-modal-avatar-grid" id="profileAvatarGrid">
-          <!-- Avatarlar JavaScript ile yüklenecek -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profil Ayarları Modal -->
-  <div id="profileSettingsModal" class="profile-settings-modal">
-    <div class="profile-settings-modal-content">
-      <div class="profile-settings-modal-header">
-        <h3>
-          <i class="fa-solid fa-cog"></i>
-          Hesap Ayarları
-        </h3>
-        <button class="profile-settings-modal-close-btn" onclick="closeProfileSettingsModal()">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      </div>
-      <div class="profile-settings-modal-body">
-        <form id="profileSettingsForm" class="profile-settings-form-container">
-          <div class="profile-settings-group">
-            <label for="settingsUsername" class="profile-settings-label">
-              <i class="fa-solid fa-user"></i>
-              Kullanıcı Adı
-            </label>
-            <input type="text" id="settingsUsername" class="profile-settings-field" placeholder="Kullanıcı adınızı girin" maxlength="40">
-          </div>
-          
-          <div class="profile-settings-group">
-            <label for="settingsMemberName" class="profile-settings-label">
-              <i class="fa-solid fa-id-card"></i>
-              Üye Adı
-            </label>
-            <input type="text" id="settingsMemberName" class="profile-settings-field" placeholder="Üye adınızı girin" maxlength="40">
-          </div>
-          
-          <div class="profile-settings-group">
-            <label for="settingsPassword" class="profile-settings-label">
-              <i class="fa-solid fa-lock"></i>
-              Yeni Şifre
-            </label>
-            <input type="password" id="settingsPassword" class="profile-settings-field" placeholder="Yeni şifrenizi girin" maxlength="40">
-          </div>
-          
-          <div class="profile-settings-group">
-            <label for="settingsPasswordConfirm" class="profile-settings-label">
-              <i class="fa-solid fa-lock"></i>
-              Şifre Tekrar
-            </label>
-            <input type="password" id="settingsPasswordConfirm" class="profile-settings-field" placeholder="Şifrenizi tekrar girin" maxlength="40">
-          </div>
-          
-          <div class="profile-settings-actions">
-            <button type="button" class="profile-settings-btn profile-settings-delete" onclick="deleteAccount()">
-              <i class="fa-solid fa-trash"></i>
-              Hesabımı Sil
-            </button>
-            <button type="button" class="profile-settings-btn profile-settings-save" onclick="saveProfileSettings()">
-              <i class="fa-solid fa-save"></i>
-              Kaydet
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
   <script src="longest-series.js"></script>
   <script src="articles.js"></script>
 

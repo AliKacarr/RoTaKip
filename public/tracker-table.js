@@ -423,7 +423,7 @@ async function toggleStatus(userId, date) {
                 
                 // Seri artışı varsa animasyon ekle
                 if (newStreak > oldStreak && newStreak > 0) {
-                    animateStreakIncrease(lastTd, oldStreak, newStreak);
+                    animateStreakIncrease(lastTd, oldStreak, newStreak, cell);
                 }
             }
         }
@@ -504,16 +504,47 @@ async function updateUserBackgroundColor(userId) {
 }
 
 // Seri artış animasyonu fonksiyonu
-function animateStreakIncrease(streakElement, oldStreak, newStreak) {
-    // Yıldız ve sayıyı ayrı ayrı animasyonla
-    const starElement = streakElement.querySelector('.weekly-fire-emoji');
+function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell) {
+    // Tıklanan hücrenin pozisyonunu al
+    const clickedRect = clickedCell.getBoundingClientRect();
     
-    if (starElement) {
-        starElement.classList.add('streak-star-animation');
-        setTimeout(() => {
-            starElement.classList.remove('streak-star-animation');
-        }, 600);
-    }
+    // Seri hücresindeki yıldızın pozisyonunu al
+    const starElement = streakElement.querySelector('.weekly-fire-emoji');
+    const starRect = starElement.getBoundingClientRect();
+    
+    // Geçici yıldız elementi oluştur
+    const flyingStar = document.createElement('div');
+    flyingStar.innerHTML = '⭐';
+    flyingStar.style.position = 'fixed';
+    flyingStar.style.left = (clickedRect.left + clickedRect.width / 2 - 12.5) + 'px'; // Hücrenin ortası (25px/2 = 12.5)
+    flyingStar.style.top = (clickedRect.top + clickedRect.height / 2 - 12.5) + 'px'; // Hücrenin ortası
+    flyingStar.style.fontSize = '20px';
+    flyingStar.style.zIndex = '9999';
+    flyingStar.style.pointerEvents = 'none';
+    flyingStar.style.transition = 'all 0.6s ease-out';
+    flyingStar.style.transform = 'scale(0.6)';
+    
+    document.body.appendChild(flyingStar);
+    
+    // Yıldızı hedefe hareket ettir
+    setTimeout(() => {
+        flyingStar.style.left = (starRect.left + starRect.width / 2 - 12.5) + 'px'; // Yıldızın tam ortası (25px/2 = 12.5)
+        flyingStar.style.top = (starRect.top + starRect.height / 2 - 12.5) + 'px'; // Yıldızın tam ortası
+        flyingStar.style.transform = 'scale(1)';
+    }, 50);
+    
+    // Hedefe ulaştığında seri hücresini animasyonla
+    setTimeout(() => {
+        if (starElement) {
+            starElement.classList.add('streak-star-animation');
+            setTimeout(() => {
+                starElement.classList.remove('streak-star-animation');
+            }, 600);
+        }
+        
+        // Uçan yıldızı kaldır
+        document.body.removeChild(flyingStar);
+    }, 650);
     
     // Başarı efekti için hafif titreşim (destekleyen cihazlarda)
     if (navigator.vibrate) {

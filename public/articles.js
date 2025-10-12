@@ -257,6 +257,11 @@ class ArticlesManager {
                 return;
             }
             
+            // Makale kartına tıklama işlemini logla
+            if (typeof logUnauthorizedAccess === 'function') {
+                logUnauthorizedAccess('Makale kartına tıklama');
+            }
+            
             // Diğer tüm tıklamalarda destination_url'ye yönlendir
             window.open(article.destination_url, '_blank');
         });

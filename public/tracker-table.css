@@ -450,49 +450,4 @@ th.today-column {
     box-shadow: 0 0 0 2px #28a745, 0 4px 16px rgba(40, 167, 69, 0.4);
 }
 
-.streak-star-animation {
-    position: relative;
-}
 
-.streak-star-animation::before {
-    content: '⭐';
-    position: absolute;
-    left: -60px;
-    top: 0;
-    opacity: 0;
-    animation: newStarSlide 0.6s ease-out;
-}
-
-
-@keyframes newStarSlide {
-    0% { 
-        left: -60px;
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    25% { 
-        left: -45px;
-        opacity: 0.25;
-        transform: scale(0.6);
-    }
-    50% {
-        left: -30px;
-        opacity: 0.5;
-        transform: scale(0.7);
-    }
-    75% {
-        left: -15px;
-        opacity: 0.75;
-        transform: scale(0.8);
-    }
-    99% {
-        left: 0px;
-        opacity: 0.99;
-        transform: scale(0.9);
-    }
-    100% { 
-        left: 0px;
-        opacity: 0;
-        transform: scale(1);
-    }
-}

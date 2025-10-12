@@ -638,10 +638,15 @@ if (window.location.pathname.includes('groupid=')) {
 // YARDIMCI FONKSİYONLAR
 // ============================================================================
 
-// Eğer firstDayOfWeek değişkeni yoksa, varsayılanı belirle
+// Eğer firstDayOfWeek değişkeni yoksa, localStorage'dan oku veya varsayılanı belirle
 if (typeof window.firstDayOfWeek === 'undefined') {
-  window.firstDayOfWeek = 1; // Pazartesi varsayılan
-  localStorage.setItem('firstDayOfWeek', 1);
+  const savedFirstDay = localStorage.getItem('firstDayOfWeek');
+  if (savedFirstDay !== null) {
+    window.firstDayOfWeek = parseInt(savedFirstDay);
+  } else {
+    window.firstDayOfWeek = 1; // Pazartesi varsayılan
+    localStorage.setItem('firstDayOfWeek', 1);
+  }
 }
 
 // Yetkisiz erişim kontrolü
