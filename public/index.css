@@ -14,14 +14,14 @@ body {
     overflow-x: hidden;
 }
 
-.container {
+.main-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
 /* Header Styles */
-.header {
+.main-header {
     text-align: center;
     margin-bottom: 35px;
 }
@@ -744,7 +744,7 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .container {
+    .main-container {
         padding: 15px;
     }
 

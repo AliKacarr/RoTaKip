@@ -3074,10 +3074,10 @@ async function sendOneSignalNotification(message, source = 'vecize') {
   }
 }
 
-// Her gece 00:00'da çalışacak cron job - okumadım dokümanları oluştur
+// Her gece 03:00'da çalışacak cron job - okumadım dokümanları oluştur
 async function createDailyOkumadimDocuments() {
   try {
-    console.log('🌙 Gece 00:00 cron job çalışıyor - okumadım dokümanları oluşturuluyor');
+    console.log('🌙 Gece 03:00 cron job çalışıyor - okumadım dokümanları oluşturuluyor');
     
     // Dünün tarihini al (Türkiye saati)
     const yesterday = new Date();
@@ -3128,10 +3128,10 @@ async function createDailyOkumadimDocuments() {
       }
     }
     
-    console.log('🌙 Gece 00:00 cron job tamamlandı');
+    console.log('🌙 Gece 03:00 cron job tamamlandı');
     
   } catch (error) {
-    console.error('❌ Gece 00:00 cron job hatası:', error);
+    console.error('❌ Gece 03:00 cron job hatası:', error);
   }
 }
 
@@ -3142,23 +3142,23 @@ function scheduleDailyNotifications() {
     return null;
   }
   
-  // TR: 00:00 - Okumadım dokümanları oluştur
+  // TR: 03:00 - Okumadım dokümanları oluştur
   const jobMidnight = schedule.scheduleJob({ rule: '0 3 * * *', tz: 'Europe/Istanbul' }, createDailyOkumadimDocuments);
   
   // TR: 09:00
-  const jobMorning = schedule.scheduleJob({ rule: '0 12 * * *', tz: 'Europe/Istanbul' }, async () => {
+  const jobMorning = schedule.scheduleJob({ rule: '0 9 * * *', tz: 'Europe/Istanbul' }, async () => {
     console.log('🌅 Sabah 9:00 cron job çalışıyor');
     const result = await getRandomVecizeForPush();
     await sendOneSignalNotification(result.message, result.source);
   });
   // TR: 21:00
-  const jobEvening = schedule.scheduleJob({ rule: '0 0 * * *', tz: 'Europe/Istanbul' }, async () => {
+  const jobEvening = schedule.scheduleJob({ rule: '0 21 * * *', tz: 'Europe/Istanbul' }, async () => {
     console.log('🌙 Akşam 21:00 cron job çalışıyor');
     const result = await getRandomVecizeForPush();
     await sendOneSignalNotification(result.message, result.source);
   });
   
-  console.log('Cron job\'lar kuruldu: 00:00 (okumadım), 09:00 ve 21:00 (vecize) (Europe/Istanbul)');
+  console.log('Cron job\'lar kuruldu: 03:00 (okumadım), 09:00 ve 21:00 (vecize) (Europe/Istanbul)');
   
   process.on('SIGINT', async () => {
     console.log('Cron job\'lar kapatılıyor...');

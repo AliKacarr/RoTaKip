@@ -346,14 +346,14 @@ async function toggleStatus(userId, date) {
     let status;
     let newSymbol;
     
-    // Tüm günler için aynı sıra: ➖ → ✖ → ✔ → ➖
+    // Tüm günler için yeni sıra: ➖ → ✔ → ✖ → ➖
     if (current === '➖') {
-        status = 'okumadım';
-        newSymbol = '✖';
-    } else if (current === '✖') {
         status = 'okudum';
         newSymbol = '✔';
     } else if (current === '✔') {
+        status = 'okumadım';
+        newSymbol = '✖';
+    } else if (current === '✖') {
         status = '';
         newSymbol = '➖';
     }
@@ -373,15 +373,15 @@ async function toggleStatus(userId, date) {
     const currentCount = userReadingCounts.get(userId) || 0;
     let newCount = currentCount;
     
-    if (current === '➖' && status === 'okumadım') {
-        // Boş -> Okumadım: değişiklik yok
-        newCount = currentCount;
-    } else if (current === '✖' && status === 'okudum') {
-        // Okumadım -> Okudum: +1
+    if (current === '➖' && status === 'okudum') {
+        // Boş -> Okudum: +1
         newCount = currentCount + 1;
-    } else if (current === '✔' && status === '') {
-        // Okudum -> Boş: -1
+    } else if (current === '✔' && status === 'okumadım') {
+        // Okudum -> Okumadım: -1
         newCount = Math.max(0, currentCount - 1);
+    } else if (current === '✖' && status === '') {
+        // Okumadım -> Boş: değişiklik yok
+        newCount = currentCount;
     }
     
     userReadingCounts.set(userId, newCount);

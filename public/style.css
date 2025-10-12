@@ -8,7 +8,7 @@ body {
   padding: 0;
 }
 
-.container {
+.main-container {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -43,17 +43,4 @@ h3 {
 #newUserForm,
 .settings-section h3 {
   min-width: 300px;
-}
-
-/* Font Awesome ikonları için varsayılan stili geçersiz kıl */
-.fa,
-.fa-brands,
-.fa-classic,
-.fa-regular,
-.fa-sharp,
-.fa-solid,
-.fab,
-.far,
-.fas {
-  display: inline;
 }
