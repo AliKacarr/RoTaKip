@@ -9,6 +9,8 @@ const nextWeekTodayBtn = document.getElementById('nextWeekToday');
 const currentWeekDisplay = document.getElementById('currentWeekDisplay');
 const firstDaySelect = document.getElementById('firstDaySelect');
 let weekOffset = 0;
+// Global erişim için window'a ekle
+window.weekOffset = weekOffset;
 let isFirstLoad = true;
 let postToggleUpdateTimer = null;
 
@@ -261,26 +263,34 @@ function areDatesConsecutive(date1, date2) {
 
 prevWeekBtn.addEventListener('click', () => {
     weekOffset--;
+    window.weekOffset = weekOffset; // Global güncelle
     showWeekLoading(true);
     loadTrackerTable();
+    loadUserCards();
 });
 
 nextWeekBtn.addEventListener('click', () => {
     weekOffset++;
+    window.weekOffset = weekOffset; // Global güncelle
     showWeekLoading(true);
     loadTrackerTable();
+    loadUserCards();
 });
 
 prevWeekTodayBtn.addEventListener('click', () => {
     weekOffset = 0;
+    window.weekOffset = weekOffset; // Global güncelle
     showWeekLoading(true);
     loadTrackerTable();
+    loadUserCards();
 });
 
 nextWeekTodayBtn.addEventListener('click', () => {
     weekOffset = 0;
+    window.weekOffset = weekOffset; // Global güncelle
     showWeekLoading(true);
     loadTrackerTable();
+    loadUserCards();
 });
 
 function calculateStreak(userStats) {
@@ -360,12 +370,65 @@ async function toggleStatus(userId, date) {
     // Hücre ikonunu güncelle
     cell.innerText = newSymbol;
 
-    // Sınıfı güncelle (okumadım serisi bilgisi tablo genelinden hesaplandığı için, burada sadece temel renkleri uygula)
-    cell.classList.remove('green', 'pink', 'lila', 'red');
-    if (status === 'okudum') {
-        cell.classList.add('green');
-    } else if (status === 'okumadım') {
-        cell.classList.add('pink');
+    // Tüm satırdaki hücrelerin renklerini yeniden hesapla
+    const rowEl = cell.closest('tr');
+    let userStatsMap = {}; // Dışarıda tanımla ki seri güncelleme kısmında da kullanılabilsin
+    
+    if (rowEl) {
+        const dateCells = rowEl.querySelectorAll('td[onclick*="toggleStatus"]');
+        const dates = getWeekDates(weekOffset);
+        
+        // Tüm tarih hücrelerinden mevcut durumu topla
+        dateCells.forEach((dateCell, index) => {
+            const cellText = dateCell.innerText;
+            const cellDate = dates[index];
+            if (cellText === '✔') {
+                userStatsMap[cellDate] = 'okudum';
+            } else if (cellText === '✖') {
+                userStatsMap[cellDate] = 'okumadım';
+            }
+        });
+        
+        // Yeni değişikliği de ekle
+        if (status) {
+            userStatsMap[date] = status;
+        } else {
+            delete userStatsMap[date];
+        }
+        
+        // Seri hesaplamalarını yap
+        const streakMap = findConsecutiveStreaks(userStatsMap);
+        
+        // Her hücrenin rengini güncelle
+        dateCells.forEach((dateCell, index) => {
+            const cellDate = dates[index];
+            const cellStatus = userStatsMap[cellDate];
+            
+            // Eski sınıfları temizle
+            dateCell.classList.remove('green', 'pink', 'lila', 'red');
+            
+            // Yeni sınıfı belirle
+            if (cellStatus === 'okudum') {
+                dateCell.classList.add('green');
+            } else if (cellStatus === 'okumadım') {
+                const streakLength = streakMap[cellDate] || 0;
+                if (streakLength === 1) {
+                    dateCell.classList.add('pink');
+                } else if (streakLength === 2) {
+                    dateCell.classList.add('lila');
+                } else if (streakLength >= 3) {
+                    dateCell.classList.add('red');
+                }
+            }
+            
+            // Bugün sınıfını koru
+            const today = new Date();
+            today.setHours(today.getHours() + 3);
+            const todayString = today.toISOString().split('T')[0];
+            if (cellDate === todayString) {
+                dateCell.classList.add('today-column');
+            }
+        });
     }
 
     // Önbellekteki okuma sayısını güncelle
@@ -398,20 +461,26 @@ async function toggleStatus(userId, date) {
         })
     });
 
-    // Kullanıcının serisini güncelle (satırın son hücresi) - optimize edilmiş
+    // Kullanıcının serisini hemen güncelle (tüm geçmiş verilerle)
     try {
-        const res = await fetch(`/api/user-stats/${window.groupid}/${userId}`);
-        const { stats } = await res.json();
-        const userStatsMap = {};
-        for (let s of stats) {
-            userStatsMap[s.date] = s.status;
-        }
-        // Seçilen hücrede yaptığımız değişikliği de yerel olarak uygula ki sunucu gecikmesinde doğru hesap çıksın
-        if (status) userStatsMap[date] = status; else delete userStatsMap[date];
-
-        const newStreak = calculateStreak(userStatsMap);
         const rowEl = cell.closest('tr');
         if (rowEl) {
+            // Sunucudan tüm geçmiş verileri çek
+            const res = await fetch(`/api/user-stats/${window.groupid}/${userId}`);
+            const { stats } = await res.json();
+            const allUserStatsMap = {};
+            for (let s of stats) {
+                allUserStatsMap[s.date] = s.status;
+            }
+            
+            // Yeni değişikliği de ekle
+            if (status) {
+                allUserStatsMap[date] = status;
+            } else {
+                delete allUserStatsMap[date];
+            }
+
+            const newStreak = calculateStreak(allUserStatsMap);
             const lastTd = rowEl.querySelector('td:last-child');
             if (lastTd) {
                 // Eski seri sayısını al
@@ -456,7 +525,7 @@ async function toggleStatus(userId, date) {
             } catch (err) {
                 console.error('Gecikmeli güncelleme hatası:', err);
             }
-        }, 1200);
+        }, 1000);
     } catch (err) {
         console.error('Debounce ayarlanamadı:', err);
     }
