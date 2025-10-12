@@ -336,6 +336,7 @@
 
 .profile-avatar-modal-body {
   padding: 25px;
+  overflow-y: auto;
 }
 
 .profile-modal-avatar-grid {
@@ -343,7 +344,6 @@
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 15px;
   max-height: 400px;
-  overflow-y: auto;
 }
 
 .profile-modal-avatar-item {
@@ -417,6 +417,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 0;
+  border-bottom: none;
 }
 
 .profile-settings-modal-close-btn {
