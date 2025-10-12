@@ -489,6 +489,7 @@ async function loadUserCards() {
     
     // Ana mesaj içeriği
     const messageContent = document.createElement('div');
+    messageContent.style.display = '-webkit-inline-box';
     messageContent.innerHTML =
       '<span class="missed-title">Art arda okumayanlar:<br></span> ' +
       consecutiveMissed.map(u => `<b class="missed-username">${u.name}</b> (<span class="missed-days">${u.days} gün</span>)`).join(', ') +

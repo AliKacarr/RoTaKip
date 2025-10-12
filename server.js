@@ -3142,17 +3142,17 @@ function scheduleDailyNotifications() {
     return null;
   }
   
-  // 00:00 - Okumadım dokümanları oluştur
-  const jobMidnight = schedule.scheduleJob({ rule: '0 0 * * *', tz: 'Europe/Istanbul' }, createDailyOkumadimDocuments);
+  // TR: 00:00 - Okumadım dokümanları oluştur
+  const jobMidnight = schedule.scheduleJob({ rule: '0 3 * * *', tz: 'Europe/Istanbul' }, createDailyOkumadimDocuments);
   
-  // 09:00
-  const jobMorning = schedule.scheduleJob({ rule: '0 9 * * *', tz: 'Europe/Istanbul' }, async () => {
+  // TR: 09:00
+  const jobMorning = schedule.scheduleJob({ rule: '0 12 * * *', tz: 'Europe/Istanbul' }, async () => {
     console.log('🌅 Sabah 9:00 cron job çalışıyor');
     const result = await getRandomVecizeForPush();
     await sendOneSignalNotification(result.message, result.source);
   });
-  // 21:00
-  const jobEvening = schedule.scheduleJob({ rule: '0 21 * * *', tz: 'Europe/Istanbul' }, async () => {
+  // TR: 21:00
+  const jobEvening = schedule.scheduleJob({ rule: '0 0 * * *', tz: 'Europe/Istanbul' }, async () => {
     console.log('🌙 Akşam 21:00 cron job çalışıyor');
     const result = await getRandomVecizeForPush();
     await sendOneSignalNotification(result.message, result.source);

@@ -573,7 +573,7 @@
     </div>
 
     <div class="stats-section">
-      <h3><i class="fa-solid fa-ranking-star" style="font-size: 1.4em; padding-inline: 3px;"></i> Okuma
+      <h3><i class="fa-solid fa-ranking-star" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Okuma
         İstatistikleri
       </h3>
       <div class="chart-container">
@@ -592,7 +592,7 @@
     </div>
 
     <div class="longest-series-section">
-      <h3><i class="fa-solid fa-bolt" style="font-size: 1.4em; padding-inline: 3px;"></i> En Uzun Okuma Serisi</h3>
+      <h3><i class="fa-solid fa-bolt" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> En Uzun Okuma Serisi</h3>
       <div id="longestSeriesChart">
         <div class="longest-series-loading">
           <div class="longest-fire-icon">⭐</div>
@@ -613,7 +613,7 @@
 
     <!-- Monthly Calendar View -->
     <div class="monthly-calendar-section" style="display: none;">
-      <h3><i class="fa-regular fa-calendar-check" style="font-size: 1.4em; padding-inline: 3px;"></i> Aylık
+      <h3><i class="fa-regular fa-calendar-check" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Aylık
         İstatistikler</h3>
       <div class="monthly-calendar-container">
         <table id="monthlyCalendar" class="monthly-calendar">
@@ -650,7 +650,7 @@
 
     <!-- Add the Quote of the Day section -->
     <div class="quote">
-      <h3><img src="images/ayyıldız.webp" alt="Ay Yıldız" style="height: 2em; vertical-align: middle;"> Rahmet Penceresi
+      <h3><i class="fa-solid fa-star-and-crescent" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Rahmet Penceresi
       </h3>
       <div class="quote-flex-container">
         <div class="quote-vertical-group">
@@ -734,7 +734,7 @@
 
     <div class="videos">
       <h3><i class="fa-regular fa-circle-play"
-          style=" font-size: 1.3em; padding-left:2px; padding-right: 8px;"></i>Videolar</h3>
+          style="font-size: 1.3em !important; padding: 0 10px 0 5px;"></i>Videolar</h3>
       <div class="top-bar">
         <button id="randomBtn">
           <i class="fa-solid fa-shuffle"></i> Rastgele Videolar
@@ -847,7 +847,7 @@
 
     <!-- Articles Section -->
     <div class="articles">
-      <h3><i class="fa-regular fa-newspaper" style="font-size: 1.3em; padding-left:2px; padding-right: 8px;"></i>Makaleler</h3>
+      <h3><i class="fa-regular fa-newspaper" style="font-size: 1.3em !important; padding: 0 10px 0 5px;"></i>Makaleler</h3>
       <div class="articles-top-bar">
         <div class="articles-categories">
           <button class="category-btn active" data-category="all">
@@ -859,68 +859,74 @@
       <div id="articlesContainer" class="articles-container" style="position: relative;">
         <!-- Loading state -->
         <div class="article-card article-loading-card">
-          <div class="article-loading-image">
-            <div class="article-loading-spinner"></div>
+          <div class="article-loading-title">
+            <div class="article-loading-line article-loading-line-1"></div>
+            <div class="article-loading-line article-loading-line-2"></div>
           </div>
-          <div class="article-loading-content">
-            <div class="article-loading-category">
-              <div class="article-loading-line article-loading-line-1"></div>
+          <div class="article-content-wrapper">
+            <div class="article-loading-image">
+              <div class="article-loading-spinner"></div>
             </div>
-            <div class="article-loading-date">
-              <div class="article-loading-line article-loading-line-2"></div>
-            </div>
-            <div class="article-loading-title">
-              <div class="article-loading-line article-loading-line-3"></div>
-              <div class="article-loading-line article-loading-line-4"></div>
-            </div>
-            <div class="article-loading-text">
-              <div class="article-loading-line article-loading-line-5"></div>
-              <div class="article-loading-line article-loading-line-6"></div>
-              <div class="article-loading-line article-loading-line-7"></div>
-            </div>
-          </div>
-        </div>
-        <div class="article-card article-loading-card">
-          <div class="article-loading-image">
-            <div class="article-loading-spinner"></div>
-          </div>
-          <div class="article-loading-content">
-            <div class="article-loading-category">
-              <div class="article-loading-line article-loading-line-1"></div>
-            </div>
-            <div class="article-loading-date">
-              <div class="article-loading-line article-loading-line-2"></div>
-            </div>
-            <div class="article-loading-title">
-              <div class="article-loading-line article-loading-line-3"></div>
-              <div class="article-loading-line article-loading-line-4"></div>
-            </div>
-            <div class="article-loading-text">
-              <div class="article-loading-line article-loading-line-5"></div>
-              <div class="article-loading-line article-loading-line-6"></div>
-              <div class="article-loading-line article-loading-line-7"></div>
+            <div class="article-loading-content">
+              <div class="article-loading-category">
+                <div class="article-loading-line article-loading-line-3"></div>
+              </div>
+              <div class="article-loading-date">
+                <div class="article-loading-line article-loading-line-4"></div>
+              </div>
+              <div class="article-loading-text">
+                <div class="article-loading-line article-loading-line-5"></div>
+                <div class="article-loading-line article-loading-line-6"></div>
+                <div class="article-loading-line article-loading-line-7"></div>
+              </div>
             </div>
           </div>
         </div>
         <div class="article-card article-loading-card">
-          <div class="article-loading-image">
-            <div class="article-loading-spinner"></div>
+          <div class="article-loading-title">
+            <div class="article-loading-line article-loading-line-1"></div>
+            <div class="article-loading-line article-loading-line-2"></div>
           </div>
-          <div class="article-loading-content">
-            <div class="article-loading-category">
-              <div class="article-loading-line article-loading-line-1"></div>
+          <div class="article-content-wrapper">
+            <div class="article-loading-image">
+              <div class="article-loading-spinner"></div>
             </div>
-            <div class="article-loading-date">
-              <div class="article-loading-line article-loading-line-2"></div>
+            <div class="article-loading-content">
+              <div class="article-loading-category">
+                <div class="article-loading-line article-loading-line-3"></div>
+              </div>
+              <div class="article-loading-date">
+                <div class="article-loading-line article-loading-line-4"></div>
+              </div>
+              <div class="article-loading-text">
+                <div class="article-loading-line article-loading-line-5"></div>
+                <div class="article-loading-line article-loading-line-6"></div>
+                <div class="article-loading-line article-loading-line-7"></div>
+              </div>
             </div>
-            <div class="article-loading-title">
-              <div class="article-loading-line article-loading-line-3"></div>
-              <div class="article-loading-line article-loading-line-4"></div>
+          </div>
+        </div>
+        <div class="article-card article-loading-card">
+          <div class="article-loading-title">
+            <div class="article-loading-line article-loading-line-1"></div>
+            <div class="article-loading-line article-loading-line-2"></div>
+          </div>
+          <div class="article-content-wrapper">
+            <div class="article-loading-image">
+              <div class="article-loading-spinner"></div>
             </div>
-            <div class="article-loading-text">
-              <div class="article-loading-line article-loading-line-5"></div>
-              <div class="article-loading-line article-loading-line-6"></div>
-              <div class="article-loading-line article-loading-line-7"></div>
+            <div class="article-loading-content">
+              <div class="article-loading-category">
+                <div class="article-loading-line article-loading-line-3"></div>
+              </div>
+              <div class="article-loading-date">
+                <div class="article-loading-line article-loading-line-4"></div>
+              </div>
+              <div class="article-loading-text">
+                <div class="article-loading-line article-loading-line-5"></div>
+                <div class="article-loading-line article-loading-line-6"></div>
+                <div class="article-loading-line article-loading-line-7"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -935,7 +941,7 @@
     <div class="main-area" style="display: none;">
       <div class="top-section">
       <div class="group-settings">
-        <h3><i class="fa-solid fa-gear" style="font-size: 1.2em; padding-left:2px; padding-right: 4px;"></i> Grup Ayarları</h3>
+        <h3><i class="fa-solid fa-gear" style="font-size: 1.2em !important; padding: 0 10px 0 5px;"></i> Grup Ayarları</h3>
         
         <div class="group-info-section">
           <!-- Sol Sütun: Grup Bilgileri -->
@@ -1140,7 +1146,7 @@
     <!-- Add this after the user list section, before the closing container div -->
     <div class="settings-section">
       <h3 id="ayarlar"><i class="fa-classic fa-solid fa-sliders fa-fw"
-          style="font-size: 1.2em; padding-left:2px; padding-right: 8px;"></i>Tercihler</h3>
+          style="font-size: 1.2em !important; padding-left:2px; padding-right: 8px;"></i>Tercihler</h3>
       <div class="setting-item">
         <label for="firstDaySelect">Tablonun İlk Günü:</label>
         <select id="firstDaySelect" class="day-select">

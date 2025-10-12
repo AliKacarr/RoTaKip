@@ -513,6 +513,14 @@ document.addEventListener('DOMContentLoaded', async function () {
       { name: 'fetchRandomHadis', fn: fetchRandomHadis },
       { name: 'fetchRandomDua', fn: fetchRandomDua },
       { name: 'initializeVideos', fn: initializeVideos },
+      { name: 'initializeArticles', fn: () => {
+        if (typeof ArticlesManager !== 'undefined') {
+          window.articlesManager = new ArticlesManager();
+          return Promise.resolve();
+        } else {
+          return Promise.resolve();
+        }
+      }},
       { name: 'renderUserList', fn: () => {
         if (LocalStorageManager.isAdmin()) {
           return renderUserList();
