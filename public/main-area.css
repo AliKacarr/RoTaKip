@@ -170,7 +170,13 @@ ul#userList li span {
 .user-profile-image {
     cursor: pointer;
     transition: opacity 0.2s;
-    position: relative;
+    position: relative;    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+    border: 1px solid #b6afff;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
 .user-profile-image.user-profile-image-loading {

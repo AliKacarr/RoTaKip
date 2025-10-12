@@ -302,7 +302,7 @@ async function saveUserName(userId) {   //Kullanıcı adını güncelleme fonksi
         nameSpan.textContent = newName;
 
         // Profile image'ı normal haline döndür
-        const profileImage = userItem.querySelector('.profile-image.user-profile-image');
+        const profileImage = userItem.querySelector('.user-profile-image');
         if (profileImage) {
             profileImage.style.border = '';
             profileImage.style.boxShadow = '';
@@ -373,7 +373,7 @@ function editUserName(userId) {     //Kullanıcı adını düzenleme fonksiyonu
     const saveButton = userItem.querySelector('.save-name-button');
     const cancelButton = userItem.querySelector('.cancel-edit-button');
     const settingsButton = userItem.querySelector('.settings-button');
-    const profileImage = userItem.querySelector('.profile-image.user-profile-image');
+    const profileImage = userItem.querySelector('.user-profile-image');
 
     // Hide name span, edit button and settings button, show input, save button and cancel button
     if (nameSpan) nameSpan.style.display = 'none';
@@ -688,7 +688,7 @@ function cancelEditUserName(userId) {     //Kullanıcı adı düzenleme iptal fo
     const saveButton = userItem.querySelector('.save-name-button');
     const cancelButton = userItem.querySelector('.cancel-edit-button');
     const settingsButton = userItem.querySelector('.settings-button');
-    const profileImage = userItem.querySelector('.profile-image.user-profile-image');
+    const profileImage = userItem.querySelector('.user-profile-image');
 
     // Reset to original state: hide input, save and cancel buttons, show name span, edit button and settings button
     nameSpan.style.display = 'inline-block';
@@ -1025,7 +1025,7 @@ function performRenderUserList() {
             // Tüm kullanıcıları yeniden oluştur
             users.forEach((user, index) => {
                 const userProfileImage = user.profileImage || '/images/default.png';
-                const liHTML = `<div class="kullanıcı-item"><img src="${userProfileImage}" alt="${user.name}" class="profile-image user-profile-image user-profile-image-loading" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${user.name}</span><input type="text" class="edit-name-input" value="${user.name}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
+                const liHTML = `<div class="kullanıcı-item"><img src="${userProfileImage}" alt="${user.name}" class="user-profile-image user-profile-image-loading" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${user.name}</span><input type="text" class="edit-name-input" value="${user.name}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
                 
                 // Kullanıcı container'ı oluştur
                 const userContainer = document.createElement('div');

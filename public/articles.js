@@ -222,7 +222,7 @@ class ArticlesManager {
             </div>
             <div class="article-content-wrapper">
                 <div class="article-image">
-                    <img src="${article.image_url}" alt="${article.title}" loading="lazy" 
+                    <img src="${article.image_url}" alt="${article.title}"  
                          onerror="this.src='/images/default-article.png'">
                 </div>
                 <div class="article-content">

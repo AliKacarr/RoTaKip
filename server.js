@@ -3227,6 +3227,162 @@ const pingJob = schedulePing();
 const tokenJob = scheduleTokenRefresh();
 const vecizeJobs = scheduleDailyNotifications();
 
+// ==================== Profile Management API Endpoints ====================
+
+// Profil resmi güncelleme
+app.post('/api/update-user-profile', upload.single('profileImage'), async (req, res) => {
+  try {
+    const { userId, groupId } = req.body;
+    
+    if (!userId || !groupId) {
+      return res.status(400).json({ success: false, message: 'Kullanıcı ID ve Grup ID gerekli' });
+    }
+
+    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
+    
+    if (req.file) {
+      // Dropbox'a yükle
+      const dropboxPath = `/profile-images/${groupId}/${userId}_${Date.now()}.jpg`;
+      const dropboxUrl = await uploadToDropbox(req.file.buffer, dropboxPath);
+      
+      // Veritabanını güncelle
+      await User.findByIdAndUpdate(userId, { profileImage: dropboxUrl });
+      
+      res.json({ 
+        success: true, 
+        message: 'Profil resmi güncellendi',
+        profileImageUrl: dropboxUrl
+      });
+    } else {
+      res.status(400).json({ success: false, message: 'Resim dosyası bulunamadı' });
+    }
+  } catch (error) {
+    console.error('Profil resmi güncellenirken hata:', error);
+    res.status(500).json({ success: false, message: 'Profil resmi güncellenemedi' });
+  }
+});
+
+// Avatar güncelleme
+app.post('/api/update-user-avatar', async (req, res) => {
+  try {
+    const { userId, groupId, avatarPath } = req.body;
+    
+    if (!userId || !groupId || !avatarPath) {
+      return res.status(400).json({ success: false, message: 'Gerekli parametreler eksik' });
+    }
+
+    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
+    
+    // Veritabanını güncelle
+    await User.findByIdAndUpdate(userId, { profileImage: avatarPath });
+    
+    res.json({ 
+      success: true, 
+      message: 'Avatar güncellendi'
+    });
+  } catch (error) {
+    console.error('Avatar güncellenirken hata:', error);
+    res.status(500).json({ success: false, message: 'Avatar güncellenemedi' });
+  }
+});
+
+// Kullanıcı ayarları güncelleme
+app.post('/api/update-user-settings', async (req, res) => {
+  try {
+    const { userId, groupId, username, memberName, password } = req.body;
+    
+    if (!userId || !groupId) {
+      return res.status(400).json({ success: false, message: 'Kullanıcı ID ve Grup ID gerekli' });
+    }
+
+    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
+    
+    const updateData = {};
+    if (username) updateData.name = username;
+    if (memberName) updateData.username = memberName;
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.userpassword = hashedPassword;
+    }
+    
+    await User.findByIdAndUpdate(userId, updateData);
+    
+    res.json({ 
+      success: true, 
+      message: 'Ayarlar güncellendi'
+    });
+  } catch (error) {
+    console.error('Ayarlar güncellenirken hata:', error);
+    res.status(500).json({ success: false, message: 'Ayarlar güncellenemedi' });
+  }
+});
+
+
+// Profil resmi silme
+app.post('/api/remove-user-profile-image', async (req, res) => {
+  try {
+    const { userId, groupId } = req.body;
+    
+    if (!userId || !groupId) {
+      return res.status(400).json({ success: false, message: 'Kullanıcı ID ve Grup ID gerekli' });
+    }
+
+    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
+    
+    // Kullanıcının mevcut profil resmini al
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Kullanıcı bulunamadı' });
+    }
+
+    const oldImageUrl = user.profileImage;
+
+    // Veritabanını default resim ile güncelle
+    await User.findByIdAndUpdate(userId, { profileImage: '/images/default.png' });
+    
+    // Eski resmi Dropbox'tan sil (arka planda)
+    if (oldImageUrl && oldImageUrl.includes('dropbox.com')) {
+      deleteFromDropboxByUrl(oldImageUrl).catch(err => 
+        console.error('Eski profil resmi silme hatası:', err)
+      );
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Profil resmi silindi'
+    });
+  } catch (error) {
+    console.error('Profil resmi silinirken hata:', error);
+    res.status(500).json({ success: false, message: 'Profil resmi silinemedi' });
+  }
+});
+
+// Hesap silme
+app.post('/api/delete-user-account', async (req, res) => {
+  try {
+    const { userId, groupId } = req.body;
+    
+    if (!userId || !groupId) {
+      return res.status(400).json({ success: false, message: 'Kullanıcı ID ve Grup ID gerekli' });
+    }
+
+    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
+    const ReadingStatus = mongoose.model(`readingstatuses_${groupId}`, readingStatusSchema, `readingstatuses_${groupId}`);
+    
+    // Kullanıcıyı ve okuma durumlarını sil
+    await User.findByIdAndDelete(userId);
+    await ReadingStatus.deleteMany({ userId: userId });
+    
+    res.json({ 
+      success: true, 
+      message: 'Hesap silindi'
+    });
+  } catch (error) {
+    console.error('Hesap silinirken hata:', error);
+    res.status(500).json({ success: false, message: 'Hesap silinemedi' });
+  }
+});
+
 // Dropbox'ı başlat
 initializeDropbox();
 

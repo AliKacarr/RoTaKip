@@ -1080,6 +1080,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Clear form fields
                 groupsAuthLoginForm.reset();
 
+                // Hoşgeldin mesajı göster
+                showToast(`Hoşgeldin ${data.userName}!`, 'success');
+
                 // Show admin indicator
                 showAdminIndicator();
 
@@ -1163,53 +1166,430 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 function showAdminInfoPanel() {
-    // Create admin info modal if it doesn't exist
-    let adminInfoModal = document.getElementById('adminInfoModal');
+    // Yeni profil modalını aç
+    openProfileModal();
+}
 
-    if (!adminInfoModal) {
-        adminInfoModal = document.createElement('div');
-        adminInfoModal.id = 'adminInfoModal';
-        adminInfoModal.className = 'admin-modal';
+// ==================== Profile Modal Functions ====================
 
-        const modalContent = document.createElement('div');
-        modalContent.className = 'modal-content-admin';
+async function openProfileModal() {
+    const profileModal = document.getElementById('profileModal');
+    if (!profileModal) return;
 
-        const closeBtn = document.createElement('span');
-        closeBtn.className = 'close-button';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.onclick = function () {
-            adminInfoModal.style.display = 'none';
+    // Önce modalı aç
+    profileModal.style.display = 'block';
+    
+    // Sonra kullanıcı bilgilerini yükle
+    await loadProfileData();
+}
+
+function closeProfileModal() {
+    const profileModal = document.getElementById('profileModal');
+    if (profileModal) {
+        profileModal.style.display = 'none';
+    }
+}
+
+async function loadProfileData() {
+    try {
+        const userInfo = LocalStorageManager.getCurrentUserInfo();
+        if (!userInfo) return;
+
+        // Profil resmi için loading efekti başlat (default.png gösterme)
+        const profileImage = document.getElementById('profileImagePreview');
+        if (profileImage) {
+            profileImage.classList.add('profile-image-loading');
+            // Default resmi gizle, sadece loading efekti göster
+            profileImage.style.display = 'none';
+        }
+
+        // Tüm verileri al (kullanıcılar ve istatistikler)
+        const response = await fetch(`/api/all-data/${userInfo.groupId}`);
+        const data = await response.json();
+
+        if (data.users && data.stats) {
+            // Kullanıcı bilgilerini bul
+            const user = data.users.find(u => u._id === userInfo.userId);
+            
+            if (user) {
+                // Kullanıcı bilgilerini güncelle
+                document.getElementById('profileUsername').textContent = user.name || '-';
+                document.getElementById('profileMemberName').textContent = user.username || '-';
+                
+                // Profil resmini güncelle
+                if (user.profileImage) {
+                    // Gerçek resim yüklenene kadar loading efekti devam eder
+                    profileImage.onload = function() {
+                        profileImage.classList.remove('profile-image-loading');
+                        profileImage.style.display = 'block';
+                    };
+                    profileImage.onerror = function() {
+                        profileImage.classList.remove('profile-image-loading');
+                        profileImage.src = '/images/default.png';
+                        profileImage.style.display = 'block';
+                    };
+                    profileImage.src = user.profileImage;
+                } else {
+                    // Default resim için loading efekti kaldır
+                    profileImage.classList.remove('profile-image-loading');
+                    profileImage.src = '/images/default.png';
+                    profileImage.style.display = 'block';
+                }
+            }
+
+            // Okuma skorunu hesapla (readingstatuses koleksiyonundan)
+            const userReadingCount = data.stats.filter(stat => 
+                stat.userId === userInfo.userId && stat.status === 'okudum'
+            ).length;
+            
+            document.querySelector('.score-number').textContent = userReadingCount;
+        }
+    } catch (error) {
+        console.error('Profil verileri yüklenirken hata:', error);
+        
+        // Hata durumunda loading efekti kaldır
+        const profileImage = document.getElementById('profileImagePreview');
+        if (profileImage) {
+            profileImage.classList.remove('profile-image-loading');
+            profileImage.src = '/images/default.png';
+            profileImage.style.display = 'block';
+        }
+    }
+}
+
+function selectProfileImage() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            uploadProfileImage(file);
+        }
+    };
+    input.click();
+}
+
+async function uploadProfileImage(file) {
+    try {
+        const userInfo = LocalStorageManager.getCurrentUserInfo();
+        if (!userInfo) return;
+
+        // Loading efekti başlat
+        const profileImagePreview = document.getElementById('profileImagePreview');
+        if (profileImagePreview) {
+            profileImagePreview.classList.add('profile-image-loading');
+        }
+
+        // Önce UI'da resmi güncelle (preview)
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            profileImagePreview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        const formData = new FormData();
+        formData.append('profileImage', file);
+        formData.append('userId', userInfo.userId);
+        formData.append('groupId', userInfo.groupId);
+
+        const response = await fetch(`/api/update-user-image/${userInfo.groupId}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            // Loading efekti kaldır
+            profileImagePreview.classList.remove('profile-image-loading');
+            showToast('Profil resmi güncellendi!', 'success');
+            
+            // UI'ı güncelle
+            updateUIAfterProfileChange();
+        } else {
+            // Loading efekti kaldır
+            profileImagePreview.classList.remove('profile-image-loading');
+            showToast('Profil resmi güncellenemedi!', 'error');
+        }
+    } catch (error) {
+        console.error('Profil resmi yüklenirken hata:', error);
+        const profileImagePreview = document.getElementById('profileImagePreview');
+        if (profileImagePreview) {
+            profileImagePreview.classList.remove('profile-image-loading');
+        }
+        showToast('Profil resmi yüklenirken hata oluştu!', 'error');
+    }
+}
+
+async function removeProfileImage() {
+    if (confirm('Profil resmini silmek istediğinizden emin misiniz?')) {
+        try {
+            const userInfo = LocalStorageManager.getCurrentUserInfo();
+            if (!userInfo) return;
+
+            // Loading efekti başlat
+            const profileImagePreview = document.getElementById('profileImagePreview');
+            if (profileImagePreview) {
+                profileImagePreview.classList.add('profile-image-loading');
+            }
+
+            const response = await fetch('/api/remove-user-profile-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userInfo.userId,
+                    groupId: userInfo.groupId
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                // Default resme geri döndür
+                profileImagePreview.src = '/images/default.png';
+                profileImagePreview.classList.remove('profile-image-loading');
+                showToast('Profil resmi silindi!', 'success');
+                
+                // UI'ı güncelle
+                updateUIAfterProfileChange();
+            } else {
+                profileImagePreview.classList.remove('profile-image-loading');
+                showToast('Profil resmi silinemedi!', 'error');
+            }
+        } catch (error) {
+            console.error('Profil resmi silinirken hata:', error);
+            const profileImagePreview = document.getElementById('profileImagePreview');
+            if (profileImagePreview) {
+                profileImagePreview.classList.remove('profile-image-loading');
+            }
+            showToast('Profil resmi silinirken hata oluştu!', 'error');
+        }
+    }
+}
+
+function openProfileAvatarModal() {
+    const avatarModal = document.getElementById('profileAvatarModal');
+    if (!avatarModal) return;
+
+    // Avatarlar zaten önceden yüklenmiş, sadece modalı aç
+    avatarModal.style.display = 'block';
+}
+
+function closeProfileAvatarModal() {
+    const avatarModal = document.getElementById('profileAvatarModal');
+    if (avatarModal) {
+        avatarModal.style.display = 'none';
+    }
+}
+
+async function loadProfileAvatars() {
+    try {
+        const response = await fetch('/api/user-avatars');
+        const avatars = await response.json();
+        
+        const avatarGrid = document.getElementById('profileAvatarGrid');
+        if (!avatarGrid) return;
+        
+        avatarGrid.innerHTML = '';
+        
+        avatars.forEach((avatar, index) => {
+            const avatarItem = document.createElement('div');
+            avatarItem.className = 'profile-modal-avatar-item';
+            avatarItem.innerHTML = `
+                <img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">
+            `;
+            
+            avatarItem.addEventListener('click', function() {
+                selectProfileAvatar(`/userAvatars/${avatar}`);
+            });
+            
+            avatarGrid.appendChild(avatarItem);
+        });
+    } catch (error) {
+        console.error('Avatarlar yüklenirken hata:', error);
+        const avatarGrid = document.getElementById('profileAvatarGrid');
+        if (avatarGrid) {
+            avatarGrid.innerHTML = '<p>Avatar yüklenirken hata oluştu.</p>';
+        }
+    }
+}
+
+async function selectProfileAvatar(avatarPath) {
+    try {
+        const userInfo = LocalStorageManager.getCurrentUserInfo();
+        if (!userInfo) return;
+
+        const response = await fetch('/api/update-user-avatar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: userInfo.userId,
+                groupId: userInfo.groupId,
+                avatarPath: avatarPath
+            })
+        });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Profil resmini güncelle
+                    document.getElementById('profileImagePreview').src = avatarPath;
+                    closeProfileAvatarModal();
+                    showToast('Avatar seçildi!', 'success');
+                    
+                    // UI'ı güncelle
+                    updateUIAfterProfileChange();
+                } else {
+                    showToast('Avatar seçilemedi!', 'error');
+                }
+    } catch (error) {
+        console.error('Avatar seçilirken hata:', error);
+        showToast('Avatar seçilirken hata oluştu!', 'error');
+    }
+}
+
+function openProfileSettingsModal() {
+    const settingsModal = document.getElementById('profileSettingsModal');
+    if (!settingsModal) return;
+
+    // Profil modalını kapat
+    closeProfileModal();
+
+    // Ayarlar modalını aç
+    settingsModal.style.display = 'block';
+    
+    // Mevcut bilgileri doldur
+    loadProfileSettings();
+}
+
+function closeProfileSettingsModal() {
+    const settingsModal = document.getElementById('profileSettingsModal');
+    if (settingsModal) {
+        settingsModal.style.display = 'none';
+    }
+}
+
+async function loadProfileSettings() {
+    try {
+        const userInfo = LocalStorageManager.getCurrentUserInfo();
+        if (!userInfo) return;
+
+        const response = await fetch(`/api/all-data/${userInfo.groupId}`);
+        const data = await response.json();
+
+        if (data.users) {
+            // Kullanıcı bilgilerini bul
+            const user = data.users.find(u => u._id === userInfo.userId);
+            
+            if (user) {
+                // Mevcut bilgileri input alanlarına yaz
+                document.getElementById('settingsUsername').value = user.name || '';
+                document.getElementById('settingsMemberName').value = user.username || '';
+                
+                // Şifre alanlarını temizle
+                document.getElementById('settingsPassword').value = '';
+                document.getElementById('settingsPasswordConfirm').value = '';
+            }
+        }
+    } catch (error) {
+        console.error('Ayarlar yüklenirken hata:', error);
+    }
+}
+
+async function saveProfileSettings() {
+    try {
+        const userInfo = LocalStorageManager.getCurrentUserInfo();
+        if (!userInfo) return;
+
+        const username = document.getElementById('settingsUsername').value;
+        const memberName = document.getElementById('settingsMemberName').value;
+        const password = document.getElementById('settingsPassword').value;
+        const passwordConfirm = document.getElementById('settingsPasswordConfirm').value;
+
+        if (password && password !== passwordConfirm) {
+            showToast('Şifreler eşleşmiyor!', 'error');
+            return;
+        }
+
+        const updateData = {
+            userId: userInfo.userId,
+            groupId: userInfo.groupId,
+            username: username,
+            memberName: memberName
         };
 
-        const title = document.createElement('h2');
-        title.textContent = 'Kullanıcı Bilgileri';
+        if (password) {
+            updateData.password = password;
+        }
 
-        const infoPanel = document.createElement('div');
-        infoPanel.className = 'admin-info-panel';
+        const response = await fetch('/api/update-user-settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
 
-        const usernameItem = document.createElement('div');
-        usernameItem.className = 'admin-info-item';
+        const data = await response.json();
+        if (data.success) {
+            closeProfileSettingsModal();
+            closeProfileModal();
+            showToast('Ayarlar güncellendi!', 'success');
+            // Sayfayı yeniden yükle
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showToast('Ayarlar güncellenemedi!', 'error');
+        }
+    } catch (error) {
+        console.error('Ayarlar kaydedilirken hata:', error);
+        showToast('Ayarlar kaydedilirken hata oluştu!', 'error');
+    }
+}
 
-        const usernameLabel = document.createElement('div');
-        usernameLabel.className = 'admin-info-label';
-        usernameLabel.textContent = 'Kullanıcı Adı:';
+async function deleteAccount() {
+    if (confirm('Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
+        if (confirm('Son kez soruyorum: Hesabınızı silmek istediğinizden emin misiniz?')) {
+            try {
+                const userInfo = LocalStorageManager.getCurrentUserInfo();
+                if (!userInfo) return;
 
-        const usernameValue = document.createElement('div');
-        usernameValue.className = 'admin-info-value';
-        // Güncel kullanıcı bilgisini al
-        const userInfo = LocalStorageManager.getCurrentUserInfo();
-        usernameValue.textContent = userInfo ? userInfo.userName : 'Kullanıcı';
+                const response = await fetch('/api/delete-user-account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userInfo.userId,
+                        groupId: userInfo.groupId
+                    })
+                });
 
-        usernameItem.appendChild(usernameLabel);
-        usernameItem.appendChild(usernameValue);
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Hesabınız silindi!', 'success');
+                    // Ayarlar panelini kapat
+                    closeProfileSettingsModal();
+                    // Çıkış yap
+                    logoutFromProfile();
+                } else {
+                    showToast('Hesap silinemedi!', 'error');
+                }
+            } catch (error) {
+                console.error('Hesap silinirken hata:', error);
+                showToast('Hesap silinirken hata oluştu!', 'error');
+            }
+        }
+    }
+}
 
-        const logoutBtn = document.createElement('button');
-        logoutBtn.className = 'logout-button';
-        logoutBtn.textContent = 'Çıkış Yap';
-        logoutBtn.onclick = function () {
+function logoutFromProfile() {
             // Yeni sistem ile çıkış yap
             LocalStorageManager.logoutUser();
-            adminInfoModal.style.display = 'none';
+    closeProfileModal();
 
             const adminIndicator = document.querySelector('.admin-indicator');
             const mainArea = document.querySelector('.main-area');
@@ -1228,32 +1608,89 @@ function showAdminInfoPanel() {
 
             // Reload data to update UI without admin privileges
             loadTrackerTable();
-        };
+    
+    showToast('Çıkış yapıldı!', 'success');
+}
 
-        infoPanel.appendChild(usernameItem);
-        infoPanel.appendChild(logoutBtn);
-
-        modalContent.appendChild(closeBtn);
-        modalContent.appendChild(title);
-        modalContent.appendChild(infoPanel);
-
-        adminInfoModal.appendChild(modalContent);
-        document.body.appendChild(adminInfoModal);
-
-        window.addEventListener('click', function (event) {
-            if (event.target === adminInfoModal) {
-                adminInfoModal.style.display = 'none';
-            }
+// Profil resmi tıklanabilir yap ve başlangıçta loading efekti
+document.addEventListener('DOMContentLoaded', function() {
+    const profileImagePreview = document.getElementById('profileImagePreview');
+    if (profileImagePreview) {
+        profileImagePreview.style.cursor = 'pointer';
+        profileImagePreview.addEventListener('click', function() {
+            selectProfileImage();
         });
-    } else {
-        // Modal zaten varsa, güncel kullanıcı bilgisini güncelle
-        const usernameValue = adminInfoModal.querySelector('.admin-info-value');
-        if (usernameValue) {
-            const userInfo = LocalStorageManager.getCurrentUserInfo();
-            usernameValue.textContent = userInfo ? userInfo.userName : 'Kullanıcı';
-        }
+        
+        // Başlangıçta loading efekti başlat
+        profileImagePreview.classList.add('profile-image-loading');
     }
-    adminInfoModal.style.display = 'flex';
+});
+
+// Modal dışına tıklandığında kapat
+document.addEventListener('click', function(event) {
+    const profileModal = document.getElementById('profileModal');
+    const avatarModal = document.getElementById('profileAvatarModal');
+    const settingsModal = document.getElementById('profileSettingsModal');
+    
+    if (event.target === profileModal) {
+        closeProfileModal();
+    }
+    if (event.target === avatarModal) {
+        closeProfileAvatarModal();
+    }
+    if (event.target === settingsModal) {
+        closeProfileSettingsModal();
+    }
+});
+
+// Profil değişikliği sonrası UI güncelleme
+function updateUIAfterProfileChange() {
+    // Tracker table'ı güncelle
+    if (typeof loadTrackerTable === 'function') {
+        loadTrackerTable();
+    }
+    
+    // User cards'ı güncelle
+    if (typeof loadUserCards === 'function') {
+        loadUserCards();
+    }
+    
+    // Admin ise user list'i güncelle
+    if (LocalStorageManager.isAdmin() && typeof renderUserList === 'function') {
+        renderUserList();
+    }
+}
+
+// Toast mesajı fonksiyonu
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10003;
+        font-size: 14px;
+        font-weight: 500;
+        animation: profileToastSlideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'profileToastSlideIn 0.3s ease reverse';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 300);
+    }, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -1424,6 +1861,8 @@ async function preloadAdminAvatars() {
         await loadUserAvatarOptions();
         // Groups auth join panelindeki user avatar'larını önceden yükle
         await loadGroupsAuthJoinAvatarOptions();
+        // Profil modalındaki user avatar'larını önceden yükle
+        await loadProfileAvatars();
     } catch (error) {
         console.error('Admin avatar ön yükleme hatası:', error);
     }

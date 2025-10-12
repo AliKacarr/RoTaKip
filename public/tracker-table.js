@@ -156,7 +156,7 @@ async function loadTrackerTable() {
         
         let row = `<tr class="user-row${currentUserClass}"><td class="user-item" data-user-id="${user._id}" style="background: ${league.bg};">`;
         const profileImage = user.profileImage || '/images/default.png';
-        row += `<img src="${profileImage}" alt="${user.name}" class="profile-image profile-image-loading" loading="lazy" onload="this.classList.remove('profile-image-loading')" onerror="this.classList.remove('profile-image-loading'); this.src='/images/default.png'" />`;
+        row += `<img src="${profileImage}" alt="${user.name}" class="tracker-profile-image tracker-profile-image-loading" onload="this.classList.remove('tracker-profile-image-loading')" onerror="this.classList.remove('tracker-profile-image-loading'); this.src='/images/default.png'" />`;
         row += `<span class="user-item-name">${user.name}</span></td>`;
         for (let date of dates) {
             const status = userStats[date] || '';
