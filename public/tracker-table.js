@@ -1,6 +1,5 @@
 const trackerTable = document.getElementById('trackerTable');
 const tableArea = document.querySelector('.table-area');
-const userList = document.getElementById('userList');
 const newUserForm = document.getElementById('newUserForm');
 const prevWeekBtn = document.getElementById('prevWeek');
 const nextWeekBtn = document.getElementById('nextWeek');

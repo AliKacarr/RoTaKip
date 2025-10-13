@@ -213,7 +213,49 @@ async function initializeAuthSystem() {
 
     const groupData = await groupResponse.json();
     
-    // 6. 5 çerezi yeniden oluştur
+    // 6. Giriş serisi güncelle
+    try {
+      const streakResponse = await fetch('/api/update-login-streak', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: userId,
+          groupId: groupid
+        })
+      });
+      
+      if (streakResponse.ok) {
+        const streakData = await streakResponse.json();
+        console.log(`🔥 Giriş serisi güncellendi: ${streakData.loginStreak} gün`);
+        
+        // Giriş serisi bilgisini UI'da güncelle
+        const streakNumber = document.querySelector('.streak-number');
+        if (streakNumber) {
+          streakNumber.textContent = streakData.loginStreak;
+        }
+        
+        // Kullanıcı profil bilgilerini UI'da güncelle
+        const profileUsername = document.getElementById('profileUsername');
+        const profileMemberName = document.getElementById('profileMemberName');
+        const profileImagePreview = document.getElementById('profileImagePreview');
+        
+        if (profileUsername && user.name) {
+          profileUsername.textContent = user.name;
+        }
+        if (profileMemberName && user.username) {
+          profileMemberName.textContent = user.username;
+        }
+        if (profileImagePreview && user.profileImage) {
+          profileImagePreview.src = user.profileImage;
+        }
+      }
+    } catch (streakError) {
+      console.error('Giriş serisi güncelleme hatası:', streakError);
+    }
+    
+    // 7. 5 çerezi yeniden oluştur
     LocalStorageManager.loginUser(
       groupid,
       userId,

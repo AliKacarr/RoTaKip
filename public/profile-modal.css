@@ -220,10 +220,22 @@
   gap: 5px;
 }
 
+.profile-streak {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .score-number {
   font-size: 20px;
   font-weight: 700;
-  color: #667eea;
+  color: #ff9300;
+}
+
+.streak-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: red;
 }
 
 .score-star {

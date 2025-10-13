@@ -1072,6 +1072,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Yeni sistem ile giriş yap
                 LocalStorageManager.loginUser(data.groupId, data.userId, data.authority, username, data.groupName);
                 
+                // Giriş serisi bilgisini göster
+                if (data.loginStreak) {
+                    console.log(`🔥 Giriş serisi: ${data.loginStreak} gün`);
+                    
+                    // Giriş serisi bilgisini UI'da güncelle
+                    const streakNumber = document.querySelector('.streak-number');
+                    if (streakNumber) {
+                        streakNumber.textContent = data.loginStreak;
+                    }
+                }
+                
+                // Kullanıcı profil bilgilerini UI'da güncelle
+                const profileUsername = document.getElementById('profileUsername');
+                const profileMemberName = document.getElementById('profileMemberName');
+                const profileImagePreview = document.getElementById('profileImagePreview');
+                
+                if (profileUsername && data.name) {
+                    profileUsername.textContent = data.name;
+                }
+                if (profileMemberName && data.username) {
+                    profileMemberName.textContent = data.username;
+                }
+                if (profileImagePreview && data.profileImage) {
+                    profileImagePreview.src = data.profileImage;
+                }
+                
                 // Private grup erişimi flag'ini sıfırla
                 window.isPrivateGroupAccessModal = false;
                 
@@ -1243,6 +1269,12 @@ async function loadProfileData() {
             ).length;
             
             document.querySelector('.score-number').textContent = userReadingCount;
+            
+            // Giriş serisi bilgisini güncelle
+            const streakNumber = document.querySelector('.streak-number');
+            if (streakNumber && user.loginStreak !== undefined) {
+                streakNumber.textContent = user.loginStreak;
+            }
         }
     } catch (error) {
         console.error('Profil verileri yüklenirken hata:', error);
@@ -1508,10 +1540,15 @@ async function saveProfileSettings() {
         const userInfo = LocalStorageManager.getCurrentUserInfo();
         if (!userInfo) return;
 
-        const username = document.getElementById('settingsUsername').value;
-        const memberName = document.getElementById('settingsMemberName').value;
-        const password = document.getElementById('settingsPassword').value;
-        const passwordConfirm = document.getElementById('settingsPasswordConfirm').value;
+        const usernameEl = document.getElementById('settingsUsername');
+        const memberNameEl = document.getElementById('settingsMemberName');
+        const passwordEl = document.getElementById('settingsPassword');
+        const passwordConfirmEl = document.getElementById('settingsPasswordConfirm');
+
+        const username = usernameEl ? usernameEl.value.trim() : '';
+        const memberName = memberNameEl ? memberNameEl.value.trim() : '';
+        const password = passwordEl ? passwordEl.value.trim() : '';
+        const passwordConfirm = passwordConfirmEl ? passwordConfirmEl.value.trim() : '';
 
         if (password && password !== passwordConfirm) {
             showToast('Şifreler eşleşmiyor!', 'error');

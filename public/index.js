@@ -608,10 +608,15 @@ class GroupsPage {
 
     async handleCreateGroup(event) {
         event.preventDefault();
-        const groupName = document.getElementById('groupNameInput').value;
-        const groupDescription = document.getElementById('groupDescInput').value;
-        const adminName = document.getElementById('adminNameInput').value;
-        const adminPassword = document.getElementById('adminPasswordInput').value;
+        const groupNameEl = document.getElementById('groupNameInput');
+        const groupDescEl = document.getElementById('groupDescInput');
+        const adminNameEl = document.getElementById('adminNameInput');
+        const adminPasswordEl = document.getElementById('adminPasswordInput');
+
+        const groupName = groupNameEl ? groupNameEl.value.trim() : '';
+        const groupDescription = groupDescEl ? groupDescEl.value.trim() : '';
+        const adminName = adminNameEl ? adminNameEl.value.trim() : '';
+        const adminPassword = adminPasswordEl ? adminPasswordEl.value.trim() : '';
         const groupImageInput = document.getElementById('groupImageInput');
         const visibility = document.getElementById('groupVisibilityInput').value;
 
@@ -1110,10 +1115,15 @@ class GroupsPage {
         
         if (!this.currentJoinGroup) return;
 
-        const userName = document.getElementById('joinUserNameInput').value;
-        const memberName = document.getElementById('joinMemberNameInput').value;
-        const memberPassword = document.getElementById('joinMemberPasswordInput').value;
+        const userNameEl = document.getElementById('joinUserNameInput');
+        const memberNameEl = document.getElementById('joinMemberNameInput');
+        const memberPasswordEl = document.getElementById('joinMemberPasswordInput');
         const profileImageInput = document.getElementById('joinProfileImageInput');
+
+        // Kayıt öncesi trim
+        const userName = userNameEl ? userNameEl.value.trim() : '';
+        const memberName = memberNameEl ? memberNameEl.value.trim() : '';
+        const memberPassword = memberPasswordEl ? memberPasswordEl.value.trim() : '';
 
         // Validasyon
         const errors = [];

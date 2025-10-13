@@ -8,6 +8,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const os = require('os'); // Added OS module
+const moment = require('moment');
 const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
@@ -108,6 +109,38 @@ async function generateMinifiedFiles() {
   } catch (err) {
     console.error('❌ Minify error:', err.message);
   }
+}
+
+// Giriş serisi hesaplama fonksiyonu
+async function handleLoginStreak(user) {
+  const today = moment().format("YYYY-MM-DD");
+  const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+
+  // Mevcut seri değerini al
+  const currentStreak = user.loginStreak || 0;
+
+  // En son girişi bugünse: hiçbir şey yapma (aynı gün içinde tekrar girmiştir)
+  if (user.lastLoginDate === today) {
+    // Aynı gün içinde tekrar giriş — değişiklik yok
+    return user; // Değişiklik yapmadan döndür
+  }
+  // Dün de girmişse: seriyi artır
+  else if (user.lastLoginDate === yesterday) {
+    user.loginStreak = currentStreak + 1;
+    console.log(`🔥 Giriş serisi artırıldı: ${user.username} -> ${user.loginStreak} gün`);
+  } 
+  // Arada gün(ler) varsa veya ilk giriş: sıfırla
+  else {
+    user.loginStreak = 1;
+  }
+
+  // Son giriş tarihini güncelle
+  user.lastLoginDate = today;
+
+  // Kaydet
+  await user.save();
+
+  return user;
 }
 
 // Middleware'ler
@@ -1128,7 +1161,9 @@ const userSchema = new mongoose.Schema({
   profileImage: String,
   username: String,
   userpassword: String,
-  authority: String
+  authority: String,
+  loginStreak: { type: Number, default: 0 },
+  lastLoginDate: { type: String, default: null }
 });
 
 const readingStatusSchema = new mongoose.Schema({
@@ -1295,12 +1330,15 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     console.log(`Yeni kullanıcı ekleniyor: ${name}, username: ${username}, plainPassword: ${plainPassword}${attemptCount > 0 ? ` (${attemptCount} deneme sonrası)` : ''}`);
     
     // 3. Adım: Kullanıcıyı kaydet (yerel resim URL'i ile birlikte)
+    const today = moment().format("YYYY-MM-DD");
     const user = new users({ 
       name, 
       profileImage: profileImageUrl,
       username: username,
       userpassword: hashedPassword,
-      authority: "member"
+      authority: "member",
+      loginStreak: 1,
+      lastLoginDate: today
     });
     await user.save();
     
@@ -2115,6 +2153,18 @@ app.post('/api/admin-login', async (req, res) => {
       const isPasswordValid = await bcrypt.compare(password, user.userpassword);
       
       if (isPasswordValid) {
+        // Eksik alanları ekle (migration)
+        if (user.loginStreak === undefined || user.lastLoginDate === undefined) {
+          const today = moment().format("YYYY-MM-DD");
+          user.loginStreak = user.loginStreak || 1;
+          user.lastLoginDate = user.lastLoginDate || today;
+          await user.save();
+          console.log(`🔧 Eksik alanlar eklendi: ${user.username} -> loginStreak: ${user.loginStreak}, lastLoginDate: ${user.lastLoginDate}`);
+        }
+
+        // Giriş serisi hesapla
+        await handleLoginStreak(user);
+        
         // Grup bilgisini al
         const group = await UserGroup.findOne({ groupId });
         if (!group) {
@@ -2126,7 +2176,8 @@ app.post('/api/admin-login', async (req, res) => {
           groupId: group.groupId,
           userId: user._id, // Kullanıcı ID'sini de döndür
           authority: user.authority, // Kullanıcının yetkisini de döndür
-          userName: user.username // Kullanıcının kullanıcı adını de döndür
+          userName: user.username, // Kullanıcının kullanıcı adını de döndür
+          loginStreak: user.loginStreak // Giriş serisini de döndür
         });
       } else {
         res.json({ success: false });
@@ -2137,6 +2188,35 @@ app.post('/api/admin-login', async (req, res) => {
   } catch (error) {
     console.error('Admin login error:', error);
     res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Giriş serisi güncelleme endpoint'i
+app.post('/api/update-login-streak', async (req, res) => {
+  try {
+    const { userId, groupId } = req.body;
+
+    // Users koleksiyonundan kullanıcıyı bul
+    const { users } = getGroupCollections(groupId);
+    
+    const user = await users.findById(userId);
+
+    if (!user) {
+      console.log(`❌ Kullanıcı bulunamadı: ${userId}`);
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    // Giriş serisi hesapla
+    await handleLoginStreak(user);
+
+    res.json({
+      success: true,
+      loginStreak: user.loginStreak,
+      lastLoginDate: user.lastLoginDate
+    });
+  } catch (error) {
+    console.error('Giriş serisi güncelleme hatası:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -2787,6 +2867,7 @@ app.post('/api/accept-join-request/:requestId', async (req, res) => {
 
     // Kullanıcıyı gruba ekle
     const { users } = getGroupCollections(joinRequest.groupId);
+    const today = moment().format("YYYY-MM-DD");
     const newUser = {
       _id: joinRequest._id, 
       name: joinRequest.name,
@@ -2794,6 +2875,8 @@ app.post('/api/accept-join-request/:requestId', async (req, res) => {
       userpassword: joinRequest.password, 
       profileImage: joinRequest.profileImage,
       authority: 'member',
+      loginStreak: 1,
+      lastLoginDate: today
     };
 
     await users.insertOne(newUser);
@@ -3175,7 +3258,6 @@ async function createDailyOkumadimDocuments() {
     
     // Dünün tarihini al (Türkiye saati)
     const yesterday = new Date();
-    yesterday.setHours(yesterday.getHours() - 3); // UTC'den Türkiye saatine çevir
     yesterday.setDate(yesterday.getDate() - 1); // Dün
     const yesterdayString = yesterday.toISOString().split('T')[0];
     
