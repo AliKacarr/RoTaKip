@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "backup": "node backup.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build": "node server.js"
   },
   "dependencies": {
     "axios": "^1.8.4",
@@ -31,6 +32,8 @@
     "sharp": "^0.34.4"
   },
   "devDependencies": {
-    "nodemon": "^2.0.15"
+    "clean-css-cli": "^5.6.3",
+    "nodemon": "^2.0.15",
+    "terser": "^5.44.0"
   }
 }

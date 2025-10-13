@@ -8,6 +8,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const os = require('os'); // Added OS module
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 require('dotenv').config();
 const schedule = require('node-schedule');
 const https = require('https');
@@ -28,10 +31,101 @@ function hashCode(str) {
 const app = express();
 const port = 3000;
 
+// Dosya varlık kontrolü
+function fileExists(filePath) {
+  return fs.existsSync(filePath);
+}
+
+// Otomatik minify fonksiyonu
+async function generateMinifiedFiles() {
+  const publicPath = path.join(__dirname, 'public');
+  
+  // Index.html için CSS ve JS dosyaları
+  const indexCssFiles = ['index.css'];
+  const indexJsFiles = ['index.js'];
+  
+  // Groups.html için CSS dosyaları
+  const groupsCssFiles = [
+    'style.css', 'admin-modal.css', 'cookies.css', 'tracker-table.css',
+    'stats-section.css', 'monthly.css', 'videos.css', 'main-area.css',
+    'footer.css', 'preferences.css', 'quote.css', 'longest-series.css',
+    'user-cards.css', 'articles.css', 'profile-modal.css'
+  ];
+  
+  // Groups.html için JS dosyaları
+  const groupsJsFiles = [
+    'share-quote.js', 'admin-modal.js', 'cookies.js', 'preferences.js',
+    'user-cards.js', 'tracker-table.js', 'script.js', 'stats-section.js',
+    'monthly.js', 'quete.js', 'videos.js', 'main-area.js',
+    'longest-series.js', 'articles.js'
+  ];
+  
+  // Dosya varlık kontrolü
+  const validIndexCssFiles = indexCssFiles
+    .map(f => path.join(publicPath, f))
+    .filter(fileExists);
+    
+  const validIndexJsFiles = indexJsFiles
+    .map(f => path.join(publicPath, f))
+    .filter(fileExists);
+    
+  const validGroupsCssFiles = groupsCssFiles
+    .map(f => path.join(publicPath, f))
+    .filter(fileExists);
+    
+  const validGroupsJsFiles = groupsJsFiles
+    .map(f => path.join(publicPath, f))
+    .filter(fileExists);
+  
+  try {
+    // Index.html için minify
+    if (validIndexCssFiles.length > 0) {
+      const indexCssCommand = `cleancss -o "${publicPath}/index.min.css" ${validIndexCssFiles.map(f => `"${f}"`).join(' ')}`;
+      await execPromise(indexCssCommand);
+      console.log('✅ Index CSS minified successfully');
+    }
+    
+    if (validIndexJsFiles.length > 0) {
+      const indexJsCommand = `terser ${validIndexJsFiles.map(f => `"${f}"`).join(' ')} -o "${publicPath}/index.min.js"`;
+      await execPromise(indexJsCommand);
+      console.log('✅ Index JS minified successfully');
+    }
+    
+    // Groups.html için minify
+    if (validGroupsCssFiles.length > 0) {
+      const groupsCssCommand = `cleancss -o "${publicPath}/groups.min.css" ${validGroupsCssFiles.map(f => `"${f}"`).join(' ')}`;
+      await execPromise(groupsCssCommand);
+      console.log('✅ Groups CSS minified successfully');
+    }
+    
+    if (validGroupsJsFiles.length > 0) {
+      const groupsJsCommand = `terser ${validGroupsJsFiles.map(f => `"${f}"`).join(' ')} -o "${publicPath}/groups.min.js"`;
+      await execPromise(groupsJsCommand);
+      console.log('✅ Groups JS minified successfully');
+    }
+    
+    console.log('🎉 All minify operations completed successfully');
+  } catch (err) {
+    console.error('❌ Minify error:', err.message);
+  }
+}
+
 // Middleware'ler
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/images', express.static('uploads'));
-app.use('/groupAvatars', express.static('groupAvatars'));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true,
+  lastModified: true,
+  maxAge: '6h' // 6 saat cache
+}));
+app.use('/images', express.static('uploads', {
+  etag: true,
+  lastModified: true,
+  maxAge: '6h'
+}));
+app.use('/groupAvatars', express.static('groupAvatars', {
+  etag: true,
+  lastModified: true,
+  maxAge: '6h'
+}));
 app.use(express.json());
 
 // Ana sayfa route'u
@@ -3388,6 +3482,9 @@ initializeDropbox();
 
 // G. SERVER BAŞLATMA
 // ============================================================================
+
+// Server başlatıldığında otomatik minify çalıştır
+generateMinifiedFiles();
 
 app.listen(port, () => {
   console.log(`Uygulama http://localhost:${port} adresinde çalışıyor`);
