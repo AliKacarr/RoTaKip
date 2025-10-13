@@ -435,7 +435,7 @@ async function loadUserCards() {
     "Okuyanlara tebrikler, henüz okumayanlara nazik bir davet 😊",
     "İstikrarın güzelliğini hep birlikte yaşayalım 🌟",
     "Eksik kalanlar için nazik bir hatırlatma olsun bu liste ✉️",
-    "Bugün okumayanlar, yarının ilk okuyanı olabilir 🌅",
+    "Bugünün okumayanları, yarının ilk okuyanı olabilir 🌅",
     "Okumalarımıza birlikte devam edebilmek duasıyla 🤲",
     "Birlikte ilerlemek, devam etmenin en güzel hali 👣",
     "Okumalarımıza sadakatle devam edelim inşaAllah 🕊️",
@@ -443,14 +443,23 @@ async function loadUserCards() {
     "İstikrarla yürüdüğümüz bu yolda hep birlikteyiz 🛤️",
     "Bu küçük hatırlatma, güzel bir başlangıç olsun 🌸",
     "Unutmak kolay, alışkanlık ise emek ister. Devam edelim 💪",
-    "Güzel alışkanlıklar birlikte inşa edilir 🧱",
+    "Güzel alışkanlıklar birlikte inşa edilir 🍃",
     "Okuma yolculuğumuza birlikte güç katalım 🚀",
     "Birlikte tamamlanan okumalarda bereket vardır 🧡",
-    "Bugün az da olsa bir adım atalım 👟",
     "Düzenli okumalarla kalplerimizi diri tutalım ❤️‍🔥",
     "Hatırlatmak bizden, gayret sizden 🙏",
     "Okumaları unutmayalım 🔔",
-    "İstikrarlı adımlar en kalıcı olanlardır ⏳"
+    "İstikrarlı adımlar en kalıcı olanlardır ⏳",
+    "Bugün de okuma halkamızın bir parçası ol 💫",
+    "Birlikte okumak, yalnız okumaktan daha değerlidir 🤝",
+    "Okudukça zihin açılır, gönül ferahlar ☀️",
+    "İstikrarlı olan kazanır; bugünü de boş geçmeyelim ⏰",
+    "Birlikte okumak, birlikte güçlenmektir 💪",
+    "Bugün okumaya vakit ayırmak, kendine bir iyiliktir 💝",
+    "Okuma halkamızda sizde yerinizi alın 🤗",
+    "Bir satır da bugün için, alışkanlık zincirini kırma 🔗",
+    "Okumak, gönlü besleyen en güzel alışkanlıktır 🌾",
+    "Okuma yolculuğumuzda mola değil, devam zamanı 🔄"
   ];
 
   // Her kullanıcı için ardışık okumama günlerini hesapla

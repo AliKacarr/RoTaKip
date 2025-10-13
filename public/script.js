@@ -51,12 +51,13 @@ class LocalStorageManager {
       userId: userId,
       userAuthority: localStorage.getItem('userAuthority'),
       userName: localStorage.getItem('userName'),
-      groupName: localStorage.getItem('groupName')
+      groupName: localStorage.getItem('groupName'),
+      name: localStorage.getItem('name')
     };
   }
 
   // Kullanıcı girişi yap
-  static loginUser(groupId, userId, userAuthority, userName, groupName) {
+  static loginUser(groupId, userId, userAuthority, userName, groupName, name) {
     // Groups objesine ekle
     this.addUserToGroup(groupId, userId);
     
@@ -66,6 +67,7 @@ class LocalStorageManager {
     localStorage.setItem('userAuthority', userAuthority);
     localStorage.setItem('userName', userName);
     localStorage.setItem('groupName', groupName);
+    localStorage.setItem('name', name || '');
   }
 
   // Kullanıcı çıkışı yap
@@ -81,6 +83,7 @@ class LocalStorageManager {
     localStorage.removeItem('userAuthority');
     localStorage.removeItem('userName');
     localStorage.removeItem('groupName');
+    localStorage.removeItem('name');
   }
 
   // 5 çerezi temizle
@@ -261,7 +264,8 @@ async function initializeAuthSystem() {
       userId,
       user.authority,
       user.username,
-      groupData.group.groupName
+      groupData.group.groupName,
+      user.name
     );
     
   
@@ -651,7 +655,8 @@ async function checkAutoLoginForGroups() {
       userId,
       user.authority,
       user.username,
-      groupData.group.groupName
+      groupData.group.groupName,
+      user.name
     );
 
     // Profil butonunu güncelle

@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', clearCookiesOnIndexPage);
 
 // LocalStorageManager sınıfı
 class LocalStorageManager {
-    static loginUser(groupId, userId, authority, username, groupName) {
+    static loginUser(groupId, userId, authority, username, groupName, name) {
         // Mevcut grupları al
         const groups = this.getGroups();
         
@@ -26,6 +26,7 @@ class LocalStorageManager {
         localStorage.setItem('userAuthority', authority);
         localStorage.setItem('userName', username);
         localStorage.setItem('groupName', groupName);
+        localStorage.setItem('name', name || '');
     }
     
     static getGroups() {
@@ -43,13 +44,14 @@ class LocalStorageManager {
         return localStorage.getItem('userAuthority') === 'admin';
     }
     
-    // 5 çerezi temizle
+    // 6 çerezi temizle
     static clearCookies() {
         localStorage.removeItem('groupid');
         localStorage.removeItem('userid');
         localStorage.removeItem('userAuthority');
         localStorage.removeItem('userName');
         localStorage.removeItem('groupName');
+        localStorage.removeItem('name');
     }
 
     // Katılma istekleri yönetimi
@@ -687,7 +689,7 @@ class GroupsPage {
 
             if (result.success) {
                 // Yeni sistem ile admin girişi yap
-                LocalStorageManager.loginUser(result.group.groupId, result.userId, 'admin', adminName, result.group.groupName);
+                LocalStorageManager.loginUser(result.group.groupId, result.userId, 'admin', adminName, result.group.groupName, adminName);
                 
                 this.closeCreateModal();
                 window.location.href = `/groupid=${result.group.groupId}`;
@@ -985,7 +987,7 @@ class GroupsPage {
                     } else if (data.status === 'accepted') {
                         // İstek kabul edilmiş, kullanıcıyı gruba ekle
                         LocalStorageManager.removeJoinRequest(groupId);
-                        LocalStorageManager.loginUser(groupId, requestId, 'member', data.userName || 'Kullanıcı', '');
+                        LocalStorageManager.loginUser(groupId, requestId, 'member', data.userName || '', '', data.userName || '');
                         const groupName = data.groupName || 'Bilinmeyen Grup';
                         this.showSuccessMessage(`"${groupName}" grubuna katılma isteğiniz kabul edildi! Artık gruba erişebilirsiniz.`);
                         console.log(`Katılma isteği kabul edildi: ${groupId}`);

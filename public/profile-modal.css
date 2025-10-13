@@ -240,6 +240,8 @@
 
 .score-star {
   font-size: 20px;
+  text-shadow: 0 0 1px #f55,0 0 1px #ff4500;
+  animation: weekly-fire-emoji-flame 4s infinite;
 }
 
 /* ==================== Profile Actions Section ==================== */

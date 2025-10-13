@@ -78,7 +78,7 @@ function showAdminIndicator() {     //admin modu butonunu gösterme
     if (!adminIndicator) {
         adminIndicator = document.createElement('div');
         adminIndicator.className = 'admin-indicator';
-        const displayName = userInfo.userName && userInfo.userName !== 'null' ? userInfo.userName : '';
+        const displayName = userInfo.name && userInfo.name !== 'null' ? userInfo.name : '';
         adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
             `<i class="fa-solid fa-user-shield"></i> ${displayName}` : 
             `<i class="fa-solid fa-user"></i> ${displayName}`;
@@ -94,7 +94,7 @@ function showAdminIndicator() {     //admin modu butonunu gösterme
         document.body.appendChild(adminIndicator);
     } else {
         // Update text based on user authority
-        const displayName = userInfo.userName && userInfo.userName !== 'null' ? userInfo.userName : '';
+        const displayName = userInfo.name && userInfo.name !== 'null' ? userInfo.name : '';
         adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
             `<i class="fa-solid fa-user-shield"></i> ${displayName}` : 
             `<i class="fa-solid fa-user"></i> ${displayName}`;
@@ -861,7 +861,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         updateData.userId,
                         updateData.authority,
                         updateData.username,
-                        updateData.groupName
+                        updateData.groupName,
+                        updateData.name
                     );
 
                     // Close modal
@@ -1070,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (data.success) {
                 // Yeni sistem ile giriş yap
-                LocalStorageManager.loginUser(data.groupId, data.userId, data.authority, username, data.groupName);
+                LocalStorageManager.loginUser(data.groupId, data.userId, data.authority, username, data.groupName, data.name);
                 
                 // Giriş serisi bilgisini göster
                 if (data.loginStreak) {
