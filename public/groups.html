@@ -568,45 +568,6 @@
       <!-- Kullanıcı kartları JavaScript ile buraya eklenecek -->
     </div>
 
-    <div class="stats-section">
-      <h3><i class="fa-solid fa-ranking-star" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Okuma
-        İstatistikleri
-      </h3>
-      <div class="chart-container">
-        <div id="stats-loading" class="stats-loading">
-          <div class="stats-loading-bars">
-            <div class="bar bar1"></div>
-            <div class="bar bar2"></div>
-            <div class="bar bar3"></div>
-            <div class="bar bar4"></div>
-            <div class="bar bar5"></div>
-          </div>
-          <div class="stats-loading-text">İstatistikler yükleniyor...</div>
-        </div>
-        <canvas id="readingStatsChart"></canvas>
-      </div>
-    </div>
-
-    <div class="longest-series-section">
-      <h3><i class="fa-solid fa-bolt" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> En Uzun Okuma Serisi</h3>
-      <div id="longestSeriesChart">
-        <div class="longest-series-loading">
-          <div class="longest-fire-icon">⭐</div>
-          <div class="longest-series-loading-lines">
-            <div class="longest-series-loading-line">
-              <span class="longest-series-loading-text">Ro</span>
-            </div>
-            <div class="longest-series-loading-line">
-              <span class="longest-series-loading-text">Ta</span>
-            </div>
-            <div class="longest-series-loading-line">
-              <span class="longest-series-loading-text">Kip</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Monthly Calendar View -->
     <div class="monthly-calendar-section" style="display: none;">
       <h3><i class="fa-regular fa-calendar-check" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Aylık
@@ -641,6 +602,46 @@
         <button id="nextMonth" class="month-nav-button">
           Sonraki Ay <span class="month-arrow-icon"></span>
         </button>
+      </div>
+    </div>
+
+    
+    <div class="longest-series-section">
+      <h3><i class="fa-solid fa-bolt" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> En Uzun Okuma Serisi</h3>
+      <div id="longestSeriesChart">
+        <div class="longest-series-loading">
+          <div class="longest-fire-icon">⭐</div>
+          <div class="longest-series-loading-lines">
+            <div class="longest-series-loading-line">
+              <span class="longest-series-loading-text">Ro</span>
+            </div>
+            <div class="longest-series-loading-line">
+              <span class="longest-series-loading-text">Ta</span>
+            </div>
+            <div class="longest-series-loading-line">
+              <span class="longest-series-loading-text">Kip</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <h3><i class="fa-solid fa-ranking-star" style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Okuma
+        İstatistikleri
+      </h3>
+      <div class="chart-container">
+        <div id="stats-loading" class="stats-loading">
+          <div class="stats-loading-bars">
+            <div class="bar bar1"></div>
+            <div class="bar bar2"></div>
+            <div class="bar bar3"></div>
+            <div class="bar bar4"></div>
+            <div class="bar bar5"></div>
+          </div>
+          <div class="stats-loading-text">İstatistikler yükleniyor...</div>
+        </div>
+        <canvas id="readingStatsChart"></canvas>
       </div>
     </div>
 

@@ -498,15 +498,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // İlk çalışacak kritik fonksiyonlar
     await Promise.all([
-      loadTrackerTable(),
-      loadUserCards(),
-      loadReadingStats(),
-      renderLongestSeries(),
-      loadMonthlyCalendar()
+      loadTrackerTable()
     ]);
 
     // Sırayla çalışacak diğer fonksiyonlar
     const functions = [
+      { name: 'loadUserCards', fn: loadUserCards },
+      { name: 'renderLongestSeries', fn: renderLongestSeries },
+      { name: 'loadMonthlyCalendar', fn: loadMonthlyCalendar },
+      { name: 'loadReadingStats', fn: loadReadingStats },
       { name: 'fetchRandomQuoteImage', fn: fetchRandomQuoteImage },
       { name: 'fetchRandomAyet', fn: fetchRandomAyet },
       { name: 'fetchRandomQuote', fn: fetchRandomQuote },
