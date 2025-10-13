@@ -16,39 +16,6 @@ function showAdminIndicator() {     //admin modu butonunu gösterme
         scrollToMainButton = document.createElement('div');
         scrollToMainButton.className = 'scroll-to-main-button';
         scrollToMainButton.innerHTML = '<i class="fa-solid fa-gear"></i> Grup Ayarları';
-        scrollToMainButton.style.cssText = `
-            position: fixed;
-            bottom: 95px;
-            left: 40px;
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: white;
-            height: 50px;
-            width: 160px;
-            padding-left: 20px;
-            padding-right: 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
-            transition: all 0.3s ease;
-            z-index: 99;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-        `;
-
-        // Add hover effects
-        scrollToMainButton.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-3px) scale(1.05)';
-            this.style.boxShadow = '0 8px 25px rgba(231, 76, 60, 0.6)';
-        });
-
-        scrollToMainButton.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-            this.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.4)';
-        });
 
         // Add click event to scroll to main area
         scrollToMainButton.addEventListener('click', function() {
@@ -88,9 +55,6 @@ function showAdminIndicator() {     //admin modu butonunu gösterme
             showAdminInfoPanel();
         });
 
-        // Add cursor pointer style to indicate it's clickable
-        adminIndicator.style.cursor = 'pointer';
-
         document.body.appendChild(adminIndicator);
     } else {
         // Update text based on user authority
@@ -99,8 +63,6 @@ function showAdminIndicator() {     //admin modu butonunu gösterme
             `<i class="fa-solid fa-user-shield"></i> ${displayName}` : 
             `<i class="fa-solid fa-user"></i> ${displayName}`;
     }
-
-    adminIndicator.style.display = 'flex';
 
     // Sadece admin yetkisi olan kullanıcılar için main-area göster
     const mainArea = document.querySelector('.main-area');
@@ -111,11 +73,11 @@ function showAdminIndicator() {     //admin modu butonunu gösterme
         if (typeof renderUserList === 'function') {
             renderUserList();
         }
-    }
-    
-    // Grup ayarlarını da yükle
-    if (typeof loadGroupSettings === 'function') {
-        loadGroupSettings();
+        
+        // Grup ayarlarını da yükle (sadece admin için)
+        if (typeof loadGroupSettings === 'function') {
+            loadGroupSettings();
+        }
     }
 }
 
@@ -873,12 +835,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         window.updateProfileButton();
                     }
 
+                    if (typeof loadTrackerTable === 'function') loadTrackerTable();
+                    
                     if (typeof showAdminIndicator === 'function') {
                         showAdminIndicator();
                     }
 
                     // Reload data
-                    if (typeof loadTrackerTable === 'function') loadTrackerTable();
                     if (typeof loadUserCards === 'function') loadUserCards();
                     if (typeof loadReadingStats === 'function') loadReadingStats();
                     if (typeof renderLongestSeries === 'function') renderLongestSeries();
@@ -1070,14 +1033,19 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
 
             if (data.success) {
-                // Yeni sistem ile giriş yap
+                // 1. ÖNCE: Veri kaydetme ve temel işlemler
                 LocalStorageManager.loginUser(data.groupId, data.userId, data.authority, username, data.groupName, data.name);
                 
-                // Giriş serisi bilgisini göster
+                // Private grup erişimi flag'ini sıfırla
+                window.isPrivateGroupAccessModal = false;
+                
+                // Modal'ı kapat ve form'u temizle
+                window.hideModal(groupsAuthLoginModal);
+                groupsAuthLoginForm.reset();
+
+                // 2. KULLANICI BİLGİLERİNİ UI'DA GÜNCELLE
+                // Giriş serisi bilgisini UI'da güncelle
                 if (data.loginStreak) {
-                    console.log(`🔥 Giriş serisi: ${data.loginStreak} gün`);
-                    
-                    // Giriş serisi bilgisini UI'da güncelle
                     const streakNumber = document.querySelector('.streak-number');
                     if (streakNumber) {
                         streakNumber.textContent = data.loginStreak;
@@ -1098,19 +1066,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (profileImagePreview && data.profileImage) {
                     profileImagePreview.src = data.profileImage;
                 }
-                
-                // Private grup erişimi flag'ini sıfırla
-                window.isPrivateGroupAccessModal = false;
-                
-                window.hideModal(groupsAuthLoginModal);
 
-                // Clear form fields
-                groupsAuthLoginForm.reset();
-
-                // Hoşgeldin mesajı göster
-                showToast(`Hoşgeldin ${data.userName}!`, 'success');
-
-                // Show admin indicator
+                // 3. YETKİ VE NAVİGASYON GÜNCELLEMELERİ
+                // Show admin indicator (içinde renderUserList ve loadGroupSettings var)
                 showAdminIndicator();
 
                 // Profil butonunu güncelle
@@ -1118,17 +1076,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.updateProfileButton();
                 }
 
+                // 4. KULLANICI BİLDİRİMİ
+                // Hoşgeldin mesajı göster
+                showToast(`Hoşgeldin ${data.userName}!`, 'success');
+
+                // 5. VERİ YÜKLEME VE UI GÜNCELLEMELERİ
                 // Reload data to update UI with admin privileges
                 if (typeof loadTrackerTable === 'function') loadTrackerTable();
                 if (typeof loadUserCards === 'function') loadUserCards();
-                if (typeof loadReadingStats === 'function') loadReadingStats();
-                if (typeof renderLongestSeries === 'function') renderLongestSeries();
                 if (typeof loadMonthlyCalendar === 'function') loadMonthlyCalendar();
+                if (typeof renderLongestSeries === 'function') renderLongestSeries();
+
                 
-                // Grup ayarlarını da yükle
-                if (typeof loadGroupSettings === 'function') {
-                    loadGroupSettings();
-                }
             } else {
                 showError(groupsAuthLoginError, 'Geçersiz kullanıcı adı veya şifre');
                 if (typeof logUnauthorizedAccess === 'function') {
@@ -1644,15 +1603,16 @@ function logoutFromProfile() {
             const scrollToMainButton = document.querySelector('.scroll-to-main-button');
             if (scrollToMainButton) scrollToMainButton.style.display = 'none';
 
+            
+            showToast('Çıkış yapıldı!', 'success');
+            
+            // Reload data to update UI without admin privileges
+            loadTrackerTable();
+
             // Profil butonunu güncelle
             if (typeof window.updateProfileButton === 'function') {
                 window.updateProfileButton();
             }
-
-            // Reload data to update UI without admin privileges
-            loadTrackerTable();
-    
-    showToast('Çıkış yapıldı!', 'success');
 }
 
 // Profil resmi tıklanabilir yap ve başlangıçta loading efekti
@@ -1767,6 +1727,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (typeof renderUserList === 'function') {
                     renderUserList();
                 }
+                
+                // Grup ayarlarını da yükle (sadece admin için)
+                if (typeof loadGroupSettings === 'function') {
+                    loadGroupSettings();
+                }
             }
             
             // Scroll butonunu sadece admin yetkisi olan kullanıcılar için göster
@@ -1777,11 +1742,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     scrollToMainButton.style.display = 'none';
                 }
-            }
-            
-            // Grup ayarlarını da yükle
-            if (typeof loadGroupSettings === 'function') {
-                loadGroupSettings();
             }
         } else {
             if (adminIndicator) adminIndicator.style.display = 'none';

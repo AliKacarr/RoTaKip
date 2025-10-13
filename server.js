@@ -2177,6 +2177,7 @@ app.post('/api/admin-login', async (req, res) => {
           userId: user._id, // Kullanıcı ID'sini de döndür
           authority: user.authority, // Kullanıcının yetkisini de döndür
           userName: user.username, // Kullanıcının kullanıcı adını de döndür
+          name: user.name, // Kullanıcının gerçek adını döndür
           loginStreak: user.loginStreak // Giriş serisini de döndür
         });
       } else {

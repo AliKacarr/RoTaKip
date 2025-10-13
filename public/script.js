@@ -231,7 +231,6 @@ async function initializeAuthSystem() {
       
       if (streakResponse.ok) {
         const streakData = await streakResponse.json();
-        console.log(`🔥 Giriş serisi güncellendi: ${streakData.loginStreak} gün`);
         
         // Giriş serisi bilgisini UI'da güncelle
         const streakNumber = document.querySelector('.streak-number');
@@ -506,15 +505,7 @@ async function updatePageTitle() {
 // Ana DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', async function () {
   try {
-    // Debug için URL bilgilerini logla
-    console.log('🔍 URL Debug Info:');
-    console.log('Full URL:', window.location.href);
-    console.log('Pathname:', window.location.pathname);
-    console.log('Search:', window.location.search);
-    console.log('Group ID:', window.groupid);
-    
     const inviteParams = getInviteParams();
-    console.log('Invite Params:', inviteParams);
     
     // Admin sayfaları için özel kontrol
     const currentPath = window.location.pathname;

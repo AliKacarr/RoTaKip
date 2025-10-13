@@ -2214,3 +2214,31 @@
   margin: 0;
 }
 
+/* Scroll to Main Button Styles */
+.scroll-to-main-button {
+    position: fixed;
+    bottom: 95px;
+    left: 40px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    height: 50px;
+    width: 160px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    transition: all 0.3s ease;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.scroll-to-main-button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(231, 76, 60, 0.6);
+}

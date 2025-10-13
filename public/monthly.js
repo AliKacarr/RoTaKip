@@ -1,5 +1,6 @@
 // Monthly Calendar Functionality
 function loadMonthlyCalendar() {
+    console.log('🔍 Monthly Calendar Loading...');
     // Elements
     const prevMonthBtn = document.getElementById('prevMonth');
     const nextMonthBtn = document.getElementById('nextMonth');

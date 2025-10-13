@@ -1,4 +1,5 @@
 function renderLongestSeries() {
+    console.log('🔍 Longest Series Loading...');
     fetch(`/api/longest-streaks/${window.groupid}`)
         .then(res => res.json())
         .then(data => {

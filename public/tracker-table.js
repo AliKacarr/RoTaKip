@@ -16,6 +16,49 @@ let postToggleUpdateTimer = null;
 // Kullanıcı okuma sayılarını önbelleğe almak için
 let userReadingCounts = new Map(); // userId -> okuma sayısı
 
+// Kullanıcı serilerini önbelleğe almak için
+let userStatsCache = new Map(); // userId -> { days: [], lastUpdated: timestamp }
+
+// Cache yönetimi fonksiyonları
+function updateUserStatsCache(userId, date, status) {
+    if (!userStatsCache.has(userId)) {
+        userStatsCache.set(userId, { days: [], lastUpdated: Date.now() });
+    }
+    
+    const cache = userStatsCache.get(userId);
+    const existingIndex = cache.days.findIndex(day => day.date === date);
+    
+    if (status) {
+        if (existingIndex >= 0) {
+            cache.days[existingIndex].status = status;
+        } else {
+            cache.days.push({ date, status });
+        }
+    } else {
+        if (existingIndex >= 0) {
+            cache.days.splice(existingIndex, 1);
+        }
+    }
+    
+    cache.lastUpdated = Date.now();
+}
+
+function getUserStatsFromCache(userId) {
+    const cache = userStatsCache.get(userId);
+    if (!cache) return {};
+    
+    const statsMap = {};
+    cache.days.forEach(day => {
+        statsMap[day.date] = day.status;
+    });
+    return statsMap;
+}
+
+function calculateStreakFromCache(userId) {
+    const userStats = getUserStatsFromCache(userId);
+    return calculateStreak(userStats);
+}
+
 // Lig tanımları - global erişilebilir
 const LEAGUES = [
     { min: 0, max: 5, name: 'Bronz', bg: 'linear-gradient(90deg, #e2b07a 60%, #ffe0b2 100%)' },
@@ -93,6 +136,7 @@ function getMonthNameInTurkish(monthIndex) {
 }
 
 async function loadTrackerTable() {
+    console.log('🔍 Tracker Table Loading...');
     const dates = getWeekDates(weekOffset);
     currentWeekDisplay.textContent = formatDateRange(dates);
     if (weekOffset < 0) {
@@ -119,10 +163,19 @@ async function loadTrackerTable() {
     
     // Kullanıcı okuma sayılarını hesapla ve önbelleğe al
     userReadingCounts.clear();
+    userStatsCache.clear(); // Cache'i temizle
+    
     for (let user of users) {
         const userStats = statMap[user._id] || {};
         const okudumDays = Object.values(userStats).filter(s => s === 'okudum').length;
         userReadingCounts.set(user._id, okudumDays);
+        
+        // Cache'i doldur
+        const cacheData = { days: [], lastUpdated: Date.now() };
+        for (const [date, status] of Object.entries(userStats)) {
+            cacheData.days.push({ date, status });
+        }
+        userStatsCache.set(user._id, cacheData);
     }
     const streakMap = {};
     for (let user of users) {
@@ -369,34 +422,40 @@ async function toggleStatus(userId, date) {
     // Hücre ikonunu güncelle
     cell.innerText = newSymbol;
 
+    // Cache'i güncelle
+    updateUserStatsCache(userId, date, status);
+    
     // Tüm satırdaki hücrelerin renklerini yeniden hesapla
     const rowEl = cell.closest('tr');
-    let userStatsMap = {}; // Dışarıda tanımla ki seri güncelleme kısmında da kullanılabilsin
     
     if (rowEl) {
         const dateCells = rowEl.querySelectorAll('td[onclick*="toggleStatus"]');
         const dates = getWeekDates(weekOffset);
         
-        // Tüm tarih hücrelerinden mevcut durumu topla
+        // Cache'den güncel verileri al
+        const userStatsMap = getUserStatsFromCache(userId);
+        
+        // Sadece bu hafta için seri hesapla
+        const weekStatsMap = {};
         dateCells.forEach((dateCell, index) => {
-            const cellText = dateCell.innerText;
             const cellDate = dates[index];
+            const cellText = dateCell.innerText;
             if (cellText === '✔') {
-                userStatsMap[cellDate] = 'okudum';
+                weekStatsMap[cellDate] = 'okudum';
             } else if (cellText === '✖') {
-                userStatsMap[cellDate] = 'okumadım';
+                weekStatsMap[cellDate] = 'okumadım';
             }
         });
         
         // Yeni değişikliği de ekle
         if (status) {
-            userStatsMap[date] = status;
+            weekStatsMap[date] = status;
         } else {
-            delete userStatsMap[date];
+            delete weekStatsMap[date];
         }
         
-        // Seri hesaplamalarını yap
-        const streakMap = findConsecutiveStreaks(userStatsMap);
+        // Seri hesaplamalarını yap (sadece bu hafta için)
+        const streakMap = findConsecutiveStreaks(weekStatsMap);
         
         // Her hücrenin rengini güncelle
         dateCells.forEach((dateCell, index) => {
@@ -444,42 +503,13 @@ async function toggleStatus(userId, date) {
         // Okumadım -> Boş: değişiklik yok
         newCount = currentCount;
     }
-    
-    userReadingCounts.set(userId, newCount);
 
-    // Veri tabanı güncellemesini hemen yap
-    await fetch(`/api/update-status/${window.groupid}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            userId, 
-            date, 
-            status,
-            requestingUserId: userInfo.userId,
-            requestingUserAuthority: userInfo.userAuthority
-        })
-    });
-
-    // Kullanıcının serisini hemen güncelle (tüm geçmiş verilerle)
+    // Kullanıcının serisini cache'den hesapla (veritabanına gitmeden)
     try {
         const rowEl = cell.closest('tr');
         if (rowEl) {
-            // Sunucudan tüm geçmiş verileri çek
-            const res = await fetch(`/api/user-stats/${window.groupid}/${userId}`);
-            const { stats } = await res.json();
-            const allUserStatsMap = {};
-            for (let s of stats) {
-                allUserStatsMap[s.date] = s.status;
-            }
-            
-            // Yeni değişikliği de ekle
-            if (status) {
-                allUserStatsMap[date] = status;
-            } else {
-                delete allUserStatsMap[date];
-            }
-
-            const newStreak = calculateStreak(allUserStatsMap);
+            // Cache'den güncel seriyi hesapla
+            const newStreak = calculateStreakFromCache(userId);
             const lastTd = rowEl.querySelector('td:last-child');
             if (lastTd) {
                 // Eski seri sayısını al
@@ -498,6 +528,23 @@ async function toggleStatus(userId, date) {
     } catch (e) {
         console.error('Seri güncellenemedi:', e);
     }
+
+        
+    userReadingCounts.set(userId, newCount);
+
+    // Veri tabanı güncellemesini hemen yap
+    await fetch(`/api/update-status/${window.groupid}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            userId, 
+            date, 
+            status,
+            requestingUserId: userInfo.userId,
+            requestingUserAuthority: userInfo.userAuthority
+        })
+    });
+
 
     // 1 sn tıklama olmazsa kartlar, istatistikler ve aylık görünümü güncelle (debounce)
     try {
