@@ -688,49 +688,35 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 
     
-    // İlk çalışacak kritik fonksiyonlar
-    await Promise.all([
-      loadTrackerTable()
-    ]);
+    // 1️⃣ Öncelikli: tracker-table hemen yüklensin
+    await loadTrackerTable();
 
-    // Sırayla çalışacak diğer fonksiyonlar
-    const functions = [
-      { name: 'loadUserCards', fn: loadUserCards },
-      { name: 'renderLongestSeries', fn: renderLongestSeries },
-      { name: 'loadMonthlyCalendar', fn: loadMonthlyCalendar },
-      { name: 'loadReadingStats', fn: loadReadingStats },
-      { name: 'fetchRandomQuoteImage', fn: fetchRandomQuoteImage },
-      { name: 'fetchRandomAyet', fn: fetchRandomAyet },
-      { name: 'fetchRandomQuote', fn: fetchRandomQuote },
-      { name: 'fetchRandomHadis', fn: fetchRandomHadis },
-      { name: 'fetchRandomDua', fn: fetchRandomDua },
-      { name: 'initializeVideos', fn: initializeVideos },
-      { name: 'initializeArticles', fn: () => {
-        if (typeof ArticlesManager !== 'undefined') {
-          window.articlesManager = new ArticlesManager();
-          return Promise.resolve();
-        } else {
-          return Promise.resolve();
-        }
-      }},
-      { name: 'renderUserList', fn: () => {
-        if (LocalStorageManager.isAdmin()) {
-          return renderUserList();
-        } else {
-          return Promise.resolve();
-        }
-      }},
-      { name: 'logPageVisit', fn: logPageVisit }
-    ];
+    // 2️⃣ Arkada, hızlı yüklenebilecek veya birbirinden bağımsız fonksiyonları paralel çalıştır
+    Promise.all([
+      loadUserCards(),
+      renderLongestSeries(),
+      loadMonthlyCalendar(),
+      loadReadingStats()
+    ]).catch(err => console.error("İlk paralel yüklemelerde hata:", err));
 
-    // Fonksiyonları sırayla çalıştır
-    for (const func of functions) {
-      try {
-        await func.fn();
-      } catch (error) {
-        console.error(`${func.name} çalıştırılırken hata:`, error);
-      }
-    }
+    // 3️⃣ Daha az öncelikli veya estetik içerikleri (ayet, hadis, alıntı, dua vs.) paralel başlat
+    Promise.all([
+      fetchRandomQuoteImage(),
+      fetchRandomAyet(),
+      fetchRandomQuote(),
+      fetchRandomHadis(),
+      fetchRandomDua()
+    ]).catch(err => console.error("Rastgele içerik yüklemede hata:", err));
+
+    // 4️⃣ Medya, makale ve yönetici listesi gibi en sona kalanlar
+    Promise.all([
+      initializeVideos(),
+      (typeof ArticlesManager !== 'undefined'
+        ? (window.articlesManager = new ArticlesManager(), Promise.resolve())
+        : Promise.resolve()),
+      (LocalStorageManager.isAdmin() ? renderUserList() : Promise.resolve()),
+      logPageVisit()
+    ]).catch(err => console.error("Son yükleme grubunda hata:", err));
 
   } catch (error) {
     console.error('Sayfa yüklenirken hata oluştu:', error);
