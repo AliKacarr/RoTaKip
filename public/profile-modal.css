@@ -317,15 +317,15 @@ to {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
+  overflow: auto;
+  justify-content: center;
+  align-items: center;
+  animation: profileModalFadeIn 0.3s ease-out;
 }
 
 .profile-avatar-modal-content {
   background: white;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 0;
+  position: relative;
   border-radius: 15px;
   width: 90%;
   max-width: 500px;
@@ -417,21 +417,21 @@ to {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
+  overflow: auto;
+  justify-content: center;
+  align-items: center;
+  animation: profileModalFadeIn 0.3s ease-out;
 }
 
 .profile-settings-modal-content {
   background: white;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 0;
   border-radius: 15px;
   width: 90%;
   max-width: 500px;
+  position: relative;
+  overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: profileModalSlideIn 0.3s ease-out;
-  overflow: hidden;
 }
 
 .profile-settings-modal-header {

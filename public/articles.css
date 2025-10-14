@@ -43,7 +43,7 @@
   background: #ffffff;
   color: #6c757d;
   border-radius: 20px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -70,7 +70,7 @@
   color: #ffffff;
   border: none;
   border-radius: 25px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -157,7 +157,7 @@
 
 .article-category {
   color: #626262;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.8px;
   margin-bottom: 8px;
@@ -171,7 +171,7 @@
 
 .article-date {
   color: #6b7280;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   margin-bottom: 15px;
 }
@@ -197,7 +197,7 @@
 
 .article-text {
   color: #4b5563;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
   flex: 1;
 }

@@ -214,7 +214,7 @@ async function loadReadingStats() {
                             color: '#000000',
                             font: {
                                 weight: 'bold',
-                                size: 14
+                                size: 15
                             }
                         }
                     },

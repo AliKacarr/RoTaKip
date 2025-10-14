@@ -130,8 +130,8 @@ function formatDateForHeader(date) {
 }
 
 function getMonthNameInTurkish(monthIndex) {
-    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haz',
+        'Tem', 'Ağu', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
     return months[monthIndex];
 }
 
@@ -673,7 +673,7 @@ function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell)
 // refresh butonu kaldırıldı
 
 function getDayOfWeekInTurkish(date) {
-    const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+    const days = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cts'];
     return days[date.getDay()];
 }
 

@@ -273,7 +273,7 @@ iframe {
     cursor: pointer;
     display: flex;
     align-items: center;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: bold;
     color: #444444;
     padding: 10px 15px;
@@ -307,7 +307,7 @@ iframe {
 #refreshBtn {
     margin-left: 10px;
     padding: 0 20px;
-    font-size: 16px;
+    font-size: 17px;
     background: linear-gradient(90deg, #2b67c4 0%, #4b87e4 100%);
     color: #fff;
     border: none;

@@ -1380,7 +1380,7 @@ function openProfileAvatarModal() {
     if (!avatarModal) return;
 
     // Avatarlar zaten önceden yüklenmiş, sadece modalı aç
-    avatarModal.style.display = 'block';
+    avatarModal.style.display = 'flex';
 }
 
 function closeProfileAvatarModal() {
@@ -1465,7 +1465,7 @@ function openProfileSettingsModal() {
     closeProfileModal();
 
     // Ayarlar modalını aç
-    settingsModal.style.display = 'block';
+    settingsModal.style.display = 'flex';
     
     // Mevcut bilgileri doldur
     loadProfileSettings();

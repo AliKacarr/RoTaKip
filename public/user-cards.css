@@ -8,12 +8,7 @@
 
 @media screen and (max-width: 1024px) {
     .user-cards-container {
-        display: flex;
-        flex-wrap: wrap;
         column-gap: 30px;
-        row-gap: 40px;
-        justify-content: center;
-        margin: 25px 0 20px 0;
     }
 }
 
@@ -274,8 +269,8 @@
 }
 
 .user-card-fire-emoji {
-    font-size: 22px;
-    margin-right: 2px;
+    font-size: 21px;
+    margin-right: 3px;
     text-shadow: 0 0 1px #ff5555, 0 0 1px #ff4500;
     animation: user-card-fire-emoji-flame 4s infinite;
 }
@@ -418,7 +413,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     justify-content: center;
     position: relative;
-    padding-bottom: 45px;
+    padding-bottom: 50px;
     justify-content: space-evenly;
 }
 
@@ -430,7 +425,7 @@
 }
 
 .league-info-range {
-    font-size: 15px;
+    font-size: 16px;
     color: #666;
     margin-top: 1px;
     font-weight: 500;
@@ -438,8 +433,8 @@
 }
 
 .league-info-img {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     border: 1.5px solid #ffffff30;
 }
@@ -447,7 +442,7 @@
 .league-info-name {
     font-weight: 600;
     color: #333;
-    font-size: 0.98em;
+    font-size: 1.1em;
     margin-top: 2px;
 }
 
@@ -455,7 +450,7 @@
     position: absolute;
     bottom: 12px;
     text-align: center;
-    font-size: 0.95em;
+    font-size: 1.05em;
     color: #333;
     font-style: italic;
     width: 100%;
@@ -472,7 +467,7 @@
     border-radius: 10px;
     line-height: 1.7;
     margin: 10px auto 18px auto;
-    padding: 60px 20px 20px 20px;
+    padding: 60px 20px 35px 20px;
     font-size: 18px;
     color: #444;
     font-weight: 600;
@@ -508,8 +503,8 @@
     position: absolute;
     bottom: 8px;
     left: 12px;
-    width: 32px;
-    height: 32px;
+    width: 35px;
+    height: 35px;
     background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/partying_face.gif');
     background-size: contain;
     background-repeat: no-repeat;
@@ -572,13 +567,10 @@
     }
 }
 
-.league-promotion-message:has(.copy-notification)::after {
-    display: none;
-}
 
 .promotion-message-content {
     line-height: 1.7;
-    font-size: 18px;
+    font-size: 20px;
     color: #444;
     font-weight: 600;
     text-align: center;
@@ -600,20 +592,6 @@
     color: #313131;
 }
 
-.copy-notification {
-    position: fixed;
-    bottom: 7px;
-    right: 3px;
-    background-color: rgba(0, 128, 0);
-    color: white;
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-size: 0.8em;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-}
-
-
 .consecutive-missed-message {
     width: 90%;
     max-width: 1200px;
@@ -621,8 +599,8 @@
     border-radius: 10px;
     line-height: 1.7;
     margin: 10px auto 18px auto;
-    padding: 52px 20px 22px 20px;
-    font-size: 17px;
+    padding: 55px 20px 35px 20px;
+    font-size: 19px;
     color: #222;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
@@ -669,22 +647,13 @@
 }
 
 
-.league-promotion-message .copy-notification {
-    opacity: 1;
-    z-index: 2;
-}
-
-.league-promotion-message:has(.copy-notification)::after {
-    display: none;
-}
-
 
 .consecutive-missed-message .left-emoji {
     position: absolute;
     bottom: 8px;
     left: 12px;
-    width: 32px;
-    height: 32px;
+    width: 35px;
+    height: 35px;
     background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/frowning_face.gif');
     background-size: contain;
     background-repeat: no-repeat;
@@ -714,14 +683,6 @@
     }
 }
 
-.consecutive-missed-message .copy-notification {
-    opacity: 1;
-    z-index: 2;
-}
-
-.consecutive-missed-message:has(.copy-notification)::after {
-    display: none;
-}
 
 @keyframes bounce-missed {
     0%, 20%, 50%, 80%, 100% {
@@ -740,48 +701,6 @@
     transform: translateY(0);
 }
 
-@media screen and (max-width: 1000px) {
-    .league-promotion-message {
-        font-size: 14px;
-        padding: 50px 15px 15px 15px;
-    }
-
-    .promotion-message-content {
-        font-size: 17px;
-    }
-
-    .league-promotion-message::before {
-        height: 25px;
-        top: 15px;
-        width: 100%;
-    }
-
-    .consecutive-missed-message {
-        font-size: 17px;
-        padding: 50px 15px 17px 15px;
-    }
-
-    .consecutive-missed-message::before {
-        height: 16px;
-        top: 22px;
-        width: 100%;
-    }
-
-    .consecutive-missed-message .chain-text {
-        top: 15px;
-        height: 25px;
-        line-height: 25px;
-        font-size: 18px;
-    }
-
-    .missed-username {
-        font-size: 14px;
-    }
-
-    .missed-reminder {
-        font-size: 17px !important;
-    }
-}
 
 .missed-title {
     color: #222;
@@ -801,7 +720,7 @@
 
 .missed-reminder {
     color: #333;
-    font-size: 18px;
+    font-size: 19px;
     font-style: italic;
     font-weight: bold;
     text-decoration: underline;

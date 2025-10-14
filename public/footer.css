@@ -1,7 +1,7 @@
 .site-footer {
   color: #222;
   padding-top: 10px;
-  font-size: 15px;
+  font-size: 16px;
   margin-top: 10px;
   border-top: 1px solid #44444423;
 }
@@ -27,7 +27,7 @@
 .footer-section h4 {
   color: #2b67c4;
   margin: 0 auto 10px auto;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: bold;
   display: inline-block;
   border-bottom: 2px solid #2b67c4;
@@ -103,7 +103,7 @@
 
 .footer-section.social-media a {
   color: #2b67c4;
-  font-size: 26px;
+  font-size: 27px;
   transition: color 0.2s;
   background: none;
   border-radius: 0;

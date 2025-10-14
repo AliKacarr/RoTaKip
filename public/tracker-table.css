@@ -60,7 +60,7 @@
 }
 
 #trackerTable td:last-child {
-    font-size: 20px;
+    font-size: 22px;
     color: red;
     font-weight: bold;
     border: 1px solid #ccc;
@@ -75,8 +75,8 @@
 }
 
 .tracker-profile-image {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     object-fit: cover;
     margin-right: 10px;
@@ -192,7 +192,7 @@ td:not(.green):not(.pink):not(.lila):not(.red):hover {
     border: 1px solid #cfcfcf;
     padding: 10px;
     text-align: center;
-    font-size: 16px;
+    font-size: 17px;
     transition: background-color 0.2s ease;
     user-select: none;
     -webkit-user-select: none;
@@ -201,7 +201,7 @@ td:not(.green):not(.pink):not(.lila):not(.red):hover {
 }
 
 #trackerTable td:first-child {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 500;
     border: 1px solid #f1f1f1;
     min-width: 0;
@@ -211,40 +211,29 @@ td:not(.green):not(.pink):not(.lila):not(.red):hover {
 #trackerTable th:first-child {
     background-color: #f7f7f7;
     color: #333;
-    font-size: 16px;
+    font-size: 17px;
     width: 170px;
 }
 
 .date-text .date-day {
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 600;
     color: #505050;
 }
 
 .date-text .date-month {
-    font-size: 11px;
+    font-size: 13px;
     color: #5d5d5d;
 }
 
 .day-of-week {
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 600;
     color: #5b9bd5;
     display: block;
     margin-top: 3px;
 }
 
-@media (max-width: 1024px) {
-  .day-of-week {
-    font-size: 15px;
-  }
-}
-
-/* Style the first column header differently */
-#trackerTable tr th:first-child {
-    background-color: #f2f2f2;
-    color: #333;
-}
 
 .user-item {
     display: flex;
@@ -280,7 +269,7 @@ td:not(.green):not(.pink):not(.lila):not(.red):hover {
     border-radius: 8px;
     padding: 10px 16px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: bold;
     color: #555;
     display: flex;
@@ -315,7 +304,7 @@ td:not(.green):not(.pink):not(.lila):not(.red):hover {
 }
 
 .current-week {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: bold;
     color: #5b9bd5;
     padding: 5px 15px;
@@ -369,7 +358,7 @@ th.today-column::before {
     color: white;
     padding: 3px 10px;
     border-radius: 4px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: normal;
     z-index: 3;
     /* Ensure it appears above other elements */
@@ -381,11 +370,6 @@ th.today-column {
     /* Reset to normal padding */
 }
 
-/* Make sure the day of week is more prominent for today */
-.today-column .day-of-week {
-    color: #1e88e5;
-    font-weight: bold;
-}
 
 /* Ensure colored cells still show their colors when they're also today's column */
 .green.today-column {
