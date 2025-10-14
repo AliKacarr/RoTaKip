@@ -18,6 +18,7 @@ const https = require('https');
 const { Dropbox } = require('dropbox');
 const sharp = require('sharp');
 const bcrypt = require('bcrypt');
+const compression = require('compression');
 
 // Hash fonksiyonu
 function hashCode(str) {
@@ -144,20 +145,22 @@ async function handleLoginStreak(user) {
 }
 
 // Middleware'ler
+// Gzip sıkıştırma (compression)
+app.use(compression());
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: true,
   lastModified: true,
-  maxAge: '6h' // 6 saat cache
+  maxAge: '3d' // 3 gün cache
 }));
 app.use('/images', express.static('uploads', {
   etag: true,
   lastModified: true,
-  maxAge: '6h'
+  maxAge: '3d'
 }));
 app.use('/groupAvatars', express.static('groupAvatars', {
   etag: true,
   lastModified: true,
-  maxAge: '6h'
+  maxAge: '3d'
 }));
 app.use(express.json());
 
