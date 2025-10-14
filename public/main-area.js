@@ -29,26 +29,13 @@ function processMessageQueue() {
         </div>
     `;
 
-    // Stil ekle
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
-        color: white;
-        padding: 12px 16px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        z-index: 10000;
-        animation: slideInRight 0.5s ease;
-        max-width: 300px;
-    `;
+    // Stil CSS'ten gelecek
 
     document.body.appendChild(notification);
 
     // 3 saniye sonra kaldır, sonra kuyruktaki sonraki mesajı göster
     setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.5s ease';
+        notification.classList.add('notification-hide');
         setTimeout(() => {
             if (document.body.contains(notification)) {
                 notification.remove();

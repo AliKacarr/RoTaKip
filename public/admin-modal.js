@@ -1684,25 +1684,11 @@ function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        z-index: 10003;
-        font-size: 14px;
-        font-weight: 500;
-        animation: profileToastSlideIn 0.3s ease;
-    `;
     
     document.body.appendChild(toast);
     
     setTimeout(() => {
-        toast.style.animation = 'profileToastSlideIn 0.3s ease reverse';
+        toast.classList.add('toast-hide');
         setTimeout(() => {
             if (toast.parentNode) {
                 toast.remove();

@@ -668,10 +668,6 @@ function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell)
         document.body.removeChild(flyingStar);
     }, 650);
     
-    // Başarı efekti için hafif titreşim (destekleyen cihazlarda)
-    if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]);
-    }
 }
 
 // refresh butonu kaldırıldı

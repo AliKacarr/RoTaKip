@@ -44,3 +44,63 @@ h3 {
 .settings-section h3 {
   min-width: 300px;
 }
+
+/* Unified Toast/Notification Styles */
+.toast,
+.notification-toast,
+.share-toast {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 24px;
+    border-radius: 10px;
+    color: #fff;
+    z-index: 10000;
+    font-size: 18px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease;
+    min-width: 100px;
+}
+
+
+/* Color variants */
+.toast-success,
+.notification-success,
+.share-success { background: #28a745; }
+
+.toast-error,
+.notification-error { background: #dc3545; }
+
+.toast-info,
+.notification-info { background: #007bff; }
+
+/* Slide out helper */
+.toast-hide,
+.notification-hide,
+.share-hide { animation: slideOut 0.3s ease forwards; }
+
+
+@keyframes slideInRight {
+  from {
+      transform: translateX(100%);
+      opacity: 0;
+  }
+  to {
+      transform: translateX(0);
+      opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}

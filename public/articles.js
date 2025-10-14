@@ -427,6 +427,7 @@ window.shareArticle = async function(url, title) {
                 title: title,
                 url: url
             });
+            showShareToast('Link panoya kopyalandı!');
         } else {
             // Web Share API desteklenmiyorsa clipboard'a kopyala
             await navigator.clipboard.writeText(url);
@@ -457,41 +458,14 @@ function showShareToast(message) {
     
     // Yeni toast oluştur
     const toast = document.createElement('div');
-    toast.className = 'share-toast';
+    toast.className = 'share-toast share-success';
     toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #28a745;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        z-index: 10000;
-        font-size: 14px;
-        font-weight: 500;
-        animation: slideIn 0.3s ease;
-    `;
-    
-    // CSS animasyonu ekle
-    if (!document.querySelector('#share-toast-styles')) {
-        const style = document.createElement('style');
-        style.id = 'share-toast-styles';
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
     
     document.body.appendChild(toast);
     
     // 3 saniye sonra kaldır
     setTimeout(() => {
-        toast.style.animation = 'slideIn 0.3s ease reverse';
+        toast.classList.add('share-hide');
         setTimeout(() => {
             if (toast.parentNode) {
                 toast.remove();

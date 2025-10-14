@@ -813,48 +813,18 @@ class GroupsPage {
     }
 
     showError(message) {
-        // Create a simple toast notification
         const toast = document.createElement('div');
-        toast.className = 'error-toast';
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #ef4444;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 9999;
-            animation: slideIn 0.3s ease;
-        `;
+        toast.className = 'toast toast-error';
         toast.textContent = message;
-
         document.body.appendChild(toast);
-
         setTimeout(() => {
-            toast.style.animation = 'slideOut 0.3s ease';
+            toast.classList.add('toast-hide');
             setTimeout(() => {
-                document.body.removeChild(toast);
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
             }, 300);
         }, 3000);
-
-        // Add CSS for animations
-        if (!document.getElementById('toast-styles')) {
-            const style = document.createElement('style');
-            style.id = 'toast-styles';
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOut {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
     }
 
     escapeHtml(text) {
@@ -1291,36 +1261,19 @@ class GroupsPage {
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 9999;
-            animation: slideIn 0.5s ease;
-            max-width: 300px;
-            word-wrap: break-word;
-        `;
         toast.textContent = message;
 
         document.body.appendChild(toast);
 
         // Mesajı 4 saniye göster, sonra kaldır ve kuyruktaki sonraki mesajı göster
         setTimeout(() => {
-            toast.style.animation = 'slideOut 0.5s ease';
+            toast.classList.add('toast-hide');
             setTimeout(() => {
                 if (document.body.contains(toast)) {
                     document.body.removeChild(toast);
                 }
-                // Kuyruktaki sonraki mesajı göster (2 saniye bekle - daha uzun aralık)
-                setTimeout(() => {
-                    this.processMessageQueue();
-                }, 2000);
-            }, 500);
+                setTimeout(() => { this.processMessageQueue(); }, 2000);
+            }, 300);
         }, 4000);
     }
 

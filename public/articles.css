@@ -213,11 +213,14 @@
   height: 17px;
   opacity: 0.6;
   cursor: pointer;
-  transition: opacity 0.3s ease;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.1s ease;
 }
 
 .article-share-icon:hover {
   opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* ==================== Loading States ==================== */
