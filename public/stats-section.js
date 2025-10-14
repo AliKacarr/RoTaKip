@@ -173,7 +173,7 @@ async function loadReadingStats() {
                             color: '#000000',
                             font: {
                                 weight: 'bold',
-                                size: 15
+                                size: 16
                             },
                             padding: {
                                 bottom: 15

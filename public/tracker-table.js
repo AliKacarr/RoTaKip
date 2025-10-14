@@ -192,7 +192,7 @@ async function loadTrackerTable() {
         const todayClass = isToday ? 'today-column' : '';
         theadHTML += `<th class="${todayClass}"><span class="date-text">${formattedDate}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
     }
-    theadHTML += `<th><img src="/images/red-arrow.webp" alt="Streak" width="20" height="20"> Seri</th></tr>`;
+    theadHTML += `<th>Okuma<br>Serisi</th></tr>`;
     trackerTable.querySelector('thead').innerHTML = theadHTML;
     let tbodyHTML = '';
     for (let user of users) {

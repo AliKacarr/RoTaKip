@@ -500,7 +500,7 @@ async function loadUserCards() {
     // Kopyala yazısı ve emoji ekle
     const copyText = document.createElement('div');
     copyText.className = 'copy-chip';
-    copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 13px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
+    copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 14px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
     copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
     missedMsg.appendChild(copyText);
 
@@ -563,7 +563,7 @@ async function loadUserCards() {
       // Kopyala yazısı ve emoji ekle
       const copyText = document.createElement('div');
       copyText.className = 'copy-chip';
-      copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 13px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
+      copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 14px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
       copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
       missedMsg.appendChild(copyText);
       
