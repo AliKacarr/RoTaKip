@@ -1,10 +1,19 @@
 // Global flag for join request success
 let isJoinRequestSuccess = false;
 
-function showAdminIndicator() {     //admin modu butonunu gösterme
+async function showAdminIndicator() {     //admin modu butonunu gösterme
     // Check if user is logged in and valid
-    if (!LocalStorageManager.isUserLoggedIn() || !verifyUserUsername()) {
+    console.log('showAdminIndicator');
+    if (!LocalStorageManager.isUserLoggedIn()) {
         return;
+    }
+    try {
+        const valid = await verifyUserUsername();
+        if (!valid) {
+            return;
+        }
+    } catch (e) {
+        // Do not block UI if verify has transient issues
     }
     
     const userInfo = LocalStorageManager.getCurrentUserInfo();
@@ -56,12 +65,14 @@ function showAdminIndicator() {     //admin modu butonunu gösterme
         });
 
         document.body.appendChild(adminIndicator);
+        adminIndicator.style.display = 'flex';
     } else {
         // Update text based on user authority
         const displayName = userInfo.name && userInfo.name !== 'null' ? userInfo.name : '';
         adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
             `<i class="fa-solid fa-user-shield"></i> ${displayName}` : 
             `<i class="fa-solid fa-user"></i> ${displayName}`;
+        adminIndicator.style.display = 'flex';
     }
 
     // Sadece admin yetkisi olan kullanıcılar için main-area göster
@@ -106,13 +117,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Admin login button click handler
-    adminLogin.addEventListener('click', function () {
+    adminLogin.addEventListener('click', async function () {
         // Check if already authenticated
         if (LocalStorageManager.isUserLoggedIn()) {
             showAdminInfoPanel();
         } else {
             hideInfoMessage(); // Normal giriş için bilgilendirme mesajını gizle
             showModal(groupsAuthLoginModal);
+            // Oturum bilgisi değişirse adminIndicator'ı tekrar kontrol et
+            setTimeout(() => { if (typeof showAdminIndicator === 'function') showAdminIndicator(); }, 0);
         }
     });
 
@@ -1068,8 +1081,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // 3. YETKİ VE NAVİGASYON GÜNCELLEMELERİ
-                // Show admin indicator (içinde renderUserList ve loadGroupSettings var)
-                showAdminIndicator();
+                // adminIndicator güncelle
+                if (typeof showAdminIndicator === 'function') {
+                    showAdminIndicator();
+                }
 
                 // Profil butonunu güncelle
                 if (typeof window.updateProfileButton === 'function') {
@@ -1163,7 +1178,7 @@ async function openProfileModal() {
     if (!profileModal) return;
 
     // Önce modalı aç
-    profileModal.style.display = 'block';
+    profileModal.style.display = 'flex';
     
     // Sonra kullanıcı bilgilerini yükle
     await loadProfileData();

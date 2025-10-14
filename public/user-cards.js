@@ -19,21 +19,10 @@ async function loadUserCards() {
   });
 
   try {
-    // API'den tüm kullanıcı ve okuma verilerini çek
-    const [allDataRes, streaksRes] = await Promise.all([
-      fetch(`/api/all-data/${window.groupid}`),
-      fetch(`/api/longest-streaks/${window.groupid}`)
-    ]);
-
-    if (!allDataRes.ok || !streaksRes.ok) {
-      console.error('API çağrısı başarısız:', allDataRes.status, streaksRes.status);
-      return;
-    }
-
-    const allData = await allDataRes.json();
+    // Global store'dan tüm kullanıcı ve okuma verilerini çek
+    const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
     const { users = [], stats = [] } = allData;
-    const streaksData = await streaksRes.json();
-    const { streaks = [] } = streaksData;
+    const streaks = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
 
     // Giriş yapılan kullanıcıyı ilk sıraya koy
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
@@ -181,7 +170,7 @@ async function loadUserCards() {
     const percent = totalDays > 0 ? Math.round((okudumDays / totalDays) * 100) : 0;
 
     // En uzun seri
-    const userStreak = (streaks || []).find(s => s.userId === user._id);
+    const userStreak = (streaks || []).find(s => (s.userId === user._id || s._id === user._id));
     let longestStreakText = '';
     if (userStreak && userStreak.streak > 0) {
       const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
@@ -701,6 +690,14 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
       })
       .then(response => {
         if (response && response.ok) {
+          // Global store'u da güncelle
+          try {
+            if (window.globalDataStore) {
+              window.globalDataStore.applyLocalUpdate(userInfo.userId, dateStr, newStatus);
+            }
+          } catch (e) {
+            console.error('Global store senkronizasyon hatası:', e);
+          }
           // Veritabanı güncellemesi başarılı olduktan sonra tüm bileşenleri güncelle
           if (window.loadUserCards) window.loadUserCards(); // Kullanıcı kartlarını yeniden render et
           if (window.loadTrackerTable) window.loadTrackerTable();

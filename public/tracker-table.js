@@ -149,8 +149,7 @@ async function loadTrackerTable() {
         prevWeekTodayBtn.style.display = 'none';
         nextWeekTodayBtn.style.display = 'none';
     }
-    const res = await fetch(`/api/all-data/${window.groupid}`);
-    const data = await res.json();
+    const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
     const { users, stats } = data;
     
     // stats'in iterable olduğundan emin ol
@@ -435,7 +434,6 @@ async function toggleStatus(userId, date) {
         // Cache'den güncel verileri al
         const userStatsMap = getUserStatsFromCache(userId);
         
-        // Sadece bu hafta için seri hesapla
         const weekStatsMap = {};
         dateCells.forEach((dateCell, index) => {
             const cellDate = dates[index];
@@ -454,7 +452,7 @@ async function toggleStatus(userId, date) {
             delete weekStatsMap[date];
         }
         
-        // Seri hesaplamalarını yap (sadece bu hafta için)
+        // Seri hesaplamalarını yap 
         const streakMap = findConsecutiveStreaks(weekStatsMap);
         
         // Her hücrenin rengini güncelle
@@ -532,18 +530,14 @@ async function toggleStatus(userId, date) {
         
     userReadingCounts.set(userId, newCount);
 
-    // Veri tabanı güncellemesini hemen yap
-    await fetch(`/api/update-status/${window.groupid}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            userId, 
-            date, 
-            status,
-            requestingUserId: userInfo.userId,
-            requestingUserAuthority: userInfo.userAuthority
-        })
-    });
+    // Global store'u senkronize et
+    try {
+        if (window.globalDataStore) {
+            window.globalDataStore.applyLocalUpdate(userId, date, status);
+        }
+    } catch (e) {
+        console.error('Global store güncellenemedi:', e);
+    }
 
 
     // 1 sn tıklama olmazsa kartlar, istatistikler ve aylık görünümü güncelle (debounce)
@@ -575,6 +569,19 @@ async function toggleStatus(userId, date) {
     } catch (err) {
         console.error('Debounce ayarlanamadı:', err);
     }
+
+        // Veri tabanı güncellemesini hemen yap
+        await fetch(`/api/update-status/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId, 
+                date, 
+                status,
+                requestingUserId: userInfo.userId,
+                requestingUserAuthority: userInfo.userAuthority
+            })
+        });
 }
 
 // Tüm kullanıcıların background rengini güncelle (önbellekten)

@@ -10,31 +10,48 @@
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
+  justify-content: center;
+  align-items: center;
+  animation: profileModalFadeIn 0.3s ease-out;
 }
 
 .profile-modal-content {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 0;
   border-radius: 20px;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: profileModalSlideIn 0.3s ease-out;
+  position: relative;
   overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: profileModalSlideIn 0.4s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1024px) {
+  .profile-modal-content {
+    scale: 1.2;
+  }
 }
 
 @keyframes profileModalSlideIn {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: translateY(-50px) scale(0.9);
+}
+to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+}
+
+@keyframes profileModalFadeIn {
+  from {
+    opacity: 0;
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
   }
 }
 
@@ -155,6 +172,7 @@
   padding: 8px;
   border-radius: 25px;
   flex-shrink: 0;
+  margin-left: 7px;
 }
 
 .profile-modal-image-btn {

@@ -1,12 +1,8 @@
 async function loadReadingStats() {
     try {
-        // Fetch the reading statistics from the server
-        const response = await fetch(`/api/reading-stats/${window.groupid}`);
-        const userStats = await response.json();
-
-        // Get all stats to calculate "okumadım" counts
-        const allDataResponse = await fetch(`/api/all-data/${window.groupid}`);
-        const allData = await allDataResponse.json();
+        // Global store'dan verileri al
+        const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
+        const summary = window.globalDataStore ? window.globalDataStore.getReadingStatsSummary() : [];
 
         // Create a map of all dates with status for each user
         const userDatesMap = {};
@@ -24,16 +20,14 @@ async function loadReadingStats() {
             userDatesMap[stat.userId][stat.date] = stat.status;
         }
 
-        // Calculate "okumadım" counts for each user
-        const enhancedUserStats = userStats.map(user => {
-            const userStatuses = userDatesMap[user.userId] || {};
-            const okumadimCount = Object.values(userStatuses).filter(status => status === 'okumadım').length;
-
-            return {
-                ...user,
-                okumadim: okumadimCount
-            };
-        });
+        // summary zaten okudum/okumadım içeriyor
+        const enhancedUserStats = summary.map(item => ({
+            userId: item.userId,
+            name: item.name,
+            profileImage: item.profileImage,
+            okudum: item.okudum,
+            okumadim: item.okumadim
+        }));
 
         // Giriş yapılan kullanıcı bilgisini al
         const currentUserInfo = LocalStorageManager.getCurrentUserInfo();

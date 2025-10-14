@@ -533,6 +533,161 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Title'ı güncelle
     updatePageTitle();
 
+
+    // Global veri deposu başlatma
+    if (!window.GlobalDataStore) {
+      class GlobalDataStore {
+        constructor() {
+          this.groupId = null;
+          this.users = [];
+          this.stats = [];
+          this.userMap = new Map(); // userId -> user
+          this.statMap = new Map(); // userId -> { date: status }
+          this.userReadingCounts = new Map(); // userId -> okudum count
+          this.longestStreaks = []; // [{ userId, name, profileImage, streak, startDate, endDate }]
+        }
+
+        async init(groupId) {
+          this.groupId = groupId;
+          const res = await fetch(`/api/all-data/${groupId}`);
+          const data = await res.json();
+          this.users = Array.isArray(data.users) ? data.users : [];
+          this.stats = Array.isArray(data.stats) ? data.stats : [];
+          this._rebuildIndexes();
+          await this._buildLongestStreaks();
+        }
+
+        _rebuildIndexes() {
+          this.userMap.clear();
+          this.statMap.clear();
+          this.userReadingCounts.clear();
+
+          for (const u of this.users) {
+            this.userMap.set(u._id, u);
+            this.statMap.set(u._id, {});
+          }
+
+          for (const s of this.stats) {
+            if (!this.statMap.has(s.userId)) {
+              this.statMap.set(s.userId, {});
+            }
+            this.statMap.get(s.userId)[s.date] = s.status;
+          }
+
+          // Okudum sayıları
+          for (const u of this.users) {
+            const map = this.statMap.get(u._id) || {};
+            const okCount = Object.values(map).filter(v => v === 'okudum').length;
+            this.userReadingCounts.set(u._id, okCount);
+          }
+        }
+
+        getAllData() {
+          return { users: this.users.slice(), stats: this.stats.slice() };
+        }
+
+        getUsers() { return this.users.slice(); }
+        getStats() { return this.stats.slice(); }
+        getUserMap() { return this.userMap; }
+        getStatMap() { return this.statMap; }
+        getUserReadingCounts() { return this.userReadingCounts; }
+
+        async _buildLongestStreaks() {
+          // Sunucudan almak yerine eldeki stats üzerinden hesapla
+          const results = [];
+          for (const u of this.users) {
+            const map = this.statMap.get(u._id) || {};
+            const okDates = Object.keys(map).filter(d => map[d] === 'okudum').sort();
+            let maxStreak = 0, currentStreak = 0;
+            let streakStart = null, streakEnd = null;
+            let maxStart = null, maxEnd = null;
+
+            for (let i = 0; i < okDates.length; i++) {
+              const prev = i > 0 ? new Date(okDates[i - 1]) : null;
+              const curr = new Date(okDates[i]);
+              if (i === 0 || (prev && (curr - prev) === 86400000)) {
+                currentStreak++;
+                if (currentStreak === 1) streakStart = okDates[i];
+                streakEnd = okDates[i];
+              } else {
+                if (currentStreak > maxStreak) {
+                  maxStreak = currentStreak; maxStart = streakStart; maxEnd = streakEnd;
+                }
+                currentStreak = 1; streakStart = okDates[i]; streakEnd = okDates[i];
+              }
+            }
+            if (currentStreak > maxStreak) {
+              maxStreak = currentStreak; maxStart = streakStart; maxEnd = streakEnd;
+            }
+            results.push({ userId: u._id, name: u.name, profileImage: u.profileImage, streak: maxStreak, startDate: maxStart, endDate: maxEnd });
+          }
+          results.sort((a, b) => b.streak - a.streak);
+          this.longestStreaks = results;
+        }
+
+        getLongestStreaks() { return this.longestStreaks.slice(); }
+
+        // Özet istatistik: okudum/okumadım sayıları
+        getReadingStatsSummary() {
+          const summary = [];
+          for (const u of this.users) {
+            const map = this.statMap.get(u._id) || {};
+            const values = Object.values(map);
+            const okudum = values.filter(v => v === 'okudum').length;
+            const okumadim = values.filter(v => v === 'okumadım').length;
+            summary.push({ userId: u._id, name: u.name, profileImage: u.profileImage, okudum, okumadim });
+          }
+          return summary;
+        }
+
+        // UI güncellemelerinden çağrılacak: hem cache’i hem dizi’yi günceller
+        applyLocalUpdate(userId, date, status) {
+          // stats array upsert/delete
+          const idx = this.stats.findIndex(s => s.userId === userId && s.date === date);
+          if (status) {
+            const newObj = { userId, date, status };
+            if (idx >= 0) this.stats[idx] = newObj; else this.stats.push(newObj);
+          } else {
+            if (idx >= 0) this.stats.splice(idx, 1);
+          }
+
+          // statMap
+          if (!this.statMap.has(userId)) this.statMap.set(userId, {});
+          const userMap = this.statMap.get(userId);
+          if (status) userMap[date] = status; else delete userMap[date];
+
+          // okudum sayacı
+          const prev = this.userReadingCounts.get(userId) || 0;
+          let next = prev;
+          if (status === 'okudum') {
+            // Eğer önceki durum okudum değilse artır
+            const before = idx >= 0 ? (this.stats[idx]?.status) : undefined;
+            if (before !== 'okudum') next = prev + 1;
+          } else if (status === 'okumadım' || status === '') {
+            // Okudum’dan başka şeye geçtiyse azalt
+            if (userMap[date] !== 'okudum') {
+              // nothing
+            }
+            // Güvenli yeniden sayım (kenar durumlarından kaçınmak için)
+            const map = this.statMap.get(userId) || {};
+            next = Object.values(map).filter(v => v === 'okudum').length;
+          }
+          this.userReadingCounts.set(userId, Math.max(0, next));
+
+          // En uzun serileri yeniden hesapla (hafif veri setleri için yeterli)
+          this._buildLongestStreaks();
+        }
+      }
+      window.GlobalDataStore = GlobalDataStore;
+    }
+
+    if (!window.globalDataStore) {
+      window.globalDataStore = new window.GlobalDataStore();
+      await window.globalDataStore.init(window.groupid);
+    }
+
+
+    
     // İlk çalışacak kritik fonksiyonlar
     await Promise.all([
       loadTrackerTable()

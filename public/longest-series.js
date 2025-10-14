@@ -1,8 +1,7 @@
 function renderLongestSeries() {
     console.log('🔍 Longest Series Loading...');
-    fetch(`/api/longest-streaks/${window.groupid}`)
-        .then(res => res.json())
-        .then(data => {
+    try {
+        const data = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
             const chart = document.getElementById('longestSeriesChart');
             chart.style.minHeight = '150px';
             chart.innerHTML = '';
@@ -228,7 +227,10 @@ function renderLongestSeries() {
                     }, 1100 + sortedIdx * 200);
                 });
             }
-        });
+        
+    } catch (e) {
+        console.error('Longest series yüklenirken hata:', e);
+    }
 }
 
 function formatDateParts(dateStr) {

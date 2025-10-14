@@ -51,11 +51,11 @@ function loadMonthlyCalendar() {
         // Clear existing options
         userSelector.innerHTML = '';
 
-        // Fetch users directly from the API
-        fetch(`/api/users/${window.groupid}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.users && Array.isArray(data.users)) {
+        // Global store'dan kullanıcıları al
+        try {
+            const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [] };
+            const data = { users: allData.users };
+            if (data.users && Array.isArray(data.users)) {
                     // Sort users alphabetically
                     data.users.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -89,10 +89,9 @@ function loadMonthlyCalendar() {
                     // Generate calendar with the selected user
                     generateCalendar(currentMonth, currentYear);
                 }
-            })
-            .catch(error => {
-                console.error('Error fetching users:', error);
-            });
+        } catch (error) {
+            console.error('Error loading users from store:', error);
+        }
     }
 
     // Call this function after the main table is loaded
@@ -184,48 +183,35 @@ function loadMonthlyCalendar() {
 
         // If a user is selected, fetch their reading data
         if (selectedUser) {
-            // Fetch all data including user stats
-            fetch(`/api/all-data/${window.groupid}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Find the user by name
-                    const user = (data.users || []).find(u => u.name === selectedUser);
-                    if (!user) return;
+            try {
+                const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
+                const user = (allData.users || []).find(u => u.name === selectedUser);
+                if (!user) return;
 
-                    // Filter stats for this user and month
-                    const userStats = data.stats.filter(s => {
-                        if (s.userId !== user._id) return false;
-
-                        // Check if the date is in the current month/year
-                        const dateParts = s.date.split('-');
-                        const statYear = parseInt(dateParts[0]);
-                        const statMonth = parseInt(dateParts[1]) - 1; // Convert to 0-based month
-
-                        return statYear === year && statMonth === month;
-                    });
-
-                    // Now clear the calendar and remove loading indicator
-                    calendarBody.innerHTML = '';
-                    const loadingElement = calendarContainer.querySelector('.calendar-loading');
-                    if (loadingElement) {
-                        loadingElement.remove();
-                    }
-
-                    // Render calendar with the filtered stats
-                    renderCalendarWithData(rows, firstDay, daysInMonth, daysInPrevMonth, todayDate, todayMonth, todayYear, userStats);
-                })
-                .catch(error => {
-                    console.error('Error fetching user data:', error);
-
-                    // Clear the calendar and remove loading indicator even on error
-                    calendarBody.innerHTML = '';
-                    const loadingElement = calendarContainer.querySelector('.calendar-loading');
-                    if (loadingElement) {
-                        loadingElement.remove();
-                    }
-
-                    renderCalendarWithData(rows, firstDay, daysInMonth, daysInPrevMonth, todayDate, todayMonth, todayYear, []);
+                const userStats = (allData.stats || []).filter(s => {
+                    if (s.userId !== user._id) return false;
+                    const dateParts = s.date.split('-');
+                    const statYear = parseInt(dateParts[0]);
+                    const statMonth = parseInt(dateParts[1]) - 1;
+                    return statYear === year && statMonth === month;
                 });
+
+                calendarBody.innerHTML = '';
+                const loadingElement = calendarContainer.querySelector('.calendar-loading');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+
+                renderCalendarWithData(rows, firstDay, daysInMonth, daysInPrevMonth, todayDate, todayMonth, todayYear, userStats);
+            } catch (error) {
+                console.error('Error loading monthly data from store:', error);
+                calendarBody.innerHTML = '';
+                const loadingElement = calendarContainer.querySelector('.calendar-loading');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+                renderCalendarWithData(rows, firstDay, daysInMonth, daysInPrevMonth, todayDate, todayMonth, todayYear, []);
+            }
         } else {
             // No user selected, clear and render empty calendar
             calendarBody.innerHTML = '';
@@ -418,6 +404,14 @@ function loadMonthlyCalendar() {
                 })
                 .then(response => {
                     if (response && response.ok) {
+                        // Global store'u da güncelle
+                        try {
+                            if (window.globalDataStore) {
+                                window.globalDataStore.applyLocalUpdate(userInfo.userId, dateStr, newStatus);
+                            }
+                        } catch (e) {
+                            console.error('Global store senkronizasyon hatası:', e);
+                        }
                         // Veritabanı güncellemesi başarılı olduktan sonra diğer bileşenleri güncelle
                         if (window.loadTrackerTable) {
                             window.loadTrackerTable();
