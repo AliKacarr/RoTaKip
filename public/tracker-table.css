@@ -70,7 +70,8 @@
 
 /* Style the streak column header in the tracker table */
 #trackerTable tr th:last-child {
-    font-size: 20px;
+    font-size: 17px;
+    font-weight: 600;
     color: red;
 }
 
