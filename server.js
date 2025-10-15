@@ -46,23 +46,43 @@ async function generateMinifiedFiles() {
   const indexCssFiles = ['index.css'];
   const indexJsFiles = ['index.js'];
   
-  // Groups.html için CSS dosyaları
+  // Groups.html için CSS dosyaları - öncelik sırasına göre
   const groupsCssFiles = [
-    'style.css', 'admin-modal.css', 'cookies.css', 'tracker-table.css',
-    'stats-section.css', 'monthly.css', 'videos.css', 'main-area.css',
-    'footer.css', 'preferences.css', 'quote.css', 'longest-series.css',
-    'user-cards.css', 'articles.css', 'profile-modal.css'
+    'style.css',           
+    'tracker-table.css',   
+    'user-cards.css',    
+    'admin-modal.css',   
+    'quote.css',          
+    'stats-section.css',   
+    'longest-series.css',  
+    'monthly.css',           
+    'videos.css',          
+    'main-area.css',        
+    'preferences.css',         
+    'articles.css',   
+    'footer.css',           
+    'profile-modal.css',     
+    'cookies.css'          
   ];
   
-  // Groups.html için JS dosyaları
+
   const groupsJsFiles = [
-    'share-quote.js', 'admin-modal.js', 'cookies.js', 'preferences.js',
-    'user-cards.js', 'tracker-table.js', 'script.js', 'stats-section.js',
-    'monthly.js', 'quete.js', 'videos.js', 'main-area.js',
-    'longest-series.js', 'articles.js'
+    'script.js',           
+    'tracker-table.js',    
+    'user-cards.js',           
+    'admin-modal.js',  
+    'longest-series.js',  
+    'stats-section.js',     
+    'monthly.js',          
+    'quete.js',            
+    'videos.js',           
+    'main-area.js',        
+    'preferences.js',      
+    'articles.js',         
+    'share-quote.js',      
+    'cookies.js'           
   ];
   
-  // Dosya varlık kontrolü
   const validIndexCssFiles = indexCssFiles
     .map(f => path.join(publicPath, f))
     .filter(fileExists);

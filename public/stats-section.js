@@ -145,11 +145,11 @@ async function loadReadingStats() {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Gün Sayısı',
+                            text: 'Toplam Okuma Yüzdesi',
                             color: '#000000',
                             font: {
                                 weight: 'bold',
-                                size: 16
+                                size: 16  //Okuma yüzdesi için
                             },
                             padding: {
                                 top: 18
@@ -182,7 +182,7 @@ async function loadReadingStats() {
                         ticks: {
                             color: '#000000',
                             font: {
-                                size: 17
+                                size: 18  //Kullanıcı isimleri için
                             },
                             callback: function (value) {
                                 const label = this.getLabelForValue(value);
@@ -214,7 +214,7 @@ async function loadReadingStats() {
                             color: '#000000',
                             font: {
                                 weight: 'bold',
-                                size: 15
+                                size: 16 //Okudum Okumadım yazısı için
                             }
                         }
                     },
@@ -248,7 +248,7 @@ async function loadReadingStats() {
                         borderRadius: 4,
                         font: {
                             weight: 'bold',
-                            size: 15
+                            size: 15   //Okuma yüzdesi için
                         },
                         padding: {
                             top: 4,
