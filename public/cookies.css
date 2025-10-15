@@ -1,8 +1,8 @@
 .cookie-consent-banner {
     position: fixed;
-    bottom: 25px;
-    left: 25px;
-    max-width: 440px;
+    bottom: 35px;
+    left: 40px;
+    max-width: 450px;
     min-width: 300px;
     background-color: #ffffff;
     box-shadow: 1px 4px 16px rgba(0, 0, 0, 0.30);
@@ -23,7 +23,7 @@
 }
 
 .cookie-icon {
-    font-size: 1.8em;
+    font-size: 30px;
     margin-right: 13px;
 }
 
@@ -32,28 +32,28 @@
     padding: 0;
     border: none;
     color: #333;
-    font-size: 1.25em;
+    font-size: 22px !important;
 }
 
 .cookie-content p {
     margin: 0 0 17px 0;
-    font-size: 1.05em;
+    font-size: 18px;
     line-height: 1.55;
     color: #555;
 }
 
 .cookie-buttons {
     display: flex;
-    gap: 14px;
+    gap: 15px;
     justify-content: flex-end;
-    margin-top: 14px;
+    margin-top: 15px;
 }
 
 .cookie-button {
-    padding: 10px 22px;
+    padding: 12px 24px;
     border: none;
     border-radius: 6px;
-    font-size: 1.05em;
+    font-size: 17px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;

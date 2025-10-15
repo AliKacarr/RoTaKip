@@ -1,12 +1,12 @@
 /* Haftalık Tablo */
 .table-area {
     flex: 3;
-    min-width: 600px;
     overflow-x: auto;
     padding: 15px;
     margin-bottom: 20px;
     position: relative;
 }
+
 /* Week loading overlay */
 .week-loading-overlay {
     position: absolute;
