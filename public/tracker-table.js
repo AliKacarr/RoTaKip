@@ -216,6 +216,16 @@ async function loadTrackerTable() {
             if (status === 'okudum') symbol = '✔';
             else if (status === 'okumadım') symbol = '✖';
             let className = '';
+            
+            // Bugünden sonraki tarihler için • ikonu ve disabled sınıfı
+            const currentDate = new Date();
+            const todayString = currentDate.toISOString().split('T')[0];
+            const isFutureDate = date > todayString;
+            
+            if (isFutureDate) {
+                symbol = '•';
+                className += ' future-date';
+            }
             if (status === 'okudum') {
                 className = 'green';
             } else if (status === 'okumadım') {
@@ -231,7 +241,8 @@ async function loadTrackerTable() {
             if (date === todayString) {
                 className += ' today-column';
             }
-            row += `<td class="${className}" onclick="toggleStatus('${user._id}', '${date}')">${symbol}</td>`;
+            const onclickAttr = isFutureDate ? '' : `onclick="toggleStatus('${user._id}', '${date}')"`;
+            row += `<td class="${className}" ${onclickAttr}>${symbol}</td>`;
         }
         const streak = calculateStreak(userStats);
         row += `<td>${streak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${streak}` : '-'}</td>`;

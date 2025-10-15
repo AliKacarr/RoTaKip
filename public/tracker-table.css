@@ -434,4 +434,16 @@ th.today-column {
     box-shadow: 0 0 0 2px #28a745, 0 4px 16px rgba(40, 167, 69, 0.4);
 }
 
+/* Gelecek tarihler için devre dışı görünüm */
+.future-date {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+}
+
+.future-date:hover {
+    background-color: #f8f9fa !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
 
