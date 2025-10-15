@@ -7,7 +7,7 @@
     background-color: #ffffff;
     box-shadow: 1px 4px 16px rgba(0, 0, 0, 0.30);
     border-radius: 14px;
-    z-index: 80;
+    z-index: 102;
     display: none;
     animation: slideIn 0.5s forwards;
 }

@@ -383,7 +383,7 @@
     justify-content: center;
     box-shadow: 0 4px 12px rgba(78, 84, 200, 0.3);
     transition: opacity 0.3s ease;
-    z-index: 1000;
+    z-index: 101;
     opacity: 0;
 }
   
