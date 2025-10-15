@@ -237,6 +237,9 @@ async function loadTrackerTable() {
                 } else if (streakLength >= 3) {
                     className = 'red';
                 }
+            } else if (!isFutureDate) {
+                // Bugün ve öncesi için boş hücreler empty sınıfına sahip olsun
+                className += ' empty';
             }
             if (date === todayString) {
                 className += ' today-column';
@@ -472,7 +475,7 @@ async function toggleStatus(userId, date) {
             const cellStatus = userStatsMap[cellDate];
             
             // Eski sınıfları temizle
-            dateCell.classList.remove('green', 'pink', 'lila', 'red');
+            dateCell.classList.remove('green', 'pink', 'lila', 'red', 'empty');
             
             // Yeni sınıfı belirle
             if (cellStatus === 'okudum') {
@@ -486,6 +489,9 @@ async function toggleStatus(userId, date) {
                 } else if (streakLength >= 3) {
                     dateCell.classList.add('red');
                 }
+            } else {
+                // Boş hücreler için empty sınıfı
+                dateCell.classList.add('empty');
             }
             
             // Bugün sınıfını koru

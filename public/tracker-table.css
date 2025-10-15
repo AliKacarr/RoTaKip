@@ -61,10 +61,10 @@
 
 #trackerTable td:last-child {
     font-size: 21px;
-    color: red;
+    color: #ff1717;
     font-weight: bold;
     border: 1px solid #ccc;
-    background: #f7f7f7;
+    background: #f5f5f5;
     white-space: nowrap;
 }
 
@@ -164,15 +164,27 @@
     /* Slightly darker red-orange on hover */
 }
 
-td:hover:not(.status-cell) {
-    background-color: #e0f7fa;
-    cursor: pointer;
+/* Gelecek tarihler için devre dışı görünüm */
+.future-date {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
 }
 
-td:not(.green):not(.pink):not(.lila):not(.red):hover {
-    background-color: #e0f7fa;
-    cursor: pointer;
+.future-date:hover {
+    background-color: #f8f9fa !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
+
+/* Boş hücreler için stil */
+.empty {
+    background-color: #f8f9fa;
+}
+
+.empty:hover {
+    background-color: rgb(233, 236, 239);
+}
+
 
 #trackerTable th {
     background-color: #f0f0f0;
@@ -193,6 +205,7 @@ td:not(.green):not(.pink):not(.lila):not(.red):hover {
     padding: 10px;
     text-align: center;
     font-size: 16px;
+    cursor: pointer;
     transition: background-color 0.2s ease;
     user-select: none;
     -webkit-user-select: none;
@@ -427,23 +440,12 @@ th.today-column {
 
 /* Bugünün sütunundan sonrası için varsayılan renk */
 .user-row.current-user-row td:not(.today-column, .green, .pink, .lila, .red) {
-    background-color: aliceblue;
+    background-color: #f0f4f8;
 }
 
 .user-row.current-user-row:hover {
     box-shadow: 0 0 0 2px #28a745, 0 4px 16px rgba(40, 167, 69, 0.4);
 }
 
-/* Gelecek tarihler için devre dışı görünüm */
-.future-date {
-    background-color: #f8f9fa !important;
-    color: #6c757d !important;
-}
-
-.future-date:hover {
-    background-color: #f8f9fa !important;
-    transform: none !important;
-    box-shadow: none !important;
-}
 
 
