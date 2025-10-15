@@ -172,12 +172,32 @@ app.use(express.static(path.join(__dirname, 'public'), {
   lastModified: true,
   maxAge: '3d' // 3 gün cache
 }));
-app.use('/images', express.static('uploads', {
+app.use('/uploads', express.static('public/uploads', {
   etag: true,
   lastModified: true,
   maxAge: '3d'
 }));
-app.use('/groupAvatars', express.static('groupAvatars', {
+app.use('/images', express.static('public/images', {
+  etag: true,
+  lastModified: true,
+  maxAge: '3d'
+}));
+app.use('/groupAvatars', express.static('public/groupAvatars', {
+  etag: true,
+  lastModified: true,
+  maxAge: '3d'
+}));
+app.use('/groupImages', express.static('public/groupImages', {
+  etag: true,
+  lastModified: true,
+  maxAge: '3d'
+}));
+app.use('/userAvatars', express.static('public/userAvatars', {
+  etag: true,
+  lastModified: true,
+  maxAge: '3d'
+}));
+app.use('/quotes', express.static('public/quotes', {
   etag: true,
   lastModified: true,
   maxAge: '3d'
@@ -560,7 +580,7 @@ async function deleteGroupImageFromDropboxByUrl(fileUrl) {
 // Multer konfigürasyonları
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const dir = 'uploads';
+    const dir = 'public/uploads';
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir);
     }
@@ -926,12 +946,12 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
       
       // 1. Adım: Geçici klasöre kaydet (orijinal format)
       const tempFileName = `${Date.now()}-${originalFileName}`;
-      const tempPath = path.join(__dirname, 'uploads', tempFileName);
+      const tempPath = path.join(__dirname, 'public', 'uploads', tempFileName);
       fs.copyFileSync(req.file.path, tempPath);
       
       // 2. Adım: WebP formatına dönüştür
       const webpFileName = `${Date.now()}-${baseFileName}.webp`;
-      const webpPath = path.join(__dirname, 'uploads', webpFileName);
+      const webpPath = path.join(__dirname, 'public', 'uploads', webpFileName);
       const conversionSuccess = await convertToWebP(tempPath, webpPath);
       
       if (conversionSuccess) {
@@ -1035,7 +1055,7 @@ app.post('/api/remove-group-image/:groupId', async (req, res) => {
 // Hazır avatar listesi endpoint'i
 app.get('/api/group-avatars', (req, res) => {
   try {
-    const avatarDir = path.join(__dirname, 'groupAvatars');
+    const avatarDir = path.join(__dirname, 'public', 'groupAvatars');
     
     if (!fs.existsSync(avatarDir)) {
       return res.json([]);
@@ -1281,12 +1301,12 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
         const baseFileName = path.parse(normalizedFileName).name;
         
         const tempFileName = `${Date.now()}-${normalizedFileName}`;
-        const tempPath = path.join(__dirname, 'uploads', tempFileName);
+        const tempPath = path.join(__dirname, 'public', 'uploads', tempFileName);
         fs.copyFileSync(req.file.path, tempPath);
         
         // 2. Adım: WebP formatına dönüştür
         const webpFileName = `${Date.now()}-${baseFileName}.webp`;
-        const webpPath = path.join(__dirname, 'uploads', webpFileName);
+        const webpPath = path.join(__dirname, 'public', 'uploads', webpFileName);
         const conversionSuccess = await convertToWebP(tempPath, webpPath);
         
         if (conversionSuccess) {
@@ -1371,7 +1391,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     // 5. Adım: Dropbox'a yükle (arka planda) - sadece dosya yüklendiyse
     if (fileName && user && !selectedAvatarPath) {
       try {
-        const localPath = path.join(__dirname, 'uploads', fileName);
+        const localPath = path.join(__dirname, 'public', 'uploads', fileName);
         const fileBuffer = fs.readFileSync(localPath);
         const dropboxFileName = fileName; // Zaten WebP formatında
         const newImageUrl = await uploadToDropbox(fileBuffer, dropboxFileName, 'userImages');
@@ -1606,12 +1626,12 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
       const baseFileName = path.parse(normalizedFileName).name;
       
       const tempFileName = `${Date.now()}-${normalizedFileName}`;
-      const tempPath = path.join(__dirname, 'uploads', tempFileName);
+      const tempPath = path.join(__dirname, 'public', 'uploads', tempFileName);
       fs.copyFileSync(req.file.path, tempPath);
       
       // 2. Adım: WebP formatına dönüştür
       const webpFileName = `${Date.now()}-${baseFileName}.webp`;
-      const webpPath = path.join(__dirname, 'uploads', webpFileName);
+      const webpPath = path.join(__dirname, 'public', 'uploads', webpFileName);
       const conversionSuccess = await convertToWebP(tempPath, webpPath);
       
       let fileName;
@@ -1654,7 +1674,7 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
 
       // 4. Adım: Dropbox'a yükle (arka planda)
       try {
-        const localPath = path.join(__dirname, 'uploads', fileName);
+        const localPath = path.join(__dirname, 'public', 'uploads', fileName);
         const fileBuffer = fs.readFileSync(localPath);
         const dropboxFileName = fileName; // Zaten WebP formatında
         const newImageUrl = await uploadToDropbox(fileBuffer, dropboxFileName, 'userImages');
@@ -1696,7 +1716,7 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
         // Dropbox hatası kullanıcıyı etkilemez, yerel resim zaten çalışıyor
         // Yerel dosyayı silme - çünkü Dropbox'a yüklenemedi
         try {
-          const localPath = path.join(__dirname, 'uploads', fileName);
+          const localPath = path.join(__dirname, 'public', 'uploads', fileName);
           if (fs.existsSync(localPath)) {
             fs.unlinkSync(localPath);
             console.log('✅ Yerel dosya temizlendi (Dropbox hatası nedeniyle)');
@@ -2079,7 +2099,7 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
       
       // Dropbox'a yükle (arka planda)
       try {
-        const localPath = path.join(__dirname, 'uploads', profileImageFile.filename);
+        const localPath = path.join(__dirname, 'public', 'uploads', profileImageFile.filename);
         const fileBuffer = fs.readFileSync(localPath);
         const dropboxFileName = profileImageFile.filename;
         const newImageUrl = await uploadToDropbox(fileBuffer, dropboxFileName, 'userImages');
@@ -2118,7 +2138,7 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
         // Dropbox hatası kullanıcıyı etkilemez, yerel resim zaten çalışıyor
         // Yerel dosyayı silme - çünkü Dropbox'a yüklenemedi
         try {
-          const localPath = path.join(__dirname, 'uploads', profileImageFile.filename);
+          const localPath = path.join(__dirname, 'public', 'uploads', profileImageFile.filename);
           if (fs.existsSync(localPath)) {
             fs.unlinkSync(localPath);
             console.log('✅ Yerel dosya temizlendi (Dropbox hatası nedeniyle)');
@@ -2608,12 +2628,12 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
         const baseFileName = path.parse(normalizedFileName).name;
         
         const tempFileName = `${Date.now()}-${normalizedFileName}`;
-        const tempPath = path.join(__dirname, 'uploads', tempFileName);
+        const tempPath = path.join(__dirname, 'public', 'uploads', tempFileName);
         fs.copyFileSync(req.file.path, tempPath);
         
         // 2. Adım: WebP formatına dönüştür
         const webpFileName = `${Date.now()}-${baseFileName}.webp`;
-        const webpPath = path.join(__dirname, 'uploads', webpFileName);
+        const webpPath = path.join(__dirname, 'public', 'uploads', webpFileName);
         const conversionSuccess = await convertToWebP(tempPath, webpPath);
         
         if (conversionSuccess) {
@@ -2674,7 +2694,7 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
     // Arka planda Dropbox'a yükle (eğer resim varsa ve avatar seçilmediyse)
     if (fileName && !selectedAvatarPath) {
       try {
-        const localPath = path.join(__dirname, 'uploads', fileName);
+        const localPath = path.join(__dirname, 'public', 'uploads', fileName);
         const fileBuffer = fs.readFileSync(localPath);
         const dropboxFileName = fileName;
         const newImageUrl = await uploadToDropbox(fileBuffer, dropboxFileName, 'userImages');

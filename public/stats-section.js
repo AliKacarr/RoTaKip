@@ -145,7 +145,7 @@ async function loadReadingStats() {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Toplam Okuma Yüzdesi',
+                            text: 'Toplam Okuma Oranı',
                             color: '#000000',
                             font: {
                                 weight: 'bold',

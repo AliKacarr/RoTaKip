@@ -1312,7 +1312,7 @@ async function uploadProfileImage(file) {
             showToast('Profil resmi güncellendi!', 'success');
             
             // UI'ı güncelle
-            updateUIAfterProfileChange();
+            await updateUIAfterProfileChange();
         } else {
             // Loading efekti kaldır
             profileImagePreview.classList.remove('profile-image-loading');
@@ -1359,7 +1359,7 @@ async function removeProfileImage() {
                 showToast('Profil resmi silindi!', 'success');
                 
                 // UI'ı güncelle
-                updateUIAfterProfileChange();
+                await updateUIAfterProfileChange();
             } else {
                 profileImagePreview.classList.remove('profile-image-loading');
                 showToast('Profil resmi silinemedi!', 'error');
@@ -1427,6 +1427,30 @@ async function selectProfileAvatar(avatarPath) {
         const userInfo = LocalStorageManager.getCurrentUserInfo();
         if (!userInfo) return;
 
+        // Önce mevcut resmi Dropbox'tan sil (eğer Dropbox resmi ise)
+        const profileImagePreview = document.getElementById('profileImagePreview');
+        const currentImageSrc = profileImagePreview.src;
+        
+        if (currentImageSrc && currentImageSrc.includes('dropbox.com')) {
+            try {
+                await fetch('/api/remove-user-profile-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userInfo.userId,
+                        groupId: userInfo.groupId
+                    })
+                });
+                console.log('Eski resim Dropbox\'tan silindi');
+            } catch (deleteError) {
+                console.error('Eski resim silme hatası:', deleteError);
+                // Silme hatası olsa bile devam et
+            }
+        }
+
+        // Avatar'ı güncelle
         const response = await fetch('/api/update-user-avatar', {
             method: 'POST',
             headers: {
@@ -1439,18 +1463,18 @@ async function selectProfileAvatar(avatarPath) {
             })
         });
 
-                const data = await response.json();
-                if (data.success) {
-                    // Profil resmini güncelle
-                    document.getElementById('profileImagePreview').src = avatarPath;
-                    closeProfileAvatarModal();
-                    showToast('Avatar seçildi!', 'success');
-                    
-                    // UI'ı güncelle
-                    updateUIAfterProfileChange();
-                } else {
-                    showToast('Avatar seçilemedi!', 'error');
-                }
+        const data = await response.json();
+        if (data.success) {
+            // Profil resmini güncelle
+            profileImagePreview.src = avatarPath;
+            closeProfileAvatarModal();
+            showToast('Avatar seçildi!', 'success');
+            
+            // API başarılı olduktan sonra UI'ı güncelle
+            await updateUIAfterProfileChange();
+        } else {
+            showToast('Avatar seçilemedi!', 'error');
+        }
     } catch (error) {
         console.error('Avatar seçilirken hata:', error);
         showToast('Avatar seçilirken hata oluştu!', 'error');
@@ -1662,21 +1686,12 @@ document.addEventListener('click', function(event) {
 });
 
 // Profil değişikliği sonrası UI güncelleme
-function updateUIAfterProfileChange() {
-    // Tracker table'ı güncelle
-    if (typeof loadTrackerTable === 'function') {
-        loadTrackerTable();
-    }
+async function updateUIAfterProfileChange() {
+    // Kısa bir gecikme ekle (veritabanı güncellemesi için)
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // User cards'ı güncelle
-    if (typeof loadUserCards === 'function') {
-        loadUserCards();
-    }
-    
-    // Admin ise user list'i güncelle
-    if (LocalStorageManager.isAdmin() && typeof renderUserList === 'function') {
-        renderUserList();
-    }
+    // Sayfayı yeniden yükle - en garantili çözüm
+    window.location.reload();
 }
 
 // Toast mesajı fonksiyonu
