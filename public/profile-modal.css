@@ -327,11 +327,13 @@ to {
   background: white;
   position: relative;
   border-radius: 15px;
-  width: 90%;
-  max-width: 500px;
+  width: 500px;
+  max-height: 90vh;
+  max-width: 90vw;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: profileModalSlideIn 0.3s ease-out;
   overflow: hidden;
+  scale: 1.2;
 }
 
 .profile-avatar-modal-header {

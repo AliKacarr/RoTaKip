@@ -1659,6 +1659,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Add user avatar modal dışına tıklandığında kapat
+    const addUserAvatarModal = document.getElementById('addUserAvatarModal');
+    if (addUserAvatarModal) {
+        addUserAvatarModal.addEventListener('click', function(e) {
+            if (e.target === addUserAvatarModal) {
+                toggleAddUserAvatarModal();
+            }
+        });
+    }
+    
     // ESC tuşu ile modal'ı kapat
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -1846,9 +1856,12 @@ function showNotification(message, type = 'info') {
 // Add User Avatar Modal Functions
 function toggleAddUserAvatarModal() {
     const modal = document.getElementById('addUserAvatarModal');
-    if (modal) {
-        modal.classList.toggle('show');
-        // Avatar'lar önceden yüklendiği için tekrar yüklemeye gerek yok
+    if (modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    } else {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
     }
 }
 

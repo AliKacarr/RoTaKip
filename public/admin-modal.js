@@ -1615,7 +1615,9 @@ async function deleteAccount() {
                     // Ayarlar panelini kapat
                     closeProfileSettingsModal();
                     // Çıkış yap
-                    logoutFromProfile();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
                 } else {
                     showToast('Hesap silinemedi!', 'error');
                 }
@@ -1630,7 +1632,7 @@ async function deleteAccount() {
 function logoutFromProfile() {
             // Yeni sistem ile çıkış yap
             LocalStorageManager.logoutUser();
-    closeProfileModal();
+            closeProfileModal();
 
             const adminIndicator = document.querySelector('.admin-indicator');
             const mainArea = document.querySelector('.main-area');
