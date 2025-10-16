@@ -77,11 +77,22 @@ function getWeekDates(offset = 0) {
     const today = new Date();
     today.setHours(today.getHours());
     const dayOfWeek = today.getDay();
-    let daysToFirstDay;
-    if (dayOfWeek >= firstDayOfWeek) {
-        daysToFirstDay = dayOfWeek - firstDayOfWeek;
+    
+    let actualFirstDay;
+    if (firstDayOfWeek === 'default') {
+        // Varsayılan: Bugünden sonraki gün haftanın ilk günü olsun
+        // JavaScript'te 0=Pazar, 1=Pazartesi... bizim sistemde 0=Pazar, 1=Pazartesi...
+        actualFirstDay = (dayOfWeek + 1) % 7;
     } else {
-        daysToFirstDay = 7 - (firstDayOfWeek - dayOfWeek);
+        // Özel gün seçildiğinde direkt kullan (0=Pazar, 1=Pazartesi, 2=Salı...)
+        actualFirstDay = firstDayOfWeek;
+    }
+    
+    let daysToFirstDay;
+    if (dayOfWeek >= actualFirstDay) {
+        daysToFirstDay = dayOfWeek - actualFirstDay;
+    } else {
+        daysToFirstDay = 7 - (actualFirstDay - dayOfWeek);
     }
     const currentWeekStart = new Date(today);
     currentWeekStart.setDate(today.getDate() - daysToFirstDay);

@@ -275,6 +275,7 @@ async function initializeAuthSystem() {
 
     if (typeof showAdminIndicator === 'function') {
       showAdminIndicator();
+      console.log('Admin indicator gösterildi1');
     }
     
     return true;
@@ -505,7 +506,6 @@ async function updatePageTitle() {
 // Ana DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', async function () {
   try {
-    const inviteParams = getInviteParams();
     
     // Admin sayfaları için özel kontrol
     const currentPath = window.location.pathname;
@@ -799,6 +799,7 @@ async function checkAutoLoginForGroups() {
     // Admin indicator'ı göster
     if (typeof showAdminIndicator === 'function') {
       showAdminIndicator();
+      console.log('Admin indicator gösterildi2');
     }
 
   } catch (error) {
@@ -820,11 +821,11 @@ if (window.location.pathname.includes('groupid=')) {
 // Eğer firstDayOfWeek değişkeni yoksa, localStorage'dan oku veya varsayılanı belirle
 if (typeof window.firstDayOfWeek === 'undefined') {
   const savedFirstDay = localStorage.getItem('firstDayOfWeek');
-  if (savedFirstDay !== null) {
+  if (savedFirstDay !== null && savedFirstDay !== 'default') {
     window.firstDayOfWeek = parseInt(savedFirstDay);
   } else {
-    window.firstDayOfWeek = 1; // Pazartesi varsayılan
-    localStorage.setItem('firstDayOfWeek', 1);
+    window.firstDayOfWeek = 'default'; // Varsayılan seçenek
+    localStorage.setItem('firstDayOfWeek', 'default');
   }
 }
 

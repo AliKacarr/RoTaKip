@@ -3131,20 +3131,17 @@ async function performBackup() {
     // Backup usergroups collection
     const usergroups = await sourceDb.collection('usergroups').find({}).toArray();
     const usergroupsCollectionName = `usergroups_backup_${timestamp}`;
-    await backupDb.collection(usergroupsCollectionName).insertMany(usergroups);
-
-    // Backup admins collection
-    const admins = await sourceDb.collection('admins').find({}).toArray();
-    const adminsCollectionName = `admins_backup_${timestamp}`;
-    await backupDb.collection(adminsCollectionName).insertMany(admins);
+    if (usergroups.length > 0) {
+        await backupDb.collection(usergroupsCollectionName).insertMany(usergroups);
+        console.log(`✅ Usergroups backed up to collection: ${usergroupsCollectionName}`);
+    } else {
+        console.log(`ℹ️ No usergroups data to backup`);
+    }
 
     console.log(`Backup completed at ${now.toLocaleString()}`);
-    console.log(`Usergroups backed up to collection: ${usergroupsCollectionName}`);
-    console.log(`Admins backed up to collection: ${adminsCollectionName}`);
 
     // Clean up old backups
     await cleanupOldBackups(backupDb, 'usergroups_backup_', 10);
-    await cleanupOldBackups(backupDb, 'admins_backup_', 10);
 
 
   } catch (err) {

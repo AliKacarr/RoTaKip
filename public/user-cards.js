@@ -81,19 +81,33 @@ async function loadUserCards() {
 
   // Haftanın günleri
   function getDaysOrderedByFirstDay(firstDayOfWeek) {
-    // 0: Pazar, 1: Pazartesi, ..., 6: Cumartesi
+    // 1: Pazartesi, 2: Salı, ..., 6: Cumartesi, 0: Pazar
     const allDays = [
-      { key: 'P', label: 'Pazar' },
-      { key: 'P', label: 'Pazartesi' },
-      { key: 'S', label: 'Salı' },
-      { key: 'Ç', label: 'Çarşamba' },
-      { key: 'P', label: 'Perşembe' },
-      { key: 'C', label: 'Cuma' },
-      { key: 'C', label: 'Cumartesi' }
+      { key: 'P', label: 'Pazar' },      // 0
+      { key: 'P', label: 'Pazartesi' },  // 1
+      { key: 'S', label: 'Salı' },       // 2
+      { key: 'Ç', label: 'Çarşamba' },   // 3
+      { key: 'P', label: 'Perşembe' },    // 4
+      { key: 'C', label: 'Cuma' },       // 5
+      { key: 'C', label: 'Cumartesi' }   // 6
     ];
+    
+    let actualFirstDay;
+    if (firstDayOfWeek === 'default') {
+      // Varsayılan: Bugünden sonraki gün haftanın ilk günü olsun
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      // JavaScript'te 0=Pazar, 1=Pazartesi... ama bizim sistemde 1=Pazartesi
+      // Bu yüzden dönüşüm yapmamız gerekiyor
+      const jsToOurSystem = (dayOfWeek + 6) % 7; // Pazar(0)->6, Pazartesi(1)->0, Salı(2)->1...
+      actualFirstDay = (jsToOurSystem + 1) % 7;
+    } else {
+      actualFirstDay = firstDayOfWeek;
+    }
+    
     const ordered = [];
     for (let i = 0; i < 7; i++) {
-      ordered.push(allDays[(firstDayOfWeek + i) % 7]);
+      ordered.push(allDays[(actualFirstDay + i) % 7]);
     }
     return ordered;
   }

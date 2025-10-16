@@ -3,7 +3,7 @@ let isJoinRequestSuccess = false;
 
 async function showAdminIndicator() {     //admin modu butonunu gösterme
     // Check if user is logged in and valid
-    console.log('showAdminIndicator');
+    console.log('show');
     if (!LocalStorageManager.isUserLoggedIn()) {
         return;
     }
@@ -111,11 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Forgot password modal elements
     const closeGroupsAuthForgotModal = document.getElementById('closeGroupsAuthForgotModal');
 
-    // Check if already authenticated
-    if (LocalStorageManager.isUserLoggedIn()) {
-        showAdminIndicator();
-    }
-
     // Admin login button click handler
     adminLogin.addEventListener('click', async function () {
         // Check if already authenticated
@@ -124,8 +119,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             hideInfoMessage(); // Normal giriş için bilgilendirme mesajını gizle
             showModal(groupsAuthLoginModal);
-            // Oturum bilgisi değişirse adminIndicator'ı tekrar kontrol et
-            setTimeout(() => { if (typeof showAdminIndicator === 'function') showAdminIndicator(); }, 0);
         }
     });
 
@@ -852,6 +845,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     
                     if (typeof showAdminIndicator === 'function') {
                         showAdminIndicator();
+                        console.log('Admin indicator gösterildi4');
                     }
 
                     // Reload data
@@ -1084,6 +1078,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // adminIndicator güncelle
                 if (typeof showAdminIndicator === 'function') {
                     showAdminIndicator();
+                    console.log('Admin indicator gösterildi3');
                 }
 
                 // Profil butonunu güncelle
