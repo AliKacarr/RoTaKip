@@ -275,7 +275,6 @@ async function initializeAuthSystem() {
 
     if (typeof showAdminIndicator === 'function') {
       showAdminIndicator();
-      console.log('Admin indicator gösterildi1');
     }
     
     return true;
@@ -732,87 +731,6 @@ window.addEventListener('popstate', function() {
 window.isPrivateGroupAccessModal = false;
 
 
-// ============================================================================
-// GROUPS.HTML SAYFASI İÇİN OTOMATİK GİRİŞ KONTROLÜ
-// ============================================================================
-
-// Groups.html sayfası için otomatik giriş kontrolü
-async function checkAutoLoginForGroups() {
-  
-  // Admin sayfaları için otomatik giriş kontrolü yapma
-  const currentPath = window.location.pathname;
-  if (currentPath === '/login-logs.html' || currentPath === '/admin-logs.html') {
-    return;
-  }
-  
-  const groupid = getGroupIdFromUrl();
-  if (!groupid) {
-    return;
-  }
-
-  // Groups objesinde bu grup var mı kontrol et
-  const groups = LocalStorageManager.getGroups();
-  const userId = groups[groupid];
-  
-  if (!userId) {
-    return;
-  }
-
-  try {
-    // Kullanıcının hala bu grupta olup olmadığını kontrol et
-    const response = await fetch(`/api/users/${groupid}`);
-    if (!response.ok) {
-      return;
-    }
-
-    const data = await response.json();
-    const user = data.users.find(u => u._id === userId);
-    
-    if (!user) {
-      LocalStorageManager.removeUserFromGroup(groupid);
-      return;
-    }
-
-    // Kullanıcı bilgilerini otomatik olarak yükle
-    const groupResponse = await fetch(`/api/group/${groupid}`);
-    if (!groupResponse.ok) {
-      return;
-    }
-
-    const groupData = await groupResponse.json();
-    
-    // Kullanıcı bilgilerini localStorage'a kaydet
-    LocalStorageManager.loginUser(
-      groupid,
-      userId,
-      user.authority,
-      user.username,
-      groupData.group.groupName,
-      user.name
-    );
-
-    // Profil butonunu güncelle
-    if (typeof window.updateProfileButton === 'function') {
-      window.updateProfileButton();
-    }
-
-    // Admin indicator'ı göster
-    if (typeof showAdminIndicator === 'function') {
-      showAdminIndicator();
-      console.log('Admin indicator gösterildi2');
-    }
-
-  } catch (error) {
-    console.error('Otomatik giriş kontrolü hatası:', error);
-  }
-}
-
-// Groups.html sayfası yüklendiğinde otomatik giriş kontrolü yap
-if (window.location.pathname.includes('groupid=')) {
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(checkAutoLoginForGroups, 100);
-  });
-}
 
 // ============================================================================
 // YARDIMCI FONKSİYONLAR

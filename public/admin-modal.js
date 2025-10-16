@@ -845,7 +845,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     
                     if (typeof showAdminIndicator === 'function') {
                         showAdminIndicator();
-                        console.log('Admin indicator gösterildi4');
                     }
 
                     // Reload data
@@ -1078,7 +1077,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 // adminIndicator güncelle
                 if (typeof showAdminIndicator === 'function') {
                     showAdminIndicator();
-                    console.log('Admin indicator gösterildi3');
                 }
 
                 // Profil butonunu güncelle
