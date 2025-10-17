@@ -496,10 +496,15 @@ ul#userList li span {
 .add-user-input-profile-image {
     width: 38px;
     height: 38px;
+    cursor: pointer;
     border-radius: 50%;
     object-fit: cover;
     border: 1px solid #b0b0b0;
     transition: all 0.3s ease;
+}
+
+.add-user-input-profile-image:hover {
+    border: 1px solid #3498db;
 }
 
 #newUserInput {

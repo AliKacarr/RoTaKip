@@ -80,7 +80,8 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
             formData.append('selectedAvatarPath', selectedAddUserAvatarPath);
         }
 
-        // Kullanıcıyı ekle (yeni sistem: önce yerel, sonra Dropbox)
+        // Kullanıcıyı ekle (yeni sistem: önce uploads klasörüne, sonra Dropbox)
+        formData.append('useTempFolder', 'true'); // uploads klasörünü kullan
         const response = await fetch(`/api/add-user/${window.groupid}`, {
             method: 'POST',
             body: formData
@@ -111,6 +112,16 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
         
         // Avatar seçimini sıfırla
         selectedAddUserAvatarPath = null;
+
+        // GlobalDataStore'u güncelle
+        if (window.globalDataStore) {
+            // Yeni kullanıcıyı users array'ine ekle
+            window.globalDataStore.users.push(result.user);
+            // Index'leri yeniden oluştur
+            window.globalDataStore._rebuildIndexes();
+            // En uzun serileri yeniden hesapla
+            await window.globalDataStore._buildLongestStreaks();
+        }
 
         // UI'ı güncelle (yerel resim ile başlar, Dropbox yüklemesi arka planda olur)
         if (LocalStorageManager.isAdmin()) {
@@ -200,6 +211,18 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
                 }, 1500);
                 return;
             }
+
+            // GlobalDataStore'u güncelle
+            if (window.globalDataStore) {
+                // Kullanıcıyı users array'inden kaldır
+                window.globalDataStore.users = window.globalDataStore.users.filter(u => u._id !== id);
+                // Kullanıcının tüm istatistiklerini kaldır
+                window.globalDataStore.stats = window.globalDataStore.stats.filter(s => s.userId !== id);
+                // Index'leri yeniden oluştur
+                window.globalDataStore._rebuildIndexes();
+                // En uzun serileri yeniden hesapla
+                await window.globalDataStore._buildLongestStreaks();
+            }
             
             if (LocalStorageManager.isAdmin()) {
                 renderUserList();
@@ -287,6 +310,17 @@ async function saveUserName(userId) {   //Kullanıcı adını güncelleme fonksi
 
         // Update the name span with new name
         nameSpan.textContent = newName;
+
+        // GlobalDataStore'u güncelle
+        if (window.globalDataStore) {
+            // Kullanıcı adını güncelle
+            const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (userIndex !== -1) {
+                window.globalDataStore.users[userIndex].name = newName;
+                // Index'leri yeniden oluştur
+                window.globalDataStore._rebuildIndexes();
+            }
+        }
 
         // Profile image'ı normal haline döndür
         const profileImage = userItem.querySelector('.user-profile-image');
@@ -425,10 +459,11 @@ function changeUserImage(userId) {     //Kullanıcı resmi değiştirme fonksiyo
                 }
             }
 
-            // Resim güncelleme (yeni sistem: önce yerel, sonra Dropbox)
+            // Resim güncelleme (yeni sistem: önce uploads klasörüne, sonra Dropbox)
             const formData = new FormData();
             formData.append('userId', userId);
             formData.append('profileImage', file);
+            formData.append('useTempFolder', 'true'); // uploads klasörünü kullan
 
             try {
                 const response = await fetch(`/api/update-user-image/${window.groupid}`, {
@@ -442,11 +477,21 @@ function changeUserImage(userId) {     //Kullanıcı resmi değiştirme fonksiyo
 
                 const result = await response.json();
                 
+                // GlobalDataStore'u güncelle
+                if (window.globalDataStore) {
+                    // Kullanıcının profil resmini güncelle
+                    const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+                    if (userIndex !== -1) {
+                        window.globalDataStore.users[userIndex].profileImage = result.imageUrl;
+                        // Index'leri yeniden oluştur
+                        window.globalDataStore._rebuildIndexes();
+                        console.log(result.imageUrl);
+                    }
+                }
+                showSuccessMessage('Kullanıcı resmi başarıyla güncellendi!');
                 // Diğer bileşenleri güncelle (yerel resim ile başlar, Dropbox yüklemesi arka planda olur)
                 loadTrackerTable();
                 loadUserCards();
-                loadReadingStats();
-                renderLongestSeries();
 
             } catch (error) {
                 console.error('Resim güncelleme hatası:', error);
@@ -537,6 +582,16 @@ if (inputProfileImage) {
         const fileInputLabel = document.querySelector('label.custom-file-input');
         if (fileInputLabel) {
             fileInputLabel.click();
+        }
+    });
+}
+
+// addUserInputProfileImage tıklanınca file seçim işlemi
+const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
+if (addUserInputProfileImage) {
+    addUserInputProfileImage.addEventListener('click', function() {
+        if (profileImageInput) {
+            profileImageInput.click();
         }
     });
 }
@@ -821,6 +876,17 @@ async function changeUserAuthority(userId, newAuthority) {
         if (response.ok) {
             const result = await response.json();
             showSuccessMessage(`Kullanıcı yetkisi başarıyla ${newAuthority === 'admin' ? 'Yönetici' : 'Üye'} olarak güncellendi!`);
+            
+            // GlobalDataStore'u güncelle
+            if (window.globalDataStore) {
+                // Kullanıcının yetkisini güncelle
+                const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+                if (userIndex !== -1) {
+                    window.globalDataStore.users[userIndex].authority = newAuthority;
+                    // Index'leri yeniden oluştur
+                    window.globalDataStore._rebuildIndexes();
+                }
+            }
             
             // Eğer kendi yetkisini değiştirdiyse
             if (currentUserInfo && currentUserInfo.userId === userId) {
@@ -1261,7 +1327,9 @@ async function updateGroupImageFromAvatar(avatarPath) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ avatarPath: avatarPath })
+            body: JSON.stringify({ 
+                avatarPath: avatarPath
+            })
         });
         
         if (response.ok) {
@@ -1272,11 +1340,15 @@ async function updateGroupImageFromAvatar(avatarPath) {
             secretAdminLoginImages.forEach(img => {
                 img.src = result.imageUrl;
             });
+            
+            showSuccessMessage('Grup resmi başarıyla güncellendi!');
         } else {
             console.error('Grup resmi güncellenemedi');
+            showErrorMessage('Grup resmi güncellenirken hata oluştu!');
         }
     } catch (error) {
         console.error('Avatar güncelleme hatası:', error);
+        showErrorMessage('Avatar güncellenirken hata oluştu!');
     }
 }
 
@@ -1767,6 +1839,16 @@ async function acceptJoinRequest(requestId) {
         
         // Başarı mesajı göster
         showSuccessMessage(data.message);
+        
+        // GlobalDataStore'u güncelle
+        if (window.globalDataStore && data.user) {
+            // Yeni kullanıcıyı users array'ine ekle
+            window.globalDataStore.users.push(data.user);
+            // Index'leri yeniden oluştur
+            window.globalDataStore._rebuildIndexes();
+            // En uzun serileri yeniden hesapla
+            await window.globalDataStore._buildLongestStreaks();
+        }
         
         // İsteği listeden kaldır
         const requestItem = document.querySelector(`[data-request-id="${requestId}"]`);

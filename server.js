@@ -559,16 +559,24 @@ async function deleteFromDropboxByUrl(fileUrl) {
 // URL'den grup resmini Dropbox'tan sil
 async function deleteGroupImageFromDropboxByUrl(fileUrl) {
   try {
-    // URL'den dosya adını ayıkla
-    const parts = fileUrl.split('/');
-    const lastPart = parts[parts.length - 1];
-    const fileName = lastPart.split('?')[0];
+    // Sadece Dropbox linklerinde silme yap
+    if (!fileUrl || !fileUrl.includes('dropbox.com')) {
+      return; // Local veya başka bir kaynak: Dropbox'tan silme
+    }
 
-    // Silinecek dosyanın yolu
-    const filePath = `/groupImages/${fileName}`;
+    // Paylaşımlı Dropbox URL'sinden gerçek Dropbox yolunu çıkar
+    // Örn: https://www.dropbox.com/scl/fi/.../group-123.webp?rlkey=...&dl=0
+    const url = new URL(fileUrl);
+    // Önce dosya adını al
+    const pathname = url.pathname || '';
+    const fileName = pathname.split('/').pop();
+    if (!fileName) return;
+
+    // Biz yüklerken /groupImages/<fileName> yolunu kullanıyoruz
+    const dropboxPath = `/groupImages/${fileName}`;
 
     // Dropbox'tan sil
-    await dbx.filesDeleteV2({ path: filePath });
+    await dbx.filesDeleteV2({ path: dropboxPath });
   } catch (error) {
     // 409 hatası "not_found" demek, dosya zaten silinmiş - bu normal
     if (error.status !== 409) {
@@ -1088,7 +1096,7 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
-    // Eski grup resmini Dropbox'tan sil
+    // Eski grup resmini Dropbox'tan sil (sadece Dropbox'ta varsa)
     if (group.groupImage && group.groupImage.includes('dropbox.com')) {
       deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err => 
         console.error('Eski grup resmi silme hatası:', err)
@@ -1096,7 +1104,7 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
     }
 
     // Avatar dosyasının varlığını kontrol et
-    const avatarFilePath = path.join(__dirname, avatarPath);
+    const avatarFilePath = path.join(__dirname, 'public', avatarPath);
     if (!fs.existsSync(avatarFilePath)) {
       return res.status(404).json({ error: 'Avatar dosyası bulunamadı' });
     }
@@ -1110,6 +1118,8 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
       { groupImage: newImageUrl },
       { new: true }
     );
+
+    console.log(`✅ Avatar seçimi: ${newImageUrl} (Dropbox'a yüklenmedi)`);
 
     res.json({ success: true, imageUrl: newImageUrl, group: updatedGroup });
   } catch (error) {
@@ -1295,6 +1305,9 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     // Resim varsa önce yerel olarak kaydet
     else if (req.file) {
       try {
+        // useTempFolder parametresi kontrolü
+        const useTempFolder = req.body.useTempFolder === 'true';
+        
         // 1. Adım: Geçici klasöre kaydet (orijinal format)
         const originalFileName = req.file.originalname;
         const normalizedFileName = normalizeFileName(originalFileName);
@@ -1311,7 +1324,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
         
         if (conversionSuccess) {
           fileName = webpFileName;
-          profileImageUrl = `/images/${fileName}`;
+          profileImageUrl = `/uploads/${fileName}`;
           // WebP başarılıysa orijinal dosyayı sil (gecikmeli)
           setTimeout(() => {
             try {
@@ -1326,7 +1339,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
         } else {
           // Dönüştürme başarısızsa orijinal dosyayı kullan
           fileName = tempFileName;
-          profileImageUrl = `/images/${fileName}`;
+          profileImageUrl = `/uploads/${fileName}`;
         }
         
         // Geçici multer dosyasını temizle
@@ -1663,7 +1676,7 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
       }
 
       // 2. Adım: Veritabanını yerel yol ile güncelle
-      const localImageUrl = `/images/${fileName}`;
+      const localImageUrl = `/uploads/${fileName}`;
       await users.findByIdAndUpdate(
         userId,
         { profileImage: localImageUrl }
