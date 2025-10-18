@@ -2,6 +2,46 @@
 // YENİ YEREL DEPOLAMA SİSTEMİ
 // ============================================================================
 
+// Giriş serisi artırıldığında bildirim göster
+function showStreakNotification(name, streak) {
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-success';
+  toast.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-size: 24px; animation: streakPulse 2s ease-in-out infinite;">🔥</div>
+      <div>
+        <div>Hoş geldin ${name}!</div>
+        <div style="font-size: 16px;">Giriş serin ${streak} oldu.</div>
+      </div>
+    </div>
+  `;
+  
+  // Animasyon CSS'i ekle
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes streakPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  document.body.appendChild(toast);
+  
+  // Bildirim azcık daha uzun (6 saniye) kalsın
+  setTimeout(() => {
+    toast.classList.add('toast-hide');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+      if (style.parentNode) {
+        style.parentNode.removeChild(style);
+      }
+    }, 300);
+  }, 6000);
+}
+
 // Yeni yerel depolama yönetimi fonksiyonları
 class LocalStorageManager {
   // Groups objesini al
@@ -238,6 +278,11 @@ async function initializeAuthSystem() {
           streakNumber.textContent = streakData.loginStreak;
         }
         
+        // Giriş serisi artırıldıysa bildirim göster
+        if (streakData.streakIncreased && user.name) {
+          showStreakNotification(user.name, streakData.loginStreak);
+        }
+        
         // Kullanıcı profil bilgilerini UI'da güncelle
         const profileUsername = document.getElementById('profileUsername');
         const profileMemberName = document.getElementById('profileMemberName');
@@ -275,6 +320,7 @@ async function initializeAuthSystem() {
 
     if (typeof showAdminIndicator === 'function') {
       showAdminIndicator();
+      console.log('Admin indicator - sayfa yüklendi');
     }
     
     return true;

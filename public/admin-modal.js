@@ -5,15 +5,23 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
     // Check if user is logged in and valid
     console.log('show');
     if (!LocalStorageManager.isUserLoggedIn()) {
-        return;
-    }
-    try {
-        const valid = await verifyUserUsername();
-        if (!valid) {
-            return;
+        // Çıkış yapmış kullanıcı için tüm elementleri gizle
+        const adminIndicator = document.querySelector('.admin-indicator');
+        const mainArea = document.querySelector('.main-area');
+        const userStatsArea = document.querySelector('.user-stats-info-area');
+        const scrollToMainButton = document.querySelector('.scroll-to-main-button');
+        
+        if (adminIndicator) adminIndicator.style.display = 'none';
+        if (mainArea) mainArea.style.display = 'none';
+        if (userStatsArea) {
+            userStatsArea.classList.remove('show');
+            setTimeout(() => {
+                userStatsArea.style.display = 'none';
+            }, 300); // Animasyon süresi kadar bekle
         }
-    } catch (e) {
-        // Do not block UI if verify has transient issues
+        if (scrollToMainButton) scrollToMainButton.style.display = 'none';
+        
+        return;
     }
     
     const userInfo = LocalStorageManager.getCurrentUserInfo();
@@ -74,6 +82,13 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
             `<i class="fa-solid fa-user"></i> ${displayName}`;
         adminIndicator.style.display = 'flex';
     }
+
+    // Kullanıcı istatistik alanını göster (giriş yapmış kullanıcılar için)
+    // Görünürlüğü, tüm veriler yüklendikten sonra tracker-table.js'deki updateUserStatsArea() fonksiyonu tarafından ayarlanacak.
+    const userStatsArea = document.querySelector('.user-stats-info-area');
+    // if (userStatsArea) {
+    //     userStatsArea.style.display = 'block';
+    // }
 
     // Sadece admin yetkisi olan kullanıcılar için main-area göster
     const mainArea = document.querySelector('.main-area');
@@ -845,6 +860,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     
                     if (typeof showAdminIndicator === 'function') {
                         showAdminIndicator();
+                        console.log('Admin indicator - hoşgeldin paneli');
                     }
 
                     // Reload data
@@ -1077,6 +1093,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // adminIndicator güncelle
                 if (typeof showAdminIndicator === 'function') {
                     showAdminIndicator();
+                    console.log('Admin indicator - giriş yapıldı');
                 }
 
                 // Profil butonunu güncelle
@@ -1086,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // 4. KULLANICI BİLDİRİMİ
                 // Hoşgeldin mesajı göster
-                showToast(`Hoşgeldin ${data.userName}!`, 'success');
+                showToast(`Hoşgeldin ${data.name}!`, 'success');
 
                 // 5. VERİ YÜKLEME VE UI GÜNCELLEMELERİ
                 // Reload data to update UI with admin privileges
@@ -1158,13 +1175,57 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // Avatar'ları önceden yükle
+    preloadAdminAvatars();
+
+    // Avatar selection functionality
+    const avatarBtn = document.getElementById('welcomeInviteAvatarBtn');
+    if (avatarBtn) {
+        avatarBtn.addEventListener('click', toggleUserAvatarModal);
+    }
+
+    // Remove image functionality
+    const removeBtn = document.getElementById('welcomeInviteRemoveBtn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            const previewImg = document.getElementById('welcomeInviteProfilePreview');
+            const fileInput = document.getElementById('welcomeInviteProfileImage');
+            
+            if (previewImg) {
+                previewImg.src = '/images/default.png';
+            }
+            
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            
+            // Avatar seçimini de sıfırla
+            selectedAvatarPath = null;
+            
+            console.log('Resim kaldırıldı, varsayılan resim seçildi');
+        });
+    }
+
+    // Profil resmi tıklanabilir yap ve başlangıçta loading efekti
+    const profileImagePreview = document.getElementById('profileImagePreview');
+    if (profileImagePreview) {
+        profileImagePreview.addEventListener('click', function() {
+            selectProfileImage();
+        });
+        
+        // Başlangıçta loading efekti başlat
+        profileImagePreview.classList.add('profile-image-loading');
+    }
 });
+
+
+// ==================== Profile Modal Functions ====================
+
 function showAdminInfoPanel() {
     // Yeni profil modalını aç
     openProfileModal();
 }
-
-// ==================== Profile Modal Functions ====================
 
 async function openProfileModal() {
     const profileModal = document.getElementById('profileModal');
@@ -1627,16 +1688,9 @@ function logoutFromProfile() {
             LocalStorageManager.logoutUser();
             closeProfileModal();
 
-            const adminIndicator = document.querySelector('.admin-indicator');
-            const mainArea = document.querySelector('.main-area');
-
-            if (adminIndicator) adminIndicator.style.display = 'none';
-            if (mainArea) mainArea.style.display = 'none';
-            
-            // Scroll butonunu da gizle
-            const scrollToMainButton = document.querySelector('.scroll-to-main-button');
-            if (scrollToMainButton) scrollToMainButton.style.display = 'none';
-
+            // showAdminIndicator() çıkış durumu için tüm elementleri gizler
+            showAdminIndicator();
+            console.log('Admin indicator - çıkış yapıldı');
             
             showToast('Çıkış yapıldı!', 'success');
             
@@ -1649,19 +1703,6 @@ function logoutFromProfile() {
             }
 }
 
-// Profil resmi tıklanabilir yap ve başlangıçta loading efekti
-document.addEventListener('DOMContentLoaded', function() {
-    const profileImagePreview = document.getElementById('profileImagePreview');
-    if (profileImagePreview) {
-        profileImagePreview.style.cursor = 'pointer';
-        profileImagePreview.addEventListener('click', function() {
-            selectProfileImage();
-        });
-        
-        // Başlangıçta loading efekti başlat
-        profileImagePreview.classList.add('profile-image-loading');
-    }
-});
 
 // Modal dışına tıklandığında kapat
 document.addEventListener('click', function(event) {
@@ -1707,112 +1748,6 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    if (LocalStorageManager.isUserLoggedIn()) {
-        verifyUserUsername();
-    }
-    const adminIndicator = document.querySelector('.admin-indicator');
-    const mainArea = document.querySelector('.main-area');
-    
-    // Avatar'ları önceden yükle
-    preloadAdminAvatars();
-
-    function checkAdminAuth() {
-        if (LocalStorageManager.isUserLoggedIn()) {
-            const userInfo = LocalStorageManager.getCurrentUserInfo();
-            if (!userInfo) return;
-            
-            if (adminIndicator) {
-                adminIndicator.style.display = 'flex';
-                const displayName = userInfo.userName && userInfo.userName !== 'null' ? userInfo.userName : '';
-                adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
-                    `<i class="fa-solid fa-user-shield"></i> ${displayName}` : 
-                    `<i class="fa-solid fa-user"></i> ${displayName}`;
-            }
-            
-            // Sadece admin yetkisi olan kullanıcılar için main-area göster
-            if (mainArea && userInfo.userAuthority === 'admin') {
-                mainArea.style.display = 'flex';
-                
-                // Admin girişi yapıldığında user list'i yükle
-                if (typeof renderUserList === 'function') {
-                    renderUserList();
-                }
-                
-                // Grup ayarlarını da yükle (sadece admin için)
-                if (typeof loadGroupSettings === 'function') {
-                    loadGroupSettings();
-                }
-            }
-            
-            // Scroll butonunu sadece admin yetkisi olan kullanıcılar için göster
-            const scrollToMainButton = document.querySelector('.scroll-to-main-button');
-            if (scrollToMainButton) {
-                if (userInfo.userAuthority === 'admin') {
-                    scrollToMainButton.style.display = 'flex';
-                } else {
-                    scrollToMainButton.style.display = 'none';
-                }
-            }
-        } else {
-            if (adminIndicator) adminIndicator.style.display = 'none';
-            if (mainArea) mainArea.style.display = 'none';
-            
-            // Scroll butonunu da gizle
-            const scrollToMainButton = document.querySelector('.scroll-to-main-button');
-            if (scrollToMainButton) scrollToMainButton.style.display = 'none';
-        }
-    }
-
-    // Check auth status when page loads
-    checkAdminAuth();
-
-    // Butonlar kaldırıldı
-
-    // Listen for authentication changes
-    window.addEventListener('storage', function (e) {
-        if (e.key === 'groups' || e.key === 'groupid' || e.key === 'userid' || e.key === 'userAuthority' || e.key === 'userName' || e.key === 'groupName') {
-            checkAdminAuth();
-        }
-    });
-
-    // Also check after login/logout
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function (key, value) {
-        originalSetItem.call(this, key, value);
-        if (key === 'groups' || key === 'groupid' || key === 'userid' || key === 'userAuthority' || key === 'userName' || key === 'groupName') {
-            checkAdminAuth();
-        }
-    };
-
-    // Avatar selection functionality
-    const avatarBtn = document.getElementById('welcomeInviteAvatarBtn');
-    if (avatarBtn) {
-        avatarBtn.addEventListener('click', toggleUserAvatarModal);
-    }
-
-    // Remove image functionality
-    const removeBtn = document.getElementById('welcomeInviteRemoveBtn');
-    if (removeBtn) {
-        removeBtn.addEventListener('click', function() {
-            const previewImg = document.getElementById('welcomeInviteProfilePreview');
-            const fileInput = document.getElementById('welcomeInviteProfileImage');
-            
-            if (previewImg) {
-                previewImg.src = '/images/default.png';
-            }
-            
-            if (fileInput) {
-                fileInput.value = '';
-            }
-            
-            // Avatar seçimini de sıfırla
-            selectedAvatarPath = null;
-            
-            console.log('Resim kaldırıldı, varsayılan resim seçildi');
-        });
-    }
-});
 
 // User Avatar Modal Functions
 let selectedAvatarPath = null; // Seçilen avatar yolunu saklamak için

@@ -68,9 +68,9 @@ async function generateMinifiedFiles() {
 
   const groupsJsFiles = [
     'script.js',           
+    'admin-modal.js',         
     'tracker-table.js',    
-    'user-cards.js',           
-    'admin-modal.js',  
+    'user-cards.js',    
     'longest-series.js',  
     'stats-section.js',     
     'monthly.js',          
@@ -149,6 +149,9 @@ async function handleLoginStreak(user) {
   else if (user.lastLoginDate === yesterday) {
     user.loginStreak = currentStreak + 1;
     console.log(`🔥 Giriş serisi artırıldı: ${user.username} -> ${user.loginStreak} gün`);
+    
+    // Giriş serisi artırıldığını işaretle
+    user.streakIncreased = true;
   } 
   // Arada gün(ler) varsa veya ilk giriş: sıfırla
   else {
@@ -2269,7 +2272,9 @@ app.post('/api/update-login-streak', async (req, res) => {
     res.json({
       success: true,
       loginStreak: user.loginStreak,
-      lastLoginDate: user.lastLoginDate
+      lastLoginDate: user.lastLoginDate,
+      streakIncreased: user.streakIncreased || false,
+      name: user.name
     });
   } catch (error) {
     console.error('Giriş serisi güncelleme hatası:', error);

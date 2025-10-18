@@ -456,6 +456,63 @@
       </div>
     </div>
 
+    <!-- Kullanıcı İstatistik Bilgi Alanı -->
+    <div class="user-stats-info-area" style="display: none;">
+      <div class="user-stats-content">
+        <!-- Sol Kısım: Giriş Serisi -->
+        <div class="user-stats-left">
+          <div class="user-stats-streak">
+            <div class="user-stats-streak-icon">🔥</div>
+            <div class="user-stats-streak-info">
+              <div class="user-stats-streak-number" id="userLoginStreak">0</div>
+              <div class="user-stats-streak-label">Giriş Serisi</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Orta Kısım: Lig Bilgisi -->
+        <div class="user-stats-center">
+          <div class="user-stats-league-progress-container">
+            <!-- Mevcut Lig -->
+            <div class="user-stats-current-league">
+              <img id="currentLeagueImg" src="" alt="Mevcut Liginiz" class="user-stats-league-img">
+              <div class="user-stats-league-name" id="currentLeagueName"></div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="user-stats-league-progress-bar">
+              <div class="user-stats-progress-info">
+                <span id="leagueProgressText"></span>
+              </div>
+              <div class="user-stats-progress-track">
+                <div class="user-stats-progress-fill" id="leagueProgressFill" style="width: 0%"></div>
+              </div>
+              <div class="user-stats-progress-status">
+                <span id="leagueProgressStatus"></span>
+              </div>
+            </div>
+            
+            <!-- Sonraki Lig -->
+            <div class="user-stats-next-league">
+              <img id="nextLeagueImg" src="" alt="Sonraki Liginiz" class="user-stats-league-img">
+              <div class="user-stats-league-name" id="nextLeagueName"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sağ Kısım: Toplam Okuma -->
+        <div class="user-stats-right">
+          <div class="user-stats-reading">
+            <div class="user-stats-reading-icon">⭐</div>
+            <div class="user-stats-reading-info">
+              <div class="user-stats-reading-number" id="userTotalReading"></div>
+              <div class="user-stats-reading-label">Toplam Okuma</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="table-area" style="display: none;">
       <table id="trackerTable">
         <thead></thead>

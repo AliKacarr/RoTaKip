@@ -13,6 +13,129 @@ window.weekOffset = weekOffset;
 let isFirstLoad = true;
 let postToggleUpdateTimer = null;
 
+// Kullanıcı istatistik alanını güncelle (giriş serisi hesaplaması ile)
+async function updateUserStatsAreaWithStreak() {
+    const userInfo = LocalStorageManager.getCurrentUserInfo();
+    if (!userInfo) return;
+
+    const userId = userInfo.userId;
+    const groupId = userInfo.groupId;
+    const totalReading = userReadingCounts.get(userId) || 0;
+    
+    try {
+        // Giriş serisi bilgisini server'dan al
+        const response = await fetch('/api/update-login-streak', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, groupId })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const loginStreakElement = document.getElementById('userLoginStreak');
+            if (loginStreakElement) {
+                loginStreakElement.textContent = data.loginStreak || 0;
+            }
+        }
+    } catch (error) {
+        console.error('Giriş serisi bilgisi alınamadı:', error);
+        // Hata durumunda varsayılan değer
+        const loginStreakElement = document.getElementById('userLoginStreak');
+        if (loginStreakElement) {
+            loginStreakElement.textContent = '0';
+        }
+    }
+
+    // Sağ kısım: Toplam okuma
+    const totalReadingElement = document.getElementById('userTotalReading');
+    if (totalReadingElement) {
+        totalReadingElement.textContent = totalReading;
+    }
+
+    // Orta kısım: Lig bilgisi
+    updateLeagueProgress(totalReading);
+
+    // Tüm veriler yüklendikten sonra modülü animasyonlu olarak görünür yap
+    const userStatsArea = document.querySelector('.user-stats-info-area');
+    if (userStatsArea) {
+        userStatsArea.style.display = 'flex';
+        // Kısa bir gecikme ile animasyon başlat
+        setTimeout(() => {
+            userStatsArea.classList.add('show');
+        }, 50);
+    }
+}
+
+// Kullanıcı istatistik alanını güncelle (sadece okuma sayısı ve lig bilgisi)
+function updateUserStatsArea() {
+    const userInfo = LocalStorageManager.getCurrentUserInfo();
+    if (!userInfo) return;
+
+    const userId = userInfo.userId;
+    const totalReading = userReadingCounts.get(userId) || 0;
+
+    // Sağ kısım: Toplam okuma
+    const totalReadingElement = document.getElementById('userTotalReading');
+    if (totalReadingElement) {
+        totalReadingElement.textContent = totalReading;
+    }
+
+    // Orta kısım: Lig bilgisi
+    updateLeagueProgress(totalReading);
+}
+
+// Lig progress bilgilerini güncelle
+function updateLeagueProgress(totalReading) {
+    // Mevcut ligi bul
+    const currentLeague = LEAGUES.find(league => totalReading >= league.min && totalReading < league.max) || LEAGUES[LEAGUES.length - 1];
+    
+    // Sonraki ligi bul
+    const currentIndex = LEAGUES.indexOf(currentLeague);
+    const nextLeague = currentIndex < LEAGUES.length - 1 ? LEAGUES[currentIndex + 1] : currentLeague;
+
+    // Mevcut lig bilgilerini güncelle
+    const currentLeagueImg = document.getElementById('currentLeagueImg');
+    const currentLeagueName = document.getElementById('currentLeagueName');
+    if (currentLeagueImg && currentLeagueName) {
+        currentLeagueImg.src = `/images/${currentLeague.img}`;
+        currentLeagueName.textContent = currentLeague.name;
+    }
+
+    // Sonraki lig bilgilerini güncelle
+    const nextLeagueImg = document.getElementById('nextLeagueImg');
+    const nextLeagueName = document.getElementById('nextLeagueName');
+    if (nextLeagueImg && nextLeagueName) {
+        nextLeagueImg.src = `/images/${nextLeague.img}`;
+        nextLeagueName.textContent = nextLeague.name;
+    }
+
+    // Progress bar'ı güncelle
+    const progressText = document.getElementById('leagueProgressText');
+    const progressFill = document.getElementById('leagueProgressFill');
+    const progressStatus = document.getElementById('leagueProgressStatus');
+    
+    if (progressText && progressFill && progressStatus) {
+        const progress = totalReading - currentLeague.min;
+        const totalNeeded = currentLeague.max - currentLeague.min;
+        const percentage = Math.min((progress / totalNeeded) * 100, 100);
+        const remaining = totalNeeded - progress;
+        
+        // Üst kısım: "197 / 200⭐" formatı, renkli
+        progressText.innerHTML = `<span style="font-weight: 700; ">${totalReading}</span><span style="font-weight: 500;">/${currentLeague.max}</span> <span style=text-shadow: 0 0 1px #ff5555,0 0 1px #ff4500;>⭐</span>`;
+
+        // Alt kısım: "Mercan ligine 3 okuma kaldı" formatı
+        if (remaining > 0) {
+            progressStatus.innerHTML = `${nextLeague.name} ligine <span style="font-size:15px" font-weight: bold;>${remaining}</span> okuma kaldı`;
+        } else {
+            progressStatus.innerHTML = `<span style="font-size:14px" font-weight: bold;>${nextLeague.name} ligindesiniz!</span>`;
+        }
+        // Progress bar'ı animasyonlu olarak doldur
+        setTimeout(() => {
+            progressFill.style.width = `${percentage}%`;
+        }, 100); // Kısa bir gecikme ile animasyon başlat
+    }
+}
+
 // Kullanıcı okuma sayılarını önbelleğe almak için
 let userReadingCounts = new Map(); // userId -> okuma sayısı
 
@@ -61,16 +184,16 @@ function calculateStreakFromCache(userId) {
 
 // Lig tanımları - global erişilebilir
 const LEAGUES = [
-    { min: 0, max: 5, name: 'Bronz', bg: 'linear-gradient(90deg, #e2b07a 60%, #ffe0b2 100%)' },
-    { min: 5, max: 10, name: 'Gümüş', bg: 'linear-gradient(90deg, #d3d3d3 60%, #e0e0e0 100%)' },
-    { min: 10, max: 20, name: 'Altın', bg: 'linear-gradient(90deg, #ffd700 60%, #ffe789 100%)' },
-    { min: 20, max: 40, name: 'İnci', bg: 'linear-gradient(90deg, #b2dfdb 60%, #c8eef3 100%)' },
-    { min: 40, max: 60, name: 'Safir', bg: 'linear-gradient(90deg, #49b7ff 60%, #bbdefb 100%)' },
-    { min: 60, max: 100, name: 'Zümrüt', bg: 'linear-gradient(90deg, #58c089 60%, #a5d6a7 100%)' },
-    { min: 100, max: 150, name: 'Elmas', bg: 'linear-gradient(90deg, #36e873 60%, #c4edb8 100%)' },
-    { min: 150, max: 200, name: 'Yakut', bg: 'linear-gradient(90deg, #ffb199 60%, #ffe0b2 100%)' },
-    { min: 200, max: 365, name: 'Mercan', bg: 'linear-gradient(90deg, #ff6f63 60%, #ffafb7 100%)' },
-    { min: 365, max: 1001, name: 'Pırlanta', bg: 'linear-gradient(90deg, #f3ebeb  60%, #ffffff 100%)' }
+    { min: 0, max: 5, name: 'Bronz', img: 'bronz.webp', bg: 'linear-gradient(90deg, #e2b07a 60%, #ffe0b2 100%)' },
+    { min: 5, max: 10, name: 'Gümüş', img: 'gumus.webp', bg: 'linear-gradient(90deg, #d3d3d3 60%, #e0e0e0 100%)' },
+    { min: 10, max: 20, name: 'Altın', img: 'altin.webp', bg: 'linear-gradient(90deg, #ffd700 60%, #ffe789 100%)' },
+    { min: 20, max: 40, name: 'İnci', img: 'inci.webp', bg: 'linear-gradient(90deg, #b2dfdb 60%, #c8eef3 100%)' },
+    { min: 40, max: 60, name: 'Safir', img: 'safir.webp', bg: 'linear-gradient(90deg, #49b7ff 60%, #bbdefb 100%)' },
+    { min: 60, max: 100, name: 'Zümrüt', img: 'zumrut.webp', bg: 'linear-gradient(90deg, #58c089 60%, #a5d6a7 100%)' },
+    { min: 100, max: 150, name: 'Elmas', img: 'elmas.webp', bg: 'linear-gradient(90deg, #36e873 60%, #c4edb8 100%)' },
+    { min: 150, max: 200, name: 'Yakut', img: 'yakut.webp', bg: 'linear-gradient(90deg, #ffb199 60%, #ffe0b2 100%)' },
+    { min: 200, max: 365, name: 'Mercan', img: 'mercan.webp', bg: 'linear-gradient(90deg, #ff6f63 60%, #ffafb7 100%)' },
+    { min: 365, max: 1001, name: 'Pırlanta', img: 'pirlanta.webp', bg: 'linear-gradient(90deg, #f3ebeb  60%, #ffffff 100%)' }
 ];
 
 function getWeekDates(offset = 0) {
@@ -300,6 +423,11 @@ async function loadTrackerTable() {
         showWeekLoading(false);
     }, 20);
     tableArea.style.display = 'block';
+    
+    // Kullanıcı istatistik alanını güncelle (giriş serisi hesaplaması ile)
+    updateUserStatsAreaWithStreak().catch(error => {
+        console.error('Kullanıcı istatistik alanı güncellenemedi:', error);
+    });
 }
 
 function findConsecutiveStreaks(userStats) {
@@ -610,6 +738,9 @@ async function toggleStatus(userId, date) {
                 requestingUserAuthority: userInfo.userAuthority
             })
         });
+        
+        // Kullanıcı istatistik alanını güncelle (sadece okuma sayısı ve lig bilgisi)
+        updateUserStatsArea();
 }
 
 // Tüm kullanıcıların background rengini güncelle (önbellekten)
