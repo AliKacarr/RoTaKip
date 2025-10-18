@@ -2312,7 +2312,7 @@
 .user-stats-streak {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     color: white;
 }
 
@@ -2423,7 +2423,7 @@
 
 .user-stats-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #3B82F6, #60A5FA);
+    background: linear-gradient(90deg, #60a5fa, #3b82f6);
     border-radius: 4px;
     transition: width 0.8s ease-in-out;
     position: relative;
@@ -2451,12 +2451,12 @@
 .user-stats-reading {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     color: white;
 }
 
 .user-stats-reading-icon {
-    font-size: 2rem;
+    font-size: 33px;
     text-shadow: 0 0 1px #f55,0 0 1px #ff4500;
     filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
     animation: userStatsReadingPulse 4s ease-in-out infinite;
