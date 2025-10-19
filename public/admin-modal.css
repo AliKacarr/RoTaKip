@@ -277,36 +277,6 @@
 }
 
 
-.admin-indicator {
-    position: fixed;
-    bottom: 30px;
-    left: 40px;
-    background: linear-gradient(135deg, #4e54c8, #8f94fb);
-    color: white;
-    height: 50px;
-    min-width: 160px;
-    padding-left: 20px;
-    padding-right: 20px;
-    border-radius: 30px;
-    font-size: 16px;
-    font-weight: 700;
-    box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
-    display: flex;
-    transition: all 0.3s ease;
-    z-index: 101;
-    text-align: center;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
-}
-
-.admin-indicator:hover {
-    background: linear-gradient(135deg, #5a5fd8, #9fa4fc);
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(78, 84, 200, 0.5);
-    border-color: rgba(255, 255, 255, 0.4);
-}
 
 .admin-logs-button {
     bottom: 65px;
@@ -2228,10 +2198,36 @@
   margin: 0;
 }
 
+/* Admin Indicator Styles */
+.admin-indicator {
+    position: fixed;
+    bottom: 260px;
+    left: 40px;
+    background: linear-gradient(135deg, #4e54c8, #8f94fb);
+    color: white;
+    height: 50px;
+    min-width: 160px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+    display: flex;
+    transition: all 0.3s ease;
+    z-index: 101;
+    text-align: center;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
 /* Scroll to Main Button Styles */
 .scroll-to-main-button {
     position: fixed;
-    bottom: 95px;
+    bottom: 200px;
     left: 40px;
     background: linear-gradient(135deg, #e74c3c, #c0392b);
     color: white;
@@ -2252,9 +2248,94 @@
     justify-content: center;
 }
 
-.scroll-to-main-button:hover {
+/* Articles Button Styles */
+.articles-button {
+    position: fixed;
+    bottom: 20px;
+    left: 40px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    height: 50px;
+    width: 160px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    transition: all 0.3s ease;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Videos Button Styles */
+.videos-button {
+    position: fixed;
+    bottom: 80px;
+    left: 40px;
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    color: white;
+    height: 50px;
+    width: 160px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
+    transition: all 0.3s ease;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Quotes Button Styles */
+.quotes-button {
+    position: fixed;
+    bottom: 140px;
+    left: 40px;
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    height: 50px;
+    width: 160px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+    transition: all 0.3s ease;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Button Hover Effects */
+.admin-indicator:hover,
+.scroll-to-main-button:hover,
+.articles-button:hover,
+.videos-button:hover,
+.quotes-button:hover {
     transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(231, 76, 60, 0.6);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.admin-indicator:active,
+.scroll-to-main-button:active,
+.articles-button:active,
+.videos-button:active,
+.quotes-button:active {
+    transform: translateY(0);
 }
 
 /* Kullanıcı İstatistik Bilgi Alanı Stilleri */

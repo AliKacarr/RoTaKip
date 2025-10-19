@@ -1,6 +1,72 @@
 // Global flag for join request success
 let isJoinRequestSuccess = false;
 
+// Create navigation buttons function (her zaman görünür)
+function createNavigationButtons() {
+    // Create articles button if it doesn't exist
+    let articlesButton = document.querySelector('.articles-button');
+    if (!articlesButton) {
+        articlesButton = document.createElement('div');
+        articlesButton.className = 'articles-button';
+        articlesButton.innerHTML = '<i class="fa-regular fa-newspaper"></i> Makaleler';
+
+        // Add click event to scroll to articles section
+        articlesButton.addEventListener('click', function() {
+            const articlesSection = document.querySelector('.articles');
+            if (articlesSection) {
+                articlesSection.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+
+        document.body.appendChild(articlesButton);
+    }
+
+    // Create videos button if it doesn't exist
+    let videosButton = document.querySelector('.videos-button');
+    if (!videosButton) {
+        videosButton = document.createElement('div');
+        videosButton.className = 'videos-button';
+        videosButton.innerHTML = '<i class="fa-regular fa-circle-play"></i> Videolar';
+
+        // Add click event to scroll to videos section
+        videosButton.addEventListener('click', function() {
+            const videosSection = document.querySelector('.videos');
+            if (videosSection) {
+                videosSection.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+
+        document.body.appendChild(videosButton);
+    }
+
+    // Create quotes button if it doesn't exist
+    let quotesButton = document.querySelector('.quotes-button');
+    if (!quotesButton) {
+        quotesButton = document.createElement('div');
+        quotesButton.className = 'quotes-button';
+        quotesButton.innerHTML = '<i class="fa-solid fa-star-and-crescent"></i> Vecizeler';
+
+        // Add click event to scroll to quotes section
+        quotesButton.addEventListener('click', function() {
+            const quotesSection = document.querySelector('.quote');
+            if (quotesSection) {
+                quotesSection.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+
+        document.body.appendChild(quotesButton);
+    }
+}
+
 async function showAdminIndicator() {     //admin modu butonunu gösterme
     // Check if user is logged in and valid
     console.log('show');
@@ -83,12 +149,8 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
         adminIndicator.style.display = 'flex';
     }
 
-    // Kullanıcı istatistik alanını göster (giriş yapmış kullanıcılar için)
-    // Görünürlüğü, tüm veriler yüklendikten sonra tracker-table.js'deki updateUserStatsArea() fonksiyonu tarafından ayarlanacak.
+  
     const userStatsArea = document.querySelector('.user-stats-info-area');
-    // if (userStatsArea) {
-    //     userStatsArea.style.display = 'block';
-    // }
 
     // Sadece admin yetkisi olan kullanıcılar için main-area göster
     const mainArea = document.querySelector('.main-area');
@@ -109,6 +171,8 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
 
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Sayfa yüklendiğinde yeni butonları oluştur (her zaman görünür)
+    createNavigationButtons();
 
     const adminLogin = document.getElementById('secretAdminLogin');
     const groupsAuthLoginModal = document.getElementById('groupsAuthLoginModal');
