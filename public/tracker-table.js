@@ -272,6 +272,13 @@ function getMonthNameInTurkish(monthIndex) {
 
 async function loadTrackerTable() {
     console.log('🔍 Tracker Table Loading...');
+    
+    // Tablo yüklenirken kaydırma çubuğunu gizle
+    if (tableArea) {
+        tableArea.style.overflowX = 'hidden';
+        tableArea.style.overflowY = 'hidden';
+    }
+    
     const dates = getWeekDates(weekOffset);
     currentWeekDisplay.textContent = formatDateRange(dates);
     if (weekOffset < 0) {
@@ -415,10 +422,22 @@ async function loadTrackerTable() {
         });
     });
     const weekNav = document.querySelector('.week-navigation');
-    if (weekNav) weekNav.style.display = 'flex';
+    if (weekNav) {
+        weekNav.style.display = 'flex';
+        // Week navigation animasyonunu tetikle
+        setTimeout(() => {
+            weekNav.classList.add('visible');
+        }, 50);
+    }
+    // Tüm tablo elementlerini gizle
+    trackerTable.classList.remove('visible');
     trackerTable.querySelector('tbody').classList.remove('tracker-table-visible');
+    
     setTimeout(() => {
+        // Tüm tablo elementlerini aynı anda göster
+        trackerTable.classList.add('visible');
         trackerTable.querySelector('tbody').classList.add('tracker-table-visible');
+        
         // Sadece ilk yüklemede sayfanın en üstüne kaydır
         if (isFirstLoad) {
             window.scrollTo({ top: 0, behavior: 'smooth' });

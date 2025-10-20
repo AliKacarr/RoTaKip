@@ -82,9 +82,11 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
         if (mainArea) mainArea.style.display = 'none';
         if (userStatsArea) {
             userStatsArea.classList.remove('show');
+            userStatsArea.classList.add('collapsed');
             setTimeout(() => {
                 userStatsArea.style.display = 'none';
-            }, 300); // Animasyon süresi kadar bekle
+                userStatsArea.classList.remove('collapsed'); // Animasyon bittikten sonra class'ı temizle
+            }, 400); // Animasyon süresi kadar bekle
         }
         if (scrollToMainButton) scrollToMainButton.style.display = 'none';
         
@@ -162,7 +164,6 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
     }
 
   
-    const userStatsArea = document.querySelector('.user-stats-info-area');
 
     // Sadece admin yetkisi olan kullanıcılar için main-area göster
     const mainArea = document.querySelector('.main-area');

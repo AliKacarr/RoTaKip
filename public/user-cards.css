@@ -7,6 +7,14 @@
     text-align: center;
     margin: 30px 0 20px 0;
     padding-inline: 20px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.user-cards-header.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .user-cards-title {
@@ -434,15 +442,21 @@
     border-radius: 14px;
     margin: 10px auto 18px auto;
     padding-top: 20px;
+    padding-bottom: 50px;
+    justify-content: space-evenly;
     display: flex;
+    position: relative;
     flex-wrap: wrap;
     align-items: flex-start;
     font-size: 1.08em;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    justify-content: center;
-    position: relative;
-    padding-bottom: 50px;
-    justify-content: space-evenly;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.league-info-bar.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .league-info-item {

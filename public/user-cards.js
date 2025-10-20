@@ -210,12 +210,20 @@ async function loadUserCards() {
     let leagueInfoBar = document.querySelector('.league-info-bar');
     if (leagueInfoBar) {
       leagueInfoBar.style.display = 'flex';
+      // League info bar animasyonunu tetikle
+      setTimeout(() => {
+        leagueInfoBar.classList.add('visible');
+      }, 100);
     }
     
     // User cards header'ı da göster
     const userCardsHeader = document.querySelector('.user-cards-header');
     if (userCardsHeader) {
       userCardsHeader.style.display = 'block';
+      // User cards header animasyonunu tetikle
+      setTimeout(() => {
+        userCardsHeader.classList.add('visible');
+      }, 150);
     }
     
     container.style.display = 'flex';

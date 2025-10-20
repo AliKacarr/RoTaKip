@@ -269,7 +269,16 @@
     justify-content: space-between;
     margin-top: 25px;
     margin-inline: 3px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }
+
+.week-navigation.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 
 .nav-group {
     display: flex;
@@ -403,10 +412,32 @@ th.today-column {
 }
 
 /* Tablo animasyonu */
-#trackerTable tbody {
+#trackerTable {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+#trackerTable.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#trackerTable thead {
     opacity: 0;
     transform: translateY(-10px);
-    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+#trackerTable.visible thead {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#trackerTable tbody {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 }
 
 #trackerTable tbody.tracker-table-visible {
