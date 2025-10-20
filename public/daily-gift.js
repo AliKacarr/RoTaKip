@@ -76,12 +76,20 @@ function openDailyGiftModal() {
     if (lastGiftDate === today && dailyGiftData) {
         showGiftData(dailyGiftData);
         modal.style.display = 'flex';
+        // Animasyon için kısa gecikme
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
         return;
     }
 
     // Yeni hediye yükle
     loadDailyGift().then(() => {
         modal.style.display = 'flex';
+        // Animasyon için kısa gecikme
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
     }).catch(error => {
         console.error('Hediye yükleme hatası:', error);
         alert('Hediye yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
@@ -134,7 +142,7 @@ function showGiftData(esmaData) {
         videoLinkElement.href = esmaData.esmaulhusna_video_url;
     }
 
-    // YouTube video thumbnail oluştur (API ile gerçek thumbnail)
+    // YouTube video thumbnail oluştur (sadece API ile)
     if (videoThumbnailElement && esmaData.esmaulhusna_video_url) {
         // Thumbnail container'ı göster
         const thumbnailContainer = document.querySelector('.daily-gift-video-thumbnail-container');
@@ -142,20 +150,23 @@ function showGiftData(esmaData) {
             thumbnailContainer.style.display = 'block';
         }
         
-        // Önce basit thumbnail'ı göster
-        const fallbackThumbnail = getYouTubeThumbnail(esmaData.esmaulhusna_video_url);
-        if (fallbackThumbnail) {
-            videoThumbnailElement.src = fallbackThumbnail;
-            videoThumbnailElement.style.display = 'block';
-        }
-        
-        // Sonra API'den gerçek thumbnail'ı al ve güncelle
+        // Sadece API'den gerçek thumbnail'ı al
         getYouTubeThumbnailFromAPI(esmaData.esmaulhusna_video_url).then(apiThumbnail => {
             if (apiThumbnail && videoThumbnailElement) {
                 videoThumbnailElement.src = apiThumbnail;
+                videoThumbnailElement.style.display = 'block';
+            } else {
+                // API'den thumbnail alınamazsa container'ı gizle
+                if (thumbnailContainer) {
+                    thumbnailContainer.style.display = 'none';
+                }
             }
         }).catch(error => {
-            console.log('API thumbnail yüklenemedi, fallback kullanılıyor:', error);
+            console.log('API thumbnail yüklenemedi, container gizleniyor:', error);
+            // Hata durumunda container'ı gizle
+            if (thumbnailContainer) {
+                thumbnailContainer.style.display = 'none';
+            }
         });
     } else {
         // Video URL yoksa thumbnail container'ı gizle
@@ -166,29 +177,6 @@ function showGiftData(esmaData) {
     }
 }
 
-// YouTube video URL'sinden thumbnail URL oluştur
-function getYouTubeThumbnail(videoUrl) {
-    try {
-        // YouTube URL'lerini parse et
-        const url = new URL(videoUrl);
-        let videoId = null;
-        
-        if (url.hostname.includes('youtube.com')) {
-            videoId = url.searchParams.get('v');
-        } else if (url.hostname.includes('youtu.be')) {
-            videoId = url.pathname.substring(1);
-        }
-        
-        if (videoId) {
-            // YouTube thumbnail URL'si oluştur (yüksek kalite)
-            return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-        }
-    } catch (error) {
-        console.error('YouTube thumbnail oluşturma hatası:', error);
-    }
-    
-    return null;
-}
 
 // YouTube API kullanarak gerçek thumbnail al
 async function getYouTubeThumbnailFromAPI(videoUrl) {
@@ -243,7 +231,12 @@ function openDailyTasksModal() {
 function closeDailyGiftModal() {
     const modal = document.getElementById('dailyGiftModal');
     if (modal) {
-        modal.style.display = 'none';
+        // Önce animasyonu başlat
+        modal.classList.remove('show');
+        // Animasyon bitince modal'ı gizle
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
     }
 }
 
