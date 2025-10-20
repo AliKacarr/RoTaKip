@@ -182,7 +182,7 @@
 
 .user-selector-container {
   margin-bottom: 15px;
-  font-size: 18px;
+  font-size: 19px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -192,7 +192,7 @@
   padding: 8px;
   border-radius: 4px;
   border: 1px solid #ddd;
-  font-size: 18px;
+  font-size: 19px;
   min-width: 200px;
   cursor: pointer;
   background-color: white;

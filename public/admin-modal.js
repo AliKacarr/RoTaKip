@@ -4,68 +4,86 @@ let isJoinRequestSuccess = false;
 // Create navigation buttons function (her zaman görünür)
 function createNavigationButtons() {
 
-    // Create videos button if it doesn't exist
-    let videosButton = document.querySelector('.videos-button');
-    if (!videosButton) {
-        videosButton = document.createElement('div');
-        videosButton.className = 'videos-button';
-        videosButton.innerHTML = '<i class="fa-regular fa-circle-play"></i> Videolar';
-
-        // Add click event to scroll to videos section
-        videosButton.addEventListener('click', function() {
-            const videosSection = document.querySelector('.videos');
-            if (videosSection) {
-                videosSection.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-
-        document.body.appendChild(videosButton);
-    }
-
-    // Create quotes button if it doesn't exist
-    let quotesButton = document.querySelector('.quotes-button');
-    if (!quotesButton) {
-        quotesButton = document.createElement('div');
-        quotesButton.className = 'quotes-button';
-        quotesButton.innerHTML = '<i class="fa-solid fa-star-and-crescent"></i> Vecizeler';
-
-        // Add click event to scroll to quotes section
-        quotesButton.addEventListener('click', function() {
-            const quotesSection = document.querySelector('.quote');
-            if (quotesSection) {
-                quotesSection.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-
-        document.body.appendChild(quotesButton);
-    }
-
     // Create articles button if it doesn't exist
     let articlesButton = document.querySelector('.articles-button');
     if (!articlesButton) {
         articlesButton = document.createElement('div');
         articlesButton.className = 'articles-button';
         articlesButton.innerHTML = '<i class="fa-regular fa-newspaper"></i> Makaleler';
-
-        // Add click event to scroll to articles section
+    
+        // Buton tıklanınca .articles alanını ekranın ortasına kaydır
         articlesButton.addEventListener('click', function() {
             const articlesSection = document.querySelector('.articles');
             if (articlesSection) {
-                articlesSection.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
+                const sectionTop = articlesSection.getBoundingClientRect().top + window.pageYOffset;
+                const sectionHeight = articlesSection.offsetHeight;
+                const windowHeight = window.innerHeight;
+    
+                // Ortalamak için scroll hedefini hesapla
+                const scrollTarget = sectionTop - (windowHeight / 2) + (sectionHeight / 2);
+    
+                window.scrollTo({
+                    top: scrollTarget,
+                    behavior: 'smooth'
                 });
             }
         });
-
+    
         document.body.appendChild(articlesButton);
     }
+    
+    // Create videos button if it doesn't exist
+let videosButton = document.querySelector('.videos-button');
+if (!videosButton) {
+    videosButton = document.createElement('div');
+    videosButton.className = 'videos-button';
+    videosButton.innerHTML = '<i class="fa-regular fa-circle-play"></i> Videolar';
+
+    // Add click event to scroll to videos section (centered)
+    videosButton.addEventListener('click', function() {
+        const videosSection = document.querySelector('.videos');
+        if (videosSection) {
+            const sectionTop = videosSection.getBoundingClientRect().top + window.pageYOffset;
+            const sectionHeight = videosSection.offsetHeight;
+            const windowHeight = window.innerHeight;
+            const scrollTarget = sectionTop - (windowHeight / 2) + (sectionHeight / 2);
+
+            window.scrollTo({
+                top: scrollTarget,
+                behavior: 'smooth'
+            });
+        }
+    });
+
+    document.body.appendChild(videosButton);
+}
+
+// Create quotes button if it doesn't exist
+let quotesButton = document.querySelector('.quotes-button');
+if (!quotesButton) {
+    quotesButton = document.createElement('div');
+    quotesButton.className = 'quotes-button';
+    quotesButton.innerHTML = '<i class="fa-solid fa-star-and-crescent"></i> Vecizeler';
+
+    // Add click event to scroll to quotes section (centered)
+    quotesButton.addEventListener('click', function() {
+        const quotesSection = document.querySelector('.quote');
+        if (quotesSection) {
+            const sectionTop = quotesSection.getBoundingClientRect().top + window.pageYOffset;
+            const sectionHeight = quotesSection.offsetHeight;
+            const windowHeight = window.innerHeight;
+            const scrollTarget = sectionTop - (windowHeight / 2) + (sectionHeight / 2);
+
+            window.scrollTo({
+                top: scrollTarget,
+                behavior: 'smooth'
+            });
+        }
+    });
+
+    document.body.appendChild(quotesButton);
+}
+
 }
 
 async function showAdminIndicator() {     //admin modu butonunu gösterme

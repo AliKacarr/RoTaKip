@@ -121,7 +121,7 @@ function updateLeagueProgress(totalReading) {
         const remaining = totalNeeded - progress;
         
         // Üst kısım: "197 / 200⭐" formatı, renkli
-        progressText.innerHTML = `<span style="font-weight: 700; ">${totalReading}</span><span style="font-weight: 500;">/${currentLeague.max}</span> <span style=text-shadow: 0 0 1px #ff5555,0 0 1px #ff4500;>⭐</span>`;
+        progressText.innerHTML = `<span style="font-weight: 700; ">${totalReading}</span><span style="font-weight: 500;">/${currentLeague.max}</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>`;
 
         // Alt kısım: "Mercan ligine 3 okuma kaldı" formatı
         if (remaining > 0) {

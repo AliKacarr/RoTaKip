@@ -174,9 +174,9 @@
     border: none;
     cursor: pointer;
     color: #424242;
-    font-size: 14px;
-    width: 30px;
-    height: 30px;
+    font-size: 15px;
+    width: 35px;
+    height: 35px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -212,8 +212,8 @@
     border: none;
     cursor: pointer;
     color: #565656;
-    width: 30px;
-    height: 30px;
+    width: 35px;
+    height: 35px;
     display: flex;
     align-items: center;
     justify-content: center;
