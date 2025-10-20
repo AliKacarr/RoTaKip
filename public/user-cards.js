@@ -24,16 +24,19 @@ async function loadUserCards() {
     const { users = [], stats = [] } = allData;
     const streaks = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
 
-    // Giriş yapılan kullanıcıyı ilk sıraya koy
+    // Giriş yapılan kullanıcı bilgisi
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
-    if (currentUserInfo && currentUserInfo.userId) {
-      const currentUserIndex = users.findIndex(user => user._id === currentUserInfo.userId);
-      if (currentUserIndex > 0) {
-        // Giriş yapılan kullanıcıyı ilk sıraya taşı
-        const currentUser = users.splice(currentUserIndex, 1)[0];
-        users.unshift(currentUser);
-      }
-    }
+
+    // Kullanıcıları lig sıralamasına göre düzenle (en yüksek ligden en düşüğe)
+    users.sort((user1, user2) => {
+      const user1Stats = stats.filter(s => s.userId === user1._id && s.status === 'okudum');
+      const user2Stats = stats.filter(s => s.userId === user2._id && s.status === 'okudum');
+      const user1OkudumCount = user1Stats.length;
+      const user2OkudumCount = user2Stats.length;
+      
+      // En yüksek ligden en düşüğe sırala
+      return user2OkudumCount - user1OkudumCount;
+    });
 
   // Mevcut kartları bir Map olarak tut
   const existingCards = new Map();
@@ -76,7 +79,7 @@ async function loadUserCards() {
     "Elmas": "linear-gradient(90deg, #36e873 60%, #c4edb8 100%)",
     "Yakut": "linear-gradient(90deg, #ffb199 60%, #ffe0b2 100%)",
     "Mercan": "linear-gradient(90deg, #ff6f63 60%, #ffafb7 100%)",
-    "Pırlanta": "linear-gradient(90deg, #f3ebeb  60%, #ffffff 100%)"
+    "Pırlanta": "linear-gradient(90deg, #ffbf00 60%, #ffe789 100%)"
   };
 
   // Haftanın günleri
@@ -197,6 +200,24 @@ async function loadUserCards() {
     const headerBg = leagueBackgrounds[league.name] || "#fff";
 
 
+    // Section'ı göster
+    const section = document.querySelector('.user-cards-section');
+    if (section) {
+      section.style.display = 'block';
+    }
+    
+    // League info bar'ı da göster
+    let leagueInfoBar = document.querySelector('.league-info-bar');
+    if (leagueInfoBar) {
+      leagueInfoBar.style.display = 'flex';
+    }
+    
+    // User cards header'ı da göster
+    const userCardsHeader = document.querySelector('.user-cards-header');
+    if (userCardsHeader) {
+      userCardsHeader.style.display = 'block';
+    }
+    
     container.style.display = 'flex';
 
     // Kart zaten varsa, içeriğini güncelle
@@ -307,10 +328,10 @@ async function loadUserCards() {
     existingMissedMsg.remove();
   }
 
-  // Bugünün ve dünün tarihini al
+  // Bugünün tarihini al (UTC+3 saat dilimi ile)
   const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
+  // UTC+3 saat dilimi ekle (Türkiye saati)
+  today.setHours(today.getHours() + 3);
   function formatDate(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -318,7 +339,6 @@ async function loadUserCards() {
     return `${year}-${month}-${day}`;
   }
   const todayStr = formatDate(today);
-  const yesterdayStr = formatDate(yesterday);
 
   // Lig atlayanları bul
   const promotedUsers = [];
@@ -329,14 +349,15 @@ async function loadUserCards() {
     // Hangi lige yeni geçmiş?
     const newLeague = leagues.find(l => okudumCount === l.min);
     if (newLeague) {
-      // Dün "okudum" ise
-      const yesterdayStat = userStats.find(s => s.date === yesterdayStr && s.status === 'okudum');
-      if (yesterdayStat) {
+      // Bugün "okudum" ise
+      const todayStat = userStats.find(s => s.date === todayStr && s.status === 'okudum');
+      if (todayStat) {
         promotedUsers.push({ name: user.name, league: newLeague.name });
       }
     }
   });
 
+  
   // Eğer lig atlayan varsa mesajı oluştur
   if (promotedUsers.length > 0) {
     const promotedMsg = document.createElement('div');
@@ -379,7 +400,11 @@ async function loadUserCards() {
     copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
     promotedMsg.appendChild(copyText);
 
-    leagueInfoBar.insertAdjacentElement('afterend', promotedMsg);
+    // user-cards-section'ın en başına ekle
+    const userCardsSection = document.querySelector('.user-cards-section');
+    if (userCardsSection) {
+      userCardsSection.insertBefore(promotedMsg, userCardsSection.firstChild);
+    }
 
     // Intersection Observer ile confetti animasyonunu tetikle
     const observer = new IntersectionObserver((entries) => {
@@ -522,7 +547,11 @@ async function loadUserCards() {
     missedMsg.appendChild(chainText);
     missedMsg.appendChild(messageContent);
     
-    afterElem.insertAdjacentElement('afterend', missedMsg);
+    // user-cards-section'ın en başına ekle
+    const userCardsSection = document.querySelector('.user-cards-section');
+    if (userCardsSection) {
+      userCardsSection.insertBefore(missedMsg, userCardsSection.firstChild);
+    }
 
     // Tıklama ile panoya kopyalama ve bildirim
     missedMsg.style.cursor = 'pointer'; // İşaretçiyi değiştirerek tıklanabilir olduğunu belirt
@@ -554,20 +583,20 @@ async function loadUserCards() {
       missedMsg.classList.add('message-fade-in');
     }, 50);
   } else {
-    // Dün herkesin okuduğunu kontrol et
-    let everyoneReadYesterday = true;
+    // Bugün herkesin okuduğunu kontrol et
+    let everyoneReadToday = true;
     users.forEach(user => {
-      const yesterdayStat = stats.find(s => s.userId === user._id && s.date === yesterdayStr);
-      if (!yesterdayStat || yesterdayStat.status !== 'okudum') {
-        everyoneReadYesterday = false;
+      const todayStat = stats.find(s => s.userId === user._id && s.date === todayStr);
+      if (!todayStat || todayStat.status !== 'okudum') {
+        everyoneReadToday = false;
       }
     });
 
-    // Sadece gerçekten dün herkes okumuşsa tebrik mesajı göster
-    if (everyoneReadYesterday) {
+    // Sadece gerçekten bugün herkes okumuşsa tebrik mesajı göster
+    if (everyoneReadToday) {
       const missedMsg = document.createElement('div');
       missedMsg.className = 'consecutive-missed-message';
-      missedMsg.innerHTML = 'Harika! Herkes dün okumalarını yapmış! 🎉🎉<span class="missed-reminder"><br>Haydi, bugünküleri de yapalım!</span>';
+      missedMsg.innerHTML = 'Harika! Herkes bugün okumalarını yapmış! 🎉🎉<span class="missed-reminder"><br>Bu güzel alışkanlığı devam ettirelim!</span>';
       
       // Sol alt köşe emoji ekle
       const leftEmoji = document.createElement('div');
@@ -581,7 +610,11 @@ async function loadUserCards() {
       copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
       missedMsg.appendChild(copyText);
       
-      afterElem.insertAdjacentElement('afterend', missedMsg);
+      // user-cards-section'ın en başına ekle
+      const userCardsSection = document.querySelector('.user-cards-section');
+      if (userCardsSection) {
+        userCardsSection.insertBefore(missedMsg, userCardsSection.firstChild);
+      }
     // Tıklama ile panoya kopyalama ve bildirim
     missedMsg.style.cursor = 'pointer';
     missedMsg.addEventListener('click', async () => {

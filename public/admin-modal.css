@@ -341,8 +341,8 @@
     position: fixed;
     bottom: 30px;
     right: 40px;
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
     background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
     color: white;
     border: none;
@@ -373,8 +373,8 @@
 }
 
 .scroll-to-top-btn svg {
-    width: 23px;
-    height: 23px;
+    width: 29px;
+    height: 29px;
     transition: transform 0.3s ease;
 }
 
@@ -2201,12 +2201,11 @@
 /* Admin Indicator Styles */
 .admin-indicator {
     position: fixed;
-    bottom: 260px;
     left: 40px;
-    background: linear-gradient(135deg, #4e54c8, #8f94fb);
+    background: linear-gradient(135deg, #6366f1, #7681ed);
     color: white;
     height: 50px;
-    min-width: 160px;
+    width: 160px;
     padding-left: 20px;
     padding-right: 20px;
     border-radius: 30px;
@@ -2218,18 +2217,28 @@
     transition: all 0.3s ease;
     z-index: 101;
     text-align: center;
-    border: 2px solid rgba(255, 255, 255, 0.2);
     align-items: center;
     gap: 10px;
     justify-content: center;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(-100px) scale(0.8);
+    animation: slideInFromLeft 0.6s ease-out 0.5s forwards;
+}
+
+.admin-indicator .admin-user-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
 /* Scroll to Main Button Styles */
 .scroll-to-main-button {
     position: fixed;
-    bottom: 200px;
+    bottom: 210px;
     left: 40px;
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    background: linear-gradient(135deg, #dc2626, #f26363);
     color: white;
     height: 50px;
     width: 160px;
@@ -2246,62 +2255,17 @@
     align-items: center;
     gap: 10px;
     justify-content: center;
-}
-
-/* Articles Button Styles */
-.articles-button {
-    position: fixed;
-    bottom: 20px;
-    left: 40px;
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    height: 50px;
-    width: 160px;
-    padding-left: 20px;
-    padding-right: 20px;
-    border-radius: 30px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 700;
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-    transition: all 0.3s ease;
-    z-index: 99;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
-}
-
-/* Videos Button Styles */
-.videos-button {
-    position: fixed;
-    bottom: 80px;
-    left: 40px;
-    background: linear-gradient(135deg, #e67e22, #d35400);
-    color: white;
-    height: 50px;
-    width: 160px;
-    padding-left: 20px;
-    padding-right: 20px;
-    border-radius: 30px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 700;
-    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
-    transition: all 0.3s ease;
-    z-index: 99;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
+    opacity: 0;
+    transform: translateX(-100px) scale(0.8);
+    animation: slideInFromLeft 0.6s ease-out 0.4s forwards;
 }
 
 /* Quotes Button Styles */
 .quotes-button {
     position: fixed;
-    bottom: 140px;
+    bottom: 150px;
     left: 40px;
-    background: linear-gradient(135deg, #f39c12, #e67e22);
+    background: linear-gradient(135deg, #f59e0b, #e6ac16);
     color: white;
     height: 50px;
     width: 160px;
@@ -2318,37 +2282,127 @@
     align-items: center;
     gap: 10px;
     justify-content: center;
+    opacity: 0;
+    transform: translateX(-100px) scale(0.8);
+    animation: slideInFromLeft 0.6s ease-out 0.3s forwards;
+}
+
+/* Videos Button Styles */
+.videos-button {
+    position: fixed;
+    bottom: 90px;
+    left: 40px;
+    background: linear-gradient(135deg, #f97316, #ea8330);
+    color: white;
+    height: 50px;
+    width: 160px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
+    transition: all 0.3s ease;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(-100px) scale(0.8);
+    animation: slideInFromLeft 0.6s ease-out 0.2s forwards;
+}
+
+
+/* Articles Button Styles */
+.articles-button {
+    position: fixed;
+    bottom: 30px;
+    left: 40px;
+    background: linear-gradient(135deg, #0284c7, #25a1d8);
+    color: white;
+    height: 50px;
+    width: 160px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    transition: all 0.3s ease;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(-100px) scale(0.8);
+    animation: slideInFromLeft 0.6s ease-out 0.1s forwards;
 }
 
 /* Button Hover Effects */
 .admin-indicator:hover,
 .scroll-to-main-button:hover,
-.articles-button:hover,
+.quotes-button:hover,
 .videos-button:hover,
-.quotes-button:hover {
+.articles-button:hover{
+    user-select: none;
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 .admin-indicator:active,
 .scroll-to-main-button:active,
-.articles-button:active,
+.quotes-button:active,
 .videos-button:active,
-.quotes-button:active {
+.articles-button:active {
     transform: translateY(0);
+}
+
+/* Button Animation Keyframes */
+@keyframes slideInFromLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-100px) scale(0.8);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translateX(-20px) scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
 }
 
 /* Kullanıcı İstatistik Bilgi Alanı Stilleri */
 .user-stats-info-area {
     width: 100%;
     max-width: 1200px;
-    margin: 20px auto;
+    margin: 10px 0 25px 0px;
     display: none;
     flex-direction: column;
     align-items: center;
     opacity: 0;
     transform: translateY(-20px);
     transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.user-stats-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e40af;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-stats-title i {
+    font-size: 26px;
+    color: #3b82f6;
 }
 
 .user-stats-info-area.show {
@@ -2398,7 +2452,7 @@
 }
 
 .user-stats-streak-icon {
-    font-size: 2rem;
+    font-size: 32px;
     filter: drop-shadow(0 2px 4px rgba(255, 69, 0, 0.4));
     animation: userStatsStreakPulse 4s ease-in-out infinite;
 }
@@ -2453,6 +2507,7 @@
 .user-stats-league-img {
     width: 40px;
     height: 40px;
+    border-radius: 50%;
     object-fit: contain;
     transition: transform 0.3s ease;
 }
@@ -2496,7 +2551,7 @@
 
 .user-stats-progress-track {
     height: 9px;
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(59, 130, 246, 0.3);
     border-radius: 4px;
     overflow: hidden;
     position: relative;

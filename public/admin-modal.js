@@ -3,26 +3,6 @@ let isJoinRequestSuccess = false;
 
 // Create navigation buttons function (her zaman görünür)
 function createNavigationButtons() {
-    // Create articles button if it doesn't exist
-    let articlesButton = document.querySelector('.articles-button');
-    if (!articlesButton) {
-        articlesButton = document.createElement('div');
-        articlesButton.className = 'articles-button';
-        articlesButton.innerHTML = '<i class="fa-regular fa-newspaper"></i> Makaleler';
-
-        // Add click event to scroll to articles section
-        articlesButton.addEventListener('click', function() {
-            const articlesSection = document.querySelector('.articles');
-            if (articlesSection) {
-                articlesSection.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-
-        document.body.appendChild(articlesButton);
-    }
 
     // Create videos button if it doesn't exist
     let videosButton = document.querySelector('.videos-button');
@@ -64,6 +44,27 @@ function createNavigationButtons() {
         });
 
         document.body.appendChild(quotesButton);
+    }
+
+    // Create articles button if it doesn't exist
+    let articlesButton = document.querySelector('.articles-button');
+    if (!articlesButton) {
+        articlesButton = document.createElement('div');
+        articlesButton.className = 'articles-button';
+        articlesButton.innerHTML = '<i class="fa-regular fa-newspaper"></i> Makaleler';
+
+        // Add click event to scroll to articles section
+        articlesButton.addEventListener('click', function() {
+            const articlesSection = document.querySelector('.articles');
+            if (articlesSection) {
+                articlesSection.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+
+        document.body.appendChild(articlesButton);
     }
 }
 
@@ -130,8 +131,8 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
         adminIndicator.className = 'admin-indicator';
         const displayName = userInfo.name && userInfo.name !== 'null' ? userInfo.name : '';
         adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
-            `<i class="fa-solid fa-user-shield"></i> ${displayName}` : 
-            `<i class="fa-solid fa-user"></i> ${displayName}`;
+            `<i class="fa-solid fa-user-shield"></i> <span class="user-name">${displayName}</span>` : 
+            `<i class="fa-solid fa-user"></i> <span class="admin-user-name">${displayName}</span>`;
 
         // Add click event to open admin info panel
         adminIndicator.addEventListener('click', function () {
@@ -144,9 +145,20 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
         // Update text based on user authority
         const displayName = userInfo.name && userInfo.name !== 'null' ? userInfo.name : '';
         adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
-            `<i class="fa-solid fa-user-shield"></i> ${displayName}` : 
-            `<i class="fa-solid fa-user"></i> ${displayName}`;
+            `<i class="fa-solid fa-user-shield"></i> <span class="user-name">${displayName}</span>` : 
+            `<i class="fa-solid fa-user"></i> <span class="user-name">${displayName}</span>`;
         adminIndicator.style.display = 'flex';
+    }
+
+    // Admin indicator pozisyonunu scrollToMainButton'a göre ayarla
+    if (adminIndicator) {
+        if (scrollToMainButton && scrollToMainButton.style.display === 'flex') {
+            // ScrollToMainButton görünürse admin-indicator'ı daha yukarı al
+            adminIndicator.style.bottom = '270px';
+        } else {
+            // ScrollToMainButton gizliyse admin-indicator'ı daha aşağı al
+            adminIndicator.style.bottom = '210px';
+        }
     }
 
   
@@ -911,6 +923,37 @@ document.addEventListener('DOMContentLoaded', function () {
                         updateData.groupName,
                         updateData.name
                     );
+                    
+                    // Giriş serisi güncelle
+                    try {
+                        const streakResponse = await fetch('/api/update-login-streak', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                userId: updateData.userId,
+                                groupId: updateData.groupId
+                            })
+                        });
+                        
+                        if (streakResponse.ok) {
+                            const streakData = await streakResponse.json();
+                            
+                            // Giriş serisi bilgisini UI'da güncelle
+                            const streakNumber = document.querySelector('.streak-number');
+                            if (streakNumber) {
+                                streakNumber.textContent = streakData.loginStreak;
+                            }
+                            
+                            // Giriş serisi artırıldıysa bildirim göster
+                            if (streakData.streakIncreased && updateData.name) {
+                                showStreakNotification(updateData.name, streakData.loginStreak);
+                            }
+                        }
+                    } catch (streakError) {
+                        console.error('Giriş serisi güncelleme hatası:', streakError);
+                    }
 
                     // Close modal
                     window.hideModal(welcomeInviteModal);
@@ -1124,6 +1167,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 // Private grup erişimi flag'ini sıfırla
                 window.isPrivateGroupAccessModal = false;
+                
+                // Giriş serisi güncelle
+                try {
+                    const streakResponse = await fetch('/api/update-login-streak', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userId: data.userId,
+                            groupId: data.groupId
+                        })
+                    });
+                    
+                    if (streakResponse.ok) {
+                        const streakData = await streakResponse.json();
+                        
+                        // Giriş serisi bilgisini UI'da güncelle
+                        const streakNumber = document.querySelector('.streak-number');
+                        if (streakNumber) {
+                            streakNumber.textContent = streakData.loginStreak;
+                        }
+                    }
+                } catch (streakError) {
+                    console.error('Giriş serisi güncelleme hatası:', streakError);
+                }
                 
                 // Modal'ı kapat ve form'u temizle
                 window.hideModal(groupsAuthLoginModal);

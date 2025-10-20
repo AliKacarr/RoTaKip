@@ -134,8 +134,8 @@ async function generateMinifiedFiles() {
 
 // Giriş serisi hesaplama fonksiyonu
 async function handleLoginStreak(user) {
-  const today = moment().format("YYYY-MM-DD");
-  const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+  const today = moment().utcOffset(3).format("YYYY-MM-DD");
+  const yesterday = moment().utcOffset(3).subtract(1, "days").format("YYYY-MM-DD");
 
   // Mevcut seri değerini al
   const currentStreak = user.loginStreak || 0;
@@ -148,7 +148,6 @@ async function handleLoginStreak(user) {
   // Dün de girmişse: seriyi artır
   else if (user.lastLoginDate === yesterday) {
     user.loginStreak = currentStreak + 1;
-    console.log(`🔥 Giriş serisi artırıldı: ${user.username} -> ${user.loginStreak} gün`);
     
     // Giriş serisi artırıldığını işaretle
     user.streakIncreased = true;

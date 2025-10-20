@@ -1,3 +1,31 @@
+/* User Cards Section */
+.user-cards-section {
+    margin: 25px 0 30px 0;
+}
+
+.user-cards-header {
+    text-align: center;
+    margin: 30px 0 20px 0;
+    padding-inline: 20px;
+}
+
+.user-cards-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #44444423;
+    gap: 12px;
+}
+
+.user-cards-title i {
+    color: #f39c12;
+    font-size: 0.9em;
+}
+
 .user-cards-container {
     flex-wrap: wrap;
     column-gap: 50px;
@@ -461,7 +489,7 @@
 }
 
 .league-promotion-message {
-    width: 90%;
+    width: 93%;
     max-width: 1200px;
     background: #e6f2ff;
     border-radius: 10px;
@@ -593,7 +621,7 @@
 }
 
 .consecutive-missed-message {
-    width: 90%;
+    width: 93%;
     max-width: 1200px;
     background: #f0f7ff;
     border-radius: 10px;

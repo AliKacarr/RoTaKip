@@ -193,12 +193,13 @@ const LEAGUES = [
     { min: 100, max: 150, name: 'Elmas', img: 'elmas.webp', bg: 'linear-gradient(90deg, #36e873 60%, #c4edb8 100%)' },
     { min: 150, max: 200, name: 'Yakut', img: 'yakut.webp', bg: 'linear-gradient(90deg, #ffb199 60%, #ffe0b2 100%)' },
     { min: 200, max: 365, name: 'Mercan', img: 'mercan.webp', bg: 'linear-gradient(90deg, #ff6f63 60%, #ffafb7 100%)' },
-    { min: 365, max: 1001, name: 'Pırlanta', img: 'pirlanta.webp', bg: 'linear-gradient(90deg, #f3ebeb  60%, #ffffff 100%)' }
+    { min: 365, max: 1001, name: 'Pırlanta', img: 'pirlanta.webp', bg: 'linear-gradient(90deg, #ffbf00 60%, #ffe789 100%)' }
 ];
 
 function getWeekDates(offset = 0) {
     const today = new Date();
-    today.setHours(today.getHours());
+    // UTC+3 saat dilimi ekle (Türkiye saati)
+    today.setHours(today.getHours() + 3);
     const dayOfWeek = today.getDay();
     
     let actualFirstDay;
@@ -316,6 +317,7 @@ async function loadTrackerTable() {
     }
     let theadHTML = `<tr><th>Kullanıcılar</th>`;
     const today = new Date();
+    // UTC+3 saat dilimi ekle (Türkiye saati)
     today.setHours(today.getHours() + 3);
     const todayString = today.toISOString().split('T')[0];
     for (let d of dates) {
@@ -353,6 +355,8 @@ async function loadTrackerTable() {
             
             // Bugünden sonraki tarihler için • ikonu ve disabled sınıfı
             const currentDate = new Date();
+            // UTC+3 saat dilimi ekle (Türkiye saati)
+            currentDate.setHours(currentDate.getHours() + 3);
             const todayString = currentDate.toISOString().split('T')[0];
             const isFutureDate = date > todayString;
             
@@ -501,7 +505,8 @@ function calculateStreak(userStats) {
     const allDates = Object.keys(userStats).sort();
     if (allDates.length === 0) return 0;
     const today = new Date();
-    today.setHours(today.getHours());
+    // UTC+3 saat dilimi ekle (Türkiye saati)
+    today.setHours(today.getHours() + 3);
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
@@ -639,6 +644,7 @@ async function toggleStatus(userId, date) {
             
             // Bugün sınıfını koru
             const today = new Date();
+            // UTC+3 saat dilimi ekle (Türkiye saati)
             today.setHours(today.getHours() + 3);
             const todayString = today.toISOString().split('T')[0];
             if (cellDate === todayString) {

@@ -3,7 +3,7 @@
 // ============================================================================
 
 // Giriş serisi artırıldığında bildirim göster
-function showStreakNotification(name, streak) {
+window.showStreakNotification = function showStreakNotification(name, streak) {
   const toast = document.createElement('div');
   toast.className = 'toast toast-success';
   toast.innerHTML = `
