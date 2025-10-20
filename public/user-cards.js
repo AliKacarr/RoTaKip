@@ -99,7 +99,12 @@ async function loadUserCards() {
     if (firstDayOfWeek === 'default') {
       // Varsayılan: Bugünden sonraki gün haftanın ilk günü olsun
       const today = new Date();
-      const dayOfWeek = today.getDay();
+      // UTC+3 saat dilimi ekle (Türkiye saati)
+      today.setHours(today.getHours() + 3);
+      // Yarını hesapla
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const dayOfWeek = tomorrow.getDay();
       // JavaScript'te 0=Pazar, 1=Pazartesi... ama bizim sistemde 1=Pazartesi
       // Bu yüzden dönüşüm yapmamız gerekiyor
       const jsToOurSystem = (dayOfWeek + 6) % 7; // Pazar(0)->6, Pazartesi(1)->0, Salı(2)->1...
@@ -145,7 +150,8 @@ async function loadUserCards() {
 
       // Bugünün tarihini al
       const today = new Date();
-      today.setHours(today.getHours());
+      // UTC+3 saat dilimi ekle (Türkiye saati)
+      today.setHours(today.getHours() + 3);
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
       const day = String(today.getDate()).padStart(2, '0');

@@ -14,7 +14,583 @@
     {
         "id": 3,
         "esmaulhusna_name": "ER-RAHİM",
-        "esmaulhusna_description": "Pek ziyâde merhamet edici, bilhassa mü’minlere rahmet eden.",
+        "esmaulhusna_description": "Pek ziyâde merhamet edici, bilhassa mü'minlere rahmet eden.",
         "esmaulhusna_video_url": "https://youtu.be/l8lh_GyWBK8?si=DUUL6vggSQsFxWzZ"
+    },
+    {
+        "id": 4,
+        "esmaulhusna_name": "EL-MELİK",
+        "esmaulhusna_description": "Bütün varlıkların sahibi ve hükümdârı.",
+        "esmaulhusna_video_url": "https://youtu.be/GEf6_9Xj0JI?si=mJCSS84Pp-xs61Hv"
+    },
+    {
+        "id": 5,
+        "esmaulhusna_name": "EL-KUDDUS",
+        "esmaulhusna_description": "Eksiklik ve kusurlardan münezzeh olan, bütün kemâl sıfatları kendisinde toplayan.",
+        "esmaulhusna_video_url": "https://youtu.be/0VIxQqvKyFw?si=7Rg38U2dmWJmKrZY"
+    },
+    {
+        "id": 6,
+        "esmaulhusna_name": "ES-SELAM",
+        "esmaulhusna_description": "Esenlik ve selâmet veren, yaratılmışlara özgü değişikliklerden ve yok oluştan münezzeh olan.",
+        "esmaulhusna_video_url": "https://youtu.be/dPCwelL0kQo?si=1dVjlrhTqZ-sS85q"
+    },
+    {
+        "id": 7,
+        "esmaulhusna_name": "EL-MÜ'MİN",
+        "esmaulhusna_description": "Bütün mahlûkâta emniyet ve güven veren ve kendisine güvenilen.",
+        "esmaulhusna_video_url": "https://youtu.be/zK95Gdx93IA?si=jTb9HnfGGkcxqviq"
+    },
+    {
+        "id": 8,
+        "esmaulhusna_name": "EL-MÜHEYMİN",
+        "esmaulhusna_description": "Kâinatın bütün işlerini gözetip yöneten, her şeyi hükmü altına alan.",
+        "esmaulhusna_video_url": "https://youtu.be/Bfv1s3Hn3k0?si=byvFtgyVv15gJjai"
+    },
+    {
+        "id": 9,
+        "esmaulhusna_name": "EL-AZİZ",
+        "esmaulhusna_description": "Ulu, galip, her şeye üstün gelen izzet sahibi.",
+        "esmaulhusna_video_url": "https://youtu.be/MSf0QpjRxcA?si=y5SlYq3lVMvxcMSY"
+    },
+    {
+        "id": 10,
+        "esmaulhusna_name": "EL-CEBBAR",
+        "esmaulhusna_description": "Dilediğini yaptırma gücüne sahip olan, her şeyi tasarrufu altına alan ve irâdesini her durumda yürüten.",
+        "esmaulhusna_video_url": "https://youtu.be/oBq9ZNSh758?si=TvQRXLWQtXuUxssP"
+    },
+    {
+        "id": 11,
+        "esmaulhusna_name": "EL-MÜTEKEBBİR",
+        "esmaulhusna_description": "Büyüklüğünü izhar eden, son derece ulu ve yüce.",
+        "esmaulhusna_video_url": "https://youtu.be/8kzffigyCBQ?si=rSOjKZDSLews_ldA"
+    },
+    {
+        "id": 12,
+        "esmaulhusna_name": "EL-HALIK",
+        "esmaulhusna_description": "Her şeyin yaratıcısı, hikmeti gereği her şeyi ölçülü yaratan.",
+        "esmaulhusna_video_url": "https://youtu.be/VaITF6Bef4g?si=JRe2tjX6mK80vgZQ"
+    },
+    {
+        "id": 13,
+        "esmaulhusna_name": "EL-BARİ",
+        "esmaulhusna_description": "Yoktan yaratan, maddesi ve örneği olmadan îcat eden.",
+        "esmaulhusna_video_url": "https://youtu.be/97Mh0StNizQ?si=76NXJ-QN8sjW_9Fo"
+    },
+    {
+        "id": 14,
+        "esmaulhusna_name": "EL-MUSAVVİR",
+        "esmaulhusna_description": "Varlığa şekil ve sûret veren.",
+        "esmaulhusna_video_url": "https://youtu.be/fDTQwATwLRE?si=X1_SRhfNrZTQhajw"
+    },
+    {
+        "id": 15,
+        "esmaulhusna_name": "EL-GAFFAR",
+        "esmaulhusna_description": "Kusur ve günahları örten, çokça bağışlayan.",
+        "esmaulhusna_video_url": "https://youtu.be/JTkJCbdkcvc?si=scFG_-Fski9EXPZT"
+    },
+    {
+        "id": 16,
+        "esmaulhusna_name": "EL-KAHHAR",
+        "esmaulhusna_description": "Yenilmeyen, dilediğini yerine getiren, kendisine her şeyin boyun eğdiği yegâne kudret ve tasarruf sahibi.",
+        "esmaulhusna_video_url": "https://youtu.be/5kUQ8GR_vNg?si=rULbLhLgFKe2f_b2"
+    },
+    {
+        "id": 17,
+        "esmaulhusna_name": "EL-VEHHAB",
+        "esmaulhusna_description": "Karşılıksız olarak çokça nimet veren ve ihsanda bulunan.",
+        "esmaulhusna_video_url": "https://youtu.be/tTLPbXvvOZ4?si=EHjpjoDTmLvPr59u"
+    },
+    {
+        "id": 18,
+        "esmaulhusna_name": "ER-REZZAK",
+        "esmaulhusna_description": "Maddî ve manevî bol rızık veren, her türlü rızık imkânlarını yaratan.",
+        "esmaulhusna_video_url": "https://youtu.be/jsv91V-oMOo?si=GgB8JXoF4tzdn6oY"
+    },
+    {
+        "id": 19,
+        "esmaulhusna_name": "EL-FETTAH",
+        "esmaulhusna_description": "Hayır kapılarını açan, hükmüyle adaleti sağlayan.",
+        "esmaulhusna_video_url": "https://youtu.be/8jANHkllRAk?si=EClmPHFckKyi6PqU"
+    },
+    {
+        "id": 20,
+        "esmaulhusna_name": "EL-ALİM",
+        "esmaulhusna_description": "İlmi her şeyi kuşatan.",
+        "esmaulhusna_video_url": "https://youtu.be/bAnRQ8T6a0w?si=u_9myDTeVBIomtwU"
+    },
+    {
+        "id": 21,
+        "esmaulhusna_name": "EL-KABIZ",
+        "esmaulhusna_description": "Her şeyi teslim alan, hikmeti gereği rızkı ve her türlü nimeti ölçülü veren, eceli gelenlerin ruhlarını teslim alan.",
+        "esmaulhusna_video_url": "https://youtu.be/A8M-CMLPT-s?si=rZBOqG3_UdqK7b-A"
+    },
+    {
+        "id": 22,
+        "esmaulhusna_name": "EL-BASIT",
+        "esmaulhusna_description": "Rızkı ve her türlü rızık imkânını genişleten, ömürleri uzatan.",
+        "esmaulhusna_video_url": "https://youtu.be/jpoiEjYV-uA?si=bZwukaUPZPXSrbTC"
+    },
+    {
+        "id": 23,
+        "esmaulhusna_name": "EL-HAFID",
+        "esmaulhusna_description": "Kâfirleri ve zalimleri alçaltan.",
+        "esmaulhusna_video_url": "https://youtu.be/H-UzebT2HqM?si=WAHkh4A0oQRcKtcb"
+    },
+    {
+        "id": 24,
+        "esmaulhusna_name": "ER-RAFİ",
+        "esmaulhusna_description": "Müminleri yükselten, izzetli ve şerefli kılan.",
+        "esmaulhusna_video_url": "https://youtu.be/998wX1akGKk?si=jRO8XwRmTb6LTzPV"
+    },
+    {
+        "id": 25,
+        "esmaulhusna_name": "EL-MUİZZ",
+        "esmaulhusna_description": "Yücelten, güçlü ve aziz kılan.",
+        "esmaulhusna_video_url": "https://youtu.be/ZQSG1YwpkFo?si=M8H4dPlWS4-aFhZP"
+    },
+    {
+        "id": 26,
+        "esmaulhusna_name": "EL-MÜZİLL",
+        "esmaulhusna_description": "Boyun eğdiren, değersiz kılan.",
+        "esmaulhusna_video_url": "https://youtu.be/5QMRdmfBIr8?si=8mKWTlEqzn3F9FFD"
+    },
+    {
+        "id": 27,
+        "esmaulhusna_name": "ES-SEMİ",
+        "esmaulhusna_description": "Her şeyi işiten.",
+        "esmaulhusna_video_url": "https://youtu.be/nFF_VbKxTtE?si=RaNoQvMSbxAZAWcS"
+    },
+    {
+        "id": 28,
+        "esmaulhusna_name": "EL-BASİR",
+        "esmaulhusna_description": "Her şeyi gören.",
+        "esmaulhusna_video_url": "https://youtu.be/0ERM3nWjRa0?si=0oZTp7lPGMELdqeS"
+    },
+    {
+        "id": 29,
+        "esmaulhusna_name": "EL-HAKEM",
+        "esmaulhusna_description": "Nihaî hükmü veren.",
+        "esmaulhusna_video_url": "https://youtu.be/xrFzGvyz0e8?si=EeGHWlPugWAm3YbH"
+    },
+    {
+        "id": 30,
+        "esmaulhusna_name": "EL-ADL",
+        "esmaulhusna_description": "Adaletli, her şeyi yerli yerinde yapan.",
+        "esmaulhusna_video_url": "https://youtu.be/viCeLDlqLAQ?si=88CV5NhyfT5Yck5E"
+    },
+    {
+        "id": 31,
+        "esmaulhusna_name": "EL-LATİF",
+        "esmaulhusna_description": "En gizli ve ince hususları dahi bilen, lütufta bulunan, zâtı duyularla algılanamayan, fiillerini rıfk ile gerçekleştiren.",
+        "esmaulhusna_video_url": "https://youtu.be/C_NVJtoZtNQ?si=Motct25KzSEvbG08"
+    },
+    {
+        "id": 32,
+        "esmaulhusna_name": "EL-HABİR",
+        "esmaulhusna_description": "Gizli ve açık her şeyden haberdar olan, dilediğini haber veren.",
+        "esmaulhusna_video_url": "https://youtu.be/woAExyBKL4o?si=r9AK3pW9oBwpzvuE"
+    },
+    {
+        "id": 33,
+        "esmaulhusna_name": "EL-HALİM",
+        "esmaulhusna_description": "Sabırlı, acele ve kızgınlıkla muamele etmeyen, kudreti olduğu hâlde hemen cezalandırmayan.",
+        "esmaulhusna_video_url": "https://youtu.be/HJe1SJbKk_U?si=NAiciAepVYsLD0-c"
+    },
+    {
+        "id": 34,
+        "esmaulhusna_name": "EL-AZİM",
+        "esmaulhusna_description": "Zât ve sıfatları bakımından pek yüce olan, azametli olan.",
+        "esmaulhusna_video_url": "https://youtu.be/tNPUgNyvvr8?si=2FufHyRoJhB_0nkX"
+    },
+    {
+        "id": 35,
+        "esmaulhusna_name": "EL-GAFUR",
+        "esmaulhusna_description": "Çok affedici ve bağışlayıcı olan.",
+        "esmaulhusna_video_url": "https://youtu.be/_YaG6PZ3t0A?si=hRLJ0jR75-UMBFRb"
+    },
+    {
+        "id": 36,
+        "esmaulhusna_name": "EŞ-ŞEKUR",
+        "esmaulhusna_description": "Yapılan iyi amellerin karşılığını bolca veren.",
+        "esmaulhusna_video_url": "https://youtu.be/QLhGhPoFGus?si=Xx2OSnHR0XgjhLxP"
+    },
+    {
+        "id": 37,
+        "esmaulhusna_name": "EL-ALİYY",
+        "esmaulhusna_description": "Yücelik ve hükümranlıkta kendisine eşit veya kendisinden daha üstün bir varlık bulunmayan.",
+        "esmaulhusna_video_url": "https://youtu.be/cG0veNNdQgA?si=pAAk_4eH1lC2j8FK"
+    },
+    {
+        "id": 38,
+        "esmaulhusna_name": "EL-KEBİR",
+        "esmaulhusna_description": "Zâtının ve sıfatlarının mahiyeti bilinemeyecek kadar büyük ve ulu olan.",
+        "esmaulhusna_video_url": "https://youtu.be/COQ8r3skcJw?si=FtZ4SLbvQxSAVRlR"
+    },
+    {
+        "id": 39,
+        "esmaulhusna_name": "EL-HAFİZ",
+        "esmaulhusna_description": "Her şey gözetiminde olan, koruyan ve kâinatı dengede tutan.",
+        "esmaulhusna_video_url": "https://youtu.be/11qSRA5Rsjs?si=ucLlIr_xjaM0RJvu"
+    },
+    {
+        "id": 40,
+        "esmaulhusna_name": "EL-MUKİT",
+        "esmaulhusna_description": "Mahlukatın gıdasını yaratıp veren, güç yetiren ve koruyup gözeten.",
+        "esmaulhusna_video_url": "https://youtu.be/Oat7aRwlFE8?si=VEyw018MB6RVAsPS"
+    },
+    {
+        "id": 41,
+        "esmaulhusna_name": "EL-HASİB",
+        "esmaulhusna_description": "Hesaba çeken, her şeyin neticesini bilen.",
+        "esmaulhusna_video_url": "https://youtu.be/p777l1oZ4JY?si=b7xzqXlxXtENPmhf"
+    },
+    {
+        "id": 42,
+        "esmaulhusna_name": "EL-CELİL",
+        "esmaulhusna_description": "Hiçbir kayıt ve kıyas kabul etmeksizin azamet sahibi, kıymeti ve mertebesi en yüce olan.",
+        "esmaulhusna_video_url": "https://youtu.be/gRS6EJln0wc?si=V0kF7-u8gZ57F_sv"
+    },
+    {
+        "id": 43,
+        "esmaulhusna_name": "EL-KERİM",
+        "esmaulhusna_description": "Çok cömert, nimet ve ihsanı bol olan.",
+        "esmaulhusna_video_url": "https://youtu.be/qlSouHNX04A?si=42NCSP3Ac4Mn9_yM"
+    },
+    {
+        "id": 44,
+        "esmaulhusna_name": "ER-RAKİB",
+        "esmaulhusna_description": "Gözeten, koruyan ve bütün işler murakabesi/kontrolü altında olan.",
+        "esmaulhusna_video_url": "https://youtu.be/BMxaswxHosw?si=TpfB7rc8dv_JVD_v"
+    },
+    {
+        "id": 45,
+        "esmaulhusna_name": "EL-MÜCİB",
+        "esmaulhusna_description": "Dua ve dilekleri kabul eden.",
+        "esmaulhusna_video_url": "https://youtu.be/uwT0QriAco0?si=swUyVmorir1wYnZq"
+    },
+    {
+        "id": 46,
+        "esmaulhusna_name": "EL-VASİ",
+        "esmaulhusna_description": "İlmi, rahmeti ve kudreti her şeyi kuşatan.",
+        "esmaulhusna_video_url": "https://youtu.be/xtzq5UagQJE?si=10adM_N0DpmwFEoi"
+    },
+    {
+        "id": 47,
+        "esmaulhusna_name": "EL-HAKİM",
+        "esmaulhusna_description": "Her işi, emri ve yasağı yerli yerinde olan.",
+        "esmaulhusna_video_url": "https://youtu.be/k8psvZoSiD4?si=FfCJ5LOdMqrEQXix"
+    },
+    {
+        "id": 48,
+        "esmaulhusna_name": "EL-VEDUD",
+        "esmaulhusna_description": "Müminleri seven ve onlar tarafından da sevilen.",
+        "esmaulhusna_video_url": "https://youtu.be/VT6mbbhkE5Y?si=JB_2SeBXMoE_D0pY"
+    },
+    {
+        "id": 49,
+        "esmaulhusna_name": "EL-MECİD",
+        "esmaulhusna_description": "Her türlü eksiklikten münezzeh, lütuf ve ikramı bol olan.",
+        "esmaulhusna_video_url": "https://youtu.be/HrsTdQBE-I8?si=7u_KzwHtay2X_d5j"
+    },
+    {
+        "id": 50,
+        "esmaulhusna_name": "EL-BAİS",
+        "esmaulhusna_description": "Ölüleri dirilten, peygamberler gönderen.",
+        "esmaulhusna_video_url": "https://youtu.be/a-8MllslN3E?si=vDU4yVOsJpVQzJ2P"
+    },
+    {
+        "id": 51,
+        "esmaulhusna_name": "EŞ-ŞEHİD",
+        "esmaulhusna_description": "Her şeye muttali olan, kendisine hiçbir şey gizli kalmayan.",
+        "esmaulhusna_video_url": "https://youtu.be/ait1G6eScA4?si=_IGYo97tnKVhEQgT"
+    },
+    {
+        "id": 52,
+        "esmaulhusna_name": "EL-HAKK",
+        "esmaulhusna_description": "Bizzat ve sürekli olarak var olan, varlığı kendinden olan, uluhiyet ve rububiyeti gerçek olan.",
+        "esmaulhusna_video_url": "https://youtu.be/skUCFHMMjg8?si=Ha5_WYFRK4g-Qk_C"
+    },
+    {
+        "id": 53,
+        "esmaulhusna_name": "EL-VEKİL",
+        "esmaulhusna_description": "Bütün yaratıkların işlerinin görülmesinde güvenilip dayanılan, bu konuda tam yeterli olan.",
+        "esmaulhusna_video_url": "https://youtu.be/IRJSIyhJJQA?si=oudj5wk4hqCtP4gY"
+    },
+    {
+        "id": 54,
+        "esmaulhusna_name": "EL-KAVİ",
+        "esmaulhusna_description": "Gücü ve kuvveti her şeye yeten.",
+        "esmaulhusna_video_url": "https://youtu.be/oHirql7KxOU?si=e8Co2mX-_UViAEUV"
+    },
+    {
+        "id": 55,
+        "esmaulhusna_name": "EL-METİN",
+        "esmaulhusna_description": "Âcizliği, zafiyeti ve güçsüzlüğü olmayan, güçlü olan.",
+        "esmaulhusna_video_url": "https://youtu.be/W6m7w1k-SJw?si=-XP7VOqmWw62fhDr"
+    },
+    {
+        "id": 56,
+        "esmaulhusna_name": "EL-VELİYY",
+        "esmaulhusna_description": "Müminlere dost ve yardımcı olan.",
+        "esmaulhusna_video_url": "https://youtu.be/sqpbViP9OrU?si=ZmxZYR0sdC13uaYO"
+    },
+    {
+        "id": 57,
+        "esmaulhusna_name": "EL-HAMİD",
+        "esmaulhusna_description": "Çok övülen, bütün övgülere ve övgülerin en yücesine layık olan.",
+        "esmaulhusna_video_url": "https://youtu.be/x2dsekuXzYU?si=_SGrb3KIQyipMsm1"
+    },
+    {
+        "id": 58,
+        "esmaulhusna_name": "EL-MUHSİ",
+        "esmaulhusna_description": "Gizli ve âşikâr her şeyin ölçü ve sayısını bütün ayrıntılarıyla bilen.",
+        "esmaulhusna_video_url": "https://youtu.be/vCxRru2Al7A?si=24bt2fBYhJ9N4FsC"
+    },
+    {
+        "id": 59,
+        "esmaulhusna_name": "EL-MÜBDİ",
+        "esmaulhusna_description": "Her şeyi yoktan var eden.",
+        "esmaulhusna_video_url": "https://youtu.be/1v0mX54bFTk?si=W7_bg5ZEPV_keYzL"
+    },
+    {
+        "id": 60,
+        "esmaulhusna_name": "EL-MUİD",
+        "esmaulhusna_description": "Varlıkları ölümlerinden sonra tekrar yaratan.",
+        "esmaulhusna_video_url": "https://youtu.be/wUnC7tb6aak?si=53bH7bLlu8uDypi1"
+    },
+    {
+        "id": 61,
+        "esmaulhusna_name": "EL-MUHYİ",
+        "esmaulhusna_description": "Hayat veren, yaşatan ve dirilten.",
+        "esmaulhusna_video_url": "https://youtu.be/JNrVyQ5rq_g?si=B6rd5qSD4EKlqcbY"
+    },
+    {
+        "id": 62,
+        "esmaulhusna_name": "EL-MÜMİT",
+        "esmaulhusna_description": "Öldüren, canları kabzeden.",
+        "esmaulhusna_video_url": "https://youtu.be/LyCKYRhLBrs?si=aXfQsy7FAUWyaHjA"
+    },
+    {
+        "id": 63,
+        "esmaulhusna_name": "EL-HAYY",
+        "esmaulhusna_description": "Ezelî ve ebedî olarak diri ve ölümsüz olan.",
+        "esmaulhusna_video_url": "https://youtu.be/9GwLRclR5WY?si=HqBdfxSBLOgGCzaJ"
+    },
+    {
+        "id": 64,
+        "esmaulhusna_name": "EL-KAYYUM",
+        "esmaulhusna_description": "Varlığı kendinden olan, her şeyin varlığı kendisine bağlı olan, kâinatı idare eden.",
+        "esmaulhusna_video_url": "https://youtu.be/qjb620-19tU?si=EaYgcPlSdbG6Roil"
+    },
+    {
+        "id": 65,
+        "esmaulhusna_name": "EL-VACİD",
+        "esmaulhusna_description": "Her şeyi bilen, hiçbir şeye muhtaç olmayan, emrini ve isteğini daima gerçekleştiren.",
+        "esmaulhusna_video_url": "https://youtu.be/YR52KqxEZqc?si=2ypQ8LgkyjdRH8Sj"
+    },
+    {
+        "id": 66,
+        "esmaulhusna_name": "EL-MACİD",
+        "esmaulhusna_description": "Şânı yüce ve sonsuz kerem sahibi olan.",
+        "esmaulhusna_video_url": "https://youtu.be/YR52KqxEZqc?si=k-Gg6kxwTR3MTyRf"
+    },
+    {
+        "id": 67,
+        "esmaulhusna_name": "EL-VAHİD",
+        "esmaulhusna_description": "Bir, tek, yegâne varlık; zâtında, ilah ve rab oluşunda ortağı olmayan.",
+        "esmaulhusna_video_url": "https://youtu.be/dIfIpZiScl4?si=zb7P2MGMiOHdBYP5"
+    },
+    {
+        "id": 68,
+        "esmaulhusna_name": "ES-SAMED",
+        "esmaulhusna_description": "Herkesin kendisine muhtaç olduğu, kendisi ise kimseye muhtaç olmayan, ezelî ve ebedî olan.",
+        "esmaulhusna_video_url": "https://youtu.be/PnJT3wKqLA4?si=ySVWqsQZuVF3Ca7C"
+    },
+    {
+        "id": 69,
+        "esmaulhusna_name": "EL-KADİR",
+        "esmaulhusna_description": "Her şeye gücü yeten.",
+        "esmaulhusna_video_url": "https://youtu.be/OXXcOntFyH4?si=8dwZ1hhcuUFimvnu"
+    },
+    {
+        "id": 70,
+        "esmaulhusna_name": "EL-MUKTEDİR",
+        "esmaulhusna_description": "Güç ve kuvvetinde hiçbir sınır olmayan.",
+        "esmaulhusna_video_url": "https://youtu.be/OXXcOntFyH4?si=8dwZ1hhcuUFimvnu"
+    },
+    {
+        "id": 71,
+        "esmaulhusna_name": "EL-MUKADDİM",
+        "esmaulhusna_description": "Hikmeti gereği istediğini öne alan, ileri geçiren.",
+        "esmaulhusna_video_url": "https://youtu.be/k_5SrNfU6mQ?si=WafJyEha5VMq08Fg"
+    },
+    {
+        "id": 72,
+        "esmaulhusna_name": "EL-MUAHHİR",
+        "esmaulhusna_description": "Hikmeti gereği dilediğini geriye bırakan.",
+        "esmaulhusna_video_url": "https://youtu.be/4xfRsIvfPgE?si=-_NLEhALlIzQG8o5"
+    },
+    {
+        "id": 73,
+        "esmaulhusna_name": "EL-EVVEL",
+        "esmaulhusna_description": "Varlığının başlangıcı olmayan, ezelî olan.",
+        "esmaulhusna_video_url": "https://youtu.be/zabnE5gLhnA?si=tKya0hEA0tayVHBd"
+    },
+    {
+        "id": 74,
+        "esmaulhusna_name": "EL-AHİR",
+        "esmaulhusna_description": "Varlığının sonu olmayan, ebedî olan.",
+        "esmaulhusna_video_url": "https://youtu.be/nO6sJSB2unw?si=AeSe1928GsjHX74k"
+    },
+    {
+        "id": 75,
+        "esmaulhusna_name": "EZ-ZAHİR",
+        "esmaulhusna_description": "Varlığını ve birliğini belgeleyen birçok delilin bulunması açısından varlığı açık olan.",
+        "esmaulhusna_video_url": "https://youtu.be/l-k4esUbv0g?si=qpLYgcJNfEpidChi"
+    },
+    {
+        "id": 76,
+        "esmaulhusna_name": "EL-BATIN",
+        "esmaulhusna_description": "Zâtı itibarıyla gizli olan, bütün gizlilikleri bilen.",
+        "esmaulhusna_video_url": "https://youtu.be/VzHHrjpJx8o?si=bsX9KEn0xav74oaj"
+    },
+    {
+        "id": 77,
+        "esmaulhusna_name": "EL-VALİ",
+        "esmaulhusna_description": "Kâinatı yöneten, onlar için gerekli olan her şeyi üstlenen.",
+        "esmaulhusna_video_url": "https://youtu.be/X0OHAMh44KU?si=bgzhKSjdxDP0fCJN"
+    },
+    {
+        "id": 78,
+        "esmaulhusna_name": "EL-MÜTEALİ",
+        "esmaulhusna_description": "Noksanlıklardan berî, aşkın ve yüce olan.",
+        "esmaulhusna_video_url": "https://youtu.be/WmPxkFR2PS8?si=xfdKpZ4Y_Ig0Ri4N"
+    },
+    {
+        "id": 79,
+        "esmaulhusna_name": "EL-BERR",
+        "esmaulhusna_description": "Çokça iyilik eden.",
+        "esmaulhusna_video_url": "https://youtu.be/gTeseG3Uozg?si=FZSeCj5W5LGYNQbS"
+    },
+    {
+        "id": 80,
+        "esmaulhusna_name": "ET-TEVVAB",
+        "esmaulhusna_description": "Kullarını tövbelerini kabul eden.",
+        "esmaulhusna_video_url": "https://youtu.be/lloH39NFcTk?si=Cdiovv-Q_tYecc3E"
+    },
+    {
+        "id": 81,
+        "esmaulhusna_name": "EL-MÜNTAKIM",
+        "esmaulhusna_description": "Suçluları yaptıklarına karşılık cezalandıran.",
+        "esmaulhusna_video_url": "https://youtu.be/lloH39NFcTk?si=Cdiovv-Q_tYecc3E"
+    },
+    {
+        "id": 82,
+        "esmaulhusna_name": "EL-AFUVV",
+        "esmaulhusna_description": "Çokça affeden.",
+        "esmaulhusna_video_url": "https://youtu.be/1Lex4GpuXks?si=yukhgqry25JGcNLg"
+    },
+    {
+        "id": 83,
+        "esmaulhusna_name": "ER-RAUF",
+        "esmaulhusna_description": "Merhameti ve şefkati çok olan.",
+        "esmaulhusna_video_url": "https://youtu.be/1Lex4GpuXks?si=yukhgqry25JGcNLg"
+    },
+    {
+        "id": 84,
+        "esmaulhusna_name": "MALİKÜ'L-MÜLK",
+        "esmaulhusna_description": "Mülkün gerçek sahibi, tüm mevcûdâtı idare eden.",
+        "esmaulhusna_video_url": "https://youtu.be/1Lex4GpuXks?si=yukhgqry25JGcNLg"
+    },
+    {
+        "id": 85,
+        "esmaulhusna_name": "ZÜ'L-CELALİ VE'L-İKRAM",
+        "esmaulhusna_description": "Sonsuz yücelik ve ikram sahibi olan.",
+        "esmaulhusna_video_url": "https://youtu.be/a_TpxSyxeQg?si=tbGoe8YIO9VkgTjD"
+    },
+    {
+        "id": 86,
+        "esmaulhusna_name": "EL-MUKSİT",
+        "esmaulhusna_description": "Adaleti gerçekleştiren, hakkaniyetle hükmeden.",
+        "esmaulhusna_video_url": "https://youtu.be/ec13CYX47yk?si=FBwrx8P_T3YsgjiG"
+    },
+    {
+        "id": 87,
+        "esmaulhusna_name": "EL-CAMİ",
+        "esmaulhusna_description": "Dünya ve ahirette bütün mahlûkâtı bir araya getirme kudretine sahip olan.",
+        "esmaulhusna_video_url": "https://youtu.be/pgNrlTyy6Ac?si=90K_aM9DVzCmk2pG"
+    },
+    {
+        "id": 88,
+        "esmaulhusna_name": "EL-GANİ",
+        "esmaulhusna_description": "Hiçbir şeye ihtiyacı olmayan.",
+        "esmaulhusna_video_url": "https://youtu.be/UCw4vIWFmvI?si=UR8IcqzrlXAf_6gL"
+    },
+    {
+        "id": 89,
+        "esmaulhusna_name": "EL-MUĞNİ",
+        "esmaulhusna_description": "İhtiyaçtan kurtaran zengin kılan.",
+        "esmaulhusna_video_url": "https://youtu.be/K1Qo1SbDywY?si=i0D-EbEN2QcmWGdC"
+    },
+    {
+        "id": 90,
+        "esmaulhusna_name": "EL-MANİ",
+        "esmaulhusna_description": "Hikmeti gereği engel koyan, mâni olan.",
+        "esmaulhusna_video_url": "https://youtu.be/Drv2hn-qr6I?si=HKu5_3g-EvshYOHB"
+    },
+    {
+        "id": 91,
+        "esmaulhusna_name": "ED-DARR",
+        "esmaulhusna_description": "Hikmeti gereği elem ve zarar verici şeyleri yaratan.",
+        "esmaulhusna_video_url": "https://youtu.be/s1BQubmnF38?si=mG1sUabPehKhUHra"
+    },
+    {
+        "id": 92,
+        "esmaulhusna_name": "EN-NAFİ",
+        "esmaulhusna_description": "Hayrı ve faydayı yaratan ve veren.",
+        "esmaulhusna_video_url": "https://youtu.be/UV7cRksD_oc?si=ieHfmOxWlKk6mGmT"
+    },
+    {
+        "id": 93,
+        "esmaulhusna_name": "EN-NUR",
+        "esmaulhusna_description": "Nurlandıran, her şeyi aydınlatan, kalplere nur ve iman veren.",
+        "esmaulhusna_video_url": "https://youtu.be/cs465wiHjeQ?si=WmGCey1h1JZwxAya"
+    },
+    {
+        "id": 94,
+        "esmaulhusna_name": "EL-HADİ",
+        "esmaulhusna_description": "Doğru yolu gösteren, hidâyete erdiren.",
+        "esmaulhusna_video_url": "https://youtu.be/t8ql5DPUXr4?si=QZYdcYAu6cOhapOf"
+    },
+    {
+        "id": 95,
+        "esmaulhusna_name": "EL-BEDİ",
+        "esmaulhusna_description": "Örneksiz ve benzersiz olarak yoktan yaratan.",
+        "esmaulhusna_video_url": "https://youtu.be/VGJxZeRWBcI?si=UH9z9CUdx-5vbMWO"
+    },
+    {
+        "id": 96,
+        "esmaulhusna_name": "EL-BAKİ",
+        "esmaulhusna_description": "Varlığı sürekli olan, ebedî, sonsuz olan.",
+        "esmaulhusna_video_url": "https://youtu.be/sVt5e6AYEnk?si=ugT1wReukwvLsIgO"
+    },
+    {
+        "id": 97,
+        "esmaulhusna_name": "EL-VARİS",
+        "esmaulhusna_description": "Varlığının sonunun bulunmaması vasfıyla kâinatın gerçek sahibi.",
+        "esmaulhusna_video_url": "https://youtu.be/gSMiPrX4GyY?si=xUKnmUYnD84X6kyy"
+    },
+    {
+        "id": 98,
+        "esmaulhusna_name": "ER-REŞİD",
+        "esmaulhusna_description": "Yol gösteren, her işi isabetli olan.",
+        "esmaulhusna_video_url": "https://youtu.be/r_jM_MMMMGU?si=zL5kEOIxGC4XD8i8"
+    },
+    {
+        "id": 99,
+        "esmaulhusna_name": "ES-SABUR",
+        "esmaulhusna_description": "Günahkârları hemen cezalandırmayıp onlara mühlet tanıyan.",
+        "esmaulhusna_video_url": "https://youtu.be/y2lko3fr-NE?si=43_bojAQwUyfUNAu"
     }
 ]
