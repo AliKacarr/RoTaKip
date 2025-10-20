@@ -458,9 +458,23 @@
 
     <!-- Kullanıcı İstatistik Bilgi Alanı -->
     <div class="user-stats-info-area" style="display: none;">
-      <div class="user-stats-title">
-        <i class="fa-regular fa-compass"></i>
-        Okuma Yolculuğum
+      <div class="user-stats-header">
+        <!-- Günlük Görevler Butonu -->
+        <div id="dailyTasksButton" class="daily-tasks-button">
+          <div class="tasks-icon">📋</div>
+          <div class="tasks-text">Günlük Görevler</div>
+        </div>
+        
+        <div class="user-stats-title">
+          <i class="fa-regular fa-compass"></i>
+          Okuma Yolculuğum
+        </div>
+        
+        <!-- Günlük Hediye Butonu -->
+        <div id="dailyGiftButton" class="daily-gift-button">
+          <div class="gift-icon">🎁</div>
+          <div class="gift-text">Günün Hediyesi</div>
+        </div>
       </div>
       <div class="user-stats-content">
         <!-- Sol Kısım: Giriş Serisi -->
@@ -513,6 +527,36 @@
               <div class="user-stats-reading-label">Toplam Okuma</div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Günlük Hediye Modal -->
+    <div id="dailyGiftModal" class="daily-gift-modal" style="display: none;">
+      <div class="daily-gift-overlay"></div>
+      <div class="daily-gift-content">
+        <div class="daily-gift-header">
+          <h2 class="daily-gift-title" id="esmaulhusnaName">Esmaül Hüsna</h2>
+          <button class="daily-gift-close" id="dailyGiftClose">×</button>
+        </div>
+        <div class="daily-gift-body">
+          <div class="daily-gift-description" id="esmaulhusnaDescription">
+            Açıklama yükleniyor...
+          </div>
+          <div class="daily-gift-video-container">
+            <a href="#" id="esmaulhusnaVideoLink" class="daily-gift-video-link" target="_blank">
+              <div class="daily-gift-video-thumbnail-container">
+                <img id="esmaulhusnaVideoThumbnail" class="daily-gift-video-thumbnail" src="" alt="Video Thumbnail" style="display: none;">
+                <span class="daily-gift-play-icon"><i class="fa-solid fa-play"></i></span>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="daily-gift-footer">
+          <p class="daily-gift-quote">
+            "En güzel isimler Allah'ındır; bu güzel isimlerle O'na dua edin, O'nun isimleri hakkında doğru inançtan sapanları kendi başlarına bırakın. Onlar yaptıklarının cezasını çekecekler! (A'râf Sûresi, 180)"
+          </p>
         </div>
       </div>
     </div>

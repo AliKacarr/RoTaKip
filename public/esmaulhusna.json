@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "esmaulhusna_name": "ALLAH",
+        "esmaulhusna_description": "Varlığı zorunlu olan ve bütün övgülere layık bulunan zâtın husûsî ve en kapsamlı ism-i şerifi.",
+        "esmaulhusna_video_url": "https://youtu.be/SP_HcCBFugQ?si=JDkygJ8vnyb9KTir"
+    },
+    {
+        "id": 2,
+        "esmaulhusna_name": "ER-RAHMAN",
+        "esmaulhusna_description": "Bütün mahlûkâta merhamet eden, hepsine de nîmetler veren.",
+        "esmaulhusna_video_url": "https://youtu.be/_fpGS5dfSEI?si=OM4OctxhLFsvi_pk"
+    },
+    {
+        "id": 3,
+        "esmaulhusna_name": "ER-RAHİM",
+        "esmaulhusna_description": "Pek ziyâde merhamet edici, bilhassa mü’minlere rahmet eden.",
+        "esmaulhusna_video_url": "https://youtu.be/l8lh_GyWBK8?si=DUUL6vggSQsFxWzZ"
+    }
+]

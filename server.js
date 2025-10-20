@@ -59,7 +59,8 @@ async function generateMinifiedFiles() {
     'videos.css',          
     'main-area.css',        
     'preferences.css',         
-    'articles.css',   
+    'articles.css',
+    "daily-gift.css",   
     'footer.css',           
     'profile-modal.css',     
     'cookies.css'          
@@ -77,10 +78,11 @@ async function generateMinifiedFiles() {
     'quete.js',            
     'videos.js',           
     'main-area.js',        
-    'preferences.js',      
+    'preferences.js', 
+    'daily-gift.js',     
     'articles.js',         
     'share-quote.js',      
-    'cookies.js'           
+    'cookies.js'
   ];
   
   const validIndexCssFiles = indexCssFiles
