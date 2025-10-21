@@ -141,22 +141,22 @@ async function handleLoginStreak(user) {
 
   // Mevcut seri değerini al
   const currentStreak = user.loginStreak || 0;
+  let streakIncreased = false;
 
   // En son girişi bugünse: hiçbir şey yapma (aynı gün içinde tekrar girmiştir)
   if (user.lastLoginDate === today) {
     // Aynı gün içinde tekrar giriş — değişiklik yok
-    return user; // Değişiklik yapmadan döndür
+    return { user, streakIncreased: false };
   }
   // Dün de girmişse: seriyi artır
   else if (user.lastLoginDate === yesterday) {
     user.loginStreak = currentStreak + 1;
-    
-    // Giriş serisi artırıldığını işaretle
-    user.streakIncreased = true;
+    streakIncreased = true;
   } 
   // Arada gün(ler) varsa veya ilk giriş: sıfırla
   else {
     user.loginStreak = 1;
+    streakIncreased = false;
   }
 
   // Son giriş tarihini güncelle
@@ -165,7 +165,7 @@ async function handleLoginStreak(user) {
   // Kaydet
   await user.save();
 
-  return user;
+  return { user, streakIncreased };
 }
 
 // Middleware'ler
@@ -2223,7 +2223,7 @@ app.post('/api/admin-login', async (req, res) => {
         }
 
         // Giriş serisi hesapla
-        await handleLoginStreak(user);
+        const { user: updatedUser, streakIncreased } = await handleLoginStreak(user);
         
         // Grup bilgisini al
         const group = await UserGroup.findOne({ groupId });
@@ -2234,11 +2234,12 @@ app.post('/api/admin-login', async (req, res) => {
           success: true,
           groupName: group.groupName,
           groupId: group.groupId,
-          userId: user._id, // Kullanıcı ID'sini de döndür
-          authority: user.authority, // Kullanıcının yetkisini de döndür
-          userName: user.username, // Kullanıcının kullanıcı adını de döndür
-          name: user.name, // Kullanıcının gerçek adını döndür
-          loginStreak: user.loginStreak // Giriş serisini de döndür
+          userId: updatedUser._id, // Kullanıcı ID'sini de döndür
+          authority: updatedUser.authority, // Kullanıcının yetkisini de döndür
+          userName: updatedUser.username, // Kullanıcının kullanıcı adını de döndür
+          name: updatedUser.name, // Kullanıcının gerçek adını döndür
+          loginStreak: updatedUser.loginStreak, // Giriş serisini de döndür
+          streakIncreased: streakIncreased // Seri artırıldı mı bilgisi
         });
       } else {
         res.json({ success: false });
@@ -2268,14 +2269,13 @@ app.post('/api/update-login-streak', async (req, res) => {
     }
 
     // Giriş serisi hesapla
-    await handleLoginStreak(user);
-
+    const { user: updatedUser, streakIncreased } = await handleLoginStreak(user);
     res.json({
       success: true,
-      loginStreak: user.loginStreak,
-      lastLoginDate: user.lastLoginDate,
-      streakIncreased: user.streakIncreased || false,
-      name: user.name
+      loginStreak: updatedUser.loginStreak,
+      lastLoginDate: updatedUser.lastLoginDate,
+      streakIncreased: streakIncreased,
+      name: updatedUser.name
     });
   } catch (error) {
     console.error('Giriş serisi güncelleme hatası:', error);

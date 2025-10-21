@@ -77,6 +77,14 @@ h3 {
 .toast-info,
 .notification-info { background: #007bff; }
 
+.toast-streak { 
+  background: #ff9800;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(255, 152, 0, 0.18);
+}
+
+
 /* Slide out helper */
 .toast-hide,
 .notification-hide,

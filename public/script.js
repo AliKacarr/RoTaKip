@@ -4,14 +4,17 @@
 
 // Giriş serisi artırıldığında bildirim göster
 window.showStreakNotification = function showStreakNotification(name, streak) {
+  console.log('Giriş serisi artırıldı4');
   const toast = document.createElement('div');
-  toast.className = 'toast toast-success';
+  toast.className = 'toast toast-streak';
   toast.innerHTML = `
     <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="font-size: 24px; animation: streakPulse 2s ease-in-out infinite;">🔥</div>
+      <div style="width: 32px; height: 32px;">
+        <img src="/images/fire.webp" alt="Fire" style="width: 100%; height: 100%; object-fit: contain;">
+      </div>
       <div>
-        <div>Hoş geldin ${name}!</div>
-        <div style="font-size: 16px;">Giriş serin ${streak} oldu.</div>
+        <div style="font-weight: bold;">Hoş geldin ${name}!</div>
+        <div style="font-size: 17px;">Giriş serin ${streak} oldu.</div>
       </div>
     </div>
   `;
@@ -25,8 +28,8 @@ window.showStreakNotification = function showStreakNotification(name, streak) {
     }
   `;
   document.head.appendChild(style);
-  
   document.body.appendChild(toast);
+  
   
   // Bildirim azcık daha uzun (6 saniye) kalsın
   setTimeout(() => {
@@ -256,7 +259,7 @@ async function initializeAuthSystem() {
 
     const groupData = await groupResponse.json();
     
-    // 6. Giriş serisi güncelle
+    // Giriş serisi güncelle (sayfa yüklendiğinde kontrol et)
     try {
       const streakResponse = await fetch('/api/update-login-streak', {
         method: 'POST',
@@ -282,24 +285,24 @@ async function initializeAuthSystem() {
         if (streakData.streakIncreased && user.name) {
           showStreakNotification(user.name, streakData.loginStreak);
         }
-        
-        // Kullanıcı profil bilgilerini UI'da güncelle
-        const profileUsername = document.getElementById('profileUsername');
-        const profileMemberName = document.getElementById('profileMemberName');
-        const profileImagePreview = document.getElementById('profileImagePreview');
-        
-        if (profileUsername && user.name) {
-          profileUsername.textContent = user.name;
-        }
-        if (profileMemberName && user.username) {
-          profileMemberName.textContent = user.username;
-        }
-        if (profileImagePreview && user.profileImage) {
-          profileImagePreview.src = user.profileImage;
-        }
       }
     } catch (streakError) {
       console.error('Giriş serisi güncelleme hatası:', streakError);
+    }
+    
+    // Kullanıcı profil bilgilerini UI'da güncelle
+    const profileUsername = document.getElementById('profileUsername');
+    const profileMemberName = document.getElementById('profileMemberName');
+    const profileImagePreview = document.getElementById('profileImagePreview');
+    
+    if (profileUsername && user.name) {
+      profileUsername.textContent = user.name;
+    }
+    if (profileMemberName && user.username) {
+      profileMemberName.textContent = user.username;
+    }
+    if (profileImagePreview && user.profileImage) {
+      profileImagePreview.src = user.profileImage;
     }
     
     // 7. 5 çerezi yeniden oluştur
@@ -320,7 +323,6 @@ async function initializeAuthSystem() {
 
     if (typeof showAdminIndicator === 'function') {
       showAdminIndicator();
-      console.log('Admin indicator - sayfa yüklendi');
     }
     
     return true;
@@ -906,8 +908,7 @@ async function verifyUserUsername() {
         LocalStorageManager.logoutUser();
         hideAdminElements();
         const mainArea = document.querySelector('.main-area');
-        if (mainArea) console.log(mainArea.style.display+" silindi");
-        mainArea.style.display = 'none';
+        if (mainArea) mainArea.style.display = 'none';
         return false;
       }
     } else if (userAuthority === 'member') {

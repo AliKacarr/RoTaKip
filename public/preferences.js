@@ -26,6 +26,7 @@ function showToast(message, type = 'success') {
 
 document.addEventListener('DOMContentLoaded', function () { //Tablonun ilk günü seçimi
     const savedFirstDay = localStorage.getItem('firstDayOfWeek');
+    const firstDaySelect = document.getElementById('firstDaySelect');
 
     if (firstDaySelect) {
         if (savedFirstDay !== null && savedFirstDay !== 'default') {

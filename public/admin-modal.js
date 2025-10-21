@@ -39,17 +39,14 @@ if (!videosButton) {
     videosButton.className = 'videos-button';
     videosButton.innerHTML = '<i class="fa-regular fa-circle-play"></i> Videolar';
 
-    // Add click event to scroll to videos section (centered)
+    // Add click event to scroll to top of videos section (do NOT center)
     videosButton.addEventListener('click', function() {
         const videosSection = document.querySelector('.videos');
         if (videosSection) {
             const sectionTop = videosSection.getBoundingClientRect().top + window.pageYOffset;
-            const sectionHeight = videosSection.offsetHeight;
-            const windowHeight = window.innerHeight;
-            const scrollTarget = sectionTop - (windowHeight / 2) + (sectionHeight / 2);
 
             window.scrollTo({
-                top: scrollTarget,
+                top: sectionTop,
                 behavior: 'smooth'
             });
         }
@@ -88,7 +85,6 @@ if (!quotesButton) {
 
 async function showAdminIndicator() {     //admin modu butonunu gösterme
     // Check if user is logged in and valid
-    console.log('show');
     if (!LocalStorageManager.isUserLoggedIn()) {
         // Çıkış yapmış kullanıcı için tüm elementleri gizle
         const adminIndicator = document.querySelector('.admin-indicator');
@@ -104,7 +100,7 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
             setTimeout(() => {
                 userStatsArea.style.display = 'none';
                 userStatsArea.classList.remove('collapsed'); // Animasyon bittikten sonra class'ı temizle
-            }, 400); // Animasyon süresi kadar bekle
+            }, 800); // Animasyon süresi kadar bekle
         }
         if (scrollToMainButton) scrollToMainButton.style.display = 'none';
         
@@ -965,10 +961,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 streakNumber.textContent = streakData.loginStreak;
                             }
                             
-                            // Giriş serisi artırıldıysa bildirim göster
-                            if (streakData.streakIncreased && updateData.name) {
-                                showStreakNotification(updateData.name, streakData.loginStreak);
-                            }
+
+                                window.showStreakNotification(updateData.name, streakData.loginStreak);
+                            
                         }
                     } catch (streakError) {
                         console.error('Giriş serisi güncelleme hatası:', streakError);
@@ -1115,13 +1110,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (groupDescription) {
             groupDescription.textContent = groupData.groupDescription || 'Bu gruba hoş geldiniz!';
         }
-
+/*
         // Update welcome message with user name
         const welcomeUserName = document.getElementById('welcomeUserName');
         if (welcomeUserName && userData && userData.name) {
             welcomeUserName.textContent = `Hoşgeldin ${userData.name}!`;
         }
-
+*/
         // Pre-fill form with existing user data
         if (userData) {
             const userNameInput = document.getElementById('welcomeInviteUserName');
@@ -1187,31 +1182,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Private grup erişimi flag'ini sıfırla
                 window.isPrivateGroupAccessModal = false;
                 
-                // Giriş serisi güncelle
-                try {
-                    const streakResponse = await fetch('/api/update-login-streak', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            userId: data.userId,
-                            groupId: data.groupId
-                        })
-                    });
-                    
-                    if (streakResponse.ok) {
-                        const streakData = await streakResponse.json();
-                        
-                        // Giriş serisi bilgisini UI'da güncelle
-                        const streakNumber = document.querySelector('.streak-number');
-                        if (streakNumber) {
-                            streakNumber.textContent = streakData.loginStreak;
-                        }
-                    }
-                } catch (streakError) {
-                    console.error('Giriş serisi güncelleme hatası:', streakError);
+                // Giriş serisi bilgisini UI'da güncelle (admin-login'den gelen veri)
+                const streakNumber = document.querySelector('.streak-number');
+                if (streakNumber && data.loginStreak) {
+                    streakNumber.textContent = data.loginStreak;
                 }
+                
+
+                // Giriş serisi artırıldıysa bildirim göster
+                window.showStreakNotification(data.name, data.loginStreak);
                 
                 // Modal'ı kapat ve form'u temizle
                 window.hideModal(groupsAuthLoginModal);
@@ -1245,7 +1224,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 // adminIndicator güncelle
                 if (typeof showAdminIndicator === 'function') {
                     showAdminIndicator();
-                    console.log('Admin indicator - giriş yapıldı');
                 }
 
                 // Profil butonunu güncelle
@@ -1255,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // 4. KULLANICI BİLDİRİMİ
                 // Hoşgeldin mesajı göster
-                showToast(`Hoşgeldin ${data.name}!`, 'success');
+              /*  showToast(`Hoşgeldin ${data.name}!`, 'success');*/
 
                 // 5. VERİ YÜKLEME VE UI GÜNCELLEMELERİ
                 // Reload data to update UI with admin privileges
@@ -1842,7 +1820,6 @@ function logoutFromProfile() {
 
             // showAdminIndicator() çıkış durumu için tüm elementleri gizler
             showAdminIndicator();
-            console.log('Admin indicator - çıkış yapıldı');
             
             showToast('Çıkış yapıldı!', 'success');
             
@@ -2011,7 +1988,6 @@ async function loadGroupsAuthJoinAvatarOptions() {
                 if (groupsAuthJoinProfileImageInput) {
                     groupsAuthJoinProfileImageInput.value = '';
                 }
-                console.log('Groups auth join modal - Avatar seçildi:', selectedGroupsAuthJoinAvatarPath);
                 toggleGroupsAuthJoinAvatarModal();
             });
 

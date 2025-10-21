@@ -6,7 +6,6 @@ const nextWeekBtn = document.getElementById('nextWeek');
 const prevWeekTodayBtn = document.getElementById('prevWeekToday');
 const nextWeekTodayBtn = document.getElementById('nextWeekToday');
 const currentWeekDisplay = document.getElementById('currentWeekDisplay');
-const firstDaySelect = document.getElementById('firstDaySelect');
 let weekOffset = 0;
 // Global erişim için window'a ekle
 window.weekOffset = weekOffset;
@@ -125,7 +124,7 @@ function updateLeagueProgress(totalReading) {
 
         // Alt kısım: "Mercan ligine 3 okuma kaldı" formatı
         if (remaining > 0) {
-            progressStatus.innerHTML = `${nextLeague.name} ligine <span style="font-size:15px;font-weight:bold;">${remaining}</span> okuma kaldı`;
+            progressStatus.innerHTML = `${nextLeague.name} ligine <span style="font-weight:bold;">${remaining}</span> okuma kaldı`;
         } else {
             progressStatus.innerHTML = `<span style="font-size:14px;font-weight:bold;">${nextLeague.name} ligindesiniz!</span>`;
         }

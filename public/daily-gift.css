@@ -1,7 +1,7 @@
 /* User Stats Header */
 .user-stats-header {
   user-select: none;
-  width: 97%; /* Tam genişlik */
+  width: 96%; /* Tam genişlik */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -113,15 +113,17 @@
 
 .daily-gift-content {
   position: relative;
-  background: white;
-  border-radius: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 30px;
   width: 95%;
-  max-width: 700px; /* 500px'den 700px'e büyütüldü */
-  /* max-height kaldırıldı - kaydırma çubuğu sorunu için */
-  overflow-y: visible; /* auto'dan visible'a değiştirildi */
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px; /* Yataylığı artırdık */
+  min-height: 600px; /* Yüksekliği azalttık */
+  overflow-y: visible;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
+  border: 2px solid rgba(59, 130, 246, 0.2);
   animation: daily-gift-modalFadeIn 0.4s ease-out;
 }
+
 
 @keyframes daily-gift-modalFadeIn {
   from {
@@ -149,62 +151,62 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 25px 35px 20px; /* Padding büyütüldü */
-  border-bottom: 1px solid #e4e4e4;
+  padding: 30px 35px 25px;
+  border-bottom: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  border-radius: 30px 30px 0 0;
   animation: daily-gift-slideIn 0.4s ease-out 0.1s both;
 }
 
 .daily-gift-title {
-  color: #2c3e50;
-  font-size: 28px; /* 24px'den büyütüldü */
-  font-weight: 700;
+  color: #ffffff;
+  font-size: 28px !important;
+  font-weight: 900;
   margin: 0;
   text-align: center;
   flex: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
 }
 
 .daily-gift-close {
-  background: #f8f9fa;
-  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  width: 40px; /* 35px'den büyütüldü */
-  height: 40px; /* 35px'den büyütüldü */
-  font-size: 27px; /* 21px'den büyütüldü */
-  color: #6c757d;
+  width: 45px;
+  height: 45px;
+  font-size: 24px;
+  color: #ffffff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .daily-gift-close:hover {
-  background: #e9ecef;
-  color: #495057;
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .daily-gift-body {
-  padding: 20px; /* 30px'den büyütüldü */
+  padding: 30px 35px;
+  background: #ffffff;
   animation: daily-gift-slideIn 0.4s ease-out 0.2s both;
 }
 
 .daily-gift-description {
-  color: #495057;
-  font-size: 18px !important; 
-  line-height: 1.6;
+  color: #475569;
+  font-size: 20px !important;
+  line-height: 1.8;
   text-align: center;
-  margin-bottom: 25px; /* 25px'den büyütüldü */
+  margin-bottom: 30px;
   font-style: italic;
-  font-weight: normal !important; /* Font weight'i sıfırla */
-  text-transform: none !important; /* Text transform'u sıfırla */
-}
-
-/* Div tag'i için özel kural */
-.daily-gift-body div.daily-gift-description {
-  font-size: 22px !important;
-  color: #495057 !important;
-  font-weight: normal !important;
+  font-weight: 500 !important;
   text-transform: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .daily-gift-video-container {
@@ -213,16 +215,18 @@
 
 .daily-gift-video-thumbnail {
   width: 100%;
-  max-width: 500px; /* 400px'den büyütüldü */
-  height: 280px; /* 225px'den büyütüldü */
-  min-height: 280px; /* Minimum yükseklik eklendi */
-  border-radius: 12px;
+  max-width: 500px; /* Yataylığı artırdık */
+  height: 280px; /* Yüksekliği artırdık */
+  min-height: 280px; /* Minimum yükseklik */
+  border-radius: 20px;
   object-fit: cover;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2);
+  transition: all 0.3s ease;
   position: relative;
   animation: daily-gift-slideIn 0.4s ease-out 0.25s both;
-  background-color: #f8f9fa; /* Yükleme sırasında arka plan rengi */
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  aspect-ratio: 16/9; /* Video oranını koruyor */
 }
 
 
@@ -231,10 +235,13 @@
   position: relative;
   display: inline-block;
   width: 100%;
-  max-width: 500px; /* 400px'den büyütüldü */
-  min-height: 280px; /* Minimum yükseklik eklendi */
-  background-color: #f8f9fa; /* Yükleme sırasında arka plan rengi */
-  border-radius: 12px;
+  max-width: 500px; /* Yataylığı artırdık */
+  min-height: 280px; /* Yüksekliği artırdık */
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2);
+  aspect-ratio: 16/9; /* Video oranını koruyor */
 }
 
 /* Play button overlay (videos.css'den uyarlandı) */
@@ -244,30 +251,32 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: white;
-  font-size: 42px; /* 36px'den büyütüldü */
+  color: #3b82f6;
+  font-size: 40px;
   opacity: 0.9;
   pointer-events: none;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
-  width: 85px; /* 75px'den büyütüldü */
-  height: 85px; /* 75px'den büyütüldü */
-  background-color: rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  transition: all 0.2s ease-out;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease-out;
 }
 
 .daily-gift-video-thumbnail-container:hover .daily-gift-play-icon {
-  font-size: 40px;
-  width: 80px;
-  height: 80px;
-  background-color: rgba(0, 0, 0, 0.7);
+  font-size: 44px;
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.2) 100%);
   opacity: 1;
-  border-width: 2px;
+  border-width: 4px;
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translate(-50%, -50%);
 }
 
 .daily-gift-video-link {
@@ -278,27 +287,21 @@
 
 .daily-gift-footer {
   display: flex;
-  padding: 25px 35px 35px; /* Padding büyütüldü */
-  border-top: 1px solid #dadada;
+  padding: 30px 35px 35px;
+  border-top: 2px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 0 0 30px 30px;
   animation: daily-gift-slideIn 0.4s ease-out 0.3s both;
 }
 
 .daily-gift-quote {
-  color: #6c757d;
-  font-size: 16px !important; 
-  line-height: 1.5;
+  color: #475569;
+  font-size: 18px !important;
+  line-height: 1.7;
   text-align: center;
   margin: 0;
   font-style: italic;
-  font-weight: normal !important; /* Font weight'i sıfırla */
-  text-transform: none !important; /* Text transform'u sıfırla */
-}
-
-/* P tag'i için özel kural */
-.daily-gift-footer p.daily-gift-quote {
-  font-size: 18px !important;
-  color: #6c757d !important;
-  font-weight: normal !important;
+  font-weight: 500 !important;
   text-transform: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
-
