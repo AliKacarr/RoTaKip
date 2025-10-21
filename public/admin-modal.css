@@ -35,7 +35,7 @@
 }
 
 .showGroups {
-    background: linear-gradient(90deg, #a8edea 0%, #fed6e3 100%);
+    background: #b1e5f1;
     border: 1px solid #c9c9c9;
     border-radius: 8px;
     padding: 9px 17px;
@@ -54,8 +54,8 @@
 }
 
 .profileButton {
-    background: linear-gradient(90deg, #e0cdf9 0%, #efd3fd 100%);
-    border: 1px solid #c9c9c9;
+    background: #e1cff7;
+    border: 1px solid #d4bfed;
     border-radius: 8px;
     padding: 9px 17px;
     display: flex;

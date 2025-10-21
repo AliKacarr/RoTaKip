@@ -12,7 +12,7 @@
 
 /* Günlük Görevler Butonu */
 .daily-tasks-button {
-  background: linear-gradient(135deg, #22c55e, #4ade80);
+  background: linear-gradient(135deg, #22c55e, #27d366);
   border-radius: 50px;
   padding: 10px 16px;
   cursor: pointer;
@@ -21,6 +21,7 @@
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
+  border: 2px solid #20bc59; 
 }
 
 .daily-tasks-button:hover {
@@ -46,6 +47,7 @@
 /* Günlük Hediye Butonu */
 .daily-gift-button {
   background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+  border: 2px solid #ff7777;
   border-radius: 50px;
   padding: 10px 16px;
   cursor: pointer;
@@ -213,12 +215,14 @@
   width: 100%;
   max-width: 500px; /* 400px'den büyütüldü */
   height: 280px; /* 225px'den büyütüldü */
+  min-height: 280px; /* Minimum yükseklik eklendi */
   border-radius: 12px;
   object-fit: cover;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
   position: relative;
   animation: daily-gift-slideIn 0.4s ease-out 0.25s both;
+  background-color: #f8f9fa; /* Yükleme sırasında arka plan rengi */
 }
 
 
@@ -228,6 +232,9 @@
   display: inline-block;
   width: 100%;
   max-width: 500px; /* 400px'den büyütüldü */
+  min-height: 280px; /* Minimum yükseklik eklendi */
+  background-color: #f8f9fa; /* Yükleme sırasında arka plan rengi */
+  border-radius: 12px;
 }
 
 /* Play button overlay (videos.css'den uyarlandı) */

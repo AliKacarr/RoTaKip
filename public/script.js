@@ -458,13 +458,11 @@ function initializeProfileButton() {
         profileButtonIcon.className = 'fa-solid fa-user-circle';
         profileButtonIcon.style.fontSize = '20px';
         profileButtonIcon.style.color = '#4e54c8';
-        profileButton.style.backgroundColor = '#e8f0ff';
       } else {
         profileButton.title = 'Üye Profili: ' + username;
         profileButtonIcon.className = 'fa-solid fa-user';
         profileButtonIcon.style.fontSize = '20px';
         profileButtonIcon.style.color = '#4e54c8';
-        profileButton.style.backgroundColor = '#e8f5e8';
       }
       
       profileButton.onclick = function() {
@@ -479,7 +477,6 @@ function initializeProfileButton() {
       profileButtonIcon.className = 'fa-solid fa-sign-in-alt';
       profileButtonIcon.style.fontSize = '20px';
       profileButtonIcon.style.color = '#007bff';
-      profileButton.style.backgroundColor = '#e3f2fd';
       
       profileButton.onclick = function() {
         if (adminLoginModal) {
