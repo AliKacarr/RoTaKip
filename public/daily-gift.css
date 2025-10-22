@@ -173,8 +173,8 @@
   background: rgba(255, 255, 255, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
   font-size: 24px;
   color: #ffffff;
   cursor: pointer;
@@ -199,7 +199,7 @@
 
 .daily-gift-description {
   color: #475569;
-  font-size: 20px !important;
+  font-size: 21px !important;
   line-height: 1.8;
   text-align: center;
   margin-bottom: 30px;

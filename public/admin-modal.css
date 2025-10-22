@@ -51,6 +51,21 @@
     margin-left: 20px;
     margin-top: 5px;
     letter-spacing: 0.4px;
+    transition: all 0.3s ease;
+}
+
+.showGroups:hover {
+    background: #a8dce5;
+    border-color: #c0c0c0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(78, 84, 200, 0.15);
+}
+
+.showGroups:active {
+    background: #9dd8e8;
+    border-color: #b8b8b8;
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(78, 84, 200, 0.1);
 }
 
 .profileButton {
@@ -75,6 +90,21 @@
     max-height: 42px;
     flex-shrink: 0;
     letter-spacing: 0.4px;
+    transition: all 0.3s ease;
+}
+
+.profileButton:hover {
+    background: #d7c3f4;
+    border-color: #d0b7ea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(78, 84, 200, 0.15);
+}
+
+.profileButton:active {
+    background: #d1b5f0;
+    border-color: #c4a8e6;
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(78, 84, 200, 0.1);
 }
 
 .profileButtonText {
@@ -2403,7 +2433,7 @@
 .user-stats-info-area {
     width: 100%;
     max-width: 1200px;
-    margin: 10px 0 25px 0px;
+    margin: 10px 0 23px 0px;
     display: none;
     flex-direction: column;
     align-items: center;

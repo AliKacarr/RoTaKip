@@ -1090,9 +1090,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Update group info in modal
         const groupAvatar = document.getElementById('welcomeInviteGroupAvatar');
         const groupName = document.getElementById('welcomeInviteGroupName');
-        const groupDescription = document.getElementById('welcomeInviteGroupDescription');
-        const messageTitle = document.getElementById('welcomeInviteMessageTitle');
-        const messageText = document.getElementById('welcomeInviteMessageText');
 
         if (groupAvatar) {
             const imgSrc = groupData.groupImage || '/images/open-book.webp';
@@ -1107,16 +1104,7 @@ document.addEventListener('DOMContentLoaded', function () {
             groupName.textContent = groupData.groupName;
         }
 
-        if (groupDescription) {
-            groupDescription.textContent = groupData.groupDescription || 'Bu gruba hoş geldiniz!';
-        }
-/*
-        // Update welcome message with user name
-        const welcomeUserName = document.getElementById('welcomeUserName');
-        if (welcomeUserName && userData && userData.name) {
-            welcomeUserName.textContent = `Hoşgeldin ${userData.name}!`;
-        }
-*/
+
         // Pre-fill form with existing user data
         if (userData) {
             const userNameInput = document.getElementById('welcomeInviteUserName');
@@ -1230,10 +1218,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (typeof window.updateProfileButton === 'function') {
                     window.updateProfileButton();
                 }
-
-                // 4. KULLANICI BİLDİRİMİ
-                // Hoşgeldin mesajı göster
-              /*  showToast(`Hoşgeldin ${data.name}!`, 'success');*/
 
                 // 5. VERİ YÜKLEME VE UI GÜNCELLEMELERİ
                 // Reload data to update UI with admin privileges

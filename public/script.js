@@ -9,12 +9,12 @@ window.showStreakNotification = function showStreakNotification(name, streak) {
   toast.className = 'toast toast-streak';
   toast.innerHTML = `
     <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="width: 32px; height: 32px;">
+      <div style="width: 35px; height: 35px;">
         <img src="/images/fire.webp" alt="Fire" style="width: 100%; height: 100%; object-fit: contain;">
       </div>
       <div>
         <div style="font-weight: bold;">Hoş geldin ${name}!</div>
-        <div style="font-size: 17px;">Giriş serin ${streak} oldu.</div>
+        <div style="font-size: 19px;">Giriş serin ${streak} oldu.</div>
       </div>
     </div>
   `;
