@@ -4,23 +4,8 @@ let lastGiftDate = null;
 
 // Sayfa yüklendiğinde çalışacak
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDailyGift();
-});
-
-// Günlük hediye sistemini başlat
-function initializeDailyGift() {
-    // Kullanıcı giriş yapmış mı kontrol et
-    const userInfo = LocalStorageManager.getCurrentUserInfo();
-    if (!userInfo) {
-        return; // Giriş yapılmamışsa hediye butonunu gösterme
-    }
-
-    // Butonlar artık user-stats-info-area tarafından kontrol ediliyor
-    // Görünürlük kontrolü gerekmiyor
-
-    // Event listener'ları ekle
     setupDailyGiftEvents();
-}
+});
 
 // Event listener'ları ayarla
 function setupDailyGiftEvents() {
@@ -55,13 +40,6 @@ function setupDailyGiftEvents() {
             }
         });
     }
-
-    // ESC tuşu ile kapatma
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && giftModal && giftModal.style.display !== 'none') {
-            closeDailyGiftModal();
-        }
-    });
 }
 
 // Günlük hediye modalını aç

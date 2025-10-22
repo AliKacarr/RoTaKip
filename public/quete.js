@@ -54,10 +54,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
+                // Inline style'ları kaldır ve visible sınıfını ekle
+                entry.target.style.opacity = '';
+                entry.target.style.transform = '';
                 entry.target.classList.add('visible');
             } else {
-                // Element görünür alandan çıktığında visible sınıfını kaldır
+                // Element görünür alandan çıktığında visible sınıfını kaldır ve tekrar gizle
                 entry.target.classList.remove('visible');
+                entry.target.style.opacity = '0';
+                entry.target.style.transform = 'translateY(30px)';
             }
         });
     }, {
@@ -70,6 +75,12 @@ document.addEventListener('DOMContentLoaded', function () {
         observer.observe(section);
     });
 
+    // Sayfa yüklendiğinde tüm quote-section'ları manuel olarak gizle
+    document.querySelectorAll('.quote-section, .quote-section-image').forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(30px)';
+    });
+    
     // Mevcut içerikleri görünür yap
     document.querySelectorAll('.quote-text').forEach(element => {
         if (element.innerHTML.trim() !== '') {
@@ -147,12 +158,15 @@ async function fetchRandomQuote() {
     try {
         const quoteTextElement = document.getElementById('quoteText');
         if (quoteTextElement) {
+            // Önce visible sınıfını kaldır (gizle)
             quoteTextElement.classList.remove('visible');
+            
             const response = await fetch('/api/random-quote');
             const data = await response.json();
 
             // Update with the new quote
             quoteTextElement.innerHTML = data.sentence;
+            
             // Animasyonu tetikle
             setTimeout(() => {
                 quoteTextElement.classList.add('visible');
@@ -173,6 +187,9 @@ async function fetchRandomQuoteImage() {
     if (!img) return;
 
     try {
+        // Önce visible sınıfını kaldır (gizle)
+        img.classList.remove('visible');
+        
         const response = await fetch('/api/quote-images');
         const data = await response.json();
         const images = data.images;
@@ -183,7 +200,11 @@ async function fetchRandomQuoteImage() {
         const randomIndex = Math.floor(Math.random() * images.length);
         img.src = `quotes/${images[randomIndex]}`;
         img.style.display = 'block';
-        img.classList.add('visible');
+        
+        // Animasyonu tetikle
+        setTimeout(() => {
+            img.classList.add('visible');
+        }, 50);
     } catch (error) {
         img.style.display = 'none';
         console.error('Bir söz resmi yüklenemedi:', error);
@@ -194,7 +215,9 @@ async function fetchRandomAyet() {
     try {
         const ayatTextElement = document.getElementById('ayatText');
         if (ayatTextElement) {
+            // Önce visible sınıfını kaldır (gizle)
             ayatTextElement.classList.remove('visible');
+            
             const response = await fetch('/api/random-ayet');
             if (!response.ok) {
                 throw new Error('Ayet getirme hatası');
@@ -203,6 +226,7 @@ async function fetchRandomAyet() {
 
             // Ayet metnini sayfada göster
             ayatTextElement.innerHTML = data.sentence || 'Ayet yüklenemedi';
+            
             // Animasyonu tetikle
             setTimeout(() => {
                 ayatTextElement.classList.add('visible');
@@ -223,7 +247,9 @@ async function fetchRandomHadis() {
     try {
         const hadithTextElement = document.getElementById('hadithText');
         if (hadithTextElement) {
+            // Önce visible sınıfını kaldır (gizle)
             hadithTextElement.classList.remove('visible');
+            
             const response = await fetch('/api/random-hadis');
             if (!response.ok) {
                 throw new Error('Hadis getirme hatası');
@@ -232,6 +258,7 @@ async function fetchRandomHadis() {
 
             // Hadis metnini sayfada göster
             hadithTextElement.innerHTML = data.sentence || 'Hadis yüklenemedi';
+            
             // Animasyonu tetikle
             setTimeout(() => {
                 hadithTextElement.classList.add('visible');
@@ -251,7 +278,9 @@ async function fetchRandomDua() {
     try {
         const duaTextElement = document.getElementById('duaText');
         if (duaTextElement) {
+            // Önce visible sınıfını kaldır (gizle)
             duaTextElement.classList.remove('visible');
+            
             const response = await fetch('/api/random-dua');
             if (!response.ok) {
                 throw new Error('Dua getirme hatası');
@@ -260,6 +289,7 @@ async function fetchRandomDua() {
 
             // Dua metnini sayfada göster
             duaTextElement.innerHTML = data.sentence || 'Dua yüklenemedi';
+            
             // Animasyonu tetikle
             setTimeout(() => {
                 duaTextElement.classList.add('visible');

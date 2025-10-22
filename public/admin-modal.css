@@ -531,7 +531,7 @@
 .groups-auth-form-input {
     width: 100%;
     padding: 16px 20px 16px 52px;
-    border: 2px solid #a1aebf;
+    border: 2px solid #bac5d2;
     border-radius: 14px;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -626,7 +626,7 @@
     gap: 12px;
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid #e5e5e5;
+    border-top: 1px solid #d8d8d8;
 }
 
 .groups-auth-forgot-password-link {
@@ -641,7 +641,7 @@
     border-radius: 12px;
     transition: all 0.3s ease;
     background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
-    border: 2px solid #a1aebf;
+    border: 2px solid #bac5d2;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
