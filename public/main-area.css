@@ -1167,6 +1167,17 @@ input[type="file"] {
     margin-right: 3px;
 }
 
+.form-group-label {
+    color: #34495e;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.form-group-label i {
+    margin-left: 3px;
+    margin-right: 3px;
+}
+
 .group-input, .group-textarea, .group-select {
     padding: 12px 16px;
     border: 1px solid #b0b0b0;
