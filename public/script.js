@@ -934,10 +934,76 @@ document.addEventListener('DOMContentLoaded', function() {
   if (scrollToTopBtn) {
     // Sayfa kaydırma olayını dinle
     window.addEventListener('scroll', function() {
-      if (window.pageYOffset > 1000) {
-        scrollToTopBtn.classList.add('show');
-      } else {
+      const scrollPosition = window.pageYOffset;
+      const documentHeight = document.documentElement.scrollHeight;
+      const windowHeight = window.innerHeight;
+      const distanceFromBottom = documentHeight - (scrollPosition + windowHeight);
+      
+      // Admin butonları ve scroll to top butonunu kontrol et
+      const adminIndicator = document.querySelector('.admin-indicator');
+      const scrollToMainButton = document.querySelector('.scroll-to-main-button');
+      const quotesButton = document.querySelector('.quotes-button');
+      const videosButton = document.querySelector('.videos-button');
+      const articlesButton = document.querySelector('.articles-button');
+      
+
+      
+      // Sayfanın sonuna 300px kala butonları gizle
+      if (distanceFromBottom < 300) {
+        // Butonları gizle
+        if (adminIndicator) {
+          adminIndicator.classList.add('hidden');
+          adminIndicator.classList.remove('show');
+        }
+        if (scrollToMainButton) {
+          scrollToMainButton.classList.add('hidden');
+          scrollToMainButton.classList.remove('show');
+        }
+        if (quotesButton) {
+          quotesButton.classList.add('hidden');
+          quotesButton.classList.remove('show');
+        }
+        if (videosButton) {
+          videosButton.classList.add('hidden');
+          videosButton.classList.remove('show');
+        }
+        if (articlesButton) {
+          articlesButton.classList.add('hidden');
+          articlesButton.classList.remove('show');
+        }
+        scrollToTopBtn.classList.add('hidden');
         scrollToTopBtn.classList.remove('show');
+      } else {
+        // Butonları göster
+        if (adminIndicator) {
+          adminIndicator.classList.remove('hidden');
+          adminIndicator.classList.add('show');
+        }
+        if (scrollToMainButton) {
+          scrollToMainButton.classList.remove('hidden');
+          scrollToMainButton.classList.add('show');
+        }
+        if (quotesButton) {
+          quotesButton.classList.remove('hidden');
+          quotesButton.classList.add('show');
+        }
+        if (videosButton) {
+          videosButton.classList.remove('hidden');
+          videosButton.classList.add('show');
+        }
+        if (articlesButton) {
+          articlesButton.classList.remove('hidden');
+          articlesButton.classList.add('show');
+        }
+        
+        // Scroll to top butonunu orijinal mantıkla yönet
+        if (scrollPosition > 1000) {
+          scrollToTopBtn.classList.add('show');
+          scrollToTopBtn.classList.remove('hidden');
+        } else {
+          scrollToTopBtn.classList.remove('show');
+          scrollToTopBtn.classList.add('hidden');
+        }
       }
     });
     

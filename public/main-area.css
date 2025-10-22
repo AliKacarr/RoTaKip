@@ -217,10 +217,6 @@ ul#userList li span {
     vertical-align: middle;
 }
 
-.user-name:hover {
-    background-color: #f0f0f0;
-}
-
 .edit-name-input {
     padding: 4px 8px;
     border: 1px solid #ddd;

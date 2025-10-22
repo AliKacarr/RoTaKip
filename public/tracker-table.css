@@ -125,44 +125,35 @@
 .green {
     background-color: rgb(76, 217, 100);
     color: indigo;
-    /* More vibrant green with less yellow tint */
 }
 
 .pink {
     background-color: rgb(255, 220, 90);
-    /* Lighter yellow */
 }
 
 .lila {
     background-color: rgb(255, 170, 60);
-    /* Medium orange */
 }
 
 .red {
     background-color: rgb(255, 100, 60);
     color: darkred;
-    /* Darker red-orange */
 }
 
-/* Keep colored cells' background color on hover */
 .green:hover {
     background-color: rgb(56, 197, 80) !important;
-    /* Slightly darker green on hover */
 }
 
 .pink:hover {
     background-color: rgb(255, 200, 70) !important;
-    /* Slightly darker yellow on hover */
 }
 
 .lila:hover {
     background-color: rgb(255, 150, 40) !important;
-    /* Slightly darker orange on hover */
 }
 
 .red:hover {
-    background-color: rgb(255, 80, 40) !important;
-    /* Slightly darker red-orange on hover */
+    background-color: #ff451a !important;
 }
 
 /* Gelecek tarihler için devre dışı görünüm */
