@@ -363,7 +363,7 @@
 th.today-column::before {
     content: "Bugün";
     position: absolute;
-    top: -29px;
+    top: -28spx;
     left: 50%;
     transform: translateX(-50%);
     background-color: #5b9bd5;

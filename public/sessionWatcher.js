@@ -16,7 +16,7 @@
     'use strict';
     
     // Konfigürasyon
-    const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 saat (milisaniye cinsinden)
+    const SESSION_TIMEOUT = 30 * 60 * 1000; // 15 dakika
     const STORAGE_KEY = 'sessionStartTime';
     
     // Session başlangıç zamanını kaydet
@@ -24,8 +24,7 @@
         const currentTime = Date.now();
         try {
             localStorage.setItem(STORAGE_KEY, currentTime.toString());
-            console.log('Session başlangıç zamanı kaydedildi:', new Date(currentTime).toLocaleString('tr-TR'));
-        } catch (error) {
+          } catch (error) {
             console.warn('Session zamanı kaydedilemedi:', error);
         }
     }
@@ -53,13 +52,6 @@
         const currentTime = Date.now();
         const timeDiff = currentTime - sessionStart;
         
-        console.log('Session kontrolü:', {
-            sessionStart: new Date(sessionStart).toLocaleString('tr-TR'),
-            currentTime: new Date(currentTime).toLocaleString('tr-TR'),
-            timeDiff: Math.round(timeDiff / 1000 / 60) + ' dakika',
-            shouldReload: timeDiff > SESSION_TIMEOUT
-        });
-        
         if (timeDiff > SESSION_TIMEOUT) {
             console.log('Session süresi aşıldı, sayfa yenileniyor...');
             // Session zamanını güncelle
@@ -84,22 +76,15 @@
     
     // Sayfa yüklendiğinde çalışacak ana fonksiyon
     function initializeSessionWatcher() {
-        console.log('Session Watcher başlatılıyor...');
         
         // İlk yüklemede session zamanını kaydet
         saveSessionStart();
         
         // pageshow olayını dinle (geri dönüş ve bellekten yükleme)
         window.addEventListener('pageshow', function(event) {
-            console.log('pageshow olayı tetiklendi:', {
-                persisted: event.persisted,
-                type: event.type
-            });
-            
             // Geri dönüş veya bellekten yükleme durumunda session kontrolü yap
             checkSessionAndReload();
         });
-        
         // Sayfa görünürlük değişikliklerini izle
         document.addEventListener('visibilitychange', handleVisibilityChange);
         
@@ -112,7 +97,7 @@
             // çünkü kullanıcı geri dönebilir
         });
         
-        console.log('Session Watcher başarıyla başlatıldı');
+        console.log('Session Watcher başlatıldı');
     }
     
     // DOM yüklendiğinde başlat
