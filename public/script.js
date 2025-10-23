@@ -544,9 +544,22 @@ async function updatePageTitle() {
   }
 }
 
+// URL'den _r parametresini temizleme fonksiyonu
+function cleanUrlFromRefreshParam() {
+  const url = new URL(window.location.href);
+  if (url.searchParams.has('_r')) {
+    url.searchParams.delete('_r');
+    // URL'yi temizle ama sayfa yenileme yapma
+    window.history.replaceState({}, '', url.toString());
+  }
+}
+
 // Ana DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', async function () {
   try {
+    
+    // URL'den _r parametresini temizle
+    cleanUrlFromRefreshParam();
     
     // Admin sayfaları için özel kontrol
     const currentPath = window.location.pathname;

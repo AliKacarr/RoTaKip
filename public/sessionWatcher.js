@@ -1,17 +1,7 @@
-/**
- * Session Watcher - Otomatik Sayfa Yenileme (Mobil uyumlu sürüm)
- * 
- * Özellikler:
- * - Sayfa yüklendiğinde mevcut zamanı kaydeder
- * - Kullanıcı 30 dakikadan uzun süre sonra dönerse sayfayı yeniler
- * - Mobil tarayıcılarda bfcache (bellekten geri yükleme) sorunlarını önler
- * - Gerektiğinde window.location.href ile yeniden yönlendirme yapar
- */
-
 (function() {
     'use strict';
-    
-    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 dakika
+
+    const SESSION_TIMEOUT = 1 * 60 * 1000; // 30 dakika
     const STORAGE_KEY = 'sessionStartTime';
 
     function saveSessionStart() {
@@ -32,17 +22,13 @@
         }
     }
 
-    function hardReload() {
-        // Mobilde bazı durumlarda reload() çalışmadığı için fallback
-        try {
-            console.log('Sayfa yeniden yükleniyor...');
-            window.location.href = window.location.href;
-        } catch (e) {
-            window.location.reload(true);
-        }
+    function reloadWithTimestamp() {
+        const url = new URL(window.location.href);
+        url.searchParams.set('_r', Date.now());
+        window.location.replace(url.toString());
     }
 
-    function checkSessionAndReload(force = false) {
+    function checkSession(force = false) {
         const start = getSessionStart();
         if (!start) {
             saveSessionStart();
@@ -50,42 +36,40 @@
         }
 
         const diff = Date.now() - start;
-
         if (force || diff > SESSION_TIMEOUT) {
-            console.log('Session süresi doldu, yenileme başlatılıyor...');
+            console.log('Session süresi doldu, sayfa tazeleniyor...');
             saveSessionStart();
-            hardReload();
+            reloadWithTimestamp();
         }
     }
 
-    function initializeSessionWatcher() {
+    function initSessionWatcher() {
         saveSessionStart();
 
-        // Sayfa bellekte tutulmuşsa (bfcache) veya geri dönülüyorsa
-        window.addEventListener('pageshow', (event) => {
-            if (event.persisted) {
-                console.log('Bellekten geri yüklendi (bfcache) → zorunlu yenileme');
-                checkSessionAndReload(true);
+        // Sayfa bellekte tutulmuşsa veya geri dönülüyorsa
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                console.log('bfcache tespit edildi, zorunlu yenileme');
+                checkSession(true);
             } else {
-                checkSessionAndReload();
+                checkSession();
             }
         });
 
-        // Görünürlük değiştiğinde (örn. uygulamadan geri dönüldü)
+        // Sayfa tekrar görünür olduğunda (arka plandan dönüldü)
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) checkSessionAndReload();
+            if (!document.hidden) checkSession();
         });
 
-        // Sekme focus olduğunda kontrol
-        window.addEventListener('focus', () => checkSessionAndReload());
+        // Focus olayında da kontrol et
+        window.addEventListener('focus', () => checkSession());
 
         console.log('Session Watcher aktif');
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeSessionWatcher);
+        document.addEventListener('DOMContentLoaded', initSessionWatcher);
     } else {
-        initializeSessionWatcher();
+        initSessionWatcher();
     }
-
 })();
