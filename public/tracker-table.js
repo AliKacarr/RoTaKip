@@ -839,8 +839,8 @@ function animateStarToUserStats(clickedCell) {
     
     // Yıldızı hedefe hareket ettir
     setTimeout(() => {
-        flyingStar.style.left = (targetRect.left + targetRect.width / 2 - 22) + 'px';
-        flyingStar.style.top = (targetRect.top + targetRect.height / 2 - 22) + 'px';
+        flyingStar.style.left = (targetRect.left + targetRect.width / 2 - 20) + 'px';
+        flyingStar.style.top = (targetRect.top + targetRect.height / 2 - 20) + 'px';
         flyingStar.style.transform = 'scale(1)';
     }, 50);
     
@@ -881,8 +881,8 @@ function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell)
     
     // Yıldızı hedefe hareket ettir
     setTimeout(() => {
-        flyingStar.style.left = (starRect.left + starRect.width / 2 - 13) + 'px'; // Yıldızın tam ortası (25px/2 = 12.5)
-        flyingStar.style.top = (starRect.top + starRect.height / 2 - 13) + 'px'; // Yıldızın tam ortası
+        flyingStar.style.left = (starRect.left + starRect.width / 2 - 12.5) + 'px'; // Yıldızın tam ortası (25px/2 = 12.5)
+        flyingStar.style.top = (starRect.top + starRect.height / 2 - 12.5) + 'px'; // Yıldızın tam ortası
         flyingStar.style.transform = 'scale(1)';
     }, 50);
     
