@@ -16,6 +16,9 @@ const closeBtn = document.querySelector('.close');
 // Video yükleme durumu
 let videoInitialized = false;
 
+// Global video verisi - daily-gift.js için
+window.currentVideoData = null;
+
 
 // Video bölümünü başlatma fonksiyonu
 function initializeVideos() {
@@ -103,12 +106,22 @@ function renderVideos(videos) {
         // Tüm video kartlarını topluca oluştur ve ekle
         const fragment = document.createDocumentFragment();
 
-        videos.forEach((item) => {
+        videos.forEach((item, index) => {
             const videoId = item.snippet.resourceId.videoId;
             const title = item.snippet.title;
             const thumbnail = item.snippet.thumbnails.high.url;
             const viewCount = viewMap[videoId] || 0;
             const formattedViewCount = new Intl.NumberFormat('tr-TR').format(viewCount);
+
+            // İlk videoyu global olarak sakla (daily-gift.js için)
+            if (index === 0) {
+                window.currentVideoData = {
+                    url: `https://www.youtube.com/watch?v=${videoId}`,
+                    thumbnail: thumbnail,
+                    title: title,
+                    videoId: videoId
+                };
+            }
 
             const videoCard = document.createElement('div');
             videoCard.className = 'video-card';

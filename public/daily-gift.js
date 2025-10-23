@@ -12,8 +12,11 @@ function setupDailyGiftEvents() {
     const giftButton = document.getElementById('dailyGiftButton');
     const tasksButton = document.getElementById('dailyTasksButton');
     const giftModal = document.getElementById('dailyGiftModal');
-    const closeButton = document.getElementById('dailyGiftClose');
-    const overlay = document.querySelector('.daily-gift-overlay');
+    const tasksModal = document.getElementById('dailyTasksModal');
+    const giftCloseButton = document.getElementById('dailyGiftClose');
+    const tasksCloseButton = document.getElementById('dailyTasksClose');
+    const giftOverlay = document.querySelector('.daily-gift-overlay');
+    const tasksOverlay = document.querySelector('.daily-tasks-overlay');
 
     if (giftButton) {
         giftButton.addEventListener('click', openDailyGiftModal);
@@ -23,20 +26,122 @@ function setupDailyGiftEvents() {
         tasksButton.addEventListener('click', openDailyTasksModal);
     }
 
-    if (closeButton) {
-        closeButton.addEventListener('click', closeDailyGiftModal);
+    if (giftCloseButton) {
+        giftCloseButton.addEventListener('click', closeDailyGiftModal);
     }
 
-    if (overlay) {
-        overlay.addEventListener('click', closeDailyGiftModal);
+    if (tasksCloseButton) {
+        tasksCloseButton.addEventListener('click', closeDailyTasksModal);
+    }
+
+    if (giftOverlay) {
+        giftOverlay.addEventListener('click', closeDailyGiftModal);
+    }
+
+    if (tasksOverlay) {
+        tasksOverlay.addEventListener('click', closeDailyTasksModal);
     }
 
     // Modal dışına tıklandığında kapatma
     if (giftModal) {
         giftModal.addEventListener('click', function(e) {
-            // Eğer modal'ın kendisine tıklandıysa (content değilse) kapat
             if (e.target === giftModal) {
                 closeDailyGiftModal();
+            }
+        });
+    }
+
+    if (tasksModal) {
+        tasksModal.addEventListener('click', function(e) {
+            if (e.target === tasksModal) {
+                closeDailyTasksModal();
+            }
+        });
+    }
+
+    // Günlük görevler için event listener'lar
+    setupDailyTasksEvents();
+}
+
+// Günlük görevler event listener'larını ayarla
+function setupDailyTasksEvents() {
+    // Okuma hedefi kaydet butonu
+    const saveGoalBtn = document.getElementById('saveDailyGoal');
+    if (saveGoalBtn) {
+        saveGoalBtn.addEventListener('click', saveDailyReadingGoal);
+    }
+
+    // Görev kutularına tıklama olayları
+    const taskItems = document.querySelectorAll('.daily-task-item');
+    taskItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Checkbox veya checkbox alanına tıklanmışsa işlem yapma
+            if (e.target.type === 'checkbox' || 
+                e.target.closest('.daily-task-checkbox') || 
+                e.target.closest('.daily-task-check-label')) {
+                return;
+            }
+            
+            const taskType = this.getAttribute('data-task');
+            const checkbox = this.querySelector('.daily-task-check');
+            const isCompleted = checkbox.checked;
+            
+            // Checkbox durumunu tersine çevir
+            checkbox.checked = !isCompleted;
+            
+            // Görev durumunu kaydet
+            saveTaskStatus(taskType, !isCompleted);
+            
+            // Görev item'larını güncelle
+            updateTaskItems();
+            
+            // Başarı mesajı ve özel işlemler
+            if (!isCompleted) {
+                showNotification('Görev tamamlandı! 🎉', 'success');
+                handleTaskCompletion(taskType);
+            } else {
+                showNotification('Görev geri alındı', 'info');
+            }
+        });
+    });
+
+    // Checkbox'lara ayrı event listener ekle
+    const taskCheckboxes = document.querySelectorAll('.daily-task-check');
+    taskCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function(e) {
+            // Event propagation'ı durdur
+            e.stopPropagation();
+            
+            const taskType = this.id.replace('task', '').toLowerCase();
+            const isCompleted = this.checked;
+            
+            // Görev durumunu kaydet
+            saveTaskStatus(taskType, isCompleted);
+            
+            // Görev item'larını güncelle
+            updateTaskItems();
+            
+            // Sadece basit bildirim, özel işlem yok
+            if (isCompleted) {
+                showNotification('Görev tamamlandı! 🎉', 'success');
+            } else {
+                showNotification('Görev geri alındı', 'info');
+            }
+        });
+        
+        // Checkbox'a tıklama olayını da yakala
+        checkbox.addEventListener('click', function(e) {
+            // Event propagation'ı durdur
+            e.stopPropagation();
+        });
+    });
+
+    // Enter tuşu ile hedef kaydetme
+    const goalInput = document.getElementById('dailyReadingGoal');
+    if (goalInput) {
+        goalInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveDailyReadingGoal();
             }
         });
     }
@@ -201,8 +306,18 @@ async function getYouTubeThumbnailFromAPI(videoUrl) {
 
 // Günlük görevler modalını aç
 function openDailyTasksModal() {
-    // Şimdilik basit bir alert göster
-    alert('Günlük Görevler özelliği yakında eklenecek!');
+    const modal = document.getElementById('dailyTasksModal');
+    if (!modal) return;
+
+    // Modalı göster
+    modal.style.display = 'flex';
+    // Animasyon için kısa gecikme
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+
+    // Günlük görevleri yükle
+    loadDailyTasks();
 }
 
 // Modalı kapat
@@ -216,5 +331,257 @@ function closeDailyGiftModal() {
             modal.style.display = 'none';
         }, 300);
     }
+}
+
+// Günlük görevler modalını kapat
+function closeDailyTasksModal() {
+    const modal = document.getElementById('dailyTasksModal');
+    if (modal) {
+        // Önce animasyonu başlat
+        modal.classList.remove('show');
+        // Animasyon bitince modal'ı gizle
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+}
+
+// Günlük görevler verilerini yükle
+function loadDailyTasks() {
+    // Günlük okuma hedefini yükle
+    loadDailyReadingGoal();
+    
+    // Görev durumlarını yükle
+    loadTaskStatuses();
+    
+    // Günün videosunu yükle
+    loadDailyVideo();
+    
+    // İlerleme göstergesini güncelle
+    updateProgressIndicator();
+}
+
+// Günlük okuma hedefini yükle
+function loadDailyReadingGoal() {
+    const goalInput = document.getElementById('dailyReadingGoal');
+    const savedGoal = localStorage.getItem('dailyReadingGoal');
+    
+    if (savedGoal) {
+        goalInput.value = savedGoal;
+    }
+}
+
+// Günlük okuma hedefini kaydet
+function saveDailyReadingGoal() {
+    const goalInput = document.getElementById('dailyReadingGoal');
+    const goal = parseInt(goalInput.value);
+    
+    if (goal && goal > 0) {
+        localStorage.setItem('dailyReadingGoal', goal);
+        
+        // Başarı mesajı göster
+        showNotification('Günlük okuma hedefi kaydedildi!', 'success');
+        
+        // Input'u temizle
+        goalInput.value = '';
+    } else {
+        showNotification('Lütfen geçerli bir sayfa sayısı girin!', 'error');
+    }
+}
+
+// Görev durumlarını yükle
+function loadTaskStatuses() {
+    const today = new Date().toDateString();
+    const tasksData = JSON.parse(localStorage.getItem('dailyTasks') || '{}');
+    
+    // Eğer bugünün verisi yoksa, yeni görevler oluştur
+    if (!tasksData[today]) {
+        tasksData[today] = {
+            reading: false,
+            gift: false,
+            video: false
+        };
+        localStorage.setItem('dailyTasks', JSON.stringify(tasksData));
+    }
+    
+    const todayTasks = tasksData[today];
+    
+    // Checkbox'ları güncelle
+    document.getElementById('taskReading').checked = todayTasks.reading;
+    document.getElementById('taskGift').checked = todayTasks.gift;
+    document.getElementById('taskVideo').checked = todayTasks.video;
+    
+    // Görev item'larını güncelle
+    updateTaskItems();
+}
+
+// Görev item'larını güncelle
+function updateTaskItems() {
+    const taskItems = document.querySelectorAll('.daily-task-item');
+    
+    taskItems.forEach(item => {
+        const checkbox = item.querySelector('.daily-task-check');
+        
+        if (checkbox.checked) {
+            item.classList.add('completed');
+        } else {
+            item.classList.remove('completed');
+        }
+    });
+}
+
+// Görev durumunu kaydet
+function saveTaskStatus(taskType, isCompleted) {
+    const today = new Date().toDateString();
+    const tasksData = JSON.parse(localStorage.getItem('dailyTasks') || '{}');
+    
+    if (!tasksData[today]) {
+        tasksData[today] = {
+            reading: false,
+            gift: false,
+            video: false
+        };
+    }
+    
+    tasksData[today][taskType] = isCompleted;
+    localStorage.setItem('dailyTasks', JSON.stringify(tasksData));
+    
+    // İlerleme göstergesini güncelle
+    updateProgressIndicator();
+}
+
+// İlerleme göstergesini güncelle
+function updateProgressIndicator() {
+    const today = new Date().toDateString();
+    const tasksData = JSON.parse(localStorage.getItem('dailyTasks') || '{}');
+    const todayTasks = tasksData[today] || { reading: false, gift: false, video: false };
+    
+    const completedCount = Object.values(todayTasks).filter(Boolean).length;
+    const totalCount = 3;
+    const percentage = (completedCount / totalCount) * 100;
+    
+    // İstatistikleri güncelle
+    document.getElementById('completedTasksCount').textContent = completedCount;
+    document.getElementById('totalTasksCount').textContent = totalCount;
+    
+    // Progress bar'ı güncelle
+    const progressFill = document.getElementById('tasksProgressFill');
+    progressFill.style.width = percentage + '%';
+}
+
+// Günün videosunu yükle
+function loadDailyVideo() {
+    try {
+        const videoContainer = document.getElementById('dailyTasksVideoThumbnail');
+        const videoLink = document.getElementById('dailyTasksVideoLink');
+        const videoTitle = document.getElementById('dailyTasksVideoTitle');
+        
+        // Eğer videos.js'den video bilgileri varsa kullan
+        if (window.currentVideoData) {
+            videoLink.href = window.currentVideoData.url;
+            videoContainer.src = window.currentVideoData.thumbnail;
+            videoTitle.textContent = window.currentVideoData.title;
+        } else {
+            // Eğer video verisi yoksa, videos.js'i başlat
+            if (typeof initializeVideos === 'function') {
+                initializeVideos();
+                
+                // Video yüklendikten sonra tekrar dene
+                setTimeout(() => {
+                    if (window.currentVideoData) {
+                        videoLink.href = window.currentVideoData.url;
+                        videoContainer.src = window.currentVideoData.thumbnail;
+                        videoTitle.textContent = window.currentVideoData.title;
+                    } else {
+                        videoTitle.textContent = 'Video yükleniyor...';
+                    }
+                }, 2000);
+            } else {
+                videoTitle.textContent = 'Video yükleniyor...';
+                videoLink.href = '#';
+                videoContainer.src = '/images/default.png';
+            }
+        }
+    } catch (error) {
+        console.error('Günün videosu yüklenirken hata:', error);
+        const videoTitle = document.getElementById('dailyTasksVideoTitle');
+        videoTitle.textContent = 'Video yüklenemedi';
+    }
+}
+
+
+// Görev tamamlandığında özel işlemler
+function handleTaskCompletion(taskType) {
+    switch (taskType) {
+        case 'reading':
+            // Günlük okuma tamamlandı - paneli kapat
+            setTimeout(() => {
+                closeDailyTasksModal();
+            }, 1000);
+            break;
+            
+        case 'gift':
+            // Günün hediyesi alındı - hediye panelini aç
+            setTimeout(() => {
+                closeDailyTasksModal();
+                openDailyGiftModal();
+            }, 1000);
+            break;
+            
+        case 'video':
+            // Günün videosu izlendi - video modalını aç
+            setTimeout(() => {
+                closeDailyTasksModal();
+                openVideoModal();
+            }, 1000);
+            break;
+    }
+}
+
+// Video modalını aç
+function openVideoModal() {
+    const videoModal = document.getElementById('videoModal');
+    const videoFrame = document.getElementById('videoFrame');
+    
+    if (videoModal && window.currentVideoData) {
+        // Mevcut video verisini kullan
+        const videoId = window.currentVideoData.videoId;
+        if (videoId) {
+            videoFrame.src = `https://www.youtube.com/embed/${videoId}`;
+            videoModal.style.display = 'flex';
+        } else {
+            showNotification('Video bulunamadı!', 'error');
+        }
+    } else {
+        showNotification('Video yükleniyor, lütfen bekleyin...', 'info');
+    }
+}
+
+// Toast bildirim göster
+function showNotification(message, type = 'info') {
+    // Mevcut toast'ları temizle
+    const existingToasts = document.querySelectorAll('.toast, .notification-toast, .share-toast');
+    existingToasts.forEach(toast => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    });
+    
+    // Toast oluştur
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // 3 saniye sonra kaldır
+    setTimeout(() => {
+        toast.classList.add('toast-hide');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
 }
 

@@ -554,6 +554,131 @@
       </div>
     </div>
 
+    <!-- Günlük Görevler Modal -->
+    <div id="dailyTasksModal" class="daily-tasks-modal" style="display: none;">
+      <div class="daily-tasks-overlay"></div>
+      <div class="daily-tasks-content">
+        <div class="daily-tasks-header">
+          <h2 class="daily-tasks-title">
+            <i class="fa-solid fa-tasks"></i>
+            Günlük Görevler
+          </h2>
+          <button class="daily-tasks-close" id="dailyTasksClose">×</button>
+        </div>
+        
+        <div class="daily-tasks-body">
+          <!-- Günlük Okuma Hedefi -->
+          <div class="daily-tasks-goal-section">
+            <div class="daily-tasks-goal-container">
+              <div class="daily-tasks-goal-input-container">
+                <input id="dailyReadingGoal" class="daily-tasks-goal-input" placeholder="Sayfa sayısı">
+                <span class="daily-tasks-goal-label">sayfa</span>
+              </div>
+              <button id="saveDailyGoal" class="daily-tasks-save-goal-btn">
+                <i class="fa-solid fa-save"></i>
+                Kaydet
+              </button>
+            </div>
+          </div>
+
+          <!-- Görev İlerleme Göstergesi -->
+          <div class="daily-tasks-progress-section">
+            <div class="daily-tasks-progress-stats">
+              <span id="completedTasksCount">0</span> / <span id="totalTasksCount">3</span> tamamlandı
+            </div>
+            <div class="daily-tasks-progress-bar">
+              <div class="daily-tasks-progress-fill" id="tasksProgressFill" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Görev Listesi -->
+          <div class="daily-tasks-list">
+            <!-- Okuma Görevi -->
+            <div class="daily-task-item" data-task="reading">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günlük Okumayı Tamamla</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskReading" class="daily-task-check">
+                <label for="taskReading" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+
+            <!-- Hediye Görevi -->
+            <div class="daily-task-item" data-task="gift">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-gift"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günün Hediyesini Al</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskGift" class="daily-task-check">
+                <label for="taskGift" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+
+            <!-- Video Görevi -->
+            <div class="daily-task-item" data-task="video">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-play"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günün Videosunu İzle</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskVideo" class="daily-task-check">
+                <label for="taskVideo" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Günün Videosu -->
+          <div class="daily-tasks-video-section">
+            <h3 class="daily-tasks-video-section-title">
+              <i class="fa-solid fa-play-circle"></i>
+              Günün Videosu
+            </h3>
+            <div class="daily-tasks-video-container">
+              <a href="#" id="dailyTasksVideoLink" class="daily-tasks-video-link" target="_blank">
+                <div class="daily-tasks-video-thumbnail-container">
+                  <img id="dailyTasksVideoThumbnail" class="daily-tasks-video-thumbnail" src="" alt="Günün Videosu">
+                  <div class="daily-tasks-video-overlay">
+                    <div class="daily-tasks-video-play-icon">
+                      <i class="fa-solid fa-play"></i>
+                    </div>
+                  </div>
+                </div>
+              </a>
+              <div class="daily-tasks-video-title" id="dailyTasksVideoTitle">Video Yükleniyor...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="daily-tasks-footer">
+          <div class="daily-tasks-footer-info">
+            <i class="fa-solid fa-info-circle"></i>
+            <span>Görevler her gün gece yarısında sıfırlanır</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="table-area" style="display: none;">
       <table id="trackerTable">
         <thead></thead>
