@@ -30,7 +30,7 @@
 
 .month-nav-button {
   background-color: #9cf2ff;
-  border: 1px solid #d7d6e2;
+  border: 1px solid #c5c4d5;
   border-radius: 4px;
   padding: 10px 16px;
   cursor: pointer;
@@ -44,7 +44,8 @@
 }
 
 .month-nav-button:hover {
-  background-color: #e9e9e9;
+  background-color: #8be1ee;
+  border: 1px solid #abaabf;
   color: #333;
 }
 

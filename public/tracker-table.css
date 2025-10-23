@@ -53,12 +53,6 @@
     to { transform: rotate(360deg); }
 }
 
-#trackerTable {
-    border-collapse: collapse;
-    width: 100%;
-    margin-top: 12px;
-}
-
 #trackerTable td:last-child {
     font-size: 21px;
     color: #ff1717;
@@ -218,6 +212,12 @@
     width: 170px;
 }
 
+.date-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #505050;
+}
+
 .date-text .date-day {
     font-size: 15px;
     font-weight: 600;
@@ -226,6 +226,7 @@
 
 .date-text .date-month {
     font-size: 13px;
+    font-weight: 500;
     color: #5d5d5d;
 }
 
@@ -277,7 +278,7 @@
 
 .week-nav-button {
     background-color: #9cf2ff;
-    border: 1px solid #d7d6e2;
+    border: 1px solid #c5c4d5;
     border-radius: 8px;
     padding: 10px 16px;
     cursor: pointer;
@@ -291,7 +292,8 @@
 }
 
 .week-nav-button:hover {
-    background-color: #e9e9e9;
+    background-color: #8be1ee;
+    border: 1px solid #abaabf;
     color: #333;
 }
 
@@ -299,11 +301,13 @@
     background-color: #5b9bd5;
     font-weight: bold;
     color: white;
-    border: none;
+    border: 1px solid #408fd9;
 }
 
 .today-button:hover {
-    background-color: #80c4fc;
+    background-color: #4a8cc8;
+    border: 1px solid #227cd1;
+    color: #ffffff;
 }
 
 .week-arrow-icon {
@@ -322,7 +326,7 @@
     padding: 5px 15px;
     border-radius: 4px;
     background-color: #f0f7ff;
-    border: 1px solid #f7ebff;
+    border: 1px solid #efe1f8;
     height: 25px;
     line-height: 20px;
     display: flex;
@@ -359,23 +363,6 @@
     box-shadow: inset 0 0 0 1px rgba(91, 155, 213, 0.5);
 }
 
-/* Position the "Bugün" indicator above the column */
-th.today-column::before {
-    content: "Bugün";
-    position: absolute;
-    top: -28spx;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #5b9bd5;
-    color: white;
-    padding: 3px 10px;
-    border-radius: 4px;
-    font-size: 15px;
-    font-weight: normal;
-    z-index: 3;
-    /* Ensure it appears above other elements */
-}
-
 /* Ensure colored cells still show their colors when they're also today's column */
 .green.today-column {
     background-color: rgb(76, 217, 100);
@@ -396,6 +383,8 @@ th.today-column::before {
 /* Tablo animasyonu */
 #trackerTable {
     opacity: 0;
+    border-collapse: collapse;
+    width: 100%;
     transform: translateY(20px);
     transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }

@@ -329,10 +329,10 @@ async function loadTrackerTable() {
     for (let d of dates) {
         const date = new Date(d);
         const dayOfWeek = getDayOfWeekInTurkish(date);
-        const formattedDate = formatDateForHeader(date);
         const isToday = d === todayString;
         const todayClass = isToday ? 'today-column' : '';
-        theadHTML += `<th class="${todayClass}"><span class="date-text">${formattedDate}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
+        const displayText = isToday ? 'Bugün' : formatDateForHeader(date);
+        theadHTML += `<th class="${todayClass}"><span class="date-text">${displayText}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
     }
     theadHTML += `<th>Okuma<br>Serisi</th></tr>`;
     trackerTable.querySelector('thead').innerHTML = theadHTML;

@@ -210,6 +210,10 @@ async function loadUserCards() {
     const section = document.querySelector('.user-cards-section');
     if (section) {
       section.style.display = 'block';
+      // Section animasyonunu tetikle
+      setTimeout(() => {
+        section.classList.add('visible');
+      }, 50);
     }
     
     // League info bar'ı da göster
