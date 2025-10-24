@@ -65,23 +65,11 @@ function setupDailyGiftEvents() {
 
 // Günlük görevler event listener'larını ayarla
 function setupDailyTasksEvents() {
-    // Okuma hedefi kaydet butonu
-    const saveGoalBtn = document.getElementById('saveDailyGoal');
-    if (saveGoalBtn) {
-        saveGoalBtn.addEventListener('click', saveDailyReadingGoal);
-    }
 
-    // Görev kutularına tıklama olayları
+    // Görev kutularına tıklama olayları - tek işlem
     const taskItems = document.querySelectorAll('.daily-task-item');
     taskItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            // Checkbox veya checkbox alanına tıklanmışsa işlem yapma
-            if (e.target.type === 'checkbox' || 
-                e.target.closest('.daily-task-checkbox') || 
-                e.target.closest('.daily-task-check-label')) {
-                return;
-            }
-            
             const taskType = this.getAttribute('data-task');
             const checkbox = this.querySelector('.daily-task-check');
             const isCompleted = checkbox.checked;
@@ -98,53 +86,10 @@ function setupDailyTasksEvents() {
             // Başarı mesajı ve özel işlemler
             if (!isCompleted) {
                 showNotification('Görev tamamlandı! 🎉', 'success');
-                handleTaskCompletion(taskType);
-            } else {
-                showNotification('Görev geri alındı', 'info');
             }
         });
     });
 
-    // Checkbox'lara ayrı event listener ekle
-    const taskCheckboxes = document.querySelectorAll('.daily-task-check');
-    taskCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function(e) {
-            // Event propagation'ı durdur
-            e.stopPropagation();
-            
-            const taskType = this.id.replace('task', '').toLowerCase();
-            const isCompleted = this.checked;
-            
-            // Görev durumunu kaydet
-            saveTaskStatus(taskType, isCompleted);
-            
-            // Görev item'larını güncelle
-            updateTaskItems();
-            
-            // Sadece basit bildirim, özel işlem yok
-            if (isCompleted) {
-                showNotification('Görev tamamlandı! 🎉', 'success');
-            } else {
-                showNotification('Görev geri alındı', 'info');
-            }
-        });
-        
-        // Checkbox'a tıklama olayını da yakala
-        checkbox.addEventListener('click', function(e) {
-            // Event propagation'ı durdur
-            e.stopPropagation();
-        });
-    });
-
-    // Enter tuşu ile hedef kaydetme
-    const goalInput = document.getElementById('dailyReadingGoal');
-    if (goalInput) {
-        goalInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                saveDailyReadingGoal();
-            }
-        });
-    }
 }
 
 // Günlük hediye modalını aç
@@ -223,6 +168,18 @@ function showGiftData(esmaData) {
 
     if (videoLinkElement) {
         videoLinkElement.href = esmaData.esmaulhusna_video_url;
+        
+        // Hediye video link'ine tıklama event listener ekle
+        videoLinkElement.addEventListener('click', function() {
+            // Hediye görevini tamamla
+            const giftCheckbox = document.getElementById('taskGift');
+            if (giftCheckbox && !giftCheckbox.checked) {
+                giftCheckbox.checked = true;
+                saveTaskStatus('gift', true);
+                updateTaskItems();
+                showNotification('Hediye görevi tamamlandı! 🎉', 'success');
+            }
+        });
     }
 
     // YouTube video thumbnail oluştur (sadece API ile)
@@ -348,8 +305,8 @@ function closeDailyTasksModal() {
 
 // Günlük görevler verilerini yükle
 function loadDailyTasks() {
-    // Günlük okuma hedefini yükle
-    loadDailyReadingGoal();
+    // Bugün okuma yapılmış mı kontrol et
+    checkTodayReading();
     
     // Görev durumlarını yükle
     loadTaskStatuses();
@@ -357,35 +314,40 @@ function loadDailyTasks() {
     // Günün videosunu yükle
     loadDailyVideo();
     
-    // İlerleme göstergesini güncelle
-    updateProgressIndicator();
 }
 
-// Günlük okuma hedefini yükle
-function loadDailyReadingGoal() {
-    const goalInput = document.getElementById('dailyReadingGoal');
-    const savedGoal = localStorage.getItem('dailyReadingGoal');
-    
-    if (savedGoal) {
-        goalInput.value = savedGoal;
-    }
-}
-
-// Günlük okuma hedefini kaydet
-function saveDailyReadingGoal() {
-    const goalInput = document.getElementById('dailyReadingGoal');
-    const goal = parseInt(goalInput.value);
-    
-    if (goal && goal > 0) {
-        localStorage.setItem('dailyReadingGoal', goal);
+// Bugün okuma yapılmış mı kontrol et
+function checkTodayReading() {
+    try {
+        // Global store'dan verileri al
+        const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
+        const { users, stats } = allData;
         
-        // Başarı mesajı göster
-        showNotification('Günlük okuma hedefi kaydedildi!', 'success');
+        // Giriş yapılan kullanıcı bilgisi
+        const userInfo = LocalStorageManager.getCurrentUserInfo();
+        if (!userInfo) return;
         
-        // Input'u temizle
-        goalInput.value = '';
-    } else {
-        showNotification('Lütfen geçerli bir sayfa sayısı girin!', 'error');
+        // Bugünün tarihini al (Türkiye saati UTC+3)
+        const today = new Date();
+        today.setHours(today.getHours() + 3); // UTC+3 saat dilimi ekle
+        const todayString = today.toISOString().split('T')[0];
+        
+        // Kullanıcının bugünkü okuma durumunu kontrol et
+        const todayStat = stats.find(s => s.userId === userInfo.userId && s.date === todayString);
+        
+        // Bugün okuma yapılmış mı kontrol et
+        if (todayStat && todayStat.status === 'okudum') {
+            // Okuma yapılmışsa, okuma görevini otomatik tamamla
+            const readingCheckbox = document.getElementById('taskReading');
+            if (readingCheckbox && !readingCheckbox.checked) {
+                readingCheckbox.checked = true;
+                saveTaskStatus('reading', true);
+                updateTaskItems();
+                showNotification('Okuma görevi tamamlandı! ✨', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('Bugün okuma kontrolü hatası:', error);
     }
 }
 
@@ -446,41 +408,19 @@ function saveTaskStatus(taskType, isCompleted) {
     tasksData[today][taskType] = isCompleted;
     localStorage.setItem('dailyTasks', JSON.stringify(tasksData));
     
-    // İlerleme göstergesini güncelle
-    updateProgressIndicator();
 }
 
-// İlerleme göstergesini güncelle
-function updateProgressIndicator() {
-    const today = new Date().toDateString();
-    const tasksData = JSON.parse(localStorage.getItem('dailyTasks') || '{}');
-    const todayTasks = tasksData[today] || { reading: false, gift: false, video: false };
-    
-    const completedCount = Object.values(todayTasks).filter(Boolean).length;
-    const totalCount = 3;
-    const percentage = (completedCount / totalCount) * 100;
-    
-    // İstatistikleri güncelle
-    document.getElementById('completedTasksCount').textContent = completedCount;
-    document.getElementById('totalTasksCount').textContent = totalCount;
-    
-    // Progress bar'ı güncelle
-    const progressFill = document.getElementById('tasksProgressFill');
-    progressFill.style.width = percentage + '%';
-}
 
 // Günün videosunu yükle
 function loadDailyVideo() {
     try {
         const videoContainer = document.getElementById('dailyTasksVideoThumbnail');
         const videoLink = document.getElementById('dailyTasksVideoLink');
-        const videoTitle = document.getElementById('dailyTasksVideoTitle');
         
         // Eğer videos.js'den video bilgileri varsa kullan
         if (window.currentVideoData) {
             videoLink.href = window.currentVideoData.url;
             videoContainer.src = window.currentVideoData.thumbnail;
-            videoTitle.textContent = window.currentVideoData.title;
         } else {
             // Eğer video verisi yoksa, videos.js'i başlat
             if (typeof initializeVideos === 'function') {
@@ -491,49 +431,28 @@ function loadDailyVideo() {
                     if (window.currentVideoData) {
                         videoLink.href = window.currentVideoData.url;
                         videoContainer.src = window.currentVideoData.thumbnail;
-                        videoTitle.textContent = window.currentVideoData.title;
-                    } else {
-                        videoTitle.textContent = 'Video yükleniyor...';
                     }
                 }, 2000);
             } else {
-                videoTitle.textContent = 'Video yükleniyor...';
                 videoLink.href = 'https://youtu.be/bOB9k0eG_SY?si=0gSTbJtJmbWt6MZL';
             }
         }
+        
+        // Video link'ine tıklama event listener ekle
+        if (videoLink) {
+            videoLink.addEventListener('click', function() {
+                // Video görevini tamamla
+                const videoCheckbox = document.getElementById('taskVideo');
+                if (videoCheckbox && !videoCheckbox.checked) {
+                    videoCheckbox.checked = true;
+                    saveTaskStatus('video', true);
+                    updateTaskItems();
+                    showNotification('Video görevi tamamlandı! 🎉', 'success');
+                }
+            });
+        }
     } catch (error) {
         console.error('Günün videosu yüklenirken hata:', error);
-        const videoTitle = document.getElementById('dailyTasksVideoTitle');
-        videoTitle.textContent = 'Video yüklenemedi';
-    }
-}
-
-
-// Görev tamamlandığında özel işlemler
-function handleTaskCompletion(taskType) {
-    switch (taskType) {
-        case 'reading':
-            // Günlük okuma tamamlandı - paneli kapat
-            setTimeout(() => {
-                closeDailyTasksModal();
-            }, 1000);
-            break;
-            
-        case 'gift':
-            // Günün hediyesi alındı - hediye panelini aç
-            setTimeout(() => {
-                closeDailyTasksModal();
-                openDailyGiftModal();
-            }, 1000);
-            break;
-            
-        case 'video':
-            // Günün videosu izlendi - video modalını aç
-            setTimeout(() => {
-                closeDailyTasksModal();
-                openVideoModal();
-            }, 1000);
-            break;
     }
 }
 
@@ -551,13 +470,11 @@ function openVideoModal() {
         } else {
             showNotification('Video bulunamadı!', 'error');
         }
-    } else {
-        showNotification('Video yükleniyor, lütfen bekleyin...', 'info');
     }
 }
 
 // Toast bildirim göster
-function showNotification(message, type = 'info') {
+function showNotification(message, type = 'success') {
     // Mevcut toast'ları temizle
     const existingToasts = document.querySelectorAll('.toast, .notification-toast, .share-toast');
     existingToasts.forEach(toast => {

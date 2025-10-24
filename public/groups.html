@@ -560,26 +560,13 @@
       <div class="daily-tasks-content">
         <div class="daily-tasks-header">
           <h2 class="daily-tasks-title">
-            <i class="fa-solid fa-tasks"></i>
+            <i class="fa-solid fa-list-check"></i>
             Günlük Görevler
           </h2>
           <button class="daily-tasks-close" id="dailyTasksClose">×</button>
         </div>
         
         <div class="daily-tasks-body">
-          <!-- Günlük Okuma Hedefi -->
-          <div class="daily-tasks-goal-section">
-            <div class="daily-tasks-goal-container">
-              <div class="daily-tasks-goal-input-container">
-                <input id="dailyReadingGoal" class="daily-tasks-goal-input" placeholder="Sayfa sayısı">
-                <span class="daily-tasks-goal-label">sayfa</span>
-              </div>
-              <button id="saveDailyGoal" class="daily-tasks-save-goal-btn">
-                <i class="fa-solid fa-save"></i>
-                Kaydet
-              </button>
-            </div>
-          </div>
 
           <!-- Görev Listesi -->
           <div class="daily-tasks-list">
@@ -590,7 +577,7 @@
                   <i class="fa-solid fa-book-open"></i>
                 </div>
                 <div class="daily-task-info">
-                  <div class="daily-task-title">Günlük Okumayı Tamamla</div>
+                  <div class="daily-task-title">Günlük Okumanı Tamamla</div>
                 </div>
               </div>
               <div class="daily-task-checkbox">
@@ -638,16 +625,6 @@
             </div>
           </div>
 
-          
-          <!-- Görev İlerleme Göstergesi -->
-          <div class="daily-tasks-progress-section">
-            <div class="daily-tasks-progress-stats">
-              <span id="completedTasksCount">0</span> / <span id="totalTasksCount">3</span> tamamlandı
-            </div>
-            <div class="daily-tasks-progress-bar">
-              <div class="daily-tasks-progress-fill" id="tasksProgressFill" style="width: 0%"></div>
-            </div>
-          </div>
 
           <!-- Günün Videosu -->
           <div class="daily-tasks-video-section">
@@ -656,7 +633,7 @@
               Günün Videosu
             </h3>
             <div class="daily-tasks-video-container">
-              <a href="#" id="dailyTasksVideoLink" class="daily-tasks-video-link" target="_blank">
+              <a href="https://youtu.be/bOB9k0eG_SY?si=0gSTbJtJmbWt6MZL" id="dailyTasksVideoLink" class="daily-tasks-video-link" target="_blank">
                 <div class="daily-tasks-video-thumbnail-container">
                   <img id="dailyTasksVideoThumbnail" class="daily-tasks-video-thumbnail" src="images/video_default.png" alt="Günün Videosu">
                   <div class="daily-tasks-video-overlay">
@@ -666,7 +643,6 @@
                   </div>
                 </div>
               </a>
-              <div class="daily-tasks-video-title" id="dailyTasksVideoTitle">Video Yükleniyor...</div>
             </div>
           </div>
         </div>

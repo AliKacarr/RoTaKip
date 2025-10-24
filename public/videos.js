@@ -118,7 +118,6 @@ function renderVideos(videos) {
                 window.currentVideoData = {
                     url: `https://www.youtube.com/watch?v=${videoId}`,
                     thumbnail: thumbnail,
-                    title: title,
                     videoId: videoId
                 };
             }
