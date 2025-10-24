@@ -2584,7 +2584,7 @@ app.get('/api/random-dua', async (req, res) => {
 
     // Eğer hiç dua yoksa, varsayılan bir mesaj döndür
     if (count === 0) {
-      return res.json({ sentence: "Allah’ım! Senden Seni sevmeyi Seni sevenleri sevmeyi ve Senin sevgine ulaştıran ameli yapmayı isterim. Allah’ım! Senin sevgini, bana canımdan, ailemden ve soğuk sudan daha sevgili kıl. (Tirmizî, Deavât,73)" });
+      return res.json({ sentence: "Allah'ım! Senden Seni sevmeyi Seni sevenleri sevmeyi ve Senin sevgine ulaştıran ameli yapmayı isterim. Allah'ım! Senin sevgini, bana canımdan, ailemden ve soğuk sudan daha sevgili kıl. (Tirmizî, Deavât,73)" });
     }
 
     // Rastgele bir indeks oluştur
@@ -2596,6 +2596,30 @@ app.get('/api/random-dua', async (req, res) => {
     res.json({ sentence: randomDua.sentence });
   } catch (error) {
     console.error('Rastgele dua alınırken hata oluştu:', error);
+    res.status(500).json({ error: 'Sunucu hatası', message: error.message });
+  }
+});
+
+// Rastgele hatırlatma endpoint'i
+app.get('/api/random-reminder', async (req, res) => {
+  try {
+    // Hatırlatmalar koleksiyonundaki toplam belge sayısını say
+    const count = await Hatirlatma.countDocuments();
+
+    // Eğer hiç hatırlatma yoksa, varsayılan bir mesaj döndür
+    if (count === 0) {
+      return res.json({ sentence: "Her gün küçük adımlarla büyük hedeflere ulaşabilirsin. Bugün de bir adım at!" });
+    }
+
+    // Rastgele bir indeks oluştur
+    const random = Math.floor(Math.random() * count);
+
+    // Rastgele belgeye atla ve al
+    const randomHatirlatma = await Hatirlatma.findOne().skip(random);
+
+    res.json({ sentence: randomHatirlatma.sentence });
+  } catch (error) {
+    console.error('Rastgele hatırlatma alınırken hata oluştu:', error);
     res.status(500).json({ error: 'Sunucu hatası', message: error.message });
   }
 });
@@ -3233,7 +3257,7 @@ const hatirlatmaSchema = new mongoose.Schema({
   sentence: String
 });
 
-const Hatirlatma = mongoose.model('hatırlatmalar', hatirlatmaSchema);
+const Hatirlatma = mongoose.model('hatırlatmalar', hatirlatmaSchema, 'hatırlatmalar');
 
 // Günün vecizesi bildirim cron'u (09:00 ve 21:00) - Europe/Istanbul TZ ile
 async function getRandomVecizeForPush() {

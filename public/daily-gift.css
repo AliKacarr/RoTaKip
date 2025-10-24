@@ -321,6 +321,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+  overflow-y: auto;
 }
 
 .daily-tasks-modal.show {
@@ -346,7 +347,7 @@
   max-height: 85vh;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
   border: 2px solid rgba(59, 130, 246, 0.2);
-  overflow: hidden;
+  overflow-y: auto;
   animation: daily-tasks-modalFadeIn 0.4s ease-out;
 }
 
@@ -599,7 +600,7 @@
 
 .daily-tasks-video-section-title {
   color: #1e293b;
-  font-size: 21px !important;
+  font-size: 22px !important;
   font-weight: 600;
   margin: 0 0 15px 0;
   display: flex;
@@ -607,6 +608,11 @@
   margin-left: 10px;
   border-bottom: 1px solid #44444433;
   gap: 8px;
+}
+
+
+.daily-tasks-video-section-title i {
+  color: #3b82f6;
 }
 
 .daily-tasks-video-container {
@@ -755,4 +761,24 @@
   font-weight: 600;
   color: #374151;
   white-space: nowrap;
+}
+
+/* Hatırlatma Bölümü */
+.daily-tasks-reminder-section {
+  margin-top: 20px;
+  padding: 20px 0;
+  background: #ffffff;
+  border-radius: 12px;
+  border-top: 1px solid #44444433;
+}
+
+.daily-tasks-reminder-text {
+  display: flex;
+  font-size: 18px !important;
+  line-height: 1.7;
+  font-weight: 500;
+  color: #343d4b;
+  margin: 0;
+  font-style: italic;
+  text-align: center;
 }

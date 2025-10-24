@@ -303,6 +303,10 @@ function closeDailyTasksModal() {
 
 // Günlük görevler verilerini yükle
 function loadDailyTasks() {
+
+    // Hatırlatmayı yükle
+    loadDailyReminder();
+
     // Bugün okuma yapılmış mı kontrol et
     checkTodayReading();
     
@@ -398,26 +402,83 @@ function updateTaskItems() {
 
 // Progress bar'ı güncelle
 function updateProgressBar() {
-    const today = new Date().toDateString();
-    const tasksData = JSON.parse(localStorage.getItem('dailyTasks') || '{}');
-    const todayTasks = tasksData[today] || { reading: false, gift: false, video: false };
-    
-    // Tamamlanan görev sayısını hesapla
-    const completedTasks = Object.values(todayTasks).filter(status => status === true).length;
-    const totalTasks = 3;
-    const percentage = (completedTasks / totalTasks) * 100;
-    
-    // Progress bar'ı güncelle
-    const progressFill = document.getElementById('dailyTasksProgressFill');
-    const progressText = document.getElementById('dailyTasksProgressText');
-    
-    if (progressFill) {
-        progressFill.style.width = `${percentage}%`;
+  const today = new Date().toDateString();
+  const tasksData = JSON.parse(localStorage.getItem('dailyTasks') || '{}');
+  const todayTasks = tasksData[today] || { reading: false, gift: false, video: false };
+  
+  // Tamamlanan görev sayısını hesapla
+  const completedTasks = Object.values(todayTasks).filter(status => status === true).length;
+  const totalTasks = 3;
+  const percentage = (completedTasks / totalTasks) * 100;
+  
+  // Progress bar'ı güncelle
+  const progressFill = document.getElementById('dailyTasksProgressFill');
+  const progressText = document.getElementById('dailyTasksProgressText');
+  
+  if (progressFill) {
+    progressFill.style.width = `${percentage}%`;
+  }
+  
+  if (progressText) {
+    progressText.textContent = `${completedTasks}/${totalTasks} Görev Tamamlandı`;
+  }
+}
+
+// Hatırlatma yükle
+async function loadDailyReminder() {
+  const reminderText = document.getElementById('dailyTasksReminderText');
+  if (!reminderText) return;
+  
+  // Önce localStorage'dan kontrol et
+  const savedReminder = localStorage.getItem('dailyReminder');
+  if (savedReminder) {
+    try {
+      const reminderData = JSON.parse(savedReminder);
+      const today = new Date().toDateString();
+      
+      // Bugünün hatırlatması varsa onu kullan
+      if (reminderData.date === today) {
+        reminderText.textContent = reminderData.text;
+        return;
+      }
+    } catch (error) {
+      console.error('Kaydedilmiş hatırlatma okuma hatası:', error);
     }
+  }
+  
+  // LocalStorage'da yoksa API'den çek
+  try {
+    const response = await fetch('/api/random-reminder');
+    const data = await response.json();
     
-    if (progressText) {
-        progressText.textContent = `${completedTasks}/${totalTasks} Görev Tamamlandı`;
-    }
+    const text = data.sentence || 'Bugün için hatırlatma bulunamadı.';
+    reminderText.textContent = text;
+    
+    // LocalStorage'a kaydet
+    localStorage.setItem('dailyReminder', JSON.stringify({
+      text: text,
+      date: new Date().toDateString()
+    }));
+  } catch (error) {
+    console.error('Hatırlatma yükleme hatası:', error);
+    reminderText.textContent = 'Hatırlatma yüklenemedi.';
+  }
+}
+
+// Sayfa yüklenirken hatırlatmayı önceden hazırla
+async function preloadDailyReminder() {
+  try {
+    const response = await fetch('/api/random-reminder');
+    const data = await response.json();
+    
+    // LocalStorage'a kaydet
+    localStorage.setItem('dailyReminder', JSON.stringify({
+      text: data.sentence || 'Bugün için hatırlatma bulunamadı.',
+      date: new Date().toDateString()
+    }));
+  } catch (error) {
+    console.error('Hatırlatma ön yükleme hatası:', error);
+  }
 }
 
 // Görev durumunu kaydet
@@ -528,4 +589,9 @@ function showNotification(message, type = 'success') {
         }, 300);
     }, 3000);
 }
+
+// Sayfa yüklenirken hatırlatmayı önceden hazırla
+document.addEventListener('DOMContentLoaded', function() {
+    preloadDailyReminder();
+});
 
