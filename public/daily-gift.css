@@ -366,7 +366,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 25px 15px;
+  padding: 30px 35px 25px;
   border-bottom: 2px solid #e2e8f0;
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   animation: daily-tasks-slideIn 0.4s ease-out 0.1s both;
@@ -374,7 +374,7 @@
 
 .daily-tasks-title {
   color: #ffffff;
-  font-size: 22px !important;
+  font-size: 26px !important;
   font-weight: 700;
   margin: 0;
   text-align: center;
@@ -410,7 +410,7 @@
 }
 
 .daily-tasks-body {
-  padding: 30px;
+  padding: 30px 35px;
   background: #ffffff;
   animation: daily-tasks-slideIn 0.4s ease-out 0.2s both;
 }
@@ -426,16 +426,6 @@
   }
 }
 
-/* Bölüm Başlıkları */
-.daily-tasks-section-title {
-  color: #1e293b;
-  font-size: 20px !important;
-  font-weight: 600;
-  margin: 0 0 15px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 
 
@@ -448,8 +438,8 @@
   display: flex;
   cursor: pointer;
   align-items: center;
-  gap: 12px;
-  padding: 15px;
+  gap: 15px;
+  padding: 18px;
   background: #fefeff;
   border: 2px solid #cbd5e1;
   border-radius: 12px;
@@ -494,8 +484,8 @@
 }
 
 .daily-task-check-label {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border: 2px solid #94a3b8;
   border-radius: 6px;
   background: #ffffff;
@@ -509,7 +499,7 @@
 
 .daily-task-check-label i {
   color: #ffffff;
-  font-size: 12px;
+  font-size: 14px;
   opacity: 0;
   transform: scale(0.5);
   transition: all 0.3s ease;
@@ -534,8 +524,8 @@
 }
 
 .daily-task-icon {
-  width: 35px;
-  height: 35px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   border-radius: 10px;
   display: flex;
@@ -586,8 +576,8 @@
 }
 
 .daily-task-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 620;
   color: #1e293b;
   margin: 0;
 }
@@ -600,7 +590,7 @@
 
 .daily-tasks-video-section-title {
   color: #1e293b;
-  font-size: 22px !important;
+  font-size: 24px !important;
   font-weight: 600;
   margin: 0 0 15px 0;
   display: flex;
@@ -741,7 +731,7 @@
 
 .daily-tasks-progress-bar {
   flex: 1;
-  height: 16px;
+  height: 20px;
   background: #e2e8f0;
   border-radius: 8px;
   overflow: hidden;
@@ -757,7 +747,7 @@
 }
 
 .daily-tasks-progress-text {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #374151;
   white-space: nowrap;
@@ -766,7 +756,7 @@
 /* Hatırlatma Bölümü */
 .daily-tasks-reminder-section {
   margin-top: 20px;
-  padding: 20px 0;
+  padding: 20px 15px;
   background: #ffffff;
   border-radius: 12px;
   border-top: 1px solid #44444433;
@@ -774,7 +764,7 @@
 
 .daily-tasks-reminder-text {
   display: flex;
-  font-size: 18px !important;
+  font-size: 20px !important;
   line-height: 1.7;
   font-weight: 500;
   color: #343d4b;
