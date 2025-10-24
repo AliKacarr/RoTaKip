@@ -485,7 +485,7 @@ function loadDailyVideo() {
             // Eğer video verisi yoksa, videos.js'i başlat
             if (typeof initializeVideos === 'function') {
                 initializeVideos();
-                
+                console.log('Video modülü zorla yüklendi');
                 // Video yüklendikten sonra tekrar dene
                 setTimeout(() => {
                     if (window.currentVideoData) {
@@ -498,8 +498,7 @@ function loadDailyVideo() {
                 }, 2000);
             } else {
                 videoTitle.textContent = 'Video yükleniyor...';
-                videoLink.href = '#';
-                videoContainer.src = '/images/default.png';
+                videoLink.href = 'https://youtu.be/bOB9k0eG_SY?si=0gSTbJtJmbWt6MZL';
             }
         }
     } catch (error) {
