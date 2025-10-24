@@ -341,7 +341,7 @@
 .daily-tasks-content {
   position: relative;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 20px;
+  border-radius: 30px;
   width: 95%;
   max-width: 600px;
   max-height: 85vh;
@@ -410,7 +410,7 @@
 }
 
 .daily-tasks-body {
-  padding: 30px 35px;
+  padding: 40px;
   background: #ffffff;
   animation: daily-tasks-slideIn 0.4s ease-out 0.2s both;
 }
@@ -427,11 +427,9 @@
 }
 
 
-
-
 /* Görev Listesi */
 .daily-tasks-list {
-  margin-bottom: 30px;
+  margin-bottom: 35px;
 }
 
 .daily-task-item {
@@ -446,7 +444,7 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 15px;
 }
 
 .daily-task-item::before {
@@ -597,7 +595,7 @@
   align-items: center;
   margin-left: 10px;
   border-bottom: 1px solid #44444433;
-  gap: 8px;
+  gap: 10px;
 }
 
 
@@ -725,13 +723,14 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  margin: 0 0 25px 0;
+  margin: 0 0 30px 0;
   padding: 0;
 }
 
 .daily-tasks-progress-bar {
   flex: 1;
   height: 20px;
+  margin-left: 2px;
   background: #e2e8f0;
   border-radius: 8px;
   overflow: hidden;
@@ -756,10 +755,9 @@
 /* Hatırlatma Bölümü */
 .daily-tasks-reminder-section {
   margin-top: 20px;
-  padding: 20px 15px;
+  padding: 20px 15px 0;
   background: #ffffff;
-  border-radius: 12px;
-  border-top: 1px solid #44444433;
+  border-top: 1px solid #44444450;
 }
 
 .daily-tasks-reminder-text {
