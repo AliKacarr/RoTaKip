@@ -145,6 +145,15 @@ async function loadDailyGift() {
         // Modalda göster
         showGiftData(selectedEsma);
         
+        // Hediye görevini tamamla
+        const giftCheckbox = document.getElementById('taskGift');
+        if (giftCheckbox && !giftCheckbox.checked) {
+            giftCheckbox.checked = true;
+            saveTaskStatus('gift', true);
+            updateTaskItems();
+            showNotification('Hediye görevi tamamlandı! 🎉', 'success');
+        }
+        
     } catch (error) {
         console.error('Esmaül Hüsna yükleme hatası:', error);
         throw error;
@@ -169,17 +178,6 @@ function showGiftData(esmaData) {
     if (videoLinkElement) {
         videoLinkElement.href = esmaData.esmaulhusna_video_url;
         
-        // Hediye video link'ine tıklama event listener ekle
-        videoLinkElement.addEventListener('click', function() {
-            // Hediye görevini tamamla
-            const giftCheckbox = document.getElementById('taskGift');
-            if (giftCheckbox && !giftCheckbox.checked) {
-                giftCheckbox.checked = true;
-                saveTaskStatus('gift', true);
-                updateTaskItems();
-                showNotification('Hediye görevi tamamlandı! 🎉', 'success');
-            }
-        });
     }
 
     // YouTube video thumbnail oluştur (sadece API ile)
@@ -343,7 +341,7 @@ function checkTodayReading() {
                 readingCheckbox.checked = true;
                 saveTaskStatus('reading', true);
                 updateTaskItems();
-                showNotification('Okuma görevi tamamlandı! ✨', 'success');
+                showNotification('Okuma görevi tamamlandı! 🎉', 'success');
             }
         }
     } catch (error) {
@@ -375,6 +373,9 @@ function loadTaskStatuses() {
     
     // Görev item'larını güncelle
     updateTaskItems();
+    
+    // Progress bar'ı güncelle
+    updateProgressBar();
 }
 
 // Görev item'larını güncelle
@@ -390,6 +391,33 @@ function updateTaskItems() {
             item.classList.remove('completed');
         }
     });
+    
+    // Progress bar'ı güncelle
+    updateProgressBar();
+}
+
+// Progress bar'ı güncelle
+function updateProgressBar() {
+    const today = new Date().toDateString();
+    const tasksData = JSON.parse(localStorage.getItem('dailyTasks') || '{}');
+    const todayTasks = tasksData[today] || { reading: false, gift: false, video: false };
+    
+    // Tamamlanan görev sayısını hesapla
+    const completedTasks = Object.values(todayTasks).filter(status => status === true).length;
+    const totalTasks = 3;
+    const percentage = (completedTasks / totalTasks) * 100;
+    
+    // Progress bar'ı güncelle
+    const progressFill = document.getElementById('dailyTasksProgressFill');
+    const progressText = document.getElementById('dailyTasksProgressText');
+    
+    if (progressFill) {
+        progressFill.style.width = `${percentage}%`;
+    }
+    
+    if (progressText) {
+        progressText.textContent = `${completedTasks}/${totalTasks} Görev Tamamlandı`;
+    }
 }
 
 // Görev durumunu kaydet

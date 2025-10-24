@@ -383,7 +383,7 @@
   display: flex;
   align-items: center;
   margin-left: 10px;
-  gap: 8px;
+  gap: 10px;
 }
 
 .daily-tasks-close {
@@ -449,7 +449,7 @@
   align-items: center;
   gap: 12px;
   padding: 15px;
-  background: #ffffff;
+  background: #fefeff;
   border: 2px solid #cbd5e1;
   border-radius: 12px;
   transition: all 0.3s ease;
@@ -550,18 +550,18 @@
 
 /* Görev türüne göre farklı renkler */
 .daily-task-item[data-task="reading"] .daily-task-icon {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
 .daily-task-item[data-task="gift"] .daily-task-icon {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  background: linear-gradient(135deg, #ec4899, #be185d);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
 }
 
 .daily-task-item[data-task="video"] .daily-task-icon {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 /* Tamamlanan görevler için özel renkler */
@@ -605,6 +605,7 @@
   display: flex;
   align-items: center;
   margin-left: 10px;
+  border-bottom: 1px solid #44444433;
   gap: 8px;
 }
 
@@ -721,4 +722,37 @@
     transform: translateX(100%);
     opacity: 0;
   }
+}
+
+/* Görev İlerleme Alanı */
+.daily-tasks-progress-area {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 0 0 25px 0;
+  padding: 0;
+}
+
+.daily-tasks-progress-bar {
+  flex: 1;
+  height: 16px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.daily-tasks-progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-radius: 8px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+.daily-tasks-progress-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
 }
