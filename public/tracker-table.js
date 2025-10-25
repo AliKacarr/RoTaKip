@@ -197,7 +197,6 @@ const LEAGUES = [
 
 function getWeekDates(offset = 0) {
     const today = new Date();
-    // Hafta hesaplamaları için UTC+3 ekleme, sadece tarih karşılaştırmalarında kullan
     const dayOfWeek = today.getDay();
     
     let actualFirstDay;

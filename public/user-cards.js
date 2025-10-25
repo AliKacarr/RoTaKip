@@ -99,8 +99,6 @@ async function loadUserCards() {
     if (firstDayOfWeek === 'default') {
       // Varsayılan: Bugünden sonraki gün haftanın ilk günü olsun
       const today = new Date();
-      // UTC+3 saat dilimi ekle (Türkiye saati)
-      today.setHours(today.getHours() + 3);
       // Yarını hesapla
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -346,10 +344,7 @@ async function loadUserCards() {
     existingMissedMsg.remove();
   }
 
-  // Bugünün tarihini al (UTC+3 saat dilimi ile)
   const today = new Date();
-  // UTC+3 saat dilimi ekle (Türkiye saati)
-  today.setHours(today.getHours() + 3);
   function formatDate(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
