@@ -197,8 +197,7 @@ const LEAGUES = [
 
 function getWeekDates(offset = 0) {
     const today = new Date();
-    // UTC+3 saat dilimi ekle (Türkiye saati)
-    today.setHours(today.getHours() + 3);
+    // Hafta hesaplamaları için UTC+3 ekleme, sadece tarih karşılaştırmalarında kullan
     const dayOfWeek = today.getDay();
     
     let actualFirstDay;
