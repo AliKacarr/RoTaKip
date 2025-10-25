@@ -379,7 +379,7 @@ to {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 15px;
-  max-height: 400px;
+  max-height: 90vh;
 }
 
 .profile-modal-avatar-item {
