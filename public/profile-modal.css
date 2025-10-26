@@ -29,9 +29,9 @@
   flex-direction: column;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .profile-modal-content {
-    scale: 1.2;
+    scale: 1.3;
   }
 }
 
@@ -333,7 +333,7 @@ to {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: profileModalSlideIn 0.3s ease-out;
   overflow: hidden;
-  scale: 1.2;
+  scale: 1.3;
 }
 
 .profile-avatar-modal-header {
@@ -565,10 +565,8 @@ to {
   }
 }
 
-/* ==================== Responsive Design ==================== */
-
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
 .profile-settings-modal-content {
-  scale: 1.2;
+  scale: 1.3;
 }
 }

@@ -802,7 +802,7 @@ input[type="file"] {
     gap: 10px;
     width: 100%;
     padding: 15px 0;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid #cfcfcf;
 }
 
 .group-action-buttons .danger-toggle-btn,
@@ -1204,7 +1204,7 @@ input[type="file"] {
     align-items: center;
     justify-content: center;
     padding-top: 15px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid #cfcfcf;
 }
 
 .save-group-btn {
