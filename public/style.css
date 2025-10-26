@@ -50,7 +50,7 @@ h3 {
 .notification-toast,
 .share-toast {
     position: fixed;
-    top: 40px;
+    top: 45px;
     right: 20px;
     justify-content: center;
     align-items: center;
