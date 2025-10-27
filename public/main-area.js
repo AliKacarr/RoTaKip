@@ -160,25 +160,24 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
     const userElement = userContainer.querySelector('li');
     const userName = userElement ? userElement.querySelector('.profil-image-user-name').textContent : 'this user';
 
-    // Admin sayısını kontrol et
-    const currentAdminCount = await getAdminCount();
-    const userAuthority = userContainer.querySelector('.authority-select').value;
+    // Toplam kullanıcı sayısını kontrol et
+    const currentTotalCount = await getTotalUserCount();
     
-    // Eğer son admin'i silmeye çalışıyorsa engelle
-    if (userAuthority === 'admin' && currentAdminCount <= 1) {
-        showErrorMessage('En az bir yönetici hesabı bulunmalıdır!');
-        return;
-    }
-
     // Kendi hesabını silme kontrolü
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
     const isDeletingSelf = currentUserInfo && currentUserInfo.userId === id;
     
-    let confirmMessage = `Silmek istediğine emin misin: ->  ${userName}  <- Bu işlem geri alınamaz.`;
-    if (isDeletingSelf) {
+    let confirmMessage;
+    
+    // Eğer son kullanıcıyı silmeye çalışıyorsa grup da silinecek
+    if (currentTotalCount <= 1) {
+        confirmMessage = `Silmek istediğine emin misin: ->  ${userName}  <- Bu kullanıcı gruptaki son kullanıcıdır. Silindiğinde grup da tamamen silinecektir.\n\nBu işlem geri alınamaz!`;
+    } else if (isDeletingSelf) {
         confirmMessage = `Kendi hesabınızı silmek istediğinizi onaylıyor musunuz?\n\n` +
                         `Bu işlem sonrasında otomatik olarak çıkış yapacaksınız ve hesabınız tamamen silinecektir.\n\n` +
                         `Bu işlem geri alınamaz!`;
+    } else {
+        confirmMessage = `Silmek istediğine emin misin: ->  ${userName}  <- Bu işlem geri alınamaz.`;
     }
 
     // Ask for confirmation before deleting
@@ -188,17 +187,28 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
         // Loading göstergesi
         const deleteBtn = document.querySelector(`li[data-user-id="${id}"] .delete-user-btn`);
         if (deleteBtn) {
-            const originalText = deleteBtn.textContent;
             deleteBtn.textContent = 'Siliniyor...';
             deleteBtn.disabled = true;
         }
 
         try {
-            await fetch(`/api/delete-user/${window.groupid}`, {
+            const response = await fetch(`/api/delete-user/${window.groupid}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id })
             });
+
+            const result = await response.json();
+            
+            // Eğer grup silindi ise ana sayfaya yönlendir
+            if (result.groupDeleted) {
+                showSuccessMessage('Kullanıcı ve grup silindi. Ana sayfaya yönlendiriliyorsunuz...');
+                LocalStorageManager.logoutUser();
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+                return;
+            }
 
             // Eğer kendi hesabını sildiyse
             if (isDeletingSelf) {
@@ -239,7 +249,7 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
         } finally {
             // Loading göstergesini kaldır
             if (deleteBtn) {
-                deleteBtn.textContent = originalText;
+                deleteBtn.textContent = 'Sil';
                 deleteBtn.disabled = false;
             }
         }
@@ -788,6 +798,20 @@ function cancelSettings(userId) {     //Ayarlar iptal fonksiyonu
     cancelButton.style.display = 'none';
     settingsButton.style.display = 'inline-block';
     editButton.style.display = 'inline-block';
+}
+
+// Toplam kullanıcı sayısını kontrol eden yardımcı fonksiyon
+async function getTotalUserCount() {
+    try {
+        const response = await fetch(`/api/users/${window.groupid}`);
+        if (!response.ok) return 0;
+        
+        const data = await response.json();
+        return data.users.length;
+    } catch (error) {
+        console.error('Toplam kullanıcı sayısı alınırken hata:', error);
+        return 0;
+    }
 }
 
 // Admin sayısını kontrol eden yardımcı fonksiyon

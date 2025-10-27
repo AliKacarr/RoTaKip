@@ -96,8 +96,11 @@ class GroupsPage {
         this.isLoading = false;
         this.searchQuery = '';
         this.selectedAvatarPath = null;
+        this.selectedAdminAvatarPath = null;
         this.currentJoinGroup = null;
         this.avatarsLoaded = false; // Avatar'ların yüklenip yüklenmediğini takip et
+        this.adminAvatarsLoaded = false; // Admin avatar'larının yüklenip yüklenmediğini takip et
+        this.createGroupStage = 1; // 1: Group Info, 2: Admin Info
         
         // Message Queue
         this.messageQueue = [];
@@ -128,16 +131,20 @@ class GroupsPage {
         clearSearch.addEventListener('click', this.clearSearch.bind(this));
 
         // Create group modal
-        const createGroupBtn = document.getElementById('createGroupBtn');
+        const openCreateGroupBtn = document.getElementById('openCreateGroupBtn');
         const closeModal = document.getElementById('closeModal');
         const cancelCreate = document.getElementById('cancelCreate');
         const createGroupForm = document.getElementById('createGroupForm');
         const modal = document.getElementById('createGroupModal');
+        const nextToAdminInfo = document.getElementById('nextToAdminInfo');
+        const backToGroupInfo = document.getElementById('backToGroupInfo');
 
-        createGroupBtn.addEventListener('click', () => this.openCreateModal());
+        openCreateGroupBtn.addEventListener('click', () => this.openCreateModal());
         closeModal.addEventListener('click', () => this.closeCreateModal());
         cancelCreate.addEventListener('click', () => this.closeCreateModal());
         createGroupForm.addEventListener('submit', this.handleCreateGroup.bind(this));
+        nextToAdminInfo.addEventListener('click', () => this.nextToAdminInfo());
+        backToGroupInfo.addEventListener('click', () => this.backToGroupInfo());
 
         // Close modal when clicking outside
         modal.addEventListener('click', (e) => {
@@ -163,9 +170,13 @@ class GroupsPage {
                 this.closeReadyImagesModal();
                 this.closeJoinModal();
                 if (avatarModalManager) {
-                    const modal = document.getElementById('joinAvatarModal');
-                    if (modal && modal.classList.contains('show')) {
+                    const joinModal = document.getElementById('joinAvatarModal');
+                    const adminModal = document.getElementById('adminAvatarModal');
+                    if (joinModal && joinModal.classList.contains('show')) {
                         avatarModalManager.toggleJoinAvatarModal();
+                    }
+                    if (adminModal && adminModal.classList.contains('show')) {
+                        this.toggleAdminAvatarModal();
                     }
                 }
             }
@@ -186,7 +197,18 @@ class GroupsPage {
         const groupImageInput = document.getElementById('groupImageInput');
         groupImageInput.addEventListener('change', (e) => {
             const fileInput = e.target;
-            const fileInputText = document.querySelector('.file-input-text');
+            const fileInputText = document.querySelector('#groupInfoStage .file-input-text');
+            if (fileInput.files.length > 0) {
+                fileInputText.textContent = fileInput.files[0].name;
+            } else {
+                fileInputText.textContent = 'Bir resim seçin...';
+            }
+        });
+
+        const adminProfileImageInput = document.getElementById('adminProfileImageInput');
+        adminProfileImageInput.addEventListener('change', (e) => {
+            const fileInput = e.target;
+            const fileInputText = document.querySelector('#adminInfoStage .file-input-text');
             if (fileInput.files.length > 0) {
                 fileInputText.textContent = fileInput.files[0].name;
             } else {
@@ -581,6 +603,10 @@ class GroupsPage {
         modal.style.visibility = 'visible';
         document.body.style.overflow = 'hidden';
 
+        // Reset to stage 1
+        this.createGroupStage = 1;
+        this.showCreateGroupStage(1);
+
         // Update visibility icon based on current selection
         this.updateVisibilityIcon();
     }
@@ -597,14 +623,24 @@ class GroupsPage {
         document.body.style.overflow = 'auto';
         form.reset();
         
+        // Reset stages
+        this.createGroupStage = 1;
+        this.showCreateGroupStage(1);
+        
         // Hazır avatar seçimini temizle
         this.selectedAvatarPath = null;
+        this.selectedAdminAvatarPath = null;
         
-        // Dosya seçim metnini sıfırla
-        const fileInputText = document.querySelector('.file-input-text');
-        if (fileInputText) {
-            fileInputText.textContent = 'Bir resim seçin...';
-            fileInputText.style.color = '#6c757d';
+        // Dosya seçim metinlerini sıfırla
+        const groupFileInputText = document.querySelector('#groupInfoStage .file-input-text');
+        const adminFileInputText = document.querySelector('#adminInfoStage .file-input-text');
+        if (groupFileInputText) {
+            groupFileInputText.textContent = 'Bir resim seçin...';
+            groupFileInputText.style.color = '#6c757d';
+        }
+        if (adminFileInputText) {
+            adminFileInputText.textContent = 'Bir resim seçin...';
+            adminFileInputText.style.color = '#6c757d';
         }
 
         if (adminPasswordError) {
@@ -640,27 +676,148 @@ class GroupsPage {
         }
     }
 
+    // Stage management methods
+    showCreateGroupStage(stage) {
+        const groupInfoStage = document.getElementById('groupInfoStage');
+        const adminInfoStage = document.getElementById('adminInfoStage');
+        const nextBtn = document.getElementById('nextToAdminInfo');
+        const backBtn = document.getElementById('backToGroupInfo');
+        const createBtn = document.getElementById('createGroupBtn');
+        const cancelBtn = document.getElementById('cancelCreate');
+        const modalTitle = document.getElementById('createModalTitle');
+
+        // Stage 1: Grup Bilgileri
+        if (stage === 1) {
+            groupInfoStage.style.display = 'block';
+            adminInfoStage.style.display = 'none';
+            
+            nextBtn.style.display = 'block';
+            backBtn.style.display = 'none';
+            createBtn.style.display = 'none';
+            cancelBtn.style.display = 'block';
+            modalTitle.textContent = 'Yeni Grup Oluştur';
+        }
+        
+        // Stage 2: Yönetici Bilgileri
+        if (stage === 2) {
+            groupInfoStage.style.display = 'none';
+            adminInfoStage.style.display = 'block';
+            
+            nextBtn.style.display = 'none';
+            backBtn.style.display = 'block';
+            createBtn.style.display = 'block';
+            cancelBtn.style.display = 'none';
+            modalTitle.textContent = 'Yönetici Bilgileri';
+        }
+    }
+
+    nextToAdminInfo() {
+        // Validate group info stage
+        const groupName = document.getElementById('groupNameInput').value.trim();
+        const errors = [];
+
+        if (!groupName) {
+            errors.push('Grup ismi zorunludur.');
+        }
+
+        if (groupName.length > 40) {
+            errors.push('Grup ismi 40 karakterden uzun olamaz.');
+        }
+
+        if (errors.length > 0) {
+            this.showErrorMessage(errors.join('\n'));
+            return;
+        }
+
+        this.createGroupStage = 2;
+        this.showCreateGroupStage(2);
+    }
+
+    backToGroupInfo() {
+        this.createGroupStage = 1;
+        this.showCreateGroupStage(1);
+    }
+
+    // Admin avatar modal methods
+    async toggleAdminAvatarModal() {
+        const modal = document.getElementById('adminAvatarModal');
+        if (modal) {
+            const willBeVisible = !modal.classList.contains('show');
+            modal.classList.toggle('show');
+            
+            // Modal açılıyorsa ve avatar'lar henüz yüklenmediyse, yükle
+            if (willBeVisible && !this.adminAvatarsLoaded) {
+                await this.loadAdminAvatarOptions();
+                this.adminAvatarsLoaded = true;
+            }
+        }
+    }
+
+    async loadAdminAvatarOptions() {
+        const avatarGrid = document.getElementById('adminAvatarGrid');
+        if (!avatarGrid) return;
+
+        try {
+            const response = await fetch('/api/user-avatars');
+            const avatars = await response.json();
+            
+            avatarGrid.innerHTML = '';
+            
+            avatars.forEach((avatar, index) => {
+                const avatarItem = document.createElement('div');
+                avatarItem.className = 'avatar-item';
+                avatarItem.innerHTML = `<img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">`;
+                
+                avatarItem.addEventListener('click', () => this.selectAdminAvatar(avatar));
+                avatarGrid.appendChild(avatarItem);
+            });
+        } catch (error) {
+            console.error('Admin avatar yükleme hatası:', error);
+            avatarGrid.innerHTML = '<p>Avatar yüklenirken hata oluştu.</p>';
+        }
+    }
+
+    selectAdminAvatar(avatar) {
+        const fileInputText = document.querySelector('#adminInfoStage .file-input-text');
+        if (fileInputText) {
+            fileInputText.textContent = 'Avatar seçildi';
+            fileInputText.style.color = '#28a745';
+        }
+        
+        this.selectedAdminAvatarPath = `/userAvatars/${avatar}`;
+        
+        const adminProfileImageInput = document.getElementById('adminProfileImageInput');
+        if (adminProfileImageInput) {
+            adminProfileImageInput.value = '';
+        }
+        
+        this.toggleAdminAvatarModal();
+    }
+
     async handleCreateGroup(event) {
         event.preventDefault();
+        
         const groupNameEl = document.getElementById('groupNameInput');
         const groupDescEl = document.getElementById('groupDescInput');
+        const adminUserNameEl = document.getElementById('adminUserNameInput');
         const adminNameEl = document.getElementById('adminNameInput');
         const adminPasswordEl = document.getElementById('adminPasswordInput');
 
         const groupName = groupNameEl ? groupNameEl.value.trim() : '';
         const groupDescription = groupDescEl ? groupDescEl.value.trim() : '';
+        const adminUserName = adminUserNameEl ? adminUserNameEl.value.trim() : '';
         const adminName = adminNameEl ? adminNameEl.value.trim() : '';
         const adminPassword = adminPasswordEl ? adminPasswordEl.value.trim() : '';
         const groupImageInput = document.getElementById('groupImageInput');
+        const adminProfileImageInput = document.getElementById('adminProfileImageInput');
         const visibility = document.getElementById('groupVisibilityInput').value;
 
         // Karakter limiti kontrolü
         const errors = [];
 
         // Kontroller
-        if (!groupName || !adminName || !adminPassword) {
+        if (!groupName || !adminUserName || !adminName || !adminPassword) {
             errors.push('Lütfen tüm zorunlu alanları doldurun.');
-            return;
         }
 
         if (groupName.length > 40) {
@@ -669,6 +826,10 @@ class GroupsPage {
         
         if (groupDescription.length > 200) {
             errors.push('Grup açıklaması 200 karakterden uzun olamaz.');
+        }
+        
+        if (adminUserName.length > 40) {
+            errors.push('Kullanıcı adı 40 karakterden uzun olamaz.');
         }
         
         if (adminName.length > 40) {
@@ -681,16 +842,13 @@ class GroupsPage {
 
         // Hata varsa göster
         if (errors.length > 0) {
-            // Hata mesajlarını adminPasswordError alanında göster
             const adminPasswordError = document.getElementById('adminPasswordError');
             if (adminPasswordError) {
                 adminPasswordError.textContent = errors.join('\n');
                 adminPasswordError.style.display = 'block';
             }
-            
             return;
         } else {
-            // Hata yoksa hata mesajını gizle
             const adminPasswordError = document.getElementById('adminPasswordError');
             if (adminPasswordError) {
                 adminPasswordError.style.display = 'none';
@@ -700,15 +858,23 @@ class GroupsPage {
         const formData = new FormData();
         formData.append('groupName', groupName);
         formData.append('description', groupDescription);
+        formData.append('adminUserName', adminUserName);
         formData.append('adminName', adminName);
         formData.append('adminPassword', adminPassword);
         formData.append('visibility', visibility);
         
-        // Hazır avatar seçildiyse onu kullan, yoksa dosya yüklemesi yap
+        // Grup resmi
         if (this.selectedAvatarPath) {
-            formData.append('selectedAvatarPath', this.selectedAvatarPath);
+            formData.append('selectedGroupAvatarPath', this.selectedAvatarPath);
         } else if (groupImageInput.files[0]) {
             formData.append('groupImage', groupImageInput.files[0]);
+        }
+        
+        // Admin profil resmi
+        if (this.selectedAdminAvatarPath) {
+            formData.append('selectedAdminAvatarPath', this.selectedAdminAvatarPath);
+        } else if (adminProfileImageInput.files[0]) {
+            formData.append('adminProfileImage', adminProfileImageInput.files[0]);
         }
 
         try {
@@ -721,7 +887,7 @@ class GroupsPage {
 
             if (result.success) {
                 // Yeni sistem ile admin girişi yap
-                LocalStorageManager.loginUser(result.group.groupId, result.userId, 'admin', adminName, result.group.groupName, adminName);
+                LocalStorageManager.loginUser(result.group.groupId, result.userId, 'admin', adminUserName, result.group.groupName, adminName);
                 
                 this.closeCreateModal();
                 window.location.href = `/groupid=${result.group.groupId}`;
@@ -732,14 +898,6 @@ class GroupsPage {
             console.error('Grup oluşturma hatası:', error);
             alert('Grup oluşturulurken bir hata oluştu.');
         }
-
-        // Formu temizle
-        document.getElementById('createGroupForm').reset();
-        const fileInputText = document.getElementById('file-input-text');
-        if (fileInputText) {
-            fileInputText.textContent = 'Bir resim seçin...';
-        }
-        // Reset file input text
     }
 
     // Grup kartı oluşturma
@@ -1077,9 +1235,16 @@ class GroupsPage {
         document.getElementById('joinGroupForm').reset();
         document.querySelector('#joinProfileImageInput').parentElement.querySelector('.file-input-text').textContent = 'Bir resim seçin...';
         
-        // Form alanlarını tekrar göster
-        document.querySelector('.join-info-section').style.display = 'block';
-        document.querySelectorAll('.form-section').forEach(section => {
+        // Form alanlarını tekrar göster (sadece join modal içinde)
+        const joinModal = document.getElementById('joinGroupModal');
+        const joinInfoSection = joinModal.querySelector('.join-info-section');
+        const formSections = joinModal.querySelectorAll('.form-section');
+        
+        if (joinInfoSection) {
+            joinInfoSection.style.display = 'block';
+        }
+        
+        formSections.forEach(section => {
             section.style.display = 'block';
         });
         
@@ -1314,9 +1479,16 @@ class GroupsPage {
 
     // Başarı paneli göster
     showSuccessPanel() {
-        // Tüm form alanlarını ve info section'ı gizle
-        document.querySelector('.join-info-section').style.display = 'none';
-        document.querySelectorAll('.form-section').forEach(section => {
+        // Tüm form alanlarını ve info section'ı gizle (sadece join modal içinde)
+        const joinModal = document.getElementById('joinGroupModal');
+        const joinInfoSection = joinModal.querySelector('.join-info-section');
+        const formSections = joinModal.querySelectorAll('.form-section');
+        
+        if (joinInfoSection) {
+            joinInfoSection.style.display = 'none';
+        }
+        
+        formSections.forEach(section => {
             section.style.display = 'none';
         });
         
@@ -1507,7 +1679,27 @@ document.addEventListener('DOMContentLoaded', function() {
         closeJoinAvatarModal.addEventListener('click', () => avatarModalManager.toggleJoinAvatarModal());
     }
     
-    // 6. Join profile image input change listener
+    // 6. Admin avatar modal butonları
+    const adminAvatarBtn = document.getElementById('adminAvatarBtn');
+    const closeAdminAvatarModal = document.getElementById('closeAdminAvatarModal');
+    
+    if (adminAvatarBtn) {
+        adminAvatarBtn.addEventListener('click', () => {
+            if (groupsPageInstance) {
+                groupsPageInstance.toggleAdminAvatarModal();
+            }
+        });
+    }
+    
+    if (closeAdminAvatarModal) {
+        closeAdminAvatarModal.addEventListener('click', () => {
+            if (groupsPageInstance) {
+                groupsPageInstance.toggleAdminAvatarModal();
+            }
+        });
+    }
+    
+    // 7. Join profile image input change listener
     const joinProfileImageInput = document.getElementById('joinProfileImageInput');
     if (joinProfileImageInput) {
         joinProfileImageInput.addEventListener('change', function() {
@@ -1519,6 +1711,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Avatar seçimini sıfırla (tek seçim mantığı)
                 avatarModalManager.resetSelection();
+            }
+        });
+    }
+    
+    // 8. Admin profile image input change listener
+    const adminProfileImageInput = document.getElementById('adminProfileImageInput');
+    if (adminProfileImageInput) {
+        adminProfileImageInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const fileInputText = document.querySelector('#adminInfoStage .file-input-text');
+                if (fileInputText) {
+                    fileInputText.textContent = this.files[0].name;
+                }
+                
+                // Admin avatar seçimini sıfırla (tek seçim mantığı)
+                if (groupsPageInstance) {
+                    groupsPageInstance.selectedAdminAvatarPath = null;
+                }
             }
         });
     }

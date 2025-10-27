@@ -859,7 +859,8 @@ body {
 }
 
 /* Ready Images Button */
-.ready-images-btn {
+.ready-images-btn,
+.admin-avatar-btn {
     background: #fff;
     color: #1976d2;
     border: 2px solid #64b5f6;
@@ -884,24 +885,28 @@ body {
     width: 40px;
 }
 
-.ready-images-btn:hover {
+.ready-images-btn:hover,
+.admin-avatar-btn:hover {
     background: #f5fbff;
     border-color: #42a5f5;
     transform: translateY(-50%) translateY(-2px);
     box-shadow: 0 2px 6px rgba(66, 165, 245, 0.4);
 }
 
-.ready-images-btn:active {
+.ready-images-btn:active,
+.admin-avatar-btn:active {
     transform: translateY(-50%);
     box-shadow: 0 2px 4px rgba(66, 165, 245, 0.3);
 }
 
-.ready-images-btn i {
+.ready-images-btn i,
+.admin-avatar-btn i {
     font-size: var(--font-base);
     transition: var(--transition-base);
 }
 
-.ready-images-btn:hover i {
+.ready-images-btn:hover i,
+.admin-avatar-btn:hover i {
     transform: scale(1.1);
 }
 
@@ -1296,7 +1301,8 @@ body {
     justify-content: center;
 }
 
-#joinAvatarModal {
+#joinAvatarModal,
+#adminAvatarModal {
     z-index: 10010 !important;
 }
 

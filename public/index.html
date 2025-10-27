@@ -49,7 +49,7 @@
                     </button>
                 </div>
             </div>
-            <button id="createGroupBtn" class="create-btn">
+            <button id="openCreateGroupBtn" class="create-btn">
                 <i class="fas fa-plus-circle"></i>
                 Yeni Grup Oluştur
             </button>
@@ -84,108 +84,182 @@
                     <div class="modal-icon">
                         <i class="fas fa-users-gear"></i>
                     </div>
-                    <h2>Yeni Grup Oluştur</h2>
+                    <h2 id="createModalTitle">Yeni Grup Oluştur</h2>
                 </div>
                 <button class="close-btn" id="closeModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+            
+            <!-- Stage 1: Group Information -->
             <form id="createGroupForm" class="modal-body">
-                <div class="form-group">
-                    <label>Grup Resmi</label>
-                    <div class="input-container">
-                        <label for="groupImageInput" class="file-input-label">
-                            <i class="fas fa-image file-input-icon"></i>
-                            <span class="file-input-text">Bir resim seçin...</span>
-                        </label>
-                        <input type="file" id="groupImageInput" accept="image/*">
-                        <button type="button" class="ready-images-btn" id="readyImagesBtn">
-                            ✨
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Hazır Görseller Modal -->
-                <div id="readyImagesModal" class="ready-images-modal">
-                    <div class="ready-images-modal-content">
-                        <div class="modal-header">
-                            <h3>
-                                <i class="fas fa-images"></i>
-                                Hazır Görseller
-                            </h3>
-                            <button type="button" class="modal-close-btn" id="closeReadyImagesModal">
-                                <i class="fas fa-times"></i>
+                <div id="groupInfoStage" class="form-stage">
+                    <div class="form-group">
+                        <label>Grup Resmi</label>
+                        <div class="input-container">
+                            <label for="groupImageInput" class="file-input-label">
+                                <i class="fas fa-image file-input-icon"></i>
+                                <span class="file-input-text">Bir resim seçin...</span>
+                            </label>
+                            <input type="file" id="groupImageInput" accept="image/*">
+                            <button type="button" class="ready-images-btn" id="readyImagesBtn">
+                                ✨
                             </button>
                         </div>
-                        <div class="modal-body">
-                            <div class="avatar-grid" id="avatarGrid">
-                                <!-- Avatar resimleri JavaScript ile yüklenecek -->
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="groupNameInput">Grup İsmi</label>
+                        <div class="input-container">
+                            <i class="fas fa-layer-group input-icon"></i>
+                            <input type="text" id="groupNameInput" required placeholder="Grup adı giriniz" maxlength="40">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="groupDescInput">Grup Açıklaması</label>
+                        <div class="input-container">
+                            <i class="fas fa-align-left input-icon"></i>
+                            <textarea id="groupDescInput" placeholder="Grup açıklamasını giriniz" maxlength="200"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="groupVisibilityInput">Görünürlük</label>
+                        <div class="input-container">
+                            <div class="select-wrapper">
+                                <i class="fas fa-eye input-icon"></i>
+                                <select id="groupVisibilityInput">
+                                    <option value="public" selected>Herkese Açık</option>
+                                    <option value="private">Gizli Grup</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="visibility-info" id="createGroupVisibilityInfo">
+                            <i class="fa-solid fa-info-circle"></i>
+                            <span>Herkes bu grubu görüntüleyebilir</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 2: Admin Information -->
+                <div id="adminInfoStage" class="form-stage" style="display: none;">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-user"></i>
+                            Yönetici Bilgileriniz
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label for="adminProfileImageInput">Profil Resmi</label>
+                            <div class="input-container">
+                                <label for="adminProfileImageInput" class="file-input-label">
+                                    <i class="fas fa-image file-input-icon"></i>
+                                    <span class="file-input-text">Bir resim seçin...</span>
+                                </label>
+                                <input type="file" id="adminProfileImageInput" accept="image/*">
+                                <button type="button" class="admin-avatar-btn" id="adminAvatarBtn">
+                                    ✨
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="adminUserNameInput">Kullanıcı Adı</label>
+                            <div class="input-container">
+                                <i class="fas fa-user input-icon"></i>
+                                <input type="text" id="adminUserNameInput" required placeholder="Kullanıcı adınızı giriniz" maxlength="40">
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="groupNameInput">Grup İsmi</label>
-                    <div class="input-container">
-                        <i class="fas fa-layer-group input-icon"></i>
-                        <input type="text" id="groupNameInput" required placeholder="Grup adı giriniz" maxlength="40">
 
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="groupDescInput">Grup Açıklaması</label>
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-key"></i>
+                            Yönetici Girişi Bilgileriniz
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label for="adminNameInput">Yönetici Adı</label>
+                            <div class="input-container">
+                                <i class="fas fa-id-card input-icon"></i>
+                                <input type="text" id="adminNameInput" required placeholder="Yönetici adınızı giriniz" maxlength="40">
+                            </div>
+                        </div>
 
-                    <div class="input-container">
-                        <i class="fas fa-align-left input-icon"></i>
-                        <textarea id="groupDescInput" placeholder="Grup açıklamasını giriniz" maxlength="200"></textarea>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="groupVisibilityInput">Görünürlük</label>
-                    <div class="input-container">
-                        <div class="select-wrapper">
-                            <i class="fas fa-eye input-icon"></i>
-                            <select id="groupVisibilityInput">
-                                <option value="public" selected>Herkese Açık</option>
-                                <option value="private">Gizli Grup</option>
-                            </select>
+                        <div class="form-group">
+                            <label for="adminPasswordInput">Yönetici Şifresi</label>
+                            <div class="input-container">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" id="adminPasswordInput" required placeholder="Yönetici şifrenizi giriniz" maxlength="40">
+                                <button type="button" class="password-toggle" id="passwordToggle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div id="adminPasswordError" class="error-message" style="display: none;"></div>
                         </div>
                     </div>
-                    <div class="visibility-info" id="createGroupVisibilityInfo">
-                        <i class="fa-solid fa-info-circle"></i>
-                        <span>Herkes bu grubu görüntüleyebilir</span>
-                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="adminNameInput">Yönetici Adı</label>
-                    <div class="input-container">
-                        <i class="fas fa-user-shield input-icon"></i>
-                        <input type="text" id="adminNameInput" required placeholder="Yönetici kullanıcı adınızı giriniz" maxlength="40">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="adminPasswordInput">Yönetici Şifresi</label>
-                    <div class="input-container">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="adminPasswordInput" required
-                            placeholder="Yönetici şifrenizi giriniz" maxlength="40">
-                        <button type="button" class="password-toggle" id="passwordToggle">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <div id="adminPasswordError" class="error-message" style="display: none;"></div>
-                </div>
+
                 <div class="group-form-actions">
                     <button type="button" class="btn-secondary" id="cancelCreate">
                         <i class="fas fa-times-circle"></i>
                         İptal
                     </button>
-                    <button type="submit" class="btn-primary">
+                    <button type="button" class="btn-secondary" id="backToGroupInfo" style="display: none;">
+                        <i class="fas fa-arrow-left"></i>
+                        Geri
+                    </button>
+                    <button type="button" class="btn-primary" id="nextToAdminInfo">
+                        <i class="fas fa-arrow-right"></i>
+                        İleri
+                    </button>
+                    <button type="submit" class="btn-primary" id="createGroupBtn" style="display: none;">
                         <i class="fas fa-plus-circle"></i>
                         Grup Oluştur
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Hazır Görseller Modal -->
+    <div id="readyImagesModal" class="ready-images-modal">
+        <div class="ready-images-modal-content">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-images"></i>
+                    Hazır Görseller
+                </h3>
+                <button type="button" class="modal-close-btn" id="closeReadyImagesModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="avatar-grid" id="avatarGrid">
+                    <!-- Avatar resimleri JavaScript ile yüklenecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Avatar Selection Modal -->
+    <div id="adminAvatarModal" class="ready-images-modal">
+        <div class="ready-images-modal-content">
+            <div class="modal-header">
+                <h3>
+                    <i class="fa-solid fa-images"></i>
+                    Avatar Seç
+                </h3>
+                <button type="button" class="modal-close-btn" id="closeAdminAvatarModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="avatar-grid" id="adminAvatarGrid">
+                    <!-- User avatar resimleri JavaScript ile yüklenecek -->
+                </div>
+            </div>
         </div>
     </div>
 

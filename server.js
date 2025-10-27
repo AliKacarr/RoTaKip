@@ -778,37 +778,66 @@ app.get('/api/groups', async (req, res) => {
 });
 
 // Grup oluşturma endpoint'i
-app.post('/api/groups', uploadGroupImage.single('groupImage'), async (req, res) => {
+app.post('/api/groups', uploadGroupImage.fields([
+  { name: 'groupImage', maxCount: 1 },
+  { name: 'adminProfileImage', maxCount: 1 }
+]), async (req, res) => {
   try {
-    const { groupName, description, adminName, adminPassword, visibility, selectedAvatarPath } = req.body;
+    const { 
+      groupName, 
+      description, 
+      adminUserName, 
+      adminName, 
+      adminPassword, 
+      visibility, 
+      selectedGroupAvatarPath,
+      selectedAdminAvatarPath 
+    } = req.body;
     
     let groupImageUrl = null;
+    let adminProfileImageUrl = null;
     
-    // Hazır avatar seçildiyse onu kullan
-    if (selectedAvatarPath) {
-      groupImageUrl = selectedAvatarPath;
-    }
-    // Eğer resim dosyası varsa Dropbox'a yükle
-    else if (req.file) {
+    // Grup resmi işleme
+    if (selectedGroupAvatarPath) {
+      groupImageUrl = selectedGroupAvatarPath;
+    } else if (req.files && req.files.groupImage) {
       try {
-        const fileName = `${Date.now()}-${req.file.originalname}`;
-        const fileBuffer = fs.readFileSync(req.file.path);
+        const fileName = `${Date.now()}-${req.files.groupImage[0].originalname}`;
+        const fileBuffer = fs.readFileSync(req.files.groupImage[0].path);
         groupImageUrl = await uploadToDropbox(fileBuffer, fileName, 'groupImages');
         
         // Yerel dosyayı sil
-        fs.unlinkSync(req.file.path);
+        fs.unlinkSync(req.files.groupImage[0].path);
       } catch (error) {
         console.error('Dropbox grup resmi upload hatası:', error);
-        // Hata durumunda grup resmi olmadan devam et
       }
+    }
+    
+    // Admin profil resmi işleme
+    if (selectedAdminAvatarPath) {
+      adminProfileImageUrl = selectedAdminAvatarPath;
+    } else if (req.files && req.files.adminProfileImage) {
+      try {
+        const fileName = `${Date.now()}-${req.files.adminProfileImage[0].originalname}`;
+        const fileBuffer = fs.readFileSync(req.files.adminProfileImage[0].path);
+        adminProfileImageUrl = await uploadToDropbox(fileBuffer, fileName, 'userImages');
+        
+        // Yerel dosyayı sil
+        fs.unlinkSync(req.files.adminProfileImage[0].path);
+      } catch (error) {
+        console.error('Dropbox admin profil resmi upload hatası:', error);
+        adminProfileImageUrl = "/images/default.png";
+      }
+    } else {
+      adminProfileImageUrl = "/images/default.png";
     }
 
     if (!groupName) {
       return res.status(400).json({ error: 'Grup adı gereklidir' });
     }
 
-    if (!adminName || !adminPassword) {
-      return res.status(400).json({ error: 'Yönetici adı ve şifresi gereklidir' });
+    if (!adminUserName || !adminName || !adminPassword) {
+      return res.status(400).json({ error: 'Kullanıcı adı, yönetici adı ve şifresi gereklidir' });
     }
 
     // Benzersiz bir grup ID'si oluştur
@@ -831,7 +860,7 @@ app.post('/api/groups', uploadGroupImage.single('groupImage'), async (req, res) 
       groupName,
       groupId: finalGroupId,
       description: description || '',
-      groupImage: groupImageUrl, // null veya Dropbox URL'i
+      groupImage: groupImageUrl,
       visibility: visibility || 'public',
       createdAt: new Date()
     });
@@ -845,8 +874,8 @@ app.post('/api/groups', uploadGroupImage.single('groupImage'), async (req, res) 
     const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
     
     const defaultUser = new users({
-      name: adminName,
-      profileImage: "/images/default.png",
+      name: adminUserName,
+      profileImage: adminProfileImageUrl,
       username: adminName,
       userpassword: hashedAdminPassword,
       authority: "admin"
@@ -1490,12 +1519,33 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
-    // Admin sayısını kontrol et
-    const adminCount = await users.countDocuments({ authority: 'admin' });
+    // Toplam kullanıcı sayısını kontrol et
+    const totalUserCount = await users.countDocuments();
     
-    // Eğer son admin'i silmeye çalışıyorsa engelle
-    if (user.authority === 'admin' && adminCount <= 1) {
-      return res.status(400).json({ error: 'En az bir yönetici hesabı bulunmalıdır!' });
+    // Eğer gruptaki son kullanıcıyı silmeye çalışıyorsa grubu da sil
+    if (totalUserCount <= 1) {
+      // Önce kullanıcıyı sil
+      await users.findByIdAndDelete(id);
+      
+      // Kullanıcının okuma durumlarını sil
+      await readingStatuses.deleteMany({ userId: id });
+      
+      // Kullanıcının profil resmini Dropbox'tan sil (arka planda)
+      if (user.profileImage && user.profileImage.includes('dropbox.com')) {
+        deleteFromDropboxByUrl(user.profileImage).catch(err => 
+          console.error('Dropbox silme hatası:', err)
+        );
+      }
+      
+      // Grubu sil
+      await UserGroup.findOneAndDelete({ groupId });
+      
+      // Kullanıcıya grup silindiğini bildir
+      return res.json({ 
+        success: true, 
+        groupDeleted: true,
+        message: 'Son kullanıcı silindiği için grup da silindi'
+      });
     }
 
     // Kullanıcıyı sil
@@ -3628,31 +3678,6 @@ app.post('/api/remove-user-profile-image', async (req, res) => {
   }
 });
 
-// Hesap silme
-app.post('/api/delete-user-account', async (req, res) => {
-  try {
-    const { userId, groupId } = req.body;
-    
-    if (!userId || !groupId) {
-      return res.status(400).json({ success: false, message: 'Kullanıcı ID ve Grup ID gerekli' });
-    }
-
-    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
-    const ReadingStatus = mongoose.model(`readingstatuses_${groupId}`, readingStatusSchema, `readingstatuses_${groupId}`);
-    
-    // Kullanıcıyı ve okuma durumlarını sil
-    await User.findByIdAndDelete(userId);
-    await ReadingStatus.deleteMany({ userId: userId });
-    
-    res.json({ 
-      success: true, 
-      message: 'Hesap silindi'
-    });
-  } catch (error) {
-    console.error('Hesap silinirken hata:', error);
-    res.status(500).json({ success: false, message: 'Hesap silinemedi' });
-  }
-});
 
 // Dropbox'ı başlat
 initializeDropbox();

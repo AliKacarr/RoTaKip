@@ -1764,16 +1764,16 @@ async function saveProfileSettings() {
     }
 }
 
-// Grup içindeki admin sayısını kontrol eden fonksiyon
-async function checkAdminCountInGroup(groupId) {
+// Grup içindeki toplam kullanıcı sayısını kontrol eden fonksiyon
+async function checkTotalUserCountInGroup(groupId) {
     try {
         const response = await fetch(`/api/users/${groupId}`);
         if (!response.ok) return 0;
         
         const data = await response.json();
-        return data.users.filter(user => user.authority === 'admin').length;
+        return data.users.length;
     } catch (error) {
-        console.error('Admin sayısı kontrol edilirken hata:', error);
+        console.error('Toplam kullanıcı sayısı kontrol edilirken hata:', error);
         return 0;
     }
 }
@@ -1782,15 +1782,15 @@ async function deleteAccount() {
     const userInfo = LocalStorageManager.getCurrentUserInfo();
     if (!userInfo) return;
 
-    // Önce grup içindeki admin sayısını kontrol et
-    const adminCount = await checkAdminCountInGroup(userInfo.groupId);
+    // Önce grup içindeki toplam kullanıcı sayısını kontrol et
+    const totalUserCount = await checkTotalUserCountInGroup(userInfo.groupId);
     
     let confirmMessage = 'Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!';
     let shouldDeleteGroup = false;
     
-    // Eğer tek admin ise grup da silinecek
-    if (adminCount <= 1) {
-        confirmMessage = 'Hesabınızı silmek istediğinizden emin misiniz?\n\nBu hesap gruptaki son admin hesabıdır. Hesabınız silindiğinde grup da tamamen silinecektir.\n\nBu işlem geri alınamaz!';
+    // Eğer tek kullanıcı ise grup da silinecek
+    if (totalUserCount <= 1) {
+        confirmMessage = 'Hesabınızı silmek istediğinizden emin misiniz?\n\nBu hesap gruptaki son kullanıcıdır. Hesabınız silindiğinde grup da tamamen silinecektir.\n\nBu işlem geri alınamaz!';
         shouldDeleteGroup = true;
     }
     
@@ -1816,29 +1816,35 @@ async function deleteAccount() {
                     showToast('Grup silinemedi!', 'error');
                 }
             } else {
-                // Normal hesap silme işlemi
-                const response = await fetch('/api/delete-user-account', {
+                // Normal hesap silme işlemi - backend'te grup silme kontrolü yapılacak
+                const response = await fetch(`/api/delete-user/${userInfo.groupId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        userId: userInfo.userId,
-                        groupId: userInfo.groupId
-                    })
+                    body: JSON.stringify({ id: userInfo.userId })
                 });
 
                 const data = await response.json();
                 if (data.success) {
-                    showToast('Hesabınız silindi!', 'success');
-                    // Ayarlar panelini kapat
-                    closeProfileSettingsModal();
-                    // Çıkış yap
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+                    if (data.groupDeleted) {
+                        showToast('Hesabınız ve grup silindi!', 'success');
+                        closeProfileSettingsModal();
+                        // Grup silindiği için ana sayfaya yönlendir
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    } else {
+                        showToast('Hesabınız silindi!', 'success');
+                        closeProfileSettingsModal();
+                        // Normal çıkış işlemi
+                        LocalStorageManager.logoutUser();
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    }
                 } else {
-                    showToast('Hesap silinemedi!', 'error');
+                    showToast(data.error || 'Hesap silinemedi!', 'error');
                 }
             }
         } catch (error) {
