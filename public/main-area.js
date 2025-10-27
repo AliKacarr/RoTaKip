@@ -1840,7 +1840,13 @@ async function acceptJoinRequest(requestId) {
         // Başarı mesajı göster
         showSuccessMessage(data.message);
         
-        // GlobalDataStore'u güncelle
+        // İsteği listeden kaldır
+        const requestItem = document.querySelector(`[data-request-id="${requestId}"]`);
+        if (requestItem) {
+            requestItem.remove();
+        }
+        
+        // GlobalDataStore'u güncelle ve render işlemlerini bekle
         if (window.globalDataStore && data.user) {
             // Yeni kullanıcıyı users array'ine ekle
             window.globalDataStore.users.push(data.user);
@@ -1848,21 +1854,15 @@ async function acceptJoinRequest(requestId) {
             window.globalDataStore._rebuildIndexes();
             // En uzun serileri yeniden hesapla
             await window.globalDataStore._buildLongestStreaks();
+            
+            // GlobalDataStore güncellendikten SONRA tüm alanları yenile
+            renderUserList();
+            loadTrackerTable();
+            loadUserCards();
+            loadReadingStats();
+            renderLongestSeries();
+            if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
         }
-        
-        // İsteği listeden kaldır
-        const requestItem = document.querySelector(`[data-request-id="${requestId}"]`);
-        if (requestItem) {
-            requestItem.remove();
-        }
-        
-        // Tüm alanları yenile
-        renderUserList();
-        loadTrackerTable();
-        loadUserCards();
-        loadReadingStats();
-        renderLongestSeries();
-        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
 
         // Eğer hiç istek kalmadıysa mesaj göster
         const remainingRequests = document.querySelectorAll('.join-request-item');

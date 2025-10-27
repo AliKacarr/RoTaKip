@@ -1,14 +1,4 @@
-// Ana sayfa yüklendiğinde çerezleri temizle
-function clearCookiesOnIndexPage() {
-    // 5 çerezi temizle
-    LocalStorageManager.clearCookies();
-    
-}
-
-// Sayfa yüklendiğinde çerezleri temizle
-document.addEventListener('DOMContentLoaded', clearCookiesOnIndexPage);
-
-// LocalStorageManager sınıfı
+/* ==================== LocalStorage Manager ==================== */
 class LocalStorageManager {
     static loginUser(groupId, userId, authority, username, groupName, name) {
         // Mevcut grupları al
@@ -44,14 +34,9 @@ class LocalStorageManager {
         return localStorage.getItem('userAuthority') === 'admin';
     }
     
-    // 6 çerezi temizle
     static clearCookies() {
-        localStorage.removeItem('groupid');
-        localStorage.removeItem('userid');
-        localStorage.removeItem('userAuthority');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('groupName');
-        localStorage.removeItem('name');
+        const keysToRemove = ['groupid', 'userid', 'userAuthority', 'userName', 'groupName', 'name'];
+        keysToRemove.forEach(key => localStorage.removeItem(key));
     }
 
     // Katılma istekleri yönetimi
@@ -83,20 +68,43 @@ class LocalStorageManager {
     }
 }
 
+/* ==================== Constants ==================== */
+const CONFIG = {
+    GROUPS_PER_PAGE: 12,
+    SEARCH_DEBOUNCE_MS: 300,
+    TOAST_DURATION_MS: 4000,
+    TOAST_HIDE_DELAY_MS: 300,
+    NEXT_TOAST_DELAY_MS: 2000,
+    SCROLL_THRESHOLD_PX: 200,
+    MIN_LOAD_INTERVAL_MS: 600
+};
+
+/* ==================== Groups Page Manager ==================== */
 class GroupsPage {
     constructor() {
+        // Data
         this.groups = [];
         this.filteredGroups = [];
+        this.memberCounts = new Map();
+        this.joinRequestStatuses = new Map();
+        
+        // Pagination
         this.currentPage = 0;
-        this.groupsPerPage = 12;
+        this.groupsPerPage = CONFIG.GROUPS_PER_PAGE;
+        
+        // State
         this.isLoading = false;
         this.searchQuery = '';
-        this.memberCounts = new Map();
         this.selectedAvatarPath = null;
-        this.joinRequestStatuses = new Map(); // Grup ID -> durum bilgisi
-        this.currentJoinGroup = null; // Şu anda katılma modalında olan grup
-        this.messageQueue = []; // Mesaj kuyruğu
-        this.isShowingMessage = false; // Şu anda mesaj gösteriliyor mu?
+        this.currentJoinGroup = null;
+        this.avatarsLoaded = false; // Avatar'ların yüklenip yüklenmediğini takip et
+        
+        // Message Queue
+        this.messageQueue = [];
+        this.isShowingMessage = false;
+        
+        // Debounce Timer
+        this.searchTimeout = null;
 
         this.init();
     }
@@ -108,7 +116,7 @@ class GroupsPage {
             this.loadGroups(true); // reset=true ile başlat
         });
         this.setupInfiniteScroll();
-        this.preloadAvatars(); // Avatar'ları önceden yükle
+        // Avatar'lar modal açıldığında lazy-load edilecek
     }
 
     bindEvents() {
@@ -148,12 +156,18 @@ class GroupsPage {
             });
         }
 
-        // ESC key to close modal
+        // ESC key to close modals
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeCreateModal();
                 this.closeReadyImagesModal();
                 this.closeJoinModal();
+                if (avatarModalManager) {
+                    const modal = document.getElementById('joinAvatarModal');
+                    if (modal && modal.classList.contains('show')) {
+                        avatarModalManager.toggleJoinAvatarModal();
+                    }
+                }
             }
         });
 
@@ -301,21 +315,40 @@ class GroupsPage {
 
             if (groupIds.length === 0) return;
 
+            // Silinmiş grupları tutmak için array
+            const deletedGroupIds = [];
+
             // Her grup için detayları al
             const groupPromises = groupIds.map(async (groupId) => {
                 try {
                     const response = await fetch(`/api/group/${groupId}`);
                     if (response.ok) {
                         const data = await response.json();
-                        return data.group;
+                        return { groupId, group: data.group, exists: true };
+                    } else if (response.status === 404) {
+                        // Grup bulunamadı - silinmiş
+                        console.log(`⚠️ Grup bulunamadı, LocalStorage'dan temizlenecek: ${groupId}`);
+                        deletedGroupIds.push(groupId);
+                        return { groupId, group: null, exists: false };
                     }
                 } catch (error) {
                     console.error(`Error loading group ${groupId}:`, error);
                 }
-                return null;
+                return { groupId, group: null, exists: false };
             });
 
-            const userGroupsData = (await Promise.all(groupPromises)).filter(group => group !== null);
+            const results = await Promise.all(groupPromises);
+            const userGroupsData = results
+                .filter(result => result.exists && result.group !== null)
+                .map(result => result.group);
+
+            // Silinmiş grupları LocalStorage'dan temizle
+            if (deletedGroupIds.length > 0) {
+                deletedGroupIds.forEach(groupId => {
+                    LocalStorageManager.removeUserFromGroup(groupId);
+                    console.log(`✅ Silinmiş grup LocalStorage'dan temizlendi: ${groupId}`);
+                });
+            }
 
             if (userGroupsData.length > 0) {
                 // Kullanıcının gruplarını en başa ekle
@@ -451,7 +484,7 @@ class GroupsPage {
         clearTimeout(this.searchTimeout);
         this.searchTimeout = setTimeout(() => {
             this.performSearch();
-        }, 300);
+        }, CONFIG.SEARCH_DEBOUNCE_MS);
     }
 
     async performSearch() {
@@ -499,18 +532,17 @@ class GroupsPage {
     setupInfiniteScroll() {
         let ticking = false;
         let lastLoadTime = 0;
-        let hasMoreGroups = true; // Daha fazla grup var mı kontrolü
-        let loadedGroupIds = new Set(); // Yüklenen grup ID'lerini takip et
+        let hasMoreGroups = true;
+        let loadedGroupIds = new Set();
         
         window.addEventListener('scroll', () => {
             if (!ticking) {
                 requestAnimationFrame(() => {
                     const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-                    const nearBottom = scrollTop + clientHeight >= scrollHeight - 200;
+                    const nearBottom = scrollTop + clientHeight >= scrollHeight - CONFIG.SCROLL_THRESHOLD_PX;
                     const now = Date.now();
                     
-                    // Sadece yüklenmiyorsa, arama yapılmıyorsa, daha fazla grup varsa ve son yüklemeden yeterli süre geçtiyse yükle
-                    if (nearBottom && !this.isLoading && this.searchQuery === '' && hasMoreGroups && now - lastLoadTime > 600) {
+                    if (nearBottom && !this.isLoading && this.searchQuery === '' && hasMoreGroups && now - lastLoadTime > CONFIG.MIN_LOAD_INTERVAL_MS) {
                         this.loadGroups();
                         lastLoadTime = now;
                     }
@@ -843,29 +875,22 @@ class GroupsPage {
         }
     }
 
-    openReadyImagesModal() {
+    async openReadyImagesModal() {
         const modal = document.getElementById('readyImagesModal');
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
-        // Avatar'lar önceden yüklendiği için tekrar yüklemeye gerek yok
+        
+        // Avatar'ları sadece ilk açılışta yükle
+        if (!this.avatarsLoaded) {
+            await this.loadAvatarOptions();
+            this.avatarsLoaded = true;
+        }
     }
 
     closeReadyImagesModal() {
         const modal = document.getElementById('readyImagesModal');
         modal.classList.remove('show');
         document.body.style.overflow = 'auto';
-    }
-
-    // Avatar'ları önceden yükle (sayfa yüklendiğinde)
-    async preloadAvatars() {
-        try {
-            // Grup avatar'larını önceden yükle
-            await this.loadAvatarOptions();
-            // Kullanıcı avatar'larını önceden yükle
-            await loadJoinAvatarOptions();
-        } catch (error) {
-            console.error('Avatar ön yükleme hatası:', error);
-        }
     }
 
     // Hazır avatar seçeneklerini yükle
@@ -941,53 +966,60 @@ class GroupsPage {
     // Katılma isteği durumlarını kontrol et
     async checkJoinRequestStatuses() {
         const joinRequests = LocalStorageManager.getJoinRequests();
+        const entries = Object.entries(joinRequests);
+        
+        if (entries.length === 0) return;
         
         // Tüm kontrolleri paralel olarak yap
-        const promises = Object.entries(joinRequests).map(async ([groupId, requestId]) => {
+        const promises = entries.map(async ([groupId, requestId]) => {
             try {
-                // ObjectId ile jointogroups koleksiyonunda doküman var mı kontrol et
                 const response = await fetch(`/api/join-request-status-by-id/${requestId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    if (data.status === 'none') {
-                        // Doküman bulunamadı, yerel depolamadan sil
+                if (!response.ok) {
+                    LocalStorageManager.removeJoinRequest(groupId);
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                switch (data.status) {
+                    case 'none':
                         LocalStorageManager.removeJoinRequest(groupId);
-                        console.log(`Katılma isteği bulunamadı, silindi: ${groupId}`);
-                    } else if (data.status === 'accepted') {
-                        // İstek kabul edilmiş, kullanıcıyı gruba ekle
+                        break;
+                        
+                    case 'accepted':
                         LocalStorageManager.removeJoinRequest(groupId);
-                        LocalStorageManager.loginUser(groupId, requestId, 'member', data.userName || '', '', data.userName || '');
-                        const groupName = data.groupName || 'Bilinmeyen Grup';
-                        this.showSuccessMessage(`"${groupName}" grubuna katılma isteğiniz kabul edildi! Artık gruba erişebilirsiniz.`);
-                        console.log(`Katılma isteği kabul edildi: ${groupId}`);
-                    } else if (data.status === 'rejected') {
-                        // İstek reddedilmiş, koleksiyondan da sil
+                        LocalStorageManager.loginUser(
+                            groupId, 
+                            requestId, 
+                            'member', 
+                            data.userName || '', 
+                            '', 
+                            data.userName || ''
+                        );
+                        this.showSuccessMessage(
+                            `"${data.groupName || 'Bilinmeyen Grup'}" grubuna katılma isteğiniz kabul edildi!`
+                        );
+                        break;
+                        
+                    case 'rejected':
                         await fetch(`/api/delete-join-request/${requestId}`, { method: 'DELETE' });
                         LocalStorageManager.removeJoinRequest(groupId);
-                        const groupName = data.groupName || 'Bilinmeyen Grup';
-                        this.showErrorMessage(`"${groupName}" grubuna katılma isteğiniz reddedildi.`);
-                        console.log(`Katılma isteği reddedildi ve silindi: ${groupId}`);
-                    } else if (data.status === 'pending') {
-                        // İstek hala bekliyor, yerel depolamada kalsın
+                        this.showErrorMessage(
+                            `"${data.groupName || 'Bilinmeyen Grup'}" grubuna katılma isteğiniz reddedildi.`
+                        );
+                        break;
+                        
+                    case 'pending':
                         this.joinRequestStatuses.set(groupId, data);
-                            console.log(`Katılma isteği bekliyor: ${groupId}`);
-                    }
-                } else {
-                    // API hatası, yerel depolamadan sil
-                    LocalStorageManager.removeJoinRequest(groupId);
-                    console.log(`API hatası, katılma isteği silindi: ${groupId}`);
+                        break;
                 }
             } catch (error) {
                 console.error(`Katılma isteği durum kontrol hatası (${groupId}):`, error);
-                // Hata durumunda da yerel depolamadan sil
                 LocalStorageManager.removeJoinRequest(groupId);
             }
         });
         
-        // Tüm kontrollerin tamamlanmasını bekle
         await Promise.all(promises);
-        console.log('Tüm katılma isteği kontrolleri tamamlandı');
     }
 
     // Katılma butonu HTML'ini oluştur
@@ -1130,8 +1162,10 @@ class GroupsPage {
         if (profileImageInput.files[0]) {
             formData.append('profileImage', profileImageInput.files[0]);
         }
-        if (selectedJoinAvatarPath) {
-            formData.append('selectedAvatarPath', selectedJoinAvatarPath);
+        
+        const selectedAvatarPath = avatarModalManager ? avatarModalManager.getSelectedAvatarPath() : null;
+        if (selectedAvatarPath) {
+            formData.append('selectedAvatarPath', selectedAvatarPath);
         }
 
         try {
@@ -1265,16 +1299,17 @@ class GroupsPage {
 
         document.body.appendChild(toast);
 
-        // Mesajı 4 saniye göster, sonra kaldır ve kuyruktaki sonraki mesajı göster
         setTimeout(() => {
             toast.classList.add('toast-hide');
             setTimeout(() => {
                 if (document.body.contains(toast)) {
                     document.body.removeChild(toast);
                 }
-                setTimeout(() => { this.processMessageQueue(); }, 2000);
-            }, 300);
-        }, 4000);
+                setTimeout(() => { 
+                    this.processMessageQueue(); 
+                }, CONFIG.NEXT_TOAST_DELAY_MS);
+            }, CONFIG.TOAST_HIDE_DELAY_MS);
+        }, CONFIG.TOAST_DURATION_MS);
     }
 
     // Başarı paneli göster
@@ -1316,67 +1351,19 @@ class GroupsPage {
     // İptal etme onay modalı göster
     showCancelConfirmModal(group) {
         const confirmModal = document.createElement('div');
-        confirmModal.className = 'modal';
-        confirmModal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        `;
-        
+        confirmModal.className = 'modal confirm-modal';
         confirmModal.innerHTML = `
-            <div style="
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                max-width: 400px;
-                width: 90%;
-                text-align: center;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            ">
-                <div style="
-                    width: 60px;
-                    height: 60px;
-                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0 auto 20px;
-                ">
-                    <i class="fas fa-question" style="color: white; font-size: 24px;"></i>
+            <div class="confirm-modal-content">
+                <div class="confirm-modal-icon">
+                    <i class="fas fa-question"></i>
                 </div>
-                <h3 style="margin: 0 0 15px 0; color: #374151; font-size: 1.3rem;">İsteği İptal Et</h3>
-                <p style="margin: 0 0 25px 0; color: #6b7280; line-height: 1.5;">
-                    <strong>${group.groupName}</strong> grubuna gönderdiğiniz katılma isteğini iptal etmek istediğinizden emin misiniz?
+                <h3 class="confirm-modal-title">İsteği İptal Et</h3>
+                <p class="confirm-modal-text">
+                    <strong>${this.escapeHtml(group.groupName)}</strong> grubuna gönderdiğiniz katılma isteğini iptal etmek istediğinizden emin misiniz?
                 </p>
-                <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button id="cancelConfirmNo" style="
-                        background: #e5e7eb;
-                        color: #374151;
-                        border: none;
-                        padding: 12px 24px;
-                        border-radius: 8px;
-                        font-weight: 500;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    ">Hayır</button>
-                    <button id="cancelConfirmYes" style="
-                        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                        color: white;
-                        border: none;
-                        padding: 12px 24px;
-                        border-radius: 8px;
-                        font-weight: 500;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    ">Evet, İptal Et</button>
+                <div class="confirm-modal-actions">
+                    <button id="cancelConfirmNo" class="btn-cancel-no">Hayır</button>
+                    <button id="cancelConfirmYes" class="btn-cancel-yes">Evet, İptal Et</button>
                 </div>
             </div>
         `;
@@ -1402,88 +1389,125 @@ class GroupsPage {
     }
 }
 
-// Global fonksiyonlar (HTML onclick için)
-let groupsPageInstance = null;
-
-function toggleReadyImagesModal() {
-    if (groupsPageInstance) {
-        groupsPageInstance.toggleReadyImagesModal();
+/* ==================== Avatar Modal Management ==================== */
+class AvatarModalManager {
+    constructor() {
+        this.selectedJoinAvatarPath = null;
+        this.joinAvatarsLoaded = false; // Avatar'ların yüklenip yüklenme diğini takip et
     }
-}
 
-// Initialize the groups page when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    groupsPageInstance = new GroupsPage();
-});
-
-// Join Avatar Modal Functions
-let selectedJoinAvatarPath = null; // Join modal için seçilen avatar yolu
-
-function toggleJoinAvatarModal() {
-    const modal = document.getElementById('joinAvatarModal');
-    if (modal) {
-        modal.classList.toggle('show');
-        // Avatar'lar önceden yüklendiği için tekrar yüklemeye gerek yok
-    }
-}
-
-async function loadJoinAvatarOptions() {
-    const avatarGrid = document.getElementById('joinAvatarGrid');
-    if (!avatarGrid) return;
-
-    try {
-        // userAvatars klasöründeki resimleri yükle
-        const response = await fetch('/api/user-avatars');
-        const avatars = await response.json();
-        
-        avatarGrid.innerHTML = '';
-        
-        avatars.forEach((avatar, index) => {
-            const avatarItem = document.createElement('div');
-            avatarItem.className = 'avatar-item';
-            avatarItem.innerHTML = `
-                <img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">
-            `;
+    async toggleJoinAvatarModal() {
+        const modal = document.getElementById('joinAvatarModal');
+        if (modal) {
+            const willBeVisible = !modal.classList.contains('show');
+            modal.classList.toggle('show');
             
-            avatarItem.addEventListener('click', function() {
-                // Seçili avatar'ı profil önizlemesine uygula
-                const fileInputText = document.querySelector('#joinGroupModal .file-input-text');
-                if (fileInputText) {
-                    fileInputText.textContent = 'Avatar seçildi';
-                    fileInputText.style.color = '#28a745'; // Yeşil renk
-                }
+            // Modal açılıyorsa ve avatar'lar henüz yüklenmediyse, yükle
+            if (willBeVisible && !this.joinAvatarsLoaded) {
+                await this.loadJoinAvatarOptions();
+                this.joinAvatarsLoaded = true;
+            }
+        }
+    }
+
+    async loadJoinAvatarOptions() {
+        const avatarGrid = document.getElementById('joinAvatarGrid');
+        if (!avatarGrid) return;
+
+        try {
+            const response = await fetch('/api/user-avatars');
+            const avatars = await response.json();
+            
+            avatarGrid.innerHTML = '';
+            
+            avatars.forEach((avatar, index) => {
+                const avatarItem = document.createElement('div');
+                avatarItem.className = 'avatar-item';
+                avatarItem.innerHTML = `<img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">`;
                 
-                // Avatar yolunu kaydet
-                selectedJoinAvatarPath = `/userAvatars/${avatar}`;
-                
-                // Dosya yükleme işlemini sıfırla (tek seçim mantığı)
-                const joinProfileImageInput = document.getElementById('joinProfileImageInput');
-                if (joinProfileImageInput) {
-                    joinProfileImageInput.value = '';
-                }
-                
-                console.log('Join modal - Avatar seçildi:', selectedJoinAvatarPath);
-                
-                // Modal'ı kapat
-                toggleJoinAvatarModal();
+                avatarItem.addEventListener('click', () => this.selectJoinAvatar(avatar));
+                avatarGrid.appendChild(avatarItem);
             });
-            
-            avatarGrid.appendChild(avatarItem);
-        });
-    } catch (error) {
-        console.error('Avatar yükleme hatası:', error);
-        avatarGrid.innerHTML = '<p>Avatar yüklenirken hata oluştu.</p>';
+        } catch (error) {
+            console.error('Avatar yükleme hatası:', error);
+            avatarGrid.innerHTML = '<p>Avatar yüklenirken hata oluştu.</p>';
+        }
+    }
+
+    selectJoinAvatar(avatar) {
+        const fileInputText = document.querySelector('#joinGroupModal .file-input-text');
+        if (fileInputText) {
+            fileInputText.textContent = 'Avatar seçildi';
+            fileInputText.style.color = '#28a745';
+        }
+        
+        this.selectedJoinAvatarPath = `/userAvatars/${avatar}`;
+        
+        const joinProfileImageInput = document.getElementById('joinProfileImageInput');
+        if (joinProfileImageInput) {
+            joinProfileImageInput.value = '';
+        }
+        
+        this.toggleJoinAvatarModal();
+    }
+
+    getSelectedAvatarPath() {
+        return this.selectedJoinAvatarPath;
+    }
+
+    resetSelection() {
+        this.selectedJoinAvatarPath = null;
     }
 }
 
-// Join avatar butonu event listener
+/* ==================== Global Instances ==================== */
+let groupsPageInstance = null;
+let avatarModalManager = null;
+
+/* ==================== DOM Content Loaded ==================== */
 document.addEventListener('DOMContentLoaded', function() {
-    const joinAvatarBtn = document.getElementById('joinAvatarBtn');
-    if (joinAvatarBtn) {
-        joinAvatarBtn.addEventListener('click', toggleJoinAvatarModal);
+    // 1. Çerezleri temizle
+    LocalStorageManager.clearCookies();
+    
+    // 2. Avatar modal manager'ı başlat
+    avatarModalManager = new AvatarModalManager();
+    
+    // 3. Groups page'i başlat
+    groupsPageInstance = new GroupsPage();
+    
+    // 4. Ready images modal butonları
+    const readyImagesBtn = document.getElementById('readyImagesBtn');
+    const closeReadyImagesModal = document.getElementById('closeReadyImagesModal');
+    
+    if (readyImagesBtn) {
+        readyImagesBtn.addEventListener('click', () => {
+            if (groupsPageInstance) {
+                groupsPageInstance.toggleReadyImagesModal();
+            }
+        });
     }
     
-    // Join profile image input change listener
+    if (closeReadyImagesModal) {
+        closeReadyImagesModal.addEventListener('click', () => {
+            if (groupsPageInstance) {
+                groupsPageInstance.closeReadyImagesModal();
+            }
+        });
+    }
+    
+    // 5. Join avatar modal butonları
+    const joinAvatarBtn = document.getElementById('joinAvatarBtn');
+    const closeJoinAvatarModal = document.getElementById('closeJoinAvatarModal');
+    
+    if (joinAvatarBtn) {
+        joinAvatarBtn.addEventListener('click', () => avatarModalManager.toggleJoinAvatarModal());
+    }
+    
+    if (closeJoinAvatarModal) {
+        closeJoinAvatarModal.addEventListener('click', () => avatarModalManager.toggleJoinAvatarModal());
+    }
+    
+    // 6. Join profile image input change listener
     const joinProfileImageInput = document.getElementById('joinProfileImageInput');
     if (joinProfileImageInput) {
         joinProfileImageInput.addEventListener('change', function() {
@@ -1494,8 +1518,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Avatar seçimini sıfırla (tek seçim mantığı)
-                selectedJoinAvatarPath = null;
-                console.log('Join modal - Dosya yüklendi, avatar seçimi sıfırlandı');
+                avatarModalManager.resetSelection();
             }
         });
     }

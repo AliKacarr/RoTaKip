@@ -2967,7 +2967,7 @@ app.post('/api/accept-join-request/:requestId', async (req, res) => {
       lastLoginDate: today
     };
 
-    await users.insertOne(newUser);
+    await users.create(newUser);
 
     // Katılma isteğini accepted olarak işaretle
     await JoinRequest.findByIdAndUpdate(requestId, { 
@@ -2979,7 +2979,8 @@ app.post('/api/accept-join-request/:requestId', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Katılma isteği başarıyla kabul edildi' 
+      message: 'Katılma isteği başarıyla kabul edildi',
+      user: newUser // Yeni kullanıcı bilgisini de döndür
     });
 
   } catch (error) {

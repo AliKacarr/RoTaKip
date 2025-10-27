@@ -99,7 +99,7 @@
                             <span class="file-input-text">Bir resim seçin...</span>
                         </label>
                         <input type="file" id="groupImageInput" accept="image/*">
-                        <button type="button" class="ready-images-btn" onclick="toggleReadyImagesModal()">
+                        <button type="button" class="ready-images-btn" id="readyImagesBtn">
                             ✨
                         </button>
                     </div>
@@ -113,7 +113,7 @@
                                 <i class="fas fa-images"></i>
                                 Hazır Görseller
                             </h3>
-                            <button type="button" class="modal-close-btn" onclick="toggleReadyImagesModal()">
+                            <button type="button" class="modal-close-btn" id="closeReadyImagesModal">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -309,40 +309,41 @@
     <div id="joinAvatarModal" class="ready-images-modal">
         <div class="ready-images-modal-content">
             <div class="modal-header">
-            <h3>
-                <i class="fa-solid fa-images"></i>
-                Avatar Seç
-            </h3>
-            <button type="button" class="modal-close-btn" onclick="toggleJoinAvatarModal()">
-                <i class="fas fa-times"></i>
-            </button>
+                <h3>
+                    <i class="fa-solid fa-images"></i>
+                    Avatar Seç
+                </h3>
+                <button type="button" class="modal-close-btn" id="closeJoinAvatarModal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body">
-            <div class="avatar-grid" id="joinAvatarGrid">
-                <!-- User avatar resimleri JavaScript ile yüklenecek -->
-            </div>
+                <div class="avatar-grid" id="joinAvatarGrid">
+                    <!-- User avatar resimleri JavaScript ile yüklenecek -->
+                </div>
             </div>
         </div>
-        </div>
+    </div>
 
+    <!-- Main Script -->
+    <script src="index.min.js"></script>
+    
+    <!-- External Services -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script src="/env.js" defer></script>
     <script src="push/onesignal-init.js" defer></script>
-
-
-    <script src="index.min.js"></script>
-    <script type="text/javascript">
+    <script>
         var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
         (function () {
-          var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
-          s1.async = true;
-          s1.src = 'https://embed.tawk.to/68278ccfe4781d19149b3d72/1ird7s2qf';
-          s1.charset = 'UTF-8';
-          s1.setAttribute('crossorigin', '*');
-          s0.parentNode.insertBefore(s1, s0);
+            var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+            s1.async = true;
+            s1.src = 'https://embed.tawk.to/68278ccfe4781d19149b3d72/1ird7s2qf';
+            s1.charset = 'UTF-8';
+            s1.setAttribute('crossorigin', '*');
+            s0.parentNode.insertBefore(s1, s0);
         })();
-      </script>
-      
+    </script>
+
 </body>
 
 </html>
