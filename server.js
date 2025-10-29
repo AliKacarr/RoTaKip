@@ -3396,75 +3396,12 @@ async function sendOneSignalNotification(message, source = 'vecize') {
   }
 }
 
-// Her gece 03:00'da çalışacak cron job - okumadım dokümanları oluştur
-async function createDailyOkumadimDocuments() {
-  try {
-    console.log('🌙 Gece 03:00 cron job çalışıyor - okumadım dokümanları oluşturuluyor');
-    
-    // Dünün tarihini al (Türkiye saati)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1); // Dün
-    const yesterdayString = yesterday.toISOString().split('T')[0];
-    
-    // Tüm koleksiyonları listele
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    
-    // users_ ile başlayan koleksiyonları bul
-    const userCollections = collections.filter(col => col.name.startsWith('users_'));
-    
-    for (const userCollection of userCollections) {
-      const groupId = userCollection.name.replace('users_', '');
-      const readingCollectionName = `readingstatuses_${groupId}`;
-      
-      try {
-        // Grup koleksiyonlarını al
-        const { users: UserModel, readingStatuses: ReadingStatusModel } = getGroupCollections(groupId);
-        
-        // Kullanıcıları al
-        const users = await UserModel.find({}, '_id').lean();
-        
-        if (users.length === 0) continue;
-        
-        // Her kullanıcı için dünün dokümanını kontrol et ve oluştur
-        for (const user of users) {
-          const existingDoc = await ReadingStatusModel.findOne({
-            userId: user._id,
-            date: yesterdayString
-          });
-          
-          if (!existingDoc) {
-            // Doküman yoksa oluştur
-            const newDoc = new ReadingStatusModel({
-              userId: user._id,
-              date: yesterdayString,
-              status: 'okumadım'
-            });
-            
-            await newDoc.save();
-          }
-        }
-        
-      } catch (error) {
-        console.error(`❌ ${groupId} grubu işlenirken hata:`, error.message);
-      }
-    }
-    
-    console.log('🌙 Gece 03:00 cron job tamamlandı');
-    
-  } catch (error) {
-    console.error('❌ Gece 03:00 cron job hatası:', error);
-  }
-}
-
 function scheduleDailyNotifications() {
   
   if (!(process.env.ONESIGNAL_APP_ID && process.env.ONESIGNAL_API_KEY)) {
     console.warn('OneSignal env değişkenleri eksik. Cron başlatılmadı.');
     return null;
   }
-  
-  // TR: 03:00 - Okumadım dokümanları oluştur
-  const jobMidnight = schedule.scheduleJob({ rule: '0 3 * * *', tz: 'Europe/Istanbul' }, createDailyOkumadimDocuments);
   
   // TR: 09:00
   const jobMorning = schedule.scheduleJob({ rule: '0 9 * * *', tz: 'Europe/Istanbul' }, async () => {
@@ -3479,16 +3416,15 @@ function scheduleDailyNotifications() {
     await sendOneSignalNotification(result.message, result.source);
   });
   
-  console.log('Cron job\'lar kuruldu: 03:00 (okumadım), 09:00 ve 21:00 (vecize) (Europe/Istanbul)');
+  console.log('Cron job\'lar kuruldu: 09:00 ve 21:00 (vecize) (Europe/Istanbul)');
   
   process.on('SIGINT', async () => {
     console.log('Cron job\'lar kapatılıyor...');
-    jobMidnight?.cancel();
     jobMorning?.cancel();
     jobEvening?.cancel();
   });
   
-  return { jobMidnight, jobMorning, jobEvening };
+  return { jobMorning, jobEvening };
 }
 
 // Sağlık kontrolü endpoint'i
