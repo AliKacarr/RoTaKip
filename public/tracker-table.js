@@ -230,11 +230,7 @@ function getWeekDates(offset = 0) {
     return dates;
 }
 
-function showWeekLoading(show) {
-    const overlay = document.getElementById('weekLoadingOverlay');
-    if (!overlay) return;
-    overlay.style.display = show ? 'flex' : 'none';
-}
+// Yükleme overlay'i kaldırıldı
 
 function formatDateRange(dates) {
     if (!dates || dates.length < 7) return '';
@@ -440,14 +436,14 @@ async function loadTrackerTable() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             isFirstLoad = false;
         }
-        showWeekLoading(false);
     }, 20);
-    tableArea.style.display = 'block';
     
     // Kullanıcı istatistik alanını güncelle (giriş serisi hesaplaması ile)
     updateUserStatsAreaWithStreak().catch(error => {
         console.error('Kullanıcı istatistik alanı güncellenemedi:', error);
     });
+    
+    tableArea.style.display = 'block';
 }
 
 function findConsecutiveStreaks(userStats) {
@@ -488,7 +484,6 @@ function areDatesConsecutive(date1, date2) {
 prevWeekBtn.addEventListener('click', () => {
     weekOffset--;
     window.weekOffset = weekOffset; // Global güncelle
-    showWeekLoading(true);
     loadTrackerTable();
     loadUserCards();
 });
@@ -496,7 +491,6 @@ prevWeekBtn.addEventListener('click', () => {
 nextWeekBtn.addEventListener('click', () => {
     weekOffset++;
     window.weekOffset = weekOffset; // Global güncelle
-    showWeekLoading(true);
     loadTrackerTable();
     loadUserCards();
 });
@@ -504,7 +498,6 @@ nextWeekBtn.addEventListener('click', () => {
 prevWeekTodayBtn.addEventListener('click', () => {
     weekOffset = 0;
     window.weekOffset = weekOffset; // Global güncelle
-    showWeekLoading(true);
     loadTrackerTable();
     loadUserCards();
 });
@@ -512,7 +505,6 @@ prevWeekTodayBtn.addEventListener('click', () => {
 nextWeekTodayBtn.addEventListener('click', () => {
     weekOffset = 0;
     window.weekOffset = weekOffset; // Global güncelle
-    showWeekLoading(true);
     loadTrackerTable();
     loadUserCards();
 });

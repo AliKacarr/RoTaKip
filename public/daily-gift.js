@@ -429,57 +429,19 @@ async function loadDailyReminder() {
   const reminderText = document.getElementById('dailyTasksReminderText');
   if (!reminderText) return;
   
-  // Önce localStorage'dan kontrol et
-  const savedReminder = localStorage.getItem('dailyReminder');
-  if (savedReminder) {
-    try {
-      const reminderData = JSON.parse(savedReminder);
-      const today = new Date().toDateString();
-      
-      // Bugünün hatırlatması varsa onu kullan
-      if (reminderData.date === today) {
-        reminderText.textContent = reminderData.text;
-        return;
-      }
-    } catch (error) {
-      console.error('Kaydedilmiş hatırlatma okuma hatası:', error);
-    }
-  }
-  
-  // LocalStorage'da yoksa API'den çek
+  // Her sayfa yüklenişinde API'den çek
   try {
     const response = await fetch('/api/random-reminder');
     const data = await response.json();
     
     const text = data.sentence || 'Bugün için hatırlatma bulunamadı.';
     reminderText.textContent = text;
-    
-    // LocalStorage'a kaydet
-    localStorage.setItem('dailyReminder', JSON.stringify({
-      text: text,
-      date: new Date().toDateString()
-    }));
   } catch (error) {
     console.error('Hatırlatma yükleme hatası:', error);
     reminderText.textContent = 'Hatırlatma yüklenemedi.';
   }
 }
 
-// Sayfa yüklenirken hatırlatmayı önceden hazırla
-async function preloadDailyReminder() {
-  try {
-    const response = await fetch('/api/random-reminder');
-    const data = await response.json();
-    
-    // LocalStorage'a kaydet
-    localStorage.setItem('dailyReminder', JSON.stringify({
-      text: data.sentence || 'Bugün için hatırlatma bulunamadı.',
-      date: new Date().toDateString()
-    }));
-  } catch (error) {
-    console.error('Hatırlatma ön yükleme hatası:', error);
-  }
-}
 
 // Görev durumunu kaydet
 function saveTaskStatus(taskType, isCompleted) {
@@ -590,8 +552,5 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Sayfa yüklenirken hatırlatmayı önceden hazırla
-document.addEventListener('DOMContentLoaded', function() {
-    preloadDailyReminder();
-});
+// (Hatırlatma önbelleği kaldırıldı; her yüklemede API'den çekilir)
 
