@@ -2,7 +2,7 @@
     'use strict';
 
     const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 dakika
-    const CHECK_INTERVAL_MS = 60 * 1000; // Periyodik kontrol: 60 saniye
+    const CHECK_INTERVAL_MS = 30 * 1000; // Periyodik kontrol: 30 saniye
     const STORAGE_KEY = 'sessionStartTime';
 
     function saveSessionStart() {
@@ -58,8 +58,21 @@
         saveSessionStart();
 
         // Periyodik kontrol: belirli aralıklarla session süresini denetle
+        // Sayfa aktifken kontrol eder
+        let lastCheckTime = Date.now();
         setInterval(() => {
-            checkSession();
+            const now = Date.now();
+            const timeSinceLastCheck = now - lastCheckTime;
+            
+            // Eğer çok fazla zaman geçtiyse (setInterval throttle edilmiş olabilir), zorunlu kontrol et
+            if (timeSinceLastCheck > CHECK_INTERVAL_MS * 2) {
+                console.log('setInterval throttle edilmiş, kontrol ediliyor...');
+                checkSession(true);
+            } else {
+                checkSession();
+            }
+            
+            lastCheckTime = now;
         }, CHECK_INTERVAL_MS);
 
         // Sayfa bellekte tutulmuşsa veya geri dönülüyorsa
@@ -74,7 +87,11 @@
 
         // Sayfa tekrar görünür olduğunda (arka plandan dönüldü)
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) checkSession();
+            if (!document.hidden) {
+                // Arka plandan döndüğünde mutlaka kontrol et
+                console.log('Sayfa tekrar görünür oldu, session kontrol ediliyor...');
+                checkSession(true);
+            }
         });
 
         // Focus olayında da kontrol et
