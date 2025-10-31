@@ -4,6 +4,7 @@
     const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 dakika
     const CHECK_INTERVAL_MS = 30 * 1000; // Periyodik kontrol: 30 saniye
     const STORAGE_KEY = 'sessionStartTime';
+    const INIT_FLAG_KEY = 'sessionWatcherInitialized';
 
     function saveSessionStart() {
         try {
@@ -47,15 +48,33 @@
     function initSessionWatcher() {
         // Sayfa yüklendiğinde eski session'ı kontrol et ve temizle
         const start = getSessionStart();
+        const isNewSession = !start;
+        
         if (start) {
             const diff = Date.now() - start;
             if (diff > SESSION_TIMEOUT) {
                 console.log('Eski session tespit edildi, temizleniyor...');
                 localStorage.removeItem(STORAGE_KEY);
+                sessionStorage.removeItem(INIT_FLAG_KEY);
+                // Eski session süresi dolmuşsa sayfayı yenile
+                reloadWithTimestamp();
+                return;
             }
         }
         
+        // Eğer localStorage boşsa ama daha önce initialized olmuşsa, localStorage temizlenmiş demektir
+        // (örn: Chrome geçmişinden silindiğinde) - bu durumda sayfayı yenile
+        const wasInitialized = sessionStorage.getItem(INIT_FLAG_KEY);
+        if (isNewSession && wasInitialized) {
+            console.log('localStorage temizlenmiş, yeni session başlatılıyor, sayfa yenileniyor...');
+            saveSessionStart();
+            reloadWithTimestamp();
+            return;
+        }
+        
+        // Normal durum: Session başlat veya güncelle
         saveSessionStart();
+        sessionStorage.setItem(INIT_FLAG_KEY, 'true');
 
         // Periyodik kontrol: belirli aralıklarla session süresini denetle
         // Sayfa aktifken kontrol eder
@@ -106,3 +125,4 @@
         initSessionWatcher();
     }
 })();
+
