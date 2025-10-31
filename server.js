@@ -454,15 +454,50 @@ app.get('/api/config', (req, res) => {
 // Articles API endpoint
 app.get('/api/articles', async (req, res) => {
   try {
+    // Bağlantı hazır mı kontrol et; değilse kısa bir süre bekle
+    if (!mongoose.connection.db || mongoose.connection.readyState !== 1) {
+      try {
+        await new Promise((resolve, reject) => {
+          if (mongoose.connection.readyState === 1) return resolve();
+          const onConnected = () => {
+            cleanup();
+            resolve();
+          };
+          const onError = (err) => {
+            cleanup();
+            reject(err);
+          };
+          const onTimeout = () => {
+            cleanup();
+            reject(new Error('DB not ready in time'));
+          };
+          const cleanup = () => {
+            clearTimeout(timeoutId);
+            mongoose.connection.off('connected', onConnected);
+            mongoose.connection.off('error', onError);
+          };
+          mongoose.connection.once('connected', onConnected);
+          mongoose.connection.once('error', onError);
+          const timeoutId = setTimeout(onTimeout, 3000);
+        });
+      } catch (waitErr) {
+        return res.status(503).json({ success: false, message: 'Veritabanı hazır değil, lütfen tekrar deneyin.' });
+      }
+    }
+
     const db = mongoose.connection.db;
+    if (!db) {
+      return res.status(503).json({ success: false, message: 'Veritabanı bağlantısı kurulamadı' });
+    }
+
     const articlesCollection = db.collection('articles');
-    
+
     // Tüm makaleleri getir
     const articles = await articlesCollection.find({}).toArray();
-    
+
     // Kategorileri çıkar
     const categories = [...new Set(articles.map(article => article.category))];
-    
+
     res.json({
       success: true,
       articles: articles,

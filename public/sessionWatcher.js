@@ -1,8 +1,6 @@
-(function() {
+(function () {
     'use strict';
 
-    const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 dakika
-    const CHECK_INTERVAL_MS = 30 * 1000; // Periyodik kontrol: 30 saniye
     const STORAGE_KEY = 'sessionStartTime';
     const INIT_FLAG_KEY = 'sessionWatcherInitialized';
 
@@ -30,93 +28,40 @@
         window.location.replace(url.toString());
     }
 
-    function checkSession(force = false) {
-        const start = getSessionStart();
-        if (!start) {
-            saveSessionStart();
-            return;
-        }
-
-        const diff = Date.now() - start;
-        if (force || diff > SESSION_TIMEOUT) {
-            console.log('Session süresi doldu, sayfa tazeleniyor...');
-            saveSessionStart();
-            reloadWithTimestamp();
-        }
-    }
-
     function initSessionWatcher() {
-        // Sayfa yüklendiğinde eski session'ı kontrol et ve temizle
         const start = getSessionStart();
         const isNewSession = !start;
-        
-        if (start) {
-            const diff = Date.now() - start;
-            if (diff > SESSION_TIMEOUT) {
-                console.log('Eski session tespit edildi, temizleniyor...');
-                localStorage.removeItem(STORAGE_KEY);
-                sessionStorage.removeItem(INIT_FLAG_KEY);
-                // Eski session süresi dolmuşsa sayfayı yenile
-                reloadWithTimestamp();
-                return;
-            }
-        }
-        
-        // Eğer localStorage boşsa ama daha önce initialized olmuşsa, localStorage temizlenmiş demektir
-        // (örn: Chrome geçmişinden silindiğinde) - bu durumda sayfayı yenile
         const wasInitialized = sessionStorage.getItem(INIT_FLAG_KEY);
+
+        // Eğer localStorage silinmiş ama sessionStorage hala varsa => sayfayı yenile
         if (isNewSession && wasInitialized) {
             console.log('localStorage temizlenmiş, yeni session başlatılıyor, sayfa yenileniyor...');
             saveSessionStart();
             reloadWithTimestamp();
             return;
         }
-        
-        // Normal durum: Session başlat veya güncelle
+
+        // Normal durumda sadece session başlat
         saveSessionStart();
         sessionStorage.setItem(INIT_FLAG_KEY, 'true');
 
-        // Periyodik kontrol: belirli aralıklarla session süresini denetle
-        // Sayfa aktifken kontrol eder
-        let lastCheckTime = Date.now();
-        setInterval(() => {
-            const now = Date.now();
-            const timeSinceLastCheck = now - lastCheckTime;
-            
-            // Eğer çok fazla zaman geçtiyse (setInterval throttle edilmiş olabilir), zorunlu kontrol et
-            if (timeSinceLastCheck > CHECK_INTERVAL_MS * 2) {
-                console.log('setInterval throttle edilmiş, kontrol ediliyor...');
-                checkSession(true);
-            } else {
-                checkSession();
-            }
-            
-            lastCheckTime = now;
-        }, CHECK_INTERVAL_MS);
-
-        // Sayfa bellekte tutulmuşsa veya geri dönülüyorsa
+        // Sayfa bellekte tutulmuşsa (bfcache) geri dönülüyorsa => yenile
         window.addEventListener('pageshow', (e) => {
             if (e.persisted) {
-                console.log('bfcache tespit edildi, zorunlu yenileme');
-                checkSession(true);
-            } else {
-                checkSession();
+                console.log('bfcache tespit edildi, sayfa yenileniyor...');
+                reloadWithTimestamp();
             }
         });
 
-        // Sayfa tekrar görünür olduğunda (arka plandan dönüldü)
+        // Sayfa görünür olduğunda (arka plandan döndü) => yenile
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                // Arka plandan döndüğünde mutlaka kontrol et
-                console.log('Sayfa tekrar görünür oldu, session kontrol ediliyor...');
-                checkSession(true);
+                console.log('Sayfa tekrar görünür oldu, yenileniyor...');
+                reloadWithTimestamp();
             }
         });
 
-        // Focus olayında da kontrol et
-        window.addEventListener('focus', () => checkSession());
-
-        console.log('Session Watcher aktif');
+        console.log('Session Watcher aktif (15 dakikalık limit kaldırıldı)');
     }
 
     if (document.readyState === 'loading') {
@@ -125,4 +70,3 @@
         initSessionWatcher();
     }
 })();
-
