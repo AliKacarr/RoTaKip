@@ -105,26 +105,26 @@ async function generateMinifiedFiles() {
   try {
     // Index.html için minify
     if (validIndexCssFiles.length > 0) {
-      const indexCssCommand = `cleancss -o "${publicPath}/index.min.css" ${validIndexCssFiles.map(f => `"${f}"`).join(' ')}`;
+      const indexCssCommand = `npx --yes cleancss -o "${publicPath}/index.min.css" ${validIndexCssFiles.map(f => `"${f}"`).join(' ')}`;
       await execPromise(indexCssCommand);
       console.log('✅ Index CSS minified successfully');
     }
     
     if (validIndexJsFiles.length > 0) {
-      const indexJsCommand = `terser ${validIndexJsFiles.map(f => `"${f}"`).join(' ')} -o "${publicPath}/index.min.js"`;
+      const indexJsCommand = `npx --yes terser ${validIndexJsFiles.map(f => `"${f}"`).join(' ')} -o "${publicPath}/index.min.js"`;
       await execPromise(indexJsCommand);
       console.log('✅ Index JS minified successfully');
     }
     
     // Groups.html için minify
     if (validGroupsCssFiles.length > 0) {
-      const groupsCssCommand = `cleancss -o "${publicPath}/groups.min.css" ${validGroupsCssFiles.map(f => `"${f}"`).join(' ')}`;
+      const groupsCssCommand = `npx --yes cleancss -o "${publicPath}/groups.min.css" ${validGroupsCssFiles.map(f => `"${f}"`).join(' ')}`;
       await execPromise(groupsCssCommand);
       console.log('✅ Groups CSS minified successfully');
     }
     
     if (validGroupsJsFiles.length > 0) {
-      const groupsJsCommand = `terser ${validGroupsJsFiles.map(f => `"${f}"`).join(' ')} -o "${publicPath}/groups.min.js"`;
+      const groupsJsCommand = `npx --yes terser ${validGroupsJsFiles.map(f => `"${f}"`).join(' ')} -o "${publicPath}/groups.min.js"`;
       await execPromise(groupsJsCommand);
       console.log('✅ Groups JS minified successfully');
     }
@@ -132,6 +132,7 @@ async function generateMinifiedFiles() {
     console.log('🎉 All minify operations completed successfully');
   } catch (err) {
     console.error('❌ Minify error:', err.message);
+    console.log('⚠️ Minify hatası olsa bile uygulama çalışmaya devam edecek');
   }
 }
 

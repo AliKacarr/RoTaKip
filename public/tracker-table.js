@@ -513,8 +513,6 @@ function calculateStreak(userStats) {
     const allDates = Object.keys(userStats).sort();
     if (allDates.length === 0) return 0;
     const today = new Date();
-    // UTC+3 saat dilimi ekle (Türkiye saati)
-    today.setHours(today.getHours() + 3);
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
@@ -897,4 +895,248 @@ function getDayOfWeekInTurkish(date) {
     const days = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cts'];
     return days[date.getDay()];
 }
+
+// Paylaş işlemi devam ediyor mu kontrolü
+let isShareProcessing = false;
+
+// Tabloyu resme çevirip modal'da göster
+async function shareTrackerTable() {
+    try {
+        // Eğer zaten bir paylaş işlemi devam ediyorsa yeni talep oluşturma
+        if (isShareProcessing) {
+            return;
+        }
+
+        // Tablo görünür mü kontrol et
+        if (!trackerTable || trackerTable.style.display === 'none') {
+            console.warn('Tablo görünür değil');
+            return;
+        }
+
+        // Butonu ve SVG'yi al
+        const shareBtn = document.getElementById('shareTableBtn');
+        if (!shareBtn) return;
+        
+        const svgElement = shareBtn.querySelector('svg');
+        if (!svgElement) return;
+
+        // İşlem başladı flag'ini set et
+        isShareProcessing = true;
+
+        // SVG'yi gizle ve loading spinner göster
+        svgElement.style.display = 'none';
+        const loadingSpinner = document.createElement('div');
+        loadingSpinner.className = 'share-loading-spinner';
+        shareBtn.appendChild(loadingSpinner);
+
+        // Tabloyu geçici container'a al (padding için)
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = 'padding: 10px; background: #ffffff; display: block;';
+        const parent = trackerTable.parentNode;
+        const nextSibling = trackerTable.nextSibling;
+        
+        // Tabloyu container'a taşı
+        tempContainer.appendChild(trackerTable);
+        if (nextSibling) {
+            parent.insertBefore(tempContainer, nextSibling);
+        } else {
+            parent.appendChild(tempContainer);
+        }
+
+        // html2canvas ile container'ı resme çevir
+        const canvas = await html2canvas(tempContainer, {
+            backgroundColor: '#ffffff',
+            scale: 2, // Yüksek kalite için
+            logging: false,
+            useCORS: true,
+            allowTaint: false
+        });
+
+        // Tabloyu geri yerine koy (hemen, görsel olarak değişiklik olmasın)
+        requestAnimationFrame(() => {
+            if (nextSibling) {
+                parent.insertBefore(trackerTable, nextSibling);
+            } else {
+                parent.appendChild(trackerTable);
+            }
+            parent.removeChild(tempContainer);
+        });
+
+        // Canvas'ı blob'a çevir
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                console.error('Resim oluşturulamadı');
+                // Loading spinner'ı kaldır ve SVG'yi tekrar göster
+                const shareBtn = document.getElementById('shareTableBtn');
+                if (shareBtn) {
+                    const spinner = shareBtn.querySelector('.share-loading-spinner');
+                    const svgElement = shareBtn.querySelector('svg');
+                    if (spinner) {
+                        spinner.remove();
+                    }
+                    if (svgElement) {
+                        svgElement.style.display = 'block';
+                    }
+                }
+                // Flag'i sıfırla
+                isShareProcessing = false;
+                return;
+            }
+
+            // Dosya adını oluştur (hafta tarihi ile)
+            const weekText = currentWeekDisplay ? currentWeekDisplay.textContent.trim() : 'tablo';
+            const fileName = `okuma-tablosu-${weekText.replace(/\s+/g, '-')}-${Date.now()}.png`;
+
+            // Resmi blob URL'ye çevir
+            const imageUrl = URL.createObjectURL(blob);
+
+            // Modal'ı göster
+            showShareModal(weekText, imageUrl, blob, fileName);
+
+            // Loading spinner'ı kaldır ve SVG'yi tekrar göster
+            const shareBtn = document.getElementById('shareTableBtn');
+            if (shareBtn) {
+                const spinner = shareBtn.querySelector('.share-loading-spinner');
+                const svgElement = shareBtn.querySelector('svg');
+                if (spinner) {
+                    spinner.remove();
+                }
+                if (svgElement) {
+                    svgElement.style.display = 'block';
+                }
+            }
+
+            // İşlem tamamlandı flag'ini sıfırla
+            isShareProcessing = false;
+        }, 'image/png', 0.95);
+        } catch (error) {
+        console.error('Tablo paylaşılırken hata oluştu:', error);
+        
+        // Hata durumunda da spinner'ı kaldır ve SVG'yi göster
+        const shareBtn = document.getElementById('shareTableBtn');
+        if (shareBtn) {
+            const spinner = shareBtn.querySelector('.share-loading-spinner');
+            const svgElement = shareBtn.querySelector('svg');
+            if (spinner) {
+                spinner.remove();
+            }
+            if (svgElement) {
+                svgElement.style.display = 'block';
+            }
+        }
+
+        // Hata durumunda da flag'i sıfırla
+        isShareProcessing = false;
+    }
+}
+
+// Modal'ı göster
+function showShareModal(weekText, imageUrl, blob, fileName) {
+    const modal = document.getElementById('tableShareModal');
+    const modalTitle = document.getElementById('tableShareModalTitle');
+    const modalImage = document.getElementById('tableShareImage');
+    
+    if (!modal || !modalTitle || !modalImage) return;
+
+    // Modal içeriğini güncelle
+    modalTitle.textContent = weekText;
+    modalImage.src = imageUrl;
+
+    // Modal'ı göster
+    modal.style.display = 'block';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+
+    // İndir butonu
+    const downloadBtn = document.getElementById('downloadTableImageBtn');
+    if (downloadBtn) {
+        // Eski listener'ları temizle
+        const newDownloadBtn = downloadBtn.cloneNode(true);
+        downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
+        
+        newDownloadBtn.addEventListener('click', () => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    // Paylaş butonu
+    const shareBtn = document.getElementById('shareTableImageBtn');
+    if (shareBtn) {
+        // Eski listener'ları temizle
+        const newShareBtn = shareBtn.cloneNode(true);
+        shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
+        
+        newShareBtn.addEventListener('click', async () => {
+            try {
+                if (navigator.share && navigator.canShare) {
+                    const file = new File([blob], fileName, { type: 'image/png' });
+                    const shareData = {
+                        title: 'Okuma Tablosu',
+                        text: `${weekText} haftası okuma tablosu`,
+                        files: [file]
+                    };
+
+                    if (navigator.canShare(shareData)) {
+                        await navigator.share(shareData);
+                        console.log('Tablo Web Share API ile paylaşıldı');
+                        closeShareModal();
+                    }
+                } else {
+                    console.warn('Web Share API desteklenmiyor');
+                }
+            } catch (shareError) {
+                if (shareError.name !== 'AbortError') {
+                    console.log('Web Share API hatası:', shareError);
+                }
+            }
+        });
+    }
+}
+
+// Modal'ı kapat
+function closeShareModal() {
+    const modal = document.getElementById('tableShareModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            // Blob URL'yi temizle
+            const modalImage = document.getElementById('tableShareImage');
+            if (modalImage && modalImage.src) {
+                URL.revokeObjectURL(modalImage.src);
+            }
+        }, 300);
+    }
+}
+
+// Paylaş butonuna event listener ekle
+document.addEventListener('DOMContentLoaded', () => {
+    const shareTableBtn = document.getElementById('shareTableBtn');
+    if (shareTableBtn) {
+        shareTableBtn.addEventListener('click', shareTrackerTable);
+    }
+
+    // Modal kapatma butonu
+    const closeBtn = document.getElementById('closeTableShareModal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeShareModal);
+    }
+
+    // Overlay'e tıklayınca kapat
+    const modal = document.getElementById('tableShareModal');
+    if (modal) {
+        const overlay = modal.querySelector('.table-share-modal-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', closeShareModal);
+        }
+    }
+});
 

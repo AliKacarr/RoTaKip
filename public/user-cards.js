@@ -120,6 +120,9 @@ async function loadUserCards() {
 
   const weekDates = typeof getWeekDates === 'function' ? getWeekDates(weekOffset || 0) : [];
 
+  // Okuma serisi yapanları toplamak için array
+  const activeStreaks = [];
+
   users.forEach(user => {
     const userStats = stats.filter(s => s.userId === user._id && (s.status === 'okudum' || s.status === 'okumadım'));
     const okudumStats = userStats.filter(s => s.status === 'okudum');
@@ -148,8 +151,6 @@ async function loadUserCards() {
 
       // Bugünün tarihini al
       const today = new Date();
-      // UTC+3 saat dilimi ekle (Türkiye saati)
-      today.setHours(today.getHours() + 3);
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
       const day = String(today.getDate()).padStart(2, '0');
@@ -157,6 +158,7 @@ async function loadUserCards() {
       const todayStatus = statMap[todayKey];
       let streak = 0;
       let currentDate;
+      
       if (todayStatus === 'okudum') {
         currentDate = todayKey;
       } else if (todayStatus === 'okumadım') {
@@ -170,6 +172,7 @@ async function loadUserCards() {
         const prevDay = String(d.getDate()).padStart(2, '0');
         currentDate = `${prevYear}-${prevMonth}-${prevDay}`;
       }
+      
       while (true) {
         if (statMap[currentDate] === 'okudum') {
           streak++;
@@ -186,6 +189,11 @@ async function loadUserCards() {
       return streak;
     }
     const streak = calculateStreakForUser(userStats);
+
+    // Seri > 0 ise activeStreaks listesine ekle
+    if (streak > 0) {
+      activeStreaks.push({ name: user.name, streak: streak });
+    }
 
     // Progress bar
     const percent = totalDays > 0 ? Math.round((okudumDays / totalDays) * 100) : 0;
@@ -325,6 +333,9 @@ async function loadUserCards() {
       });
     });
   });
+
+  // Seri sayısına göre sırala (en yüksekten en düşüğe)
+  activeStreaks.sort((a, b) => b.streak - a.streak);
 
   let leagueInfoBar = document.querySelector('.league-info-bar');
   if (leagueInfoBar) {
@@ -525,6 +536,9 @@ async function loadUserCards() {
       consecutiveMissed.push({ name: user.name, days: count });
     }
   });
+  
+  // Gün sayısına göre sırala (en yüksekten en düşüğe)
+  consecutiveMissed.sort((a, b) => b.days - a.days);
 
   const afterElem = document.querySelector('.league-promotion-message') || leagueInfoBar;
   if (consecutiveMissed.length > 0) {
@@ -573,9 +587,18 @@ async function loadUserCards() {
         const randomReminder = reminderAlternatives[Math.floor(Math.random() * reminderAlternatives.length)];
         
         // Panoya kopyalanacak metni oluştur
-        const copyText = 'Art arda okumayanlar:\n' +
-          consecutiveMissed.map(u => `${u.name} (${u.days} gün)`).join(',\n') +
-          '\n'+randomReminder;
+        let copyText = '';
+        
+        // Okuma serisi yapanlar kısmı
+        if (activeStreaks.length > 0) {
+          copyText += 'Okuma serisi yapanlar:\n';
+          copyText += activeStreaks.map(u => `${u.name} (${u.streak} gün)`).join(',\n') + '\n\n';
+        }
+        
+        // Art arda okumayanlar kısmı
+        copyText += 'Art arda okumayanlar:\n';
+        copyText += consecutiveMissed.map(u => `${u.name} (${u.days} gün)`).join(',\n');
+        copyText += '\n\n' + randomReminder;
         
         await navigator.clipboard.writeText(copyText); // Metni panoya kopyala
 
