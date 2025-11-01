@@ -552,10 +552,10 @@
     overflow-x: hidden;
     flex: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     background: #f8f9fa;
-    min-height: 0;
+    min-height: 250px;
 }
 
 .table-share-image-container {
@@ -567,7 +567,7 @@
     border-radius: 12px;
     padding: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: min-height 0.3s ease-out;
+    transition: min-height 0.5s ease-out;
 }
 
 .table-share-image {
@@ -575,6 +575,7 @@
     height: auto;
     border-radius: 8px;
     display: block;
+    transition: opacity 0.3s ease-out, max-height 0.5s ease-out;
 }
 
 .table-share-loading-message {
@@ -608,7 +609,7 @@
 }
 
 .table-share-modal-footer {
-    padding: 24px 30px;
+    padding: 30px;
     border-top: 1px solid #e8e8e8;
     display: flex;
     gap: 15px;

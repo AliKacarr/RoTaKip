@@ -1067,9 +1067,6 @@ function showShareModalLoading(weekText) {
     // Resmi gizle ve loading mesajını göster
     modalImage.style.display = 'none';
     
-    // Loading durumunda container yüksekliğini ayarla
-    imageContainer.style.minHeight = '250px';
-    
     // Loading mesajı oluştur veya güncelle
     let loadingMessage = imageContainer.querySelector('.table-share-loading-message');
     if (!loadingMessage) {
@@ -1116,33 +1113,46 @@ function showShareModalReady(weekText, imageUrl, blob, fileName) {
         loadingMessage.style.display = 'none';
     }
 
-    // Resmi göster
-    modalImage.src = imageUrl;
+    // Resmi başlangıçta gizle (opacity ve max-height ile)
     modalImage.style.display = 'block';
+    modalImage.style.opacity = '0';
+    modalImage.style.maxHeight = '0px';
+    modalImage.style.overflow = 'hidden';
     
-    // Resim yüklendiğinde panel yüksekliğini yavaşça artır
+    // Resmi yükle
+    modalImage.src = imageUrl;
+    
+    // Resim yüklendiğinde görünür yap ve container transition'ını tetikle
     modalImage.onload = function() {
-        // İptal kontrolü - panel kapatıldı mı?
         if (cancelImageGeneration) {
             return;
         }
         
-        // Resim yüklendiğinde yumuşak bir yükseklik geçişi için
-        imageContainer.style.transition = 'min-height 0.5s ease-out';
+        // Resmin gerçek yüksekliğini hesapla
+        // naturalHeight resmin gerçek piksel boyutunu verir
+        const naturalHeight = this.naturalHeight;
+        // Resim responsive (max-width: 100%) olduğu için container genişliğine göre scale olabilir
+        // Container genişliğini al
+        const containerWidth = imageContainer.getBoundingClientRect().width - 20; // padding dahil
+        const naturalWidth = this.naturalWidth;
         
-        // Resmin gerçek yüksekliğini bekle (DOM'a tam yüklendiğinde)
-        setTimeout(() => {
+        // Eğer resim container'dan genişse, scale edilmiş yüksekliği hesapla
+        let calculatedHeight = naturalHeight;
+        if (naturalWidth > containerWidth && containerWidth > 0) {
+            const scale = containerWidth / naturalWidth;
+            calculatedHeight = naturalHeight * scale;
+        }
+        
+        // Kısa bir gecikme ile transition'ı tetikle
+        requestAnimationFrame(() => {
             if (cancelImageGeneration) {
                 return;
             }
-            
-            const imageRect = this.getBoundingClientRect();
-            const actualImageHeight = imageRect.height;
-            const maxHeight = window.innerHeight * 0.7;
-            
-            // Resmin yüksekliğine göre container yüksekliğini ayarla (250'den az olsa bile)
-            imageContainer.style.minHeight = Math.min(actualImageHeight + 20, maxHeight) + 'px';
-        }, 50);
+            // Resmi görünür yap (hesaplanan yüksekliğe göre)
+            this.style.opacity = '1';
+            this.style.maxHeight = calculatedHeight + 'px';
+            this.style.overflow = 'visible';
+        });
     };
 
     // Footer butonlarını göster
@@ -1216,12 +1226,15 @@ function closeShareModal() {
         modal.classList.remove('show');
         setTimeout(() => {
             modal.style.display = 'none';
-            // Blob URL'yi temizle
+            // Blob URL'yi temizle ve resmin style'larını sıfırla
             const modalImage = document.getElementById('tableShareImage');
             if (modalImage && modalImage.src) {
                 URL.revokeObjectURL(modalImage.src);
                 modalImage.src = '';
                 modalImage.style.display = 'none';
+                modalImage.style.opacity = '';
+                modalImage.style.maxHeight = '';
+                modalImage.style.overflow = '';
             }
             
             // Loading mesajını temizle
