@@ -898,6 +898,7 @@ function getDayOfWeekInTurkish(date) {
 
 // Paylaş işlemi devam ediyor mu kontrolü
 let isShareProcessing = false;
+let cancelImageGeneration = false;
 
 // Tabloyu resme çevirip modal'da göster
 async function shareTrackerTable() {
@@ -920,18 +921,26 @@ async function shareTrackerTable() {
         const svgElement = shareBtn.querySelector('svg');
         if (!svgElement) return;
 
-        // İşlem başladı flag'ini set et
+        // İşlem başladı flag'ini set et ve iptal flag'ini sıfırla
         isShareProcessing = true;
+        cancelImageGeneration = false;
 
-        // SVG'yi gizle ve loading spinner göster
+        // SVG'yi gizle ve yerine spinner ekle, yazı görünür kalsın
         svgElement.style.display = 'none';
         const loadingSpinner = document.createElement('div');
         loadingSpinner.className = 'share-loading-spinner';
-        shareBtn.appendChild(loadingSpinner);
+        // SVG'den önce ekle (solda olsun)
+        shareBtn.insertBefore(loadingSpinner, svgElement);
+
+        // Dosya adını oluştur (hafta tarihi ile)
+        const weekText = currentWeekDisplay ? currentWeekDisplay.textContent.trim() : 'tablo';
+
+        // Modal'ı hemen aç (loading durumunda)
+        showShareModalLoading(weekText);
 
         // Tabloyu geçici container'a al (padding için)
         const tempContainer = document.createElement('div');
-        tempContainer.style.cssText = 'padding: 10px; background: #ffffff; display: block;';
+        tempContainer.style.cssText = 'padding: 15px; background: #ffffff; display: block;';
         const parent = trackerTable.parentNode;
         const nextSibling = trackerTable.nextSibling;
         
@@ -941,6 +950,24 @@ async function shareTrackerTable() {
             parent.insertBefore(tempContainer, nextSibling);
         } else {
             parent.appendChild(tempContainer);
+        }
+
+        // İptal kontrolü - panel kapatıldı mı?
+        if (cancelImageGeneration) {
+            // Tabloyu geri yerine koy
+            requestAnimationFrame(() => {
+                if (nextSibling) {
+                    parent.insertBefore(trackerTable, nextSibling);
+                } else {
+                    parent.appendChild(trackerTable);
+                }
+                parent.removeChild(tempContainer);
+            });
+            
+            // Loading spinner'ı kaldır ve SVG'yi tekrar göster
+            resetShareButton(shareBtn, svgElement, loadingSpinner);
+            isShareProcessing = false;
+            return;
         }
 
         // html2canvas ile container'ı resme çevir
@@ -962,67 +989,51 @@ async function shareTrackerTable() {
             parent.removeChild(tempContainer);
         });
 
+        // İptal kontrolü - panel kapatıldı mı?
+        if (cancelImageGeneration) {
+            resetShareButton(shareBtn, svgElement, loadingSpinner);
+            isShareProcessing = false;
+            return;
+        }
+
         // Canvas'ı blob'a çevir
         canvas.toBlob(async (blob) => {
-            if (!blob) {
-                console.error('Resim oluşturulamadı');
-                // Loading spinner'ı kaldır ve SVG'yi tekrar göster
-                const shareBtn = document.getElementById('shareTableBtn');
-                if (shareBtn) {
-                    const spinner = shareBtn.querySelector('.share-loading-spinner');
-                    const svgElement = shareBtn.querySelector('svg');
-                    if (spinner) {
-                        spinner.remove();
-                    }
-                    if (svgElement) {
-                        svgElement.style.display = 'block';
-                    }
+            // İptal kontrolü - panel kapatıldı mı?
+            if (cancelImageGeneration || !blob) {
+                if (!blob) {
+                    console.error('Resim oluşturulamadı');
                 }
-                // Flag'i sıfırla
+                // Modal'ı kapat
+                closeShareModal();
+                resetShareButton(shareBtn, svgElement, loadingSpinner);
                 isShareProcessing = false;
                 return;
             }
 
-            // Dosya adını oluştur (hafta tarihi ile)
-            const weekText = currentWeekDisplay ? currentWeekDisplay.textContent.trim() : 'tablo';
             const fileName = `okuma-tablosu-${weekText.replace(/\s+/g, '-')}-${Date.now()}.png`;
-
-            // Resmi blob URL'ye çevir
             const imageUrl = URL.createObjectURL(blob);
 
-            // Modal'ı göster
-            showShareModal(weekText, imageUrl, blob, fileName);
+            // Modal'ı resim ile güncelle
+            showShareModalReady(weekText, imageUrl, blob, fileName);
 
             // Loading spinner'ı kaldır ve SVG'yi tekrar göster
-            const shareBtn = document.getElementById('shareTableBtn');
-            if (shareBtn) {
-                const spinner = shareBtn.querySelector('.share-loading-spinner');
-                const svgElement = shareBtn.querySelector('svg');
-                if (spinner) {
-                    spinner.remove();
-                }
-                if (svgElement) {
-                    svgElement.style.display = 'block';
-                }
-            }
+            resetShareButton(shareBtn, svgElement, loadingSpinner);
 
             // İşlem tamamlandı flag'ini sıfırla
             isShareProcessing = false;
         }, 'image/png', 0.95);
-        } catch (error) {
+    } catch (error) {
         console.error('Tablo paylaşılırken hata oluştu:', error);
+        
+        // Hata durumunda modal'ı kapat
+        closeShareModal();
         
         // Hata durumunda da spinner'ı kaldır ve SVG'yi göster
         const shareBtn = document.getElementById('shareTableBtn');
         if (shareBtn) {
-            const spinner = shareBtn.querySelector('.share-loading-spinner');
             const svgElement = shareBtn.querySelector('svg');
-            if (spinner) {
-                spinner.remove();
-            }
-            if (svgElement) {
-                svgElement.style.display = 'block';
-            }
+            const spinner = shareBtn.querySelector('.share-loading-spinner');
+            resetShareButton(shareBtn, svgElement, spinner);
         }
 
         // Hata durumunda da flag'i sıfırla
@@ -1030,23 +1041,115 @@ async function shareTrackerTable() {
     }
 }
 
-// Modal'ı göster
-function showShareModal(weekText, imageUrl, blob, fileName) {
+// Share butonunu sıfırla
+function resetShareButton(shareBtn, svgElement, loadingSpinner) {
+    if (loadingSpinner && loadingSpinner.parentNode) {
+        loadingSpinner.remove();
+    }
+    if (svgElement) {
+        svgElement.style.display = 'block';
+    }
+    // Yazı zaten görünür kaldığı için değişiklik yapmaya gerek yok
+}
+
+// Modal'ı loading durumunda göster
+function showShareModalLoading(weekText) {
     const modal = document.getElementById('tableShareModal');
     const modalTitle = document.getElementById('tableShareModalTitle');
     const modalImage = document.getElementById('tableShareImage');
+    const imageContainer = document.querySelector('.table-share-image-container');
     
-    if (!modal || !modalTitle || !modalImage) return;
+    if (!modal || !modalTitle || !modalImage || !imageContainer) return;
 
     // Modal içeriğini güncelle
     modalTitle.textContent = weekText;
-    modalImage.src = imageUrl;
+    
+    // Resmi gizle ve loading mesajını göster
+    modalImage.style.display = 'none';
+    
+    // Loading durumunda container yüksekliğini ayarla
+    imageContainer.style.minHeight = '250px';
+    
+    // Loading mesajı oluştur veya güncelle
+    let loadingMessage = imageContainer.querySelector('.table-share-loading-message');
+    if (!loadingMessage) {
+        loadingMessage = document.createElement('div');
+        loadingMessage.className = 'table-share-loading-message';
+        const loadingText = document.createElement('span');
+        loadingText.textContent = 'Resim hazırlanıyor...';
+        loadingMessage.appendChild(loadingText);
+        imageContainer.appendChild(loadingMessage);
+    }
+    loadingMessage.style.display = 'flex';
+
+    // Footer butonlarını gizle
+    const footer = document.querySelector('.table-share-modal-footer');
+    if (footer) {
+        footer.style.display = 'none';
+    }
 
     // Modal'ı göster
     modal.style.display = 'block';
     setTimeout(() => {
         modal.classList.add('show');
     }, 10);
+}
+
+// Modal'ı resim hazır olduğunda güncelle
+function showShareModalReady(weekText, imageUrl, blob, fileName) {
+    const modal = document.getElementById('tableShareModal');
+    const modalTitle = document.getElementById('tableShareModalTitle');
+    const modalImage = document.getElementById('tableShareImage');
+    const imageContainer = document.querySelector('.table-share-image-container');
+    
+    if (!modal || !modalTitle || !modalImage || !imageContainer) return;
+
+    // İptal kontrolü - panel kapatıldı mı?
+    if (cancelImageGeneration) {
+        closeShareModal();
+        return;
+    }
+
+    // Loading mesajını gizle
+    const loadingMessage = imageContainer.querySelector('.table-share-loading-message');
+    if (loadingMessage) {
+        loadingMessage.style.display = 'none';
+    }
+
+    // Resmi göster
+    modalImage.src = imageUrl;
+    modalImage.style.display = 'block';
+    
+    // Resim yüklendiğinde panel yüksekliğini yavaşça artır
+    modalImage.onload = function() {
+        // İptal kontrolü - panel kapatıldı mı?
+        if (cancelImageGeneration) {
+            return;
+        }
+        
+        // Resim yüklendiğinde yumuşak bir yükseklik geçişi için
+        imageContainer.style.transition = 'min-height 0.5s ease-out';
+        
+        // Resmin gerçek yüksekliğini bekle (DOM'a tam yüklendiğinde)
+        setTimeout(() => {
+            if (cancelImageGeneration) {
+                return;
+            }
+            
+            const imageRect = this.getBoundingClientRect();
+            const actualImageHeight = imageRect.height;
+            const maxHeight = window.innerHeight * 0.7;
+            
+            // Resmin yüksekliğine göre container yüksekliğini ayarla (250'den az olsa bile)
+            imageContainer.style.minHeight = Math.min(actualImageHeight + 20, maxHeight) + 'px';
+        }, 50);
+    };
+
+    // Footer butonlarını göster
+    const footer = document.querySelector('.table-share-modal-footer');
+    if (footer) {
+        footer.style.display = 'flex';
+    }
 
     // İndir butonu
     const downloadBtn = document.getElementById('downloadTableImageBtn');
@@ -1103,6 +1206,11 @@ function showShareModal(weekText, imageUrl, blob, fileName) {
 
 // Modal'ı kapat
 function closeShareModal() {
+    // İptal flag'ini set et (resim üretimi devam ediyorsa)
+    if (isShareProcessing) {
+        cancelImageGeneration = true;
+    }
+    
     const modal = document.getElementById('tableShareModal');
     if (modal) {
         modal.classList.remove('show');
@@ -1112,6 +1220,17 @@ function closeShareModal() {
             const modalImage = document.getElementById('tableShareImage');
             if (modalImage && modalImage.src) {
                 URL.revokeObjectURL(modalImage.src);
+                modalImage.src = '';
+                modalImage.style.display = 'none';
+            }
+            
+            // Loading mesajını temizle
+            const imageContainer = document.querySelector('.table-share-image-container');
+            if (imageContainer) {
+                const loadingMessage = imageContainer.querySelector('.table-share-loading-message');
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
             }
         }, 300);
     }
@@ -1139,4 +1258,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 

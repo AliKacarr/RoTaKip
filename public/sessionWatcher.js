@@ -61,7 +61,7 @@
             }
         });
 
-        console.log('Session Watcher aktif (15 dakikalık limit kaldırıldı)');
+        console.log('Session Watcher aktif');
     }
 
     if (document.readyState === 'loading') {
