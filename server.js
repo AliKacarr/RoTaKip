@@ -12,6 +12,7 @@ const moment = require('moment');
 const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
+const CleanCSS = require('clean-css');
 require('dotenv').config();
 const schedule = require('node-schedule');
 const https = require('https');
@@ -103,10 +104,18 @@ async function generateMinifiedFiles() {
     .filter(fileExists);
   
   try {
+    const cleanCssInstance = new CleanCSS();
+    
     // Index.html için minify
     if (validIndexCssFiles.length > 0) {
-      const indexCssCommand = `npx --yes cleancss -o "${publicPath}/index.min.css" ${validIndexCssFiles.map(f => `"${f}"`).join(' ')}`;
-      await execPromise(indexCssCommand);
+      const indexCssContent = validIndexCssFiles
+        .map(file => fs.readFileSync(file, 'utf8'))
+        .join('\n');
+      const minifiedCss = cleanCssInstance.minify(indexCssContent);
+      if (minifiedCss.errors.length > 0) {
+        console.warn('⚠️ CSS minification warnings:', minifiedCss.errors);
+      }
+      fs.writeFileSync(path.join(publicPath, 'index.min.css'), minifiedCss.styles);
       console.log('✅ Index CSS minified successfully');
     }
     
@@ -118,8 +127,14 @@ async function generateMinifiedFiles() {
     
     // Groups.html için minify
     if (validGroupsCssFiles.length > 0) {
-      const groupsCssCommand = `npx --yes cleancss -o "${publicPath}/groups.min.css" ${validGroupsCssFiles.map(f => `"${f}"`).join(' ')}`;
-      await execPromise(groupsCssCommand);
+      const groupsCssContent = validGroupsCssFiles
+        .map(file => fs.readFileSync(file, 'utf8'))
+        .join('\n');
+      const minifiedCss = cleanCssInstance.minify(groupsCssContent);
+      if (minifiedCss.errors.length > 0) {
+        console.warn('⚠️ CSS minification warnings:', minifiedCss.errors);
+      }
+      fs.writeFileSync(path.join(publicPath, 'groups.min.css'), minifiedCss.styles);
       console.log('✅ Groups CSS minified successfully');
     }
     

@@ -13,6 +13,7 @@
     "axios": "^1.8.4",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
+    "clean-css": "^5.3.3",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
