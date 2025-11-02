@@ -64,7 +64,8 @@ async function generateMinifiedFiles() {
     'articles.css',
     'footer.css',           
     'profile-modal.css',     
-    'cookies.css'          
+    'cookies.css',
+    'share-modal.css'          
   ];
   
 
@@ -82,7 +83,8 @@ async function generateMinifiedFiles() {
     'main-area.js',        
     'preferences.js',   
     'articles.js',         
-    'share-quote.js',      
+    'share-quote.js',  
+    'share-utils.js',
     'cookies.js',
   ];
   

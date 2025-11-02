@@ -31,11 +31,11 @@ function loadMonthlyCalendar() {
         <select id="userSelector" class="user-selector"></select>
       `;
         
-        // Insert user selector before the calendar container (not before month-navigation)
-        const monthlyCalendarSection = document.querySelector('.monthly-calendar-section');
+        // Insert user selector into monthly-calendar-share-container before the calendar container
+        const monthlyCalendarShareContainer = document.querySelector('.monthly-calendar-share-container');
         const monthlyCalendarContainer = document.querySelector('.monthly-calendar-container');
-        if (monthlyCalendarSection && monthlyCalendarContainer) {
-            monthlyCalendarSection.insertBefore(userSelectorContainer, monthlyCalendarContainer);
+        if (monthlyCalendarShareContainer && monthlyCalendarContainer) {
+            monthlyCalendarShareContainer.insertBefore(userSelectorContainer, monthlyCalendarContainer);
         }
     }
 
@@ -507,4 +507,36 @@ function loadMonthlyCalendar() {
 
     // Try to populate users initially if the table is already loaded
     setTimeout(populateUserSelector, 500);
+    
+    // Paylaş butonu için event listener ekle
+    const monthShareBtn = document.getElementById('monthShareBtn');
+    if (monthShareBtn) {
+        monthShareBtn.addEventListener('click', shareMonthlyCalendar);
+    }
+}
+
+// Aylık takvimi resme çevirip modal'da göster
+async function shareMonthlyCalendar() {
+    const monthlyCalendarShareContainer = document.querySelector('.monthly-calendar-share-container');
+    if (!monthlyCalendarShareContainer) {
+        console.warn('Monthly calendar share container bulunamadı');
+        return;
+    }
+    
+    const monthYearHeader = document.getElementById('monthYearHeader');
+    const titleText = monthYearHeader ? monthYearHeader.textContent.trim() : 'aylik-takvim';
+
+    await shareContainerAsImage({
+        container: monthlyCalendarShareContainer,
+        modalId: 'monthShareModal',
+        titleText: titleText,
+        fileNamePrefix: 'aylik-takvim',
+        shareTitle: 'Aylık Takvim',
+        shareText: `${titleText} aylık okuma takvimi`,
+        onRestore: () => {
+            // Monthly calendar için restore işlemi gerekmiyor
+            // Çünkü kullanıcı resmi bilgisi kullanmıyoruz
+        },
+        prepareImages: null // Monthly calendar'da resim hazırlama ihtiyacı yok
+    });
 }

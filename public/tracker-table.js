@@ -925,44 +925,20 @@ function getDayOfWeekInTurkish(date) {
     return days[date.getDay()];
 }
 
-// Paylaş işlemi devam ediyor mu kontrolü
-let isShareProcessing = false;
-let cancelImageGeneration = false;
 
 // Tabloyu resme çevirip modal'da göster
 async function shareTrackerTable() {
-    try {
-        // Eğer zaten bir paylaş işlemi devam ediyorsa yeni talep oluşturma
-        if (isShareProcessing) {
-            return;
-        }
+    const weekText = currentWeekDisplay ? currentWeekDisplay.textContent.trim() : 'tablo';
 
-        // Tablo görünür mü kontrol et
-        if (!trackerTable || trackerTable.style.display === 'none') {
-            console.warn('Tablo görünür değil');
-            return;
-        }
-
-        // İşlem başladı flag'ini set et ve iptal flag'ini sıfırla
-        isShareProcessing = true;
-        cancelImageGeneration = false;
-
-        // Dosya adını oluştur (hafta tarihi ile)
-        const weekText = currentWeekDisplay ? currentWeekDisplay.textContent.trim() : 'tablo';
-
-        // Modal'ı hemen aç (loading durumunda)
-        showShareModalLoading(weekText);
-
-        // Dropbox resimlerini default.png olarak değiştir (canvas'tan önce)
+    // Dropbox resimlerini default.png olarak değiştir
+    const prepareImages = async () => {
         const profileImages = trackerTable.querySelectorAll('.tracker-profile-image');
         const imageUpdates = [];
         
         profileImages.forEach(img => {
             const src = img.src || img.getAttribute('src') || '';
-            // Local path kontrolü: /images/ veya /userAvatars/ içeren tüm URL'ler (tam URL olsa bile)
             const isLocalPath = src.includes('/images/') || src.includes('/userAvatars/');
             
-            // Dropbox veya external URL: http/https ile başlayıp local path içermiyorsa
             if (src && (src.startsWith('http://') || src.startsWith('https://')) && !isLocalPath) {
                 imageUpdates.push({
                     img: img,
@@ -972,333 +948,35 @@ async function shareTrackerTable() {
             }
         });
         
-        // Resimlerin yüklenmesini bekle
         await Promise.all(imageUpdates.map(({ img }) => {
             return new Promise((resolve) => {
                 if (img.complete) {
                     resolve();
                 } else {
                     img.onload = resolve;
-                    img.onerror = resolve; // Hata olsa bile devam et
-                    // Timeout: 2 saniye sonra devam et
+                    img.onerror = resolve;
                     setTimeout(resolve, 2000);
                 }
             });
         }));
-
-        // Tabloyu geçici container'a al (padding için)
-        const tempContainer = document.createElement('div');
-        tempContainer.style.cssText = 'background: #ffffff; display: block;';
-        const parent = trackerTable.parentNode;
-        const nextSibling = trackerTable.nextSibling;
-        
-        // Tabloyu container'a taşı
-        tempContainer.appendChild(trackerTable);
-        if (nextSibling) {
-            parent.insertBefore(tempContainer, nextSibling);
-        } else {
-            parent.appendChild(tempContainer);
-        }
-
-        // İptal kontrolü - panel kapatıldı mı?
-        if (cancelImageGeneration) {
-            // Tabloyu geri yerine koy
-            requestAnimationFrame(() => {
-                if (nextSibling) {
-                    parent.insertBefore(trackerTable, nextSibling);
-                } else {
-                    parent.appendChild(trackerTable);
-                }
-                parent.removeChild(tempContainer);
-            });
-            
-            isShareProcessing = false;
-            return;
-        }
-
-        // html2canvas ile container'ı resme çevir
-        const canvas = await html2canvas(tempContainer, {
-            backgroundColor: '#ffffff',
-            scale: 2, // Yüksek kalite için
-            logging: false,
-            useCORS: true,
-            allowTaint: false
-        });
-
-        // Tabloyu geri yerine koy (hemen, görsel olarak değişiklik olmasın)
-        requestAnimationFrame(() => {
-            if (nextSibling) {
-                parent.insertBefore(trackerTable, nextSibling);
-            } else {
-                parent.appendChild(trackerTable);
-            }
-            parent.removeChild(tempContainer);
-        });
-
-        // İptal kontrolü - panel kapatıldı mı?
-        if (cancelImageGeneration) {
-            isShareProcessing = false;
-            return;
-        }
-
-        // Resmi daha büyük bir beyaz canvas'ın ortasına yerleştir
-        // Ekstra padding için: her yönden 20px boşluk ekle
-        const paddingPx = 15;
-        const finalCanvas = document.createElement('canvas');
-        finalCanvas.width = canvas.width + (paddingPx * 2);
-        finalCanvas.height = canvas.height + (paddingPx * 2);
-        
-        const ctx = finalCanvas.getContext('2d');
-        
-        // Beyaz arka plan
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-        
-        // Orijinal canvas'ı ortaya çiz
-        ctx.drawImage(canvas, paddingPx, paddingPx);
-
-        // Canvas'ı blob'a çevir (finalCanvas kullan)
-        try {
-            const finalBlob = await new Promise((resolve, reject) => {
-                finalCanvas.toBlob((blob) => {
-                    if (blob) resolve(blob);
-                    else reject(new Error('Blob oluşturulamadı'));
-                }, 'image/png', 0.95);
-            });
-            
-            // İptal kontrolü - panel kapatıldı mı?
-            if (cancelImageGeneration) {
-                isShareProcessing = false;
-                return;
-            }
-
-            // Blob'u kullan
-            const fileName = `okuma-tablosu-${weekText.replace(/\s+/g, '-')}-${Date.now()}.png`;
-            const imageUrl = URL.createObjectURL(finalBlob);
-
-            // Modal'ı resim ile güncelle
-            showShareModalReady(weekText, imageUrl, finalBlob, fileName);
-
-            // İşlem tamamlandı flag'ini sıfırla
-            isShareProcessing = false;
-        } catch (blobError) {
-            console.error('Blob oluşturma hatası:', blobError);
-            closeShareModal();
-            isShareProcessing = false;
-            throw blobError; // Üst try-catch'e ilet
-        }
-    } catch (error) {
-        console.error('Tablo paylaşılırken hata oluştu:', error);
-        
-        // Hata durumunda modal'ı kapat
-        closeShareModal();
-        
-        // Hata durumunda da flag'i sıfırla
-        isShareProcessing = false;
-    }
-}
-
-// Modal'ı loading durumunda göster
-function showShareModalLoading(weekText) {
-    const modal = document.getElementById('tableShareModal');
-    const modalTitle = document.getElementById('tableShareModalTitle');
-    const modalImage = document.getElementById('tableShareImage');
-    const imageContainer = document.querySelector('.table-share-image-container');
-    
-    if (!modal || !modalTitle || !modalImage || !imageContainer) return;
-
-    // Modal içeriğini güncelle
-    modalTitle.textContent = weekText;
-    
-    // Resmi gizle ve loading mesajını göster
-    modalImage.style.display = 'none';
-    
-    // Loading mesajı oluştur veya güncelle
-    let loadingMessage = imageContainer.querySelector('.table-share-loading-message');
-    if (!loadingMessage) {
-        loadingMessage = document.createElement('div');
-        loadingMessage.className = 'table-share-loading-message';
-        const loadingText = document.createElement('span');
-        loadingText.textContent = 'Resim hazırlanıyor...';
-        loadingMessage.appendChild(loadingText);
-        imageContainer.appendChild(loadingMessage);
-    }
-    loadingMessage.style.display = 'flex';
-
-    // Footer butonlarını gizle
-    const footer = document.querySelector('.table-share-modal-footer');
-    if (footer) {
-        footer.style.display = 'none';
-    }
-
-    // Modal'ı göster
-    modal.style.display = 'block';
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
-}
-
-// Modal'ı resim hazır olduğunda güncelle
-function showShareModalReady(weekText, imageUrl, blob, fileName) {
-    const modal = document.getElementById('tableShareModal');
-    const modalTitle = document.getElementById('tableShareModalTitle');
-    const modalImage = document.getElementById('tableShareImage');
-    const imageContainer = document.querySelector('.table-share-image-container');
-    
-    if (!modal || !modalTitle || !modalImage || !imageContainer) return;
-
-    // İptal kontrolü - panel kapatıldı mı?
-    if (cancelImageGeneration) {
-        closeShareModal();
-        return;
-    }
-
-    // Loading mesajını gizle
-    const loadingMessage = imageContainer.querySelector('.table-share-loading-message');
-    if (loadingMessage) {
-        loadingMessage.style.display = 'none';
-    }
-
-    // Resmi başlangıçta gizle (opacity ve max-height ile)
-    modalImage.style.display = 'block';
-    modalImage.style.opacity = '0';
-    modalImage.style.maxHeight = '0px';
-    modalImage.style.overflow = 'hidden';
-    
-    // Resmi yükle
-    modalImage.src = imageUrl;
-    
-    // Resim yüklendiğinde görünür yap ve container transition'ını tetikle
-    modalImage.onload = function() {
-        if (cancelImageGeneration) {
-            return;
-        }
-        
-        // Resmin gerçek yüksekliğini hesapla
-        // naturalHeight resmin gerçek piksel boyutunu verir
-        const naturalHeight = this.naturalHeight;
-        // Resim responsive (max-width: 100%) olduğu için container genişliğine göre scale olabilir
-        // Container genişliğini al
-        const containerWidth = imageContainer.getBoundingClientRect().width - 20; // padding dahil
-        const naturalWidth = this.naturalWidth;
-        
-        // Eğer resim container'dan genişse, scale edilmiş yüksekliği hesapla
-        let calculatedHeight = naturalHeight;
-        if (naturalWidth > containerWidth && containerWidth > 0) {
-            const scale = containerWidth / naturalWidth;
-            calculatedHeight = naturalHeight * scale;
-        }
-        
-        // Kısa bir gecikme ile transition'ı tetikle
-        requestAnimationFrame(() => {
-            if (cancelImageGeneration) {
-                return;
-            }
-            // Resmi görünür yap (hesaplanan yüksekliğe göre)
-            this.style.opacity = '1';
-            this.style.maxHeight = calculatedHeight + 'px';
-            this.style.overflow = 'visible';
-        });
     };
 
-    // Footer butonlarını göster
-    const footer = document.querySelector('.table-share-modal-footer');
-    if (footer) {
-        footer.style.display = 'flex';
-    }
-
-    // İndir butonu
-    const downloadBtn = document.getElementById('downloadTableImageBtn');
-    if (downloadBtn) {
-        // Eski listener'ları temizle
-        const newDownloadBtn = downloadBtn.cloneNode(true);
-        downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
-        
-        newDownloadBtn.addEventListener('click', () => {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        });
-    }
-
-    // Paylaş butonu
-    const shareBtn = document.getElementById('shareTableImageBtn');
-    if (shareBtn) {
-        // Eski listener'ları temizle
-        const newShareBtn = shareBtn.cloneNode(true);
-        shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
-        
-        newShareBtn.addEventListener('click', async () => {
-            try {
-                if (navigator.share && navigator.canShare) {
-                    const file = new File([blob], fileName, { type: 'image/png' });
-                    const shareData = {
-                        title: 'Okuma Tablosu',
-                        text: `${weekText} haftası okuma tablosu`,
-                        files: [file]
-                    };
-
-                    if (navigator.canShare(shareData)) {
-                        await navigator.share(shareData);
-                        console.log('Tablo Web Share API ile paylaşıldı');
-                        closeShareModal();
-                    }
-                } else {
-                    console.warn('Web Share API desteklenmiyor');
-                }
-            } catch (shareError) {
-                if (shareError.name !== 'AbortError') {
-                    console.log('Web Share API hatası:', shareError);
-                }
-            }
-        });
-    }
-}
-
-// Modal'ı kapat
-function closeShareModal() {
-    // İptal flag'ini set et (resim üretimi devam ediyorsa)
-    if (isShareProcessing) {
-        cancelImageGeneration = true;
-    }
-    
-    const modal = document.getElementById('tableShareModal');
-    if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-            // Blob URL'yi temizle ve resmin style'larını sıfırla
-            const modalImage = document.getElementById('tableShareImage');
-            if (modalImage && modalImage.src) {
-                URL.revokeObjectURL(modalImage.src);
-                modalImage.src = '';
-                modalImage.style.display = 'none';
-                modalImage.style.opacity = '';
-                modalImage.style.maxHeight = '';
-                modalImage.style.overflow = '';
-            }
-            
-            // Loading mesajını temizle
-            const imageContainer = document.querySelector('.table-share-image-container');
-            if (imageContainer) {
-                const loadingMessage = imageContainer.querySelector('.table-share-loading-message');
-                if (loadingMessage) {
-                    loadingMessage.remove();
-                }
-            }
-            
-            // Tabloyu eski haline döndürmek için loadTrackerTable'ı çağır
+    await window.shareContainerAsImage({
+        container: trackerTable,
+        modalId: 'tableShareModal',
+        titleText: weekText,
+        fileNamePrefix: 'okuma-tablosu',
+        shareTitle: 'Okuma Tablosu',
+        shareText: `${weekText} haftası okuma tablosu`,
+        onRestore: () => {
             if (typeof loadTrackerTable === 'function') {
                 loadTrackerTable();
             }
-        }, 300);
-    }
+        },
+        prepareImages: prepareImages
+    });
 }
+
 
 // Session timeout modal'ını göster
 function showSessionTimeoutModal() {
@@ -1369,28 +1047,34 @@ function reloadPageAfterSessionTimeout() {
     }
 }
 
-// Paylaş butonuna event listener ekle
+// Paylaş butonuna event listener ekle ve modal kapatma işlemlerini başlat
 document.addEventListener('DOMContentLoaded', () => {
+    // Table share modal
     const shareTableBtn = document.getElementById('shareTableBtn');
     if (shareTableBtn) {
         shareTableBtn.addEventListener('click', shareTrackerTable);
     }
 
-    // Modal kapatma butonu
-    const closeBtn = document.getElementById('closeTableShareModal');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeShareModal);
-    }
-
-    // Overlay'e tıklayınca kapat
-    const modal = document.getElementById('tableShareModal');
-    if (modal) {
-        const overlay = modal.querySelector('.table-share-modal-overlay');
-        if (overlay) {
-            overlay.addEventListener('click', closeShareModal);
+    window.setupShareModal('tableShareModal', 'closeTableShareModal', () => {
+        if (typeof loadTrackerTable === 'function') {
+            loadTrackerTable();
         }
-    }
-
+    });
+    
+    // Month share modal setup
+    window.setupShareModal('monthShareModal', 'closeMonthShareModal', () => {
+        // Monthly calendar için restore işlemi gerekmiyor
+    });
+    
+    // Longest series share modal setup
+    window.setupShareModal('longestSeriesShareModal', 'closeLongestSeriesShareModal', () => {
+        // Restore işlemi gerekmiyor
+    });
+    
+    // Reading stats share modal setup
+    window.setupShareModal('readingStatsShareModal', 'closeReadingStatsShareModal', () => {
+        // Restore işlemi gerekmiyor
+    });
 });
 
 

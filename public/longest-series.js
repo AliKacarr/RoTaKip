@@ -12,6 +12,9 @@ function renderLongestSeries() {
             shareBtn.id = 'longestSeriesShareBtn';
             shareBtn.innerHTML = `<img src="/images/share.webp" alt="Paylaş" />`;
             chart.appendChild(shareBtn);
+            
+            // Paylaş butonu için event listener ekle
+            shareBtn.addEventListener('click', shareLongestSeriesChart);
             // En iyi (yüksek streak) üstte olacak şekilde sırala
             const sortedData = (data || []).slice().sort((a, b) => b.streak - a.streak);
             // Barlar ters: en iyi = en kısa
@@ -246,4 +249,30 @@ function formatDateParts(dateStr) {
     const day = date.toLocaleDateString('tr-TR', { day: '2-digit' });
     const month = date.toLocaleDateString('tr-TR', { month: 'short' });
     return `<span class="date-daymonth">${day} ${month}</span>`;
+}
+
+// En uzun seri section'ını resme çevirip modal'da göster
+async function shareLongestSeriesChart() {
+    const longestSeriesSection = document.querySelector('.longest-series-section');
+    if (!longestSeriesSection) {
+        console.warn('Longest series section bulunamadı');
+        return;
+    }
+    
+    const titleText = 'En Uzun Okuma Serisi';
+
+    if (window.shareContainerAsImage) {
+        await window.shareContainerAsImage({
+            container: longestSeriesSection,
+            modalId: 'longestSeriesShareModal',
+            titleText: titleText,
+            fileNamePrefix: 'en-uzun-okuma-serisi',
+            shareTitle: 'En Uzun Okuma Serisi',
+            shareText: 'En uzun okuma serisi istatistikleri',
+            onRestore: () => {
+                // Restore işlemi gerekmiyor
+            },
+            prepareImages: null
+        });
+    }
 }

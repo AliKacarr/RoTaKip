@@ -274,6 +274,9 @@ async function loadReadingStats() {
             shareBtn.id = 'readingStatsShareBtn';
             shareBtn.innerHTML = `<img src="/images/share.webp" alt="Paylaş" />`;
             chartContainer.appendChild(shareBtn);
+            
+            // Paylaş butonu için event listener ekle
+            shareBtn.addEventListener('click', shareReadingStatsChart);
         }
 
         // stats-section'ı görünür yap
@@ -281,5 +284,31 @@ async function loadReadingStats() {
         if (statsSection) statsSection.style.display = 'block';
     } catch (error) {
         console.error('Error loading reading stats:', error);
+    }
+}
+
+// Okuma istatistikleri section'ını resme çevirip modal'da göster
+async function shareReadingStatsChart() {
+    const statsSection = document.querySelector('.stats-section');
+    if (!statsSection) {
+        console.warn('Stats section bulunamadı');
+        return;
+    }
+    
+    const titleText = 'Okuma İstatistikleri';
+
+    if (window.shareContainerAsImage) {
+        await window.shareContainerAsImage({
+            container: statsSection,
+            modalId: 'readingStatsShareModal',
+            titleText: titleText,
+            fileNamePrefix: 'okuma-istatistikleri',
+            shareTitle: 'Okuma İstatistikleri',
+            shareText: 'Okuma istatistikleri grafiği',
+            onRestore: () => {
+                // Restore işlemi gerekmiyor
+            },
+            prepareImages: null
+        });
     }
 }

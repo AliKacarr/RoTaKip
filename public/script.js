@@ -482,7 +482,7 @@ function initializeProfileButton() {
       profileButton.title = 'Kullanıcı Girişi';
       
       profileButtonIcon.className = 'fa-solid fa-sign-in-alt';
-      profileButtonIcon.style.fontSize = '20px';
+      profileButtonIcon.style.fontSize = '30px';
       profileButtonIcon.style.color = '#007bff';
       
       profileButton.onclick = function() {
@@ -1024,7 +1024,6 @@ document.addEventListener('DOMContentLoaded', function() {
               }
             }
           }
-          console.log('Scroll olayı');
           // Sonra adminIndicator'ı kontrol et (scrollToMainButton durumuna göre pozisyon ayarlanır)
           if (adminIndicator) {
             if (isLoggedIn) {
