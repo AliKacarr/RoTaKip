@@ -969,7 +969,7 @@ async function shareTrackerTable() {
 
         // Tabloyu geçici container'a al (padding için)
         const tempContainer = document.createElement('div');
-        tempContainer.style.cssText = 'padding: 15px; background: #ffffff; display: block;';
+        tempContainer.style.cssText = 'background: #ffffff; display: block;';
         const parent = trackerTable.parentNode;
         const nextSibling = trackerTable.nextSibling;
         
@@ -1025,32 +1025,57 @@ async function shareTrackerTable() {
             return;
         }
 
-        // Canvas'ı blob'a çevir
-        canvas.toBlob(async (blob) => {
+        // Resmi daha büyük bir beyaz canvas'ın ortasına yerleştir
+        // Ekstra padding için: her yönden 20px boşluk ekle
+        const paddingPx = 15;
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = canvas.width + (paddingPx * 2);
+        finalCanvas.height = canvas.height + (paddingPx * 2);
+        
+        const ctx = finalCanvas.getContext('2d');
+        
+        // Beyaz arka plan
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+        
+        // Orijinal canvas'ı ortaya çiz
+        ctx.drawImage(canvas, paddingPx, paddingPx);
+
+        // Canvas'ı blob'a çevir (finalCanvas kullan)
+        try {
+            const finalBlob = await new Promise((resolve, reject) => {
+                finalCanvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('Blob oluşturulamadı'));
+                }, 'image/png', 0.95);
+            });
+            
             // İptal kontrolü - panel kapatıldı mı?
-            if (cancelImageGeneration || !blob) {
-                if (!blob) {
-                    console.error('Resim oluşturulamadı');
-                }
-                // Modal'ı kapat
-                closeShareModal();
+            if (cancelImageGeneration) {
                 resetShareButton(shareBtn, svgElement, loadingSpinner);
                 isShareProcessing = false;
                 return;
             }
 
+            // Blob'u kullan
             const fileName = `okuma-tablosu-${weekText.replace(/\s+/g, '-')}-${Date.now()}.png`;
-            const imageUrl = URL.createObjectURL(blob);
+            const imageUrl = URL.createObjectURL(finalBlob);
 
             // Modal'ı resim ile güncelle
-            showShareModalReady(weekText, imageUrl, blob, fileName);
+            showShareModalReady(weekText, imageUrl, finalBlob, fileName);
 
             // Loading spinner'ı kaldır ve SVG'yi tekrar göster
             resetShareButton(shareBtn, svgElement, loadingSpinner);
 
             // İşlem tamamlandı flag'ini sıfırla
             isShareProcessing = false;
-        }, 'image/png', 0.95);
+        } catch (blobError) {
+            console.error('Blob oluşturma hatası:', blobError);
+            closeShareModal();
+            resetShareButton(shareBtn, svgElement, loadingSpinner);
+            isShareProcessing = false;
+            throw blobError; // Üst try-catch'e ilet
+        }
     } catch (error) {
         console.error('Tablo paylaşılırken hata oluştu:', error);
         
