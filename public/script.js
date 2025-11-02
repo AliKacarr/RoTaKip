@@ -558,6 +558,11 @@ function cleanUrlFromRefreshParam() {
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     
+    // Sayfa açılış zamanını kaydet veya güncelle
+    const sessionStartTimeKey = 'pageSessionStartTime';
+    const now = Date.now();
+    localStorage.setItem(sessionStartTimeKey, now.toString());
+    
     // URL'den _r parametresini temizle
     cleanUrlFromRefreshParam();
     

@@ -31,7 +31,7 @@
 .month-nav-button {
   background-color: #9cf2ff;
   border: 1px solid #c5c4d5;
-  border-radius: 4px;
+  border-radius: 8px;
   padding: 10px 16px;
   cursor: pointer;
   font-size: 15px;
@@ -47,6 +47,10 @@
   background-color: #8be1ee;
   border: 1px solid #abaabf;
   color: #333;
+}
+
+.month-nav-button:active {
+  transform: scale(0.98);
 }
 
 .month-arrow-icon {

@@ -327,6 +327,11 @@ function loadMonthlyCalendar() {
             return;
         }
 
+        // Session kontrolü
+        if (window.checkSessionTimeout && window.checkSessionTimeout()) {
+            return; // İşlemi durdur
+        }
+
         // Member kullanıcıları sadece kendi verilerini güncelleyebilir
         if (userInfo.userAuthority === 'member') {
             // Member kullanıcılar için kullanıcı adını API'den al

@@ -12,6 +12,30 @@ window.weekOffset = weekOffset;
 let isFirstLoad = true;
 let postToggleUpdateTimer = null;
 
+// Session kontrolü için değişkenler
+let lastSessionCheckTime = 0;
+const SESSION_CHECK_DEBOUNCE = 5000; // 5 saniye
+const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 dakika (milisaniye)
+
+// Session kontrolü yardımcı fonksiyonu (global erişim için)
+window.checkSessionTimeout = function() {
+    const now = Date.now();
+    // 5 saniye içinde kontrol edilmediyse kontrol et
+    if (now - lastSessionCheckTime > SESSION_CHECK_DEBOUNCE) {
+        const sessionStartTime = parseInt(localStorage.getItem('pageSessionStartTime') || '0');
+        const timeElapsed = now - sessionStartTime;
+        
+        if (timeElapsed >= SESSION_TIMEOUT) {
+            // 30 dakika geçmiş, panel aç
+            showSessionTimeoutModal();
+            return true; // İşlemi durdur
+        }
+        
+        lastSessionCheckTime = now;
+    }
+    return false; // İşleme devam edilebilir
+};
+
 // Kullanıcı istatistik alanını güncelle (giriş serisi hesaplaması ile)
 async function updateUserStatsAreaWithStreak() {
     const userInfo = LocalStorageManager.getCurrentUserInfo();
@@ -564,6 +588,11 @@ async function toggleStatus(userId, date) {
     if (userInfo.userAuthority === 'member' && userInfo.userId !== userId) {
         logUnauthorizedAccess('Başka üyenin haftalık tablosuna tıklama');
         return;
+    }
+
+    // Session kontrolü
+    if (window.checkSessionTimeout && window.checkSessionTimeout()) {
+        return; // İşlemi durdur
     }
     const cell = event.target;
     const current = cell.innerText;
@@ -1249,6 +1278,75 @@ function closeShareModal() {
     }
 }
 
+// Session timeout modal'ını göster
+function showSessionTimeoutModal() {
+    const modal = document.getElementById('sessionTimeoutModal');
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    
+    // Geri sayım başlat
+    startSessionTimeoutCountdown();
+}
+
+// Geri sayım interval'ini sakla
+let sessionCountdownInterval = null;
+
+// Geri sayım fonksiyonu
+function startSessionTimeoutCountdown() {
+    const countdownElement = document.getElementById('sessionTimeoutCountdown');
+    if (!countdownElement) return;
+    
+    // Önceki interval'i temizle (varsa)
+    if (sessionCountdownInterval) {
+        clearInterval(sessionCountdownInterval);
+    }
+    
+    let countdown = 3;
+    countdownElement.textContent = countdown;
+    
+    sessionCountdownInterval = setInterval(() => {
+        
+        if (countdown >= 0) {
+            countdownElement.textContent = countdown;
+            // Sayı değiştiğinde animasyon efekti
+            countdownElement.classList.add('countdown-pulse');
+            setTimeout(() => {
+                countdownElement.classList.remove('countdown-pulse');
+            }, 300);
+        } else {
+            // Geri sayım bitti, sayfayı yenile
+            clearInterval(sessionCountdownInterval);
+            sessionCountdownInterval = null;
+            reloadPageAfterSessionTimeout();
+        }
+
+        countdown--;
+    }, 1000); // Her 1 saniyede bir
+}
+
+// Session timeout modal'ını kapat ve mevcut URL'ye yönlendir
+function reloadPageAfterSessionTimeout() {
+    // Geri sayım interval'ini temizle
+    if (sessionCountdownInterval) {
+        clearInterval(sessionCountdownInterval);
+        sessionCountdownInterval = null;
+    }
+    
+    const modal = document.getElementById('sessionTimeoutModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            // Mevcut URL'ye yönlendir
+            window.location.href = window.location.href;
+        }, 300);
+    }
+}
+
 // Paylaş butonuna event listener ekle
 document.addEventListener('DOMContentLoaded', () => {
     const shareTableBtn = document.getElementById('shareTableBtn');
@@ -1270,6 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.addEventListener('click', closeShareModal);
         }
     }
+
 });
 
 

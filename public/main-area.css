@@ -621,6 +621,12 @@ input[type="file"] {
     transform: translateY(-1px);
 }
 
+.upload-btn:active {
+    transform: scale(0.98);
+    background-color: #229954;
+    color: #ffffff;
+}
+
 .avatar-select-btn {
     background: linear-gradient(135deg, #4B8EF5 0%, #2563EB 100%);
     color: white !important;
@@ -645,6 +651,12 @@ input[type="file"] {
     transform: translateY(-1px);
 }
 
+.avatar-select-btn:active {
+    transform: scale(0.98);
+    background-color: #229954;
+    color: #ffffff;
+}
+
 .remove-image-btn {
     background: linear-gradient(135deg, #F87171, #EF4444);
     color: white !important;
@@ -667,6 +679,12 @@ input[type="file"] {
     background: linear-gradient(135deg, #EF4444, #DC2626);
     box-shadow: 0 4px 8px rgba(248, 113, 113, 0.4);
     transform: translateY(-1px);
+}
+
+.remove-image-btn:active {
+    transform: scale(0.98);
+    background-color: #229954;
+    color: #ffffff;
 }
 
 #imagePreviewContainer {
@@ -1230,6 +1248,12 @@ input[type="file"] {
     transform: translateY(-2px);
 }
 
+.save-group-btn:active {
+    transform: scale(0.98);
+    background-color: #229954;
+    color: #ffffff;
+}
+
 .delete-group-btn {
     background-color: #e74c3c;
     color: white;
@@ -1252,6 +1276,12 @@ input[type="file"] {
     background-color: #c0392b;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
+}
+
+.delete-group-btn:active {
+    transform: scale(0.98);
+    background-color: #c0392b;
+    color: #ffffff;
 }
 
 /* Grup Link Butonları */
@@ -1277,6 +1307,12 @@ input[type="file"] {
     background-color: #2980b9;
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
     transform: translateY(-2px);
+}
+
+.group-link-btn:active {
+    transform: scale(0.98);
+    background-color: #2980b9;
+    color: #ffffff;
 }
 
 .group-link-btn i {
@@ -1357,6 +1393,12 @@ input[type="file"] {
 .share-group-btn:hover {
     background-color: #229954;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.share-group-btn:active {
+    transform: scale(0.98);
+    background-color: #229954;
+    color: #ffffff;
 }
 
 .visibility-container {

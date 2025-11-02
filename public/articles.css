@@ -85,6 +85,12 @@
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
+.load-more-btn:active {
+  transform: scale(0.98);
+  background: linear-gradient(135deg, #5a67d8 0%, #533483 100%);
+  color: #e0e7ff;
+}
+
 .load-more-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;

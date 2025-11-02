@@ -84,7 +84,6 @@ async function generateMinifiedFiles() {
     'articles.js',         
     'share-quote.js',      
     'cookies.js',
-    //'sessionWatcher.js'
   ];
   
   const validIndexCssFiles = indexCssFiles

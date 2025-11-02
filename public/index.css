@@ -262,6 +262,11 @@ body {
     background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--primary-blue-light) 100%);
 }
 
+.create-btn:active {
+    transform: scale(0.98);
+    color: #e0e7ff;
+}
+
 .create-btn i {
     font-size: var(--font-xl);
 }
@@ -604,6 +609,11 @@ body {
 .join-group-btn.pending:hover {
     transform: none;
     box-shadow: none;
+}
+
+.join-group-btn:active {
+    transform: scale(0.98);
+    color: #e0e7ff;
 }
 
 /* Loading & No Results */
@@ -1076,6 +1086,11 @@ body {
     border-color: #1D4ED8;
 }
 
+.btn-primary:active {
+    transform: scale(0.98);
+    color: #e0e7ff;
+}
+
 .btn-secondary {
     flex: 1;
     background: white;
@@ -1088,6 +1103,11 @@ body {
     background: rgba(56, 189, 248, 0.1);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+}
+
+.btn-secondary:active {
+    transform: scale(0.98);
+    color: #e0e7ff;
 }
 
 .btn-danger {
@@ -1115,6 +1135,11 @@ body {
 
 .btn-danger i {
     font-size: var(--font-sm);
+}
+
+.btn-danger:active {
+    transform: scale(0.98);
+    color: #e0e7ff;
 }
 
 /* ==================== Join Group Modal ==================== */

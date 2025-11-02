@@ -182,6 +182,12 @@
   color: #fff;
 }
 
+.footer-section.app-download .app-btn:active {
+  transform: scale(0.98);
+  background-color: #1a417a;
+  color: #ffffff;
+}
+
 .footer-bottom {
   display: flex;
   justify-content: center;
