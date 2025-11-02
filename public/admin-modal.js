@@ -81,38 +81,9 @@ if (!quotesButton) {
     document.body.appendChild(quotesButton);
 }
 
-}
-
-async function showAdminIndicator() {     //admin modu butonunu gösterme
-    // Check if user is logged in and valid
-    if (!LocalStorageManager.isUserLoggedIn()) {
-        // Çıkış yapmış kullanıcı için tüm elementleri gizle
-        const adminIndicator = document.querySelector('.admin-indicator');
-        const mainArea = document.querySelector('.main-area');
-        const userStatsArea = document.querySelector('.user-stats-info-area');
-        const scrollToMainButton = document.querySelector('.scroll-to-main-button');
-        
-        if (adminIndicator) adminIndicator.style.display = 'none';
-        if (mainArea) mainArea.style.display = 'none';
-        if (userStatsArea) {
-            userStatsArea.classList.remove('show');
-            userStatsArea.classList.add('collapsed');
-            setTimeout(() => {
-                userStatsArea.style.display = 'none';
-                userStatsArea.classList.remove('collapsed'); // Animasyon bittikten sonra class'ı temizle
-            }, 800); // Animasyon süresi kadar bekle
-        }
-        if (scrollToMainButton) scrollToMainButton.style.display = 'none';
-        
-        return;
-    }
-    
-    const userInfo = LocalStorageManager.getCurrentUserInfo();
-    if (!userInfo) return;
-    
-    // Create scroll to main area button if it doesn't exist (only for admin)
+    // Create scroll to main area button if it doesn't exist
     let scrollToMainButton = document.querySelector('.scroll-to-main-button');
-    if (!scrollToMainButton && userInfo.userAuthority === 'admin') {
+    if (!scrollToMainButton) {
         scrollToMainButton = document.createElement('div');
         scrollToMainButton.className = 'scroll-to-main-button';
         scrollToMainButton.innerHTML = '<i class="fa-solid fa-gear"></i> Grup Ayarları';
@@ -130,52 +101,115 @@ async function showAdminIndicator() {     //admin modu butonunu gösterme
 
         document.body.appendChild(scrollToMainButton);
     }
-    
-    // Scroll butonunu göster (sadece admin yetkisi olan kullanıcılar için)
-    if (scrollToMainButton) {
-        if (userInfo.userAuthority === 'admin') {
-            scrollToMainButton.style.display = 'flex';
-        } else {
-            scrollToMainButton.style.display = 'none';
-        }
-    }
 
     // Create admin indicator if it doesn't exist
     let adminIndicator = document.querySelector('.admin-indicator');
     if (!adminIndicator) {
         adminIndicator = document.createElement('div');
         adminIndicator.className = 'admin-indicator';
-        const displayName = userInfo.name && userInfo.name !== 'null' ? userInfo.name : '';
-        adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
-            `<i class="fa-solid fa-user-shield"></i> <span class="user-name">${displayName}</span>` : 
-            `<i class="fa-solid fa-user"></i> <span class="admin-user-name">${displayName}</span>`;
-
+        
         // Add click event to open admin info panel
         adminIndicator.addEventListener('click', function () {
             showAdminInfoPanel();
         });
 
         document.body.appendChild(adminIndicator);
-        adminIndicator.style.display = 'flex';
-    } else {
-        // Update text based on user authority
+    }
+}
+
+async function showAdminIndicator() { 
+
+        // Üç navigasyon butonunu göster
+        const quotesButton = document.querySelector('.quotes-button');
+        const videosButton = document.querySelector('.videos-button');
+        const articlesButton = document.querySelector('.articles-button');
+        
+        if (quotesButton) {
+            quotesButton.classList.add('show');
+            quotesButton.classList.remove('hidden');
+        }
+        if (videosButton) {
+            videosButton.classList.add('show');
+            videosButton.classList.remove('hidden');
+        }
+        if (articlesButton) {
+            articlesButton.classList.add('show');
+            articlesButton.classList.remove('hidden');
+        }
+        
+    //admin modu butonunu gösterme
+    // Check if user is logged in and valid
+    if (!LocalStorageManager.isUserLoggedIn()) {
+        // Çıkış yapmış kullanıcı için tüm elementleri gizle
+        const adminIndicator = document.querySelector('.admin-indicator');
+        const mainArea = document.querySelector('.main-area');
+        const userStatsArea = document.querySelector('.user-stats-info-area');
+        const scrollToMainButton = document.querySelector('.scroll-to-main-button');
+        
+        if (adminIndicator) {
+            adminIndicator.classList.remove('show');
+            adminIndicator.classList.add('hidden');
+        }
+        if (mainArea) mainArea.style.display = 'none';
+        if (userStatsArea) {
+            userStatsArea.classList.remove('show');
+            userStatsArea.classList.add('collapsed');
+            setTimeout(() => {
+                userStatsArea.style.display = 'none';
+                userStatsArea.classList.remove('collapsed'); // Animasyon bittikten sonra class'ı temizle
+            }, 800); // Animasyon süresi kadar bekle
+        }
+        if (scrollToMainButton) {
+            scrollToMainButton.classList.remove('show');
+            scrollToMainButton.classList.add('hidden');
+        }
+        
+        return;
+    }
+    
+    const userInfo = LocalStorageManager.getCurrentUserInfo();
+    if (!userInfo) return;
+    
+    // Get scroll to main area button (already created in createNavigationButtons)
+    let scrollToMainButton = document.querySelector('.scroll-to-main-button');
+    
+    // Scroll butonunu göster (sadece admin yetkisi olan kullanıcılar için)
+    if (scrollToMainButton) {
+        if (userInfo.userAuthority === 'admin') {
+            scrollToMainButton.classList.add('show');
+            scrollToMainButton.classList.remove('hidden');
+        } else {
+            scrollToMainButton.classList.remove('show');
+            scrollToMainButton.classList.add('hidden');
+        }
+    }
+
+    // Get admin indicator (already created in createNavigationButtons)
+    let adminIndicator = document.querySelector('.admin-indicator');
+    
+    // Update admin indicator content based on user authority
+    if (adminIndicator) {
         const displayName = userInfo.name && userInfo.name !== 'null' ? userInfo.name : '';
         adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
             `<i class="fa-solid fa-user-shield"></i> <span class="user-name">${displayName}</span>` : 
-            `<i class="fa-solid fa-user"></i> <span class="user-name">${displayName}</span>`;
-        adminIndicator.style.display = 'flex';
+            `<i class="fa-solid fa-user"></i> <span class="admin-user-name">${displayName}</span>`;
+        adminIndicator.classList.add('show');
+        adminIndicator.classList.remove('hidden');
     }
 
-    // Admin indicator pozisyonunu scrollToMainButton'a göre ayarla
+    // Admin indicator pozisyonunu scrollToMainButton'ın görünürlüğüne göre ayarla
     if (adminIndicator) {
-        if (scrollToMainButton && scrollToMainButton.style.display === 'flex') {
-            // ScrollToMainButton görünürse admin-indicator'ı daha yukarı al
+        // scrollToMainButton "show" class'ına sahipse
+        if (
+            scrollToMainButton &&
+            scrollToMainButton.classList.contains('show')
+        ) {
             adminIndicator.style.bottom = '270px';
         } else {
-            // ScrollToMainButton gizliyse admin-indicator'ı daha aşağı al
             adminIndicator.style.bottom = '210px';
         }
     }
+
 
   
 
@@ -1217,6 +1251,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 // adminIndicator güncelle
                 if (typeof showAdminIndicator === 'function') {
                     showAdminIndicator();
+                }
+
+                // Beş butona show sınıfını ekle
+                const adminIndicator = document.querySelector('.admin-indicator');
+                const scrollToMainButton = document.querySelector('.scroll-to-main-button');
+                const quotesButton = document.querySelector('.quotes-button');
+                const videosButton = document.querySelector('.videos-button');
+                const articlesButton = document.querySelector('.articles-button');
+                
+                if (adminIndicator) {
+                    adminIndicator.classList.add('show');
+                    adminIndicator.classList.remove('hidden');
+                }
+                if (scrollToMainButton && data.authority === 'admin') {
+                    scrollToMainButton.classList.add('show');
+                    scrollToMainButton.classList.remove('hidden');
+                }
+                if (quotesButton) {
+                    quotesButton.classList.add('show');
+                    quotesButton.classList.remove('hidden');
+                }
+                if (videosButton) {
+                    videosButton.classList.add('show');
+                    videosButton.classList.remove('hidden');
+                }
+                if (articlesButton) {
+                    articlesButton.classList.add('show');
+                    articlesButton.classList.remove('hidden');
                 }
 
                 // Profil butonunu güncelle

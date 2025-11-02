@@ -267,6 +267,15 @@ async function loadReadingStats() {
         const statsLoading = document.getElementById('stats-loading');
         if (statsLoading) statsLoading.style.display = 'none';
 
+        // Paylaş butonunu ekle
+        if (chartContainer && !document.getElementById('readingStatsShareBtn')) {
+            const shareBtn = document.createElement('div');
+            shareBtn.className = 'reading-stats-share-btn';
+            shareBtn.id = 'readingStatsShareBtn';
+            shareBtn.innerHTML = `<img src="/images/share.webp" alt="Paylaş" />`;
+            chartContainer.appendChild(shareBtn);
+        }
+
         // stats-section'ı görünür yap
         const statsSection = document.querySelector('.stats-section');
         if (statsSection) statsSection.style.display = 'block';

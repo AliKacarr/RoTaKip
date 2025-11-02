@@ -5,6 +5,13 @@ function renderLongestSeries() {
             const chart = document.getElementById('longestSeriesChart');
             chart.style.minHeight = '150px';
             chart.innerHTML = '';
+            
+            // Paylaş butonunu ekle
+            const shareBtn = document.createElement('div');
+            shareBtn.className = 'longest-series-share-btn';
+            shareBtn.id = 'longestSeriesShareBtn';
+            shareBtn.innerHTML = `<img src="/images/share.webp" alt="Paylaş" />`;
+            chart.appendChild(shareBtn);
             // En iyi (yüksek streak) üstte olacak şekilde sırala
             const sortedData = (data || []).slice().sort((a, b) => b.streak - a.streak);
             // Barlar ters: en iyi = en kısa

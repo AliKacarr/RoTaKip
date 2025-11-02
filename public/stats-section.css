@@ -105,3 +105,27 @@
     margin: 0;
     padding: 0;
 }
+
+.reading-stats-share-btn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    z-index: 10;
+}
+
+.reading-stats-share-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+}
+
+.reading-stats-share-btn:hover img {
+    transform: scale(1.1);
+}

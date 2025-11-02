@@ -240,3 +240,40 @@
   border: 2px solid #3498db;
   background-color: #ebf5fb;
 }
+
+.month-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.month-header-content #monthYearHeader {
+  flex: 1;
+  text-align: center;
+}
+
+.month-share-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.month-share-btn img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.month-share-btn:hover img {
+  transform: scale(1.1);
+}
+
+.month-header-spacer {
+  width: 36px;
+  flex-shrink: 0;
+}

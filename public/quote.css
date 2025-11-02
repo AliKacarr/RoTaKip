@@ -232,13 +232,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* border-radius ve transition kaldırıldı */
     z-index: 2;
 }
 
-.share-quote:hover {
-    background: none;
-    color: #1a417a;
+.share-quote img {
+    transition: transform 0.2s ease;
+}
+
+.share-quote:hover img {
     transform: scale(1.1);
 }
 

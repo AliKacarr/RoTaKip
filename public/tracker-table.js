@@ -943,29 +943,48 @@ async function shareTrackerTable() {
             return;
         }
 
-        // Butonu ve SVG'yi al
-        const shareBtn = document.getElementById('shareTableBtn');
-        if (!shareBtn) return;
-        
-        const svgElement = shareBtn.querySelector('svg');
-        if (!svgElement) return;
-
         // İşlem başladı flag'ini set et ve iptal flag'ini sıfırla
         isShareProcessing = true;
         cancelImageGeneration = false;
-
-        // SVG'yi gizle ve yerine spinner ekle, yazı görünür kalsın
-        svgElement.style.display = 'none';
-        const loadingSpinner = document.createElement('div');
-        loadingSpinner.className = 'share-loading-spinner';
-        // SVG'den önce ekle (solda olsun)
-        shareBtn.insertBefore(loadingSpinner, svgElement);
 
         // Dosya adını oluştur (hafta tarihi ile)
         const weekText = currentWeekDisplay ? currentWeekDisplay.textContent.trim() : 'tablo';
 
         // Modal'ı hemen aç (loading durumunda)
         showShareModalLoading(weekText);
+
+        // Dropbox resimlerini default.png olarak değiştir (canvas'tan önce)
+        const profileImages = trackerTable.querySelectorAll('.tracker-profile-image');
+        const imageUpdates = [];
+        
+        profileImages.forEach(img => {
+            const src = img.src || img.getAttribute('src') || '';
+            // Local path kontrolü: /images/ veya /userAvatars/ içeren tüm URL'ler (tam URL olsa bile)
+            const isLocalPath = src.includes('/images/') || src.includes('/userAvatars/');
+            
+            // Dropbox veya external URL: http/https ile başlayıp local path içermiyorsa
+            if (src && (src.startsWith('http://') || src.startsWith('https://')) && !isLocalPath) {
+                imageUpdates.push({
+                    img: img,
+                    originalSrc: src
+                });
+                img.src = '/images/default.png';
+            }
+        });
+        
+        // Resimlerin yüklenmesini bekle
+        await Promise.all(imageUpdates.map(({ img }) => {
+            return new Promise((resolve) => {
+                if (img.complete) {
+                    resolve();
+                } else {
+                    img.onload = resolve;
+                    img.onerror = resolve; // Hata olsa bile devam et
+                    // Timeout: 2 saniye sonra devam et
+                    setTimeout(resolve, 2000);
+                }
+            });
+        }));
 
         // Tabloyu geçici container'a al (padding için)
         const tempContainer = document.createElement('div');
@@ -993,8 +1012,6 @@ async function shareTrackerTable() {
                 parent.removeChild(tempContainer);
             });
             
-            // Loading spinner'ı kaldır ve SVG'yi tekrar göster
-            resetShareButton(shareBtn, svgElement, loadingSpinner);
             isShareProcessing = false;
             return;
         }
@@ -1020,7 +1037,6 @@ async function shareTrackerTable() {
 
         // İptal kontrolü - panel kapatıldı mı?
         if (cancelImageGeneration) {
-            resetShareButton(shareBtn, svgElement, loadingSpinner);
             isShareProcessing = false;
             return;
         }
@@ -1052,7 +1068,6 @@ async function shareTrackerTable() {
             
             // İptal kontrolü - panel kapatıldı mı?
             if (cancelImageGeneration) {
-                resetShareButton(shareBtn, svgElement, loadingSpinner);
                 isShareProcessing = false;
                 return;
             }
@@ -1064,15 +1079,11 @@ async function shareTrackerTable() {
             // Modal'ı resim ile güncelle
             showShareModalReady(weekText, imageUrl, finalBlob, fileName);
 
-            // Loading spinner'ı kaldır ve SVG'yi tekrar göster
-            resetShareButton(shareBtn, svgElement, loadingSpinner);
-
             // İşlem tamamlandı flag'ini sıfırla
             isShareProcessing = false;
         } catch (blobError) {
             console.error('Blob oluşturma hatası:', blobError);
             closeShareModal();
-            resetShareButton(shareBtn, svgElement, loadingSpinner);
             isShareProcessing = false;
             throw blobError; // Üst try-catch'e ilet
         }
@@ -1082,28 +1093,9 @@ async function shareTrackerTable() {
         // Hata durumunda modal'ı kapat
         closeShareModal();
         
-        // Hata durumunda da spinner'ı kaldır ve SVG'yi göster
-        const shareBtn = document.getElementById('shareTableBtn');
-        if (shareBtn) {
-            const svgElement = shareBtn.querySelector('svg');
-            const spinner = shareBtn.querySelector('.share-loading-spinner');
-            resetShareButton(shareBtn, svgElement, spinner);
-        }
-
         // Hata durumunda da flag'i sıfırla
         isShareProcessing = false;
     }
-}
-
-// Share butonunu sıfırla
-function resetShareButton(shareBtn, svgElement, loadingSpinner) {
-    if (loadingSpinner && loadingSpinner.parentNode) {
-        loadingSpinner.remove();
-    }
-    if (svgElement) {
-        svgElement.style.display = 'block';
-    }
-    // Yazı zaten görünür kaldığı için değişiklik yapmaya gerek yok
 }
 
 // Modal'ı loading durumunda göster
@@ -1298,6 +1290,11 @@ function closeShareModal() {
                 if (loadingMessage) {
                     loadingMessage.remove();
                 }
+            }
+            
+            // Tabloyu eski haline döndürmek için loadTrackerTable'ı çağır
+            if (typeof loadTrackerTable === 'function') {
+                loadTrackerTable();
             }
         }, 300);
     }

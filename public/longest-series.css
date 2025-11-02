@@ -16,6 +16,30 @@
     position: relative;
 }
 
+.longest-series-share-btn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    z-index: 10;
+}
+
+.longest-series-share-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+}
+
+.longest-series-share-btn:hover img {
+    transform: scale(1.1);
+}
+
 .longest-series-bar-row {
     display: flex;
     align-items: center;

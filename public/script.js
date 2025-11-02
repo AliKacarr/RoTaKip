@@ -992,14 +992,27 @@ document.addEventListener('DOMContentLoaded', function() {
         scrollToTopBtn.classList.add('hidden');
         scrollToTopBtn.classList.remove('show');
       } else {
-        // Butonları göster
+        // Butonları göster (sadece giriş yapılmış kullanıcılar için admin butonları)
+        const isLoggedIn = LocalStorageManager.isUserLoggedIn();
+        const userInfo = isLoggedIn ? LocalStorageManager.getCurrentUserInfo() : null;
+        
         if (adminIndicator) {
-          adminIndicator.classList.remove('hidden');
-          adminIndicator.classList.add('show');
+          if (isLoggedIn) {
+            adminIndicator.classList.remove('hidden');
+            adminIndicator.classList.add('show');
+          } else {
+            adminIndicator.classList.add('hidden');
+            adminIndicator.classList.remove('show');
+          }
         }
         if (scrollToMainButton) {
-          scrollToMainButton.classList.remove('hidden');
-          scrollToMainButton.classList.add('show');
+          if (isLoggedIn && userInfo && userInfo.userAuthority === 'admin') {
+            scrollToMainButton.classList.remove('hidden');
+            scrollToMainButton.classList.add('show');
+          } else {
+            scrollToMainButton.classList.add('hidden');
+            scrollToMainButton.classList.remove('show');
+          }
         }
         if (quotesButton) {
           quotesButton.classList.remove('hidden');
