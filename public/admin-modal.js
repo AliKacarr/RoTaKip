@@ -2,7 +2,7 @@
 let isJoinRequestSuccess = false;
 
 // Create navigation buttons function (her zaman görünür)
-function createNavigationButtons() {
+window.createNavigationButtons = function createNavigationButtons() {
 
     // Create articles button if it doesn't exist
     let articlesButton = document.querySelector('.articles-button');
@@ -170,7 +170,6 @@ async function showAdminIndicator() {
     const userInfo = LocalStorageManager.getCurrentUserInfo();
     if (!userInfo) return;
     
-    // Get scroll to main area button (already created in createNavigationButtons)
     let scrollToMainButton = document.querySelector('.scroll-to-main-button');
     
     // Scroll butonunu göster (sadece admin yetkisi olan kullanıcılar için)
@@ -210,9 +209,6 @@ async function showAdminIndicator() {
         }
     }
 
-
-  
-
     // Sadece admin yetkisi olan kullanıcılar için main-area göster
     const mainArea = document.querySelector('.main-area');
     if (mainArea && userInfo.userAuthority === 'admin') {
@@ -232,8 +228,6 @@ async function showAdminIndicator() {
 
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Sayfa yüklendiğinde yeni butonları oluştur (her zaman görünür)
-    createNavigationButtons();
 
     const adminLogin = document.getElementById('secretAdminLogin');
     const groupsAuthLoginModal = document.getElementById('groupsAuthLoginModal');
@@ -1921,7 +1915,6 @@ function logoutFromProfile() {
             LocalStorageManager.logoutUser();
             closeProfileModal();
 
-            // showAdminIndicator() çıkış durumu için tüm elementleri gizler
             showAdminIndicator();
             
             showToast('Çıkış yapıldı!', 'success');

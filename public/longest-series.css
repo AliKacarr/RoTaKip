@@ -11,7 +11,7 @@
     justify-content: center;
     background: rgba(255, 246, 246, 0.45);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
+    border: 1px solid #dfdfdf;
     min-height: 370px;
     position: relative;
 }
