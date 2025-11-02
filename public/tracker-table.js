@@ -15,7 +15,7 @@ let postToggleUpdateTimer = null;
 // Session kontrolü için değişkenler
 let lastSessionCheckTime = 0;
 const SESSION_CHECK_DEBOUNCE = 5000; // 5 saniye
-const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 dakika (milisaniye)
+const SESSION_TIMEOUT = 15 * 60 * 1000; // 20 dakika (milisaniye)
 
 // Session kontrolü yardımcı fonksiyonu (global erişim için)
 window.checkSessionTimeout = function() {
@@ -26,7 +26,7 @@ window.checkSessionTimeout = function() {
         const timeElapsed = now - sessionStartTime;
         
         if (timeElapsed >= SESSION_TIMEOUT) {
-            // 30 dakika geçmiş, panel aç
+            //15 dakika geçmiş, panel aç
             showSessionTimeoutModal();
             return true; // İşlemi durdur
         }

@@ -204,7 +204,10 @@ window.groupid = getGroupIdFromUrl();
 // Admin elementlerini gizleme fonksiyonu
 function hideAdminElements() {
   const adminIndicator = document.querySelector('.admin-indicator');
-  if (adminIndicator) adminIndicator.style.display = 'none';
+  if (adminIndicator) {
+    adminIndicator.classList.add('hidden');
+    adminIndicator.classList.remove('show');
+  }
 }
 
 // YENİ YETKİ KONTROLÜ SİSTEMİ
@@ -463,12 +466,10 @@ function initializeProfileButton() {
       if (userAuthority === 'admin') {
         profileButton.title = 'Yönetici Profili: ' + username;
         profileButtonIcon.className = 'fa-solid fa-user-circle';
-        profileButtonIcon.style.fontSize = '20px';
         profileButtonIcon.style.color = '#4e54c8';
       } else {
         profileButton.title = 'Üye Profili: ' + username;
         profileButtonIcon.className = 'fa-solid fa-user';
-        profileButtonIcon.style.fontSize = '20px';
         profileButtonIcon.style.color = '#4e54c8';
       }
       
@@ -482,7 +483,6 @@ function initializeProfileButton() {
       profileButton.title = 'Kullanıcı Girişi';
       
       profileButtonIcon.className = 'fa-solid fa-sign-in-alt';
-      profileButtonIcon.style.fontSize = '30px';
       profileButtonIcon.style.color = '#007bff';
       
       profileButton.onclick = function() {
