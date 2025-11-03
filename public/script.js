@@ -1078,4 +1078,51 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   }
+  
+  // Footer-bottom'a tıklanınca pageSessionStartTime bilgisini ve şu anki zamanı göster
+  const footerBottom = document.querySelector('.footer-bottom');
+  if (footerBottom) {
+    footerBottom.addEventListener('click', function() {
+      const sessionStartTimeKey = 'pageSessionStartTime';
+      const sessionStartTime = parseInt(localStorage.getItem(sessionStartTimeKey) || '0');
+
+      if (sessionStartTime > 0) {
+        // Oturum başlangıç zamanı
+        const date = new Date(sessionStartTime);
+        const formattedDate = date.toLocaleDateString('tr-TR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        const formattedTime = date.toLocaleTimeString('tr-TR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        // Şu anki zaman
+        const now = new Date();
+        const currentDate = now.toLocaleDateString('tr-TR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        const currentTime = now.toLocaleTimeString('tr-TR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        const message = 
+          `Oturum Başlangıç Zamanı:\n${formattedDate} ${formattedTime}\n\n` +
+          `Şu Anki Zaman:\n${currentDate} ${currentTime}`;
+        alert(message);
+      } else {
+        alert('Oturum başlangıç zamanı bulunamadı.');
+      }
+    });
+
+    // Tıklanabilir olduğunu göstermek için cursor'u değiştir
+    footerBottom.style.cursor = 'pointer';
+  }
 });
