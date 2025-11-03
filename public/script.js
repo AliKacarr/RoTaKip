@@ -567,7 +567,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const sessionStartTimeKey = 'pageSessionStartTime';
     const lastSession = parseInt(localStorage.getItem(sessionStartTimeKey), 10);
     const now = Date.now();
-    const maxSessionDuration = 2 * 60 * 1000; // 2 dakika
+    const maxSessionDuration = 20 * 60 * 1000; // 20 dakika
     
     // Eğer son oturum 2 dakikadan eskiyse → sayfayı tamamen yenile
     if (lastSession && (now - lastSession) > maxSessionDuration) {
@@ -577,8 +577,10 @@ document.addEventListener('DOMContentLoaded', async function () {
       return; // reload beklenirken kalan kodu çalıştırma
     }
     
-    // Yeni oturum başlat
-    localStorage.setItem(sessionStartTimeKey, now.toString());
+    // Sadece yeni oturum başlatılıyorsa (lastSession yoksa) zamanı kaydet
+    if (!lastSession) {
+      localStorage.setItem(sessionStartTimeKey, now.toString());
+    }
     
     // URL'den _r parametresini temizle
     cleanUrlFromRefreshParam();
