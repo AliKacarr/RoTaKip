@@ -563,9 +563,21 @@ function cleanUrlFromRefreshParam() {
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     
-    // Sayfa açılış zamanını kaydet veya güncelle
+    // Oturum kontrolü: Eğer son oturum 2 dakikadan eskiyse → sayfayı tamamen yenile
     const sessionStartTimeKey = 'pageSessionStartTime';
+    const lastSession = parseInt(localStorage.getItem(sessionStartTimeKey), 10);
     const now = Date.now();
+    const maxSessionDuration = 2 * 60 * 1000; // 2 dakika
+    
+    // Eğer son oturum 2 dakikadan eskiyse → sayfayı tamamen yenile
+    if (lastSession && (now - lastSession) > maxSessionDuration) {
+      console.log('⏰ Oturum süresi dolmuş, sayfa yeniden yükleniyor...');
+      localStorage.removeItem(sessionStartTimeKey);
+      location.reload(); // Hard reload (true parametresi deprecated)
+      return; // reload beklenirken kalan kodu çalıştırma
+    }
+    
+    // Yeni oturum başlat
     localStorage.setItem(sessionStartTimeKey, now.toString());
     
     // URL'den _r parametresini temizle
@@ -745,10 +757,13 @@ document.addEventListener('DOMContentLoaded', async function () {
       window.GlobalDataStore = GlobalDataStore;
     }
 
-    if (!window.globalDataStore) {
+    // GlobalDataStore instance kontrolü ve güncelleme
+    // Eğer instance yoksa veya grup ID değiştiyse yeniden oluştur
+    if (!window.globalDataStore || window.globalDataStore.groupId !== window.groupid) {
       window.globalDataStore = new window.GlobalDataStore();
-      await window.globalDataStore.init(window.groupid);
     }
+    // Her sayfa yüklendiğinde verilerin güncel olması için init et
+    await window.globalDataStore.init(window.groupid);
 
 
     
