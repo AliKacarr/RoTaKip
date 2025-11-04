@@ -137,7 +137,6 @@ async function showAdminIndicator() {
             articlesButton.classList.remove('hidden');
         }
         
-    //admin modu butonunu gösterme
     // Check if user is logged in and valid
     if (!LocalStorageManager.isUserLoggedIn()) {
         // Çıkış yapmış kullanıcı için tüm elementleri gizle
@@ -192,13 +191,6 @@ async function showAdminIndicator() {
         adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
             `<i class="fa-solid fa-user-shield"></i> <span class="user-name">${displayName}</span>` : 
             `<i class="fa-solid fa-user"></i> <span class="admin-user-name">${displayName}</span>`;
-        adminIndicator.classList.add('show');
-        adminIndicator.classList.remove('hidden');
-    }
-
-    // Admin indicator pozisyonunu scrollToMainButton'ın görünürlüğüne göre ayarla
-    if (adminIndicator) {
-        // scrollToMainButton "show" class'ına sahipse
         if (
             scrollToMainButton &&
             scrollToMainButton.classList.contains('show')
@@ -207,6 +199,8 @@ async function showAdminIndicator() {
         } else {
             adminIndicator.style.bottom = '210px';
         }
+        adminIndicator.classList.add('show');
+        adminIndicator.classList.remove('hidden');
     }
 
     // Sadece admin yetkisi olan kullanıcılar için main-area göster

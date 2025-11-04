@@ -33,7 +33,7 @@ function hashCode(str) {
   return hash;
 }
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Dosya varlık kontrolü
 function fileExists(filePath) {
