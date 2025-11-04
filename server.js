@@ -13,6 +13,7 @@ const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
 const CleanCSS = require('clean-css');
+const { minify } = require('terser');
 require('dotenv').config();
 const schedule = require('node-schedule');
 const https = require('https');
@@ -121,8 +122,15 @@ async function generateMinifiedFiles() {
     }
     
     if (validIndexJsFiles.length > 0) {
-      const indexJsCommand = `npx --yes terser ${validIndexJsFiles.map(f => `"${f}"`).join(' ')} -o "${publicPath}/index.min.js"`;
-      await execPromise(indexJsCommand);
+      // Terser API kullanarak minify
+      const indexJsContent = validIndexJsFiles
+        .map(file => fs.readFileSync(file, 'utf8'))
+        .join('\n');
+      const minifiedJs = await minify(indexJsContent, {
+        compress: true,
+        mangle: true
+      });
+      fs.writeFileSync(path.join(publicPath, 'index.min.js'), minifiedJs.code);
       console.log('✅ Index JS minified successfully');
     }
     
@@ -140,8 +148,15 @@ async function generateMinifiedFiles() {
     }
     
     if (validGroupsJsFiles.length > 0) {
-      const groupsJsCommand = `npx --yes terser ${validGroupsJsFiles.map(f => `"${f}"`).join(' ')} -o "${publicPath}/groups.min.js"`;
-      await execPromise(groupsJsCommand);
+      // Terser API kullanarak minify
+      const groupsJsContent = validGroupsJsFiles
+        .map(file => fs.readFileSync(file, 'utf8'))
+        .join('\n');
+      const minifiedJs = await minify(groupsJsContent, {
+        compress: true,
+        mangle: true
+      });
+      fs.writeFileSync(path.join(publicPath, 'groups.min.js'), minifiedJs.code);
       console.log('✅ Groups JS minified successfully');
     }
     
