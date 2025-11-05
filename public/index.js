@@ -163,6 +163,18 @@ class GroupsPage {
             });
         }
 
+        // Join avatar modal'ı için dışına tıklama
+        const joinAvatarModal = document.getElementById('joinAvatarModal');
+        if (joinAvatarModal) {
+            joinAvatarModal.addEventListener('click', (e) => {
+                if (e.target === joinAvatarModal) {
+                    if (avatarModalManager) {
+                        avatarModalManager.toggleJoinAvatarModal();
+                    }
+                }
+            });
+        }
+
         // ESC key to close modals
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {

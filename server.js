@@ -168,13 +168,14 @@ async function generateMinifiedFiles() {
 }
 
 // Giriş serisi hesaplama fonksiyonu
-async function handleLoginStreak(user) {
+async function handleLoginStreak(user, groupId) {
   const today = moment().utcOffset(3).format("YYYY-MM-DD");
   const yesterday = moment().utcOffset(3).subtract(1, "days").format("YYYY-MM-DD");
 
   // Mevcut seri değerini al
   const currentStreak = user.loginStreak || 0;
   let streakIncreased = false;
+  let newStreak = currentStreak;
 
   // En son girişi bugünse: hiçbir şey yapma (aynı gün içinde tekrar girmiştir)
   if (user.lastLoginDate === today) {
@@ -183,22 +184,29 @@ async function handleLoginStreak(user) {
   }
   // Dün de girmişse: seriyi artır
   else if (user.lastLoginDate === yesterday) {
-    user.loginStreak = currentStreak + 1;
+    newStreak = currentStreak + 1;
     streakIncreased = true;
   } 
   // Arada gün(ler) varsa veya ilk giriş: sıfırla
   else {
-    user.loginStreak = 1;
+    newStreak = 1;
     streakIncreased = false;
   }
 
-  // Son giriş tarihini güncelle
-  user.lastLoginDate = today;
+  // Veritabanını güncelle (lean kullanıldığı için findByIdAndUpdate kullanıyoruz)
+  const { users } = getGroupCollections(groupId);
+  const updatedUser = await users.findByIdAndUpdate(
+    user._id,
+    { 
+      loginStreak: newStreak,
+      lastLoginDate: today
+    },
+    { new: true }
+  );
 
-  // Kaydet
-  await user.save();
-
-  return { user, streakIncreased };
+  // Güncellenmiş user objesini döndür
+  const resultUser = updatedUser || { ...user, loginStreak: newStreak, lastLoginDate: today };
+  return { user: resultUser, streakIncreased };
 }
 
 // Middleware'ler
@@ -731,6 +739,8 @@ async function createIndexesForGroup(groupId) {
     await db.collection(`readingstatuses_${groupId}`).createIndex({ userId: 1, date: 1 });
     await db.collection(`users_${groupId}`).createIndex({ name: 1 });
     await db.collection(`users_${groupId}`).createIndex({ username: 1 });
+    // username ve authority birlikte sorgulanıyor (admin kontrolü için)
+    await db.collection(`users_${groupId}`).createIndex({ username: 1, authority: 1 });
     
     console.log(`Yeni grup için index'ler oluşturuldu: ${groupId}`);
   } catch (error) {
@@ -781,7 +791,7 @@ app.get('/api/dropbox-status', async (req, res) => {
 app.get('/api/group/:groupId', async (req, res) => {
   try {
     const { groupId } = req.params;
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
 
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
@@ -824,7 +834,8 @@ app.get('/api/groups', async (req, res) => {
       groups = await UserGroup.find(finalFilter)
         .sort({ createdAt: -1 })
         .skip(Number(skip))
-        .limit(Number(limit));
+        .limit(Number(limit))
+        .lean();
     } else {
       // Arama yapılmıyorsa MongoDB'nin kendi rastgele sıralama özelliğini kullan
       // Bu daha performanslı ve gerçek rastgelelik sağlar
@@ -913,12 +924,12 @@ app.post('/api/groups', uploadGroupImage.fields([
     // Grup ID'si zaten var mı kontrol et
     let finalGroupId = groupId;
     let counter = 1;
-    let existingGroup = await UserGroup.findOne({ groupId: finalGroupId });
+    let existingGroup = await UserGroup.findOne({ groupId: finalGroupId }).lean();
 
     // Eğer ID zaten varsa, benzersiz bir ID oluşturana kadar sayı ekle
     while (existingGroup) {
       finalGroupId = `${groupId}${counter}`;
-      existingGroup = await UserGroup.findOne({ groupId: finalGroupId });
+      existingGroup = await UserGroup.findOne({ groupId: finalGroupId }).lean();
       counter++;
     }
 
@@ -976,7 +987,7 @@ app.get('/api/groups/:groupId/member-count', async (req, res) => {
     const { groupId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1001,7 +1012,7 @@ app.post('/api/update-group/:groupId', async (req, res) => {
     const { groupName, description, visibility } = req.body;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1030,7 +1041,7 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
     const { groupId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1135,7 +1146,7 @@ app.post('/api/remove-group-image/:groupId', async (req, res) => {
     const { groupId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1192,7 +1203,7 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
     const { avatarPath } = req.body;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1235,7 +1246,7 @@ app.delete('/api/delete-group/:groupId', async (req, res) => {
     const { groupId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1251,7 +1262,7 @@ app.delete('/api/delete-group/:groupId', async (req, res) => {
     const { users, readingStatuses } = getGroupCollections(groupId);
 
     // Tüm kullanıcıların profil resimlerini Dropbox'tan sil
-    const allUsers = await users.find();
+    const allUsers = await users.find().lean();
     for (const user of allUsers) {
       if (user.profileImage && user.profileImage.includes('dropbox.com')) {
         deleteFromDropboxByUrl(user.profileImage).catch(err => 
@@ -1363,7 +1374,7 @@ app.get('/api/users/:groupId', async (req, res) => {
     const { groupId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1372,7 +1383,7 @@ app.get('/api/users/:groupId', async (req, res) => {
     const { users } = getGroupCollections(groupId);
 
     // Sadece kullanıcıları getir
-    const usersData = await users.find().sort({ name: 1 });
+    const usersData = await users.find().sort({ name: 1 }).lean();
 
     res.json({ users: usersData });
   } catch (error) {
@@ -1388,7 +1399,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     const { name, selectedAvatarPath } = req.body;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1463,7 +1474,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     let randomNumber = Math.floor(Math.random() * 900) + 100; // 100-999 arası rastgele sayı
     
     // Username çakışması kontrolü
-    let usernameExists = await users.findOne({ username });
+    let usernameExists = await users.findOne({ username }).lean();
     let attemptCount = 0;
     
     // Önce orijinal ismi dene
@@ -1473,7 +1484,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
         attemptCount++;
         randomNumber = Math.floor(Math.random() * 900) + 100;
         username = name + randomNumber;
-        usernameExists = await users.findOne({ username });
+        usernameExists = await users.findOne({ username }).lean();
       }
     }
     
@@ -1572,7 +1583,7 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
     const { id } = req.body;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1581,7 +1592,7 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
     const { users, readingStatuses } = getGroupCollections(groupId);
 
     // Kullanıcıyı bul ve yetkisini kontrol et
-    const user = await users.findById(id);
+    const user = await users.findById(id).lean();
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
@@ -1651,7 +1662,7 @@ app.post('/api/update-user/:groupId', async (req, res) => {
     }
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1694,7 +1705,7 @@ app.post('/api/update-user-authority/:groupId', async (req, res) => {
     }
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1703,7 +1714,7 @@ app.post('/api/update-user-authority/:groupId', async (req, res) => {
     const { users } = getGroupCollections(groupId);
 
     // Kullanıcıyı bul
-    const user = await users.findById(userId);
+    const user = await users.findById(userId).lean();
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
@@ -1741,7 +1752,7 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
 
   try {
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1752,7 +1763,7 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
     // If a file was uploaded
     if (req.file) {
       // Find the user to get their old profile image
-      const user = await users.findById(userId);
+      const user = await users.findById(userId).lean();
       const oldImageUrl = user ? user.profileImage : null;
 
       // 1. Adım: Geçici klasöre kaydet (orijinal format)
@@ -1889,7 +1900,7 @@ app.get('/api/all-data/:groupId', async (req, res) => {
     const { groupId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1897,8 +1908,8 @@ app.get('/api/all-data/:groupId', async (req, res) => {
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
-    const usersData = await users.find().sort({ name: 1 });
-    const statsData = await readingStatuses.find();
+    const usersData = await users.find().sort({ name: 1 }).lean();
+    const statsData = await readingStatuses.find().lean();
 
     res.json({ users: usersData, stats: statsData, group });
   } catch (error) {
@@ -1913,7 +1924,7 @@ app.get('/api/user-stats/:groupId/:userId', async (req, res) => {
     const { groupId, userId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1922,7 +1933,7 @@ app.get('/api/user-stats/:groupId/:userId', async (req, res) => {
     const { readingStatuses } = getGroupCollections(groupId);
 
     // Sadece belirli kullanıcının istatistiklerini getir
-    const userStats = await readingStatuses.find({ userId }).sort({ date: 1 });
+    const userStats = await readingStatuses.find({ userId }).sort({ date: 1 }).lean();
 
     res.json({ stats: userStats });
   } catch (error) {
@@ -1937,7 +1948,7 @@ app.get('/api/reading-stats/:groupId', async (req, res) => {
     const { groupId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1945,8 +1956,8 @@ app.get('/api/reading-stats/:groupId', async (req, res) => {
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
-    const usersData = await users.find().sort({ name: 1 });
-    const statsData = await readingStatuses.find();
+    const usersData = await users.find().sort({ name: 1 }).lean();
+    const statsData = await readingStatuses.find().lean();
 
     const userStats = usersData.map(user => {
       const userReadings = statsData.filter(stat =>
@@ -1974,7 +1985,7 @@ app.get('/api/longest-streaks/:groupId', async (req, res) => {
     const { groupId } = req.params;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -1982,8 +1993,8 @@ app.get('/api/longest-streaks/:groupId', async (req, res) => {
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
-    const usersData = await users.find();
-    const statsData = await readingStatuses.find();
+    const usersData = await users.find().lean();
+    const statsData = await readingStatuses.find().lean();
 
     const results = usersData.map(user => {
       // Kullanıcının okuma kayıtlarını tarihe göre sırala
@@ -2044,7 +2055,7 @@ app.post('/api/update-status/:groupId', async (req, res) => {
     const { userId, date, status, requestingUserId, requestingUserAuthority } = req.body;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -2095,14 +2106,14 @@ app.post('/api/create-invite/:groupId', async (req, res) => {
     const { userId } = req.body;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
     // Kullanıcı var mı kontrol et
     const { users } = getGroupCollections(groupId);
-    const user = await users.findById(userId);
+    const user = await users.findById(userId).lean();
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
@@ -2156,7 +2167,7 @@ app.get('/api/verify-invite/:groupId', async (req, res) => {
       inviteTokenHash,
       groupId: decodedGroupId,
       expiresAt: { $gt: new Date() }
-    });
+    }).lean();
 
     if (!inviteRecord) {
       return res.status(404).json({ error: 'Geçersiz veya süresi dolmuş davet' });
@@ -2164,14 +2175,14 @@ app.get('/api/verify-invite/:groupId', async (req, res) => {
 
     // Kullanıcı bilgilerini al
     const { users } = getGroupCollections(decodedGroupId);
-    const user = await users.findById(inviteRecord.userId);
+    const user = await users.findById(inviteRecord.userId).lean();
     
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
     // Grup bilgilerini al
-    const group = await UserGroup.findOne({ groupId: decodedGroupId });
+    const group = await UserGroup.findOne({ groupId: decodedGroupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -2205,14 +2216,14 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
     }
 
     // Davet token'ını kontrol et (used alanını kullanmıyoruz)
-    const invite = await Invite.findById(inviteId);
+    const invite = await Invite.findById(inviteId).lean();
     if (!invite || invite.groupId !== groupId) {
       return res.status(404).json({ error: 'Geçersiz davet linki' });
     }
 
     // Kullanıcı bilgilerini al
     const { users } = getGroupCollections(groupId);
-    const user = await users.findById(invite.userId);
+    const user = await users.findById(invite.userId).lean();
     
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
@@ -2296,7 +2307,7 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
     await Invite.findByIdAndDelete(inviteId);
 
     // Grup bilgilerini al
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
 
     res.json({
       success: true,
@@ -2324,7 +2335,7 @@ app.post('/api/admin-login', async (req, res) => {
 
     // Users koleksiyonundan kullanıcıyı bul (admin veya member)
     const { users } = getGroupCollections(groupId);
-    const user = await users.findOne({ username });
+    const user = await users.findOne({ username }).lean();
 
     if (user) {
       // Şifre kontrolü
@@ -2334,17 +2345,20 @@ app.post('/api/admin-login', async (req, res) => {
         // Eksik alanları ekle (migration)
         if (user.loginStreak === undefined || user.lastLoginDate === undefined) {
           const today = moment().format("YYYY-MM-DD");
-          user.loginStreak = user.loginStreak || 1;
-          user.lastLoginDate = user.lastLoginDate || today;
-          await user.save();
-          console.log(`🔧 Eksik alanlar eklendi: ${user.username} -> loginStreak: ${user.loginStreak}, lastLoginDate: ${user.lastLoginDate}`);
+          const loginStreak = user.loginStreak || 1;
+          const lastLoginDate = user.lastLoginDate || today;
+          await users.findByIdAndUpdate(user._id, { loginStreak, lastLoginDate });
+          // user objesi plain object olduğu için manuel güncelle
+          user.loginStreak = loginStreak;
+          user.lastLoginDate = lastLoginDate;
+          console.log(`🔧 Eksik alanlar eklendi: ${user.username} -> loginStreak: ${loginStreak}, lastLoginDate: ${lastLoginDate}`);
         }
 
         // Giriş serisi hesapla
-        const { user: updatedUser, streakIncreased } = await handleLoginStreak(user);
+        const { user: updatedUser, streakIncreased } = await handleLoginStreak(user, groupId);
         
         // Grup bilgisini al
-        const group = await UserGroup.findOne({ groupId });
+        const group = await UserGroup.findOne({ groupId }).lean();
         if (!group) {
           return res.json({ success: false, error: 'Grup bulunamadı' });
         }
@@ -2379,7 +2393,7 @@ app.post('/api/update-login-streak', async (req, res) => {
     // Users koleksiyonundan kullanıcıyı bul
     const { users } = getGroupCollections(groupId);
     
-    const user = await users.findById(userId);
+    const user = await users.findById(userId).lean();
 
     if (!user) {
       console.log(`❌ Kullanıcı bulunamadı: ${userId}`);
@@ -2387,7 +2401,7 @@ app.post('/api/update-login-streak', async (req, res) => {
     }
 
     // Giriş serisi hesapla
-    const { user: updatedUser, streakIncreased } = await handleLoginStreak(user);
+    const { user: updatedUser, streakIncreased } = await handleLoginStreak(user, groupId);
     res.json({
       success: true,
       loginStreak: updatedUser.loginStreak,
@@ -2408,7 +2422,7 @@ app.post('/api/verify-admin', async (req, res) => {
 
     // Users koleksiyonundan admin kullanıcısını bul
     const { users } = getGroupCollections(groupId);
-    const admin = await users.findOne({ username, authority: 'admin' });
+    const admin = await users.findOne({ username, authority: 'admin' }).lean();
 
     res.json({ valid: !!admin });
   } catch (error) {
@@ -2462,7 +2476,7 @@ app.get('/api/access-logs', async (req, res) => {
       query.groupId = groupId;
     }
     
-    const logs = await AccessLog.find(query).sort({ timestamp: -1 });
+    const logs = await AccessLog.find(query).sort({ timestamp: -1 }).lean();
     res.json(logs);
   } catch (error) {
     console.error('Error fetching access logs:', error);
@@ -2481,7 +2495,7 @@ app.get('/api/login-logs', async (req, res) => {
       query.groupId = groupId;
     }
     
-    const logs = await LoginLog.find(query).sort({ date: -1 });
+    const logs = await LoginLog.find(query).sort({ date: -1 }).lean();
 
     // Format the dates before sending to client
     const formattedLogs = logs.map(log => {
@@ -2636,7 +2650,7 @@ app.get('/api/random-quote', async (req, res) => {
     const random = Math.floor(Math.random() * count);
 
     // Skip to the random document and get it
-    const randomVecize = await Vecize.findOne().skip(random);
+    const randomVecize = await Vecize.findOne().skip(random).lean();
 
     res.json({ sentence: randomVecize.sentence });
   } catch (error) {
@@ -2660,7 +2674,7 @@ app.get('/api/random-ayet', async (req, res) => {
     const random = Math.floor(Math.random() * count);
 
     // Rastgele belgeye atla ve al
-    const randomAyet = await Ayet.findOne().skip(random);
+    const randomAyet = await Ayet.findOne().skip(random).lean();
 
     res.json({ sentence: randomAyet.sentence });
   } catch (error) {
@@ -2684,7 +2698,7 @@ app.get('/api/random-hadis', async (req, res) => {
     const random = Math.floor(Math.random() * count);
 
     // Rastgele belgeye atla ve al
-    const randomHadis = await Hadis.findOne().skip(random);
+    const randomHadis = await Hadis.findOne().skip(random).lean();
 
     res.json({ sentence: randomHadis.sentence });
   } catch (error) {
@@ -2708,7 +2722,7 @@ app.get('/api/random-dua', async (req, res) => {
     const random = Math.floor(Math.random() * count);
 
     // Rastgele belgeye atla ve al
-    const randomDua = await Dua.findOne().skip(random);
+    const randomDua = await Dua.findOne().skip(random).lean();
 
     res.json({ sentence: randomDua.sentence });
   } catch (error) {
@@ -2732,7 +2746,7 @@ app.get('/api/random-reminder', async (req, res) => {
     const random = Math.floor(Math.random() * count);
 
     // Rastgele belgeye atla ve al
-    const randomHatirlatma = await Hatirlatma.findOne().skip(random);
+    const randomHatirlatma = await Hatirlatma.findOne().skip(random).lean();
 
     res.json({ sentence: randomHatirlatma.sentence });
   } catch (error) {
@@ -2750,7 +2764,7 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
     const { groupId, userName, memberName, userPassword, selectedAvatarPath } = req.body;
 
     // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId });
+    const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
@@ -2760,7 +2774,7 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
       groupId, 
       userName: memberName, 
       status: 'pending' 
-    });
+    }).lean();
 
     if (existingRequest) {
       return res.status(400).json({ error: 'Bu grup için zaten bir katılma isteğiniz bulunuyor' });
@@ -2768,7 +2782,7 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
 
     // Kullanıcı zaten bu grupta mı kontrol et (memberName ile)
     const { users } = getGroupCollections(groupId);
-    const existingUser = await users.findOne({ username: memberName });
+    const existingUser = await users.findOne({ username: memberName }).lean();
     if (existingUser) {
       return res.status(400).json({ error: 'Bu üye adı zaten bu grupta kullanılıyor' });
     }
@@ -2929,14 +2943,14 @@ app.get('/api/check-username-exists/:groupId/:username', async (req, res) => {
     const { users } = getGroupCollections(groupId);
 
     // Kullanıcı adı var mı kontrol et
-    const existingUser = await users.findOne({ username });
+    const existingUser = await users.findOne({ username }).lean();
 
     // Ayrıca pending durumundaki katılma isteklerinde de var mı kontrol et
     const existingRequest = await JoinRequest.findOne({ 
       groupId, 
       userName: username, 
       status: 'pending' 
-    });
+    }).lean();
 
     res.json({ 
       exists: !!(existingUser || existingRequest)
@@ -2954,7 +2968,7 @@ app.get('/api/join-request-status/:groupId/:userName', async (req, res) => {
     const { groupId, userName } = req.params;
 
     // Katılma isteğini bul
-    const joinRequest = await JoinRequest.findOne({ groupId, userName });
+    const joinRequest = await JoinRequest.findOne({ groupId, userName }).lean();
 
     if (!joinRequest) {
       return res.json({ status: 'none' });
@@ -2963,7 +2977,7 @@ app.get('/api/join-request-status/:groupId/:userName', async (req, res) => {
     // Eğer istek kabul edilmişse, kullanıcının gerçekten grupta olup olmadığını kontrol et
     if (joinRequest.status === 'accepted') {
       const { users } = getGroupCollections(groupId);
-      const user = await users.findOne({ username: userName });
+      const user = await users.findOne({ username: userName }).lean();
       
       if (user) {
         return res.json({ 
@@ -2992,7 +3006,7 @@ app.get('/api/join-request-status-by-id/:requestId', async (req, res) => {
   try {
     const { requestId } = req.params;
 
-    const joinRequest = await JoinRequest.findById(requestId);
+    const joinRequest = await JoinRequest.findById(requestId).lean();
 
     if (!joinRequest) {
       return res.json({ status: 'none' });
@@ -3005,7 +3019,7 @@ app.get('/api/join-request-status-by-id/:requestId', async (req, res) => {
       console.log(`Kabul edilen katılma isteği silindi: ${requestId}`);
       
       // Grup adını al
-      const group = await UserGroup.findOne({ groupId: joinRequest.groupId });
+      const group = await UserGroup.findOne({ groupId: joinRequest.groupId }).lean();
       const groupName = group ? group.groupName : 'Bilinmeyen Grup';
       
       return res.json({ 
@@ -3017,7 +3031,7 @@ app.get('/api/join-request-status-by-id/:requestId', async (req, res) => {
     }
 
     // Grup adını al (tüm durumlar için)
-    const group = await UserGroup.findOne({ groupId: joinRequest.groupId });
+    const group = await UserGroup.findOne({ groupId: joinRequest.groupId }).lean();
     const groupName = group ? group.groupName : 'Bilinmeyen Grup';
 
     return res.json({ 
@@ -3042,7 +3056,7 @@ app.get('/api/join-requests/:groupId', async (req, res) => {
     const joinRequests = await JoinRequest.find({ 
       groupId: groupId, 
       status: 'pending' 
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
 
     res.json({ 
       success: true, 
@@ -3061,7 +3075,7 @@ app.post('/api/accept-join-request/:requestId', async (req, res) => {
     const { requestId } = req.params;
 
     // Katılma isteğini bul
-    const joinRequest = await JoinRequest.findById(requestId);
+    const joinRequest = await JoinRequest.findById(requestId).lean();
     if (!joinRequest) {
       return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
     }
@@ -3112,7 +3126,7 @@ app.post('/api/reject-join-request/:requestId', async (req, res) => {
     const { requestId } = req.params;
 
     // Katılma isteğini bul
-    const joinRequest = await JoinRequest.findById(requestId);
+    const joinRequest = await JoinRequest.findById(requestId).lean();
     if (!joinRequest) {
       return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
     }
@@ -3140,7 +3154,7 @@ app.post('/api/reject-join-request/:requestId', async (req, res) => {
     }
 
     // Grup adını al
-    const group = await UserGroup.findOne({ groupId: joinRequest.groupId });
+    const group = await UserGroup.findOne({ groupId: joinRequest.groupId }).lean();
     const groupName = group ? group.groupName : 'Bilinmeyen Grup';
 
     console.log(`Katılma isteği reddedildi: ${joinRequest.userName} -> ${joinRequest.groupId}`);
@@ -3235,7 +3249,7 @@ app.get('/api/check-user-in-group/:groupId/:objectId', async (req, res) => {
     const { users } = getGroupCollections(groupId);
 
     // ObjectId ile kullanıcı ara
-    const user = await users.findOne({ _id: objectId });
+    const user = await users.findOne({ _id: objectId }).lean();
 
     if (user) {
       res.json({ 
@@ -3402,7 +3416,7 @@ async function getRandomVecizeForPush() {
     
     // Seçilen koleksiyondan rastgele belge al
     const randomIndex = Math.floor(Math.random() * counts[sources.indexOf(selectedSource)]);
-    const doc = await selectedSource.model.findOne().skip(randomIndex);
+    const doc = await selectedSource.model.findOne().skip(randomIndex).lean();
     
     return {
       message: doc?.sentence || 'Bugün için vecize bulunamadı.',
@@ -3654,7 +3668,7 @@ app.post('/api/remove-user-profile-image', async (req, res) => {
     const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
     
     // Kullanıcının mevcut profil resmini al
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
     if (!user) {
       return res.status(404).json({ success: false, message: 'Kullanıcı bulunamadı' });
     }
