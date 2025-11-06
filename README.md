@@ -2,7 +2,7 @@
 
 Modern ve kullanıcı dostu bir okuma takip platformu. Grup üyelerinin günlük okuma alışkanlıklarını takip etmek, istatistiklerini görüntülemek ve motivasyonlarını artırmak için geliştirilmiştir.
 
-🌐 [RoTaKip Web Uygulaması](https://rotakip.onrender.com/)
+🌐 [RoTaKip Web Uygulaması](https://rotakip-okuma-takip.up.railway.app/)
 
 ## ✨ Özellikler
 
@@ -332,7 +332,7 @@ const LEAGUES = [
 
 ### Render (Mevcut)
 
-Uygulama şu anda [Render.com](https://rotakip.onrender.com/) üzerinde çalışmaktadır.
+Uygulama şu anda [Render.com](https://rotakip-okuma-takip.up.railway.app/) üzerinde çalışmaktadır.
 
 **Gereksinimler:**
 

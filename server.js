@@ -118,7 +118,6 @@ async function generateMinifiedFiles() {
         console.warn('⚠️ CSS minification warnings:', minifiedCss.errors);
       }
       fs.writeFileSync(path.join(publicPath, 'index.min.css'), minifiedCss.styles);
-      console.log('✅ Index CSS minified successfully');
     }
     
     if (validIndexJsFiles.length > 0) {
@@ -131,7 +130,6 @@ async function generateMinifiedFiles() {
         mangle: true
       });
       fs.writeFileSync(path.join(publicPath, 'index.min.js'), minifiedJs.code);
-      console.log('✅ Index JS minified successfully');
     }
     
     // Groups.html için minify
@@ -144,7 +142,6 @@ async function generateMinifiedFiles() {
         console.warn('⚠️ CSS minification warnings:', minifiedCss.errors);
       }
       fs.writeFileSync(path.join(publicPath, 'groups.min.css'), minifiedCss.styles);
-      console.log('✅ Groups CSS minified successfully');
     }
     
     if (validGroupsJsFiles.length > 0) {
@@ -157,7 +154,6 @@ async function generateMinifiedFiles() {
         mangle: true
       });
       fs.writeFileSync(path.join(publicPath, 'groups.min.js'), minifiedJs.code);
-      console.log('✅ Groups JS minified successfully');
     }
     
     console.log('🎉 All minify operations completed successfully');
@@ -301,11 +297,6 @@ mongoose.connect(process.env.MONGO_URI, mongooseOptions)
   .catch((err) => {
     console.error('MongoDB bağlantı hatası:', err);
   });
-
-// Bağlantı olaylarını dinle
-mongoose.connection.on('connected', () => {
-  console.log('MongoDB bağlantısı kuruldu');
-});
 
 mongoose.connection.on('error', (err) => {
   console.error('MongoDB bağlantı hatası:', err);
@@ -3372,7 +3363,6 @@ async function cleanupOldBackups(db, prefix, keepCount) {
 function scheduleBackup() {
   // Schedule backups to run every 1440 minutes (24 hours)
   const backupJob = schedule.scheduleJob('0 23 * * *', performBackup);
-  console.log("Backup scheduler started. Backups will run daily at midnight.");
 
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
@@ -3497,8 +3487,6 @@ function scheduleDailyNotifications() {
     await sendOneSignalNotification(result.message, result.source);
   });
   
-  console.log('Cron job\'lar kuruldu: 09:00 ve 21:00 (vecize) (Europe/Istanbul)');
-  
   process.on('SIGINT', async () => {
     console.log('Cron job\'lar kapatılıyor...');
     jobMorning?.cancel();
@@ -3518,14 +3506,39 @@ function schedulePing() {
   // Her 2 dakikada bir ping gönder
   const pingJob = schedule.scheduleJob('*/2 * * * *', async () => {
     try {
-      const response = await fetch('https://rotakip.onrender.com/api/health');
-      const data = await response.json();
+      const response = await fetch('https://rotakip.onrender.com/api/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        // Başarısız response'u text olarak oku
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.warn(`⚠️ Ping başarısız: ${response.status} ${response.statusText} - ${errorText.trim()}`);
+        return;
+      }
+
+      // Sadece başarılı response'ları JSON olarak parse et
+      const contentType = response.headers.get('content-type');
+      if (!(contentType && contentType.includes('application/json'))) {
+        const text = await response.text();
+        console.warn(`⚠️ Ping yanıtı JSON değil: ${text.substring(0, 100)}`);
+      }
     } catch (error) {
-      console.error('Ping failed:', error.message);
+      // Network hatalarını sessizce handle et
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+        console.warn('⚠️ Ping bağlantı hatası (network). Bir sonraki ping\'de tekrar denenecek.');
+      } else if (error.message && error.message.includes('JSON')) {
+        console.warn('⚠️ Ping JSON parse hatası:', error.message);
+      } else {
+        console.warn('⚠️ Ping hatası:', error.message || error);
+      }
     }
   });
   
-  console.log("Ping scheduler started. Pings will be sent every 2 minutes.");
+  console.log("Ping scheduler started.");
   
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
@@ -3541,14 +3554,12 @@ function scheduleTokenRefresh() {
   // Her 1 saatte bir token'ı yenile
   const tokenJob = schedule.scheduleJob('0 * * * *', async () => {
     try {
-      console.log('🔄 Dropbox token otomatik yenileniyor...');
       await refreshDropboxToken();
     } catch (error) {
       console.error('Token refresh failed:', error.message);
     }
   });
-  
-  console.log("Token refresh scheduler started. Token will be refreshed every 1 hour.");
+
   
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
