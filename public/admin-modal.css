@@ -506,27 +506,24 @@
 }
 
 .groups-auth-login-close-btn {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
     color: #ffffff;
     cursor: pointer;
-    padding: 12px;
+    padding: 10px;
     border-radius: 50%;
-    transition: all 0.3s ease;
-    width: 32px;
-    height: 32px;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(10px);
 }
 
 .groups-auth-login-close-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.2);
     color: #ffffff;
-    transform: scale(1.05);
-    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .groups-auth-login-modal-body {
@@ -792,28 +789,30 @@
     align-items: center;
     justify-content: space-between;
     padding: 25px 30px 20px 30px;
-    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px 20px 0 0;
     position: relative;
 }
 
 .groups-auth-forgot-modal-icon {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 1.5rem;
-    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     margin-right: 15px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 .groups-auth-forgot-modal-title {
     font-size: 1.6rem;
     font-weight: 700;
-    color: #1f2937;
+    color: #ffffff;
     margin: 0;
     flex: 1;
 }
@@ -822,7 +821,7 @@
     background: none;
     border: none;
     font-size: 1.2rem;
-    color: #9ca3af;
+    color: #ffffff;
     cursor: pointer;
     padding: 10px;
     border-radius: 50%;
@@ -835,9 +834,8 @@
 }
 
 .groups-auth-forgot-close-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .groups-auth-forgot-modal-body {
@@ -1008,33 +1006,30 @@
 }
 
 .groups-auth-join-close-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    font-size: 14px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
     color: #ffffff;
     cursor: pointer;
     padding: 10px;
     border-radius: 50%;
     transition: all 0.2s ease;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: absolute;
     right: 0;
-    backdrop-filter: blur(10px);
 }
 
 .groups-auth-join-close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
     color: #ffffff;
-    transform: scale(1.1);
-    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .groups-auth-join-modal-body {
-    padding: 30px;
+    padding: 0;
     overflow-y: auto;
     flex: 1;
 }
@@ -1045,6 +1040,10 @@
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: 1.5px solid #cbd5e1;
     border-radius: 20px 20px 0 0;
+}
+
+.groups-auth-join-form-content {
+    padding: 30px;
 }
 
 .groups-auth-join-group-info {
@@ -1090,7 +1089,7 @@
 /* Form Bölümleri */
 .groups-auth-join-form-section {
     margin-bottom: 20px;
-    padding-top: 20px;
+    padding-top: 5px;
 }
 
 .groups-auth-join-section-title {
@@ -1413,9 +1412,8 @@
 }
 
 .groups-auth-join-success-close-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    transform: scale(1.1);
+    background: rgba(0, 0, 0, 0.05);
+    color: #6b7280;
 }
 
 .groups-auth-join-success-modal-body {
@@ -1681,32 +1679,29 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  color: #64748b;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #ffffff;
   cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px);
   z-index: 10;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .welcome-invite-close-btn:hover {
-  background: rgba(248, 250, 252, 0.9);
-  color: #475569;
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .welcome-invite-modal-body {
-  padding: 24px;
+  padding: 0;
   position: relative;
   overflow-y: auto;
 }
@@ -1715,21 +1710,24 @@
   text-align: center;
 }
 
+.welcome-invite-form-content {
+  padding: 24px;
+}
+
 .welcome-invite-group-info {
   position: relative;
   display: flex;
   align-items: center;
   gap: 15px;
-  background: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg,#667eea 0,#764ba2 100%);
   padding: 20px;
-  border-radius: 16px;
-  margin-bottom: 16px;
   backdrop-filter: blur(8px);
   border: 1px solid rgba(148, 163, 184, 0.15);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .welcome-invite-group-avatar {
+  margin-left: 10px;
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -1750,7 +1748,7 @@
 }
 
 .welcome-invite-group-details h3 {
-  color: #333;
+  color: #ffffff;
   margin: 0 0 8px 0;
   font-size: 24px;
   font-weight: 700;
@@ -1761,7 +1759,7 @@
 }
 
 .welcome-user-name {
-  color: #2196f3;
+  color: #ffffff;
   font-size: 20px;
   font-weight: 700;
   margin: 5px 0 12px 0;
@@ -1813,9 +1811,9 @@
 /* Welcome Form Styles */
 .welcome-invite-form {
   background: rgba(255, 255, 255, 0.4);
-  padding: 20px;
+  padding: 20px 20px 5px 20px;
   border-radius: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   backdrop-filter: blur(6px);
   border: 1px solid rgba(148, 163, 184, 0.4);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -1823,7 +1821,7 @@
 
 
 .welcome-form-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .welcome-form-group label {
@@ -2248,6 +2246,27 @@
 
 #groupsAuthJoinAvatarModal {
   z-index: 10010 !important;
+}
+
+.groups-auth-join-avatar-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.groups-auth-join-avatar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .groups-auth-join-input-container .groups-auth-join-file-input-label {

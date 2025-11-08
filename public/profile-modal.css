@@ -76,15 +76,22 @@ to {
 .profile-modal-close-btn {
   background: none;
   border: none;
-  color: white;
-  font-size: 21px;
+  font-size: 1.2rem;
+  color: #ffffff;
   cursor: pointer;
+  padding: 10px;
   border-radius: 50%;
-  transition: background-color 0.3s ease;
+  transition: all 0.2s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .profile-modal-close-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .profile-modal-body {
@@ -326,7 +333,7 @@ to {
   background: white;
   position: relative;
   border-radius: 15px;
-  width: 500px;
+  width: 600px;
   max-height: 90vh;
   max-width: 90vw;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -357,15 +364,22 @@ to {
 .profile-avatar-modal-close-btn {
   background: none;
   border: none;
-  color: white;
-  font-size: 20px;
+  font-size: 1.2rem;
+  color: #ffffff;
   cursor: pointer;
+  padding: 10px;
   border-radius: 50%;
-  transition: background-color 0.3s ease;
+  transition: all 0.2s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .profile-avatar-modal-close-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .profile-avatar-modal-body {
@@ -458,15 +472,22 @@ to {
 .profile-settings-modal-close-btn {
   background: none;
   border: none;
-  color: white;
-  font-size: 20px;
+  font-size: 1.2rem;
+  color: #ffffff;
   cursor: pointer;
+  padding: 10px;
   border-radius: 50%;
-  transition: background-color 0.3s ease;
+  transition: all 0.2s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .profile-settings-modal-close-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .profile-settings-modal-body {

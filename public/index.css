@@ -225,7 +225,7 @@ body {
     font-size: var(--font-base);
     background: none;
     border: none;
-    color: var(--gray-400);
+    color: var(--gray-500);
     cursor: pointer;
     padding: var(--spacing-xs);
     border-radius: var(--radius-full);
@@ -671,6 +671,7 @@ body {
 .modal-header {
     display: flex;
     align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     justify-content: space-between;
     padding: 25px 30px 20px 30px;
     border-bottom: 1px solid rgba(226, 232, 240);
@@ -698,25 +699,30 @@ body {
 }
 
 .modal-header h2 {
-    font-size: var(--font-2xl);
+    font-size: var(--font-xl);
     font-weight: 700;
-    color: var(--gray-800);
+    color: #ffffff;
 }
 
-.close-btn {
+.group-modal-close-btn {
     background: none;
     border: none;
-    font-size: var(--font-xl);
-    color: var(--gray-400);
+    font-size: 1.2rem;
+    color: #ffffff;
     cursor: pointer;
     padding: 10px;
-    border-radius: var(--radius-full);
-    transition: var(--transition-fast);
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.close-btn:hover {
-    background: rgba(56, 189, 248, 0.1);
-    color: #38BDF8;
+.group-modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .modal-body {
@@ -1156,12 +1162,46 @@ body {
     z-index: 1;
 }
 
+.join-modal-content .modal-body {
+    padding: 0;
+}
+
 .join-info-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 25px;
     border-radius: 20px 20px 0 0;
     margin-bottom: 0;
+    position: relative;
+}
+
+.join-modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.join-modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.join-form-content {
+    padding: 25px 30px;
 }
 
 .join-group-info {
@@ -1199,7 +1239,7 @@ body {
 
 .form-section {
     margin-bottom: 20px;
-    padding-top: 20px;
+    padding-top: 5px;
 }
 
 .section-title {
@@ -1333,7 +1373,7 @@ body {
 
 .ready-images-modal-content {
     background-color: white;
-    border-radius: 12px;
+    border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     max-width: 90vw;
     max-height: 90vh;
@@ -1347,44 +1387,49 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 20px;
-    border-bottom: 1px solid #e9ecef;
-    background-color: #f8f9fa;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .ready-images-modal-content .modal-header h3 {
     margin: 0;
     font-size: var(--font-lg);
     font-weight: 600;
-    color: #495057;
+    color: #ffffff;
     display: flex;
     align-items: center;
     gap: var(--gap-xs);
 }
 
 .ready-images-modal-content .modal-header h3 i {
-    color: #6c757d;
+    color: #ffffff;
 }
 
 .ready-images-modal-content .modal-close-btn {
     background: none;
     border: none;
-    font-size: var(--font-xl);
-    color: var(--gray-500);
+    font-size: 1.2rem;
+    color: #ffffff;
     cursor: pointer;
-    padding: 5px;
-    border-radius: 4px;
-    transition: var(--transition-base);
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ready-images-modal-content .modal-close-btn:hover {
-    background-color: #e9ecef;
-    color: #495057;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .ready-images-modal-content .modal-body {
     padding: 20px;
     max-height: 60vh;
     overflow-y: auto;
+    transition: max-height 0.3s ease-out;
 }
 
 .avatar-grid {
@@ -1392,6 +1437,7 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: var(--gap-md);
     padding: 5px;
+    transition: height 0.3s ease-out;
 }
 
 .avatar-item {
@@ -1677,7 +1723,7 @@ body {
     }
 
     .modal-header h2 {
-        font-size: var(--font-xl);
+        font-size: var(--font-lg);
     }
     
     #successActions button {
@@ -1745,10 +1791,6 @@ body {
         margin: 15px;
     }
 
-    .modal-header {
-        padding: 25px 22px 18px 22px;
-    }
-    
     .modal-body {
         padding: 22px;
     }
@@ -1764,12 +1806,6 @@ body {
     
     .join-info-section {
         padding: 20px;
-    }
-    
-    .join-group-info {
-        flex-direction: column;
-        text-align: center;
-        gap: var(--gap-sm);
     }
     
     .join-group-avatar {

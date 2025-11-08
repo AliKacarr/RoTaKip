@@ -86,7 +86,7 @@
                     </div>
                     <h2 id="createModalTitle">Yeni Grup Oluştur</h2>
                 </div>
-                <button class="close-btn" id="closeModal">
+                <button class="group-modal-close-btn" id="closeModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -266,19 +266,11 @@
     <!-- Join Group Request Modal -->
     <div id="joinGroupModal" class="modal" style="display: none; opacity: 0; visibility: hidden;">
         <div class="join-modal-content">
-            <div class="modal-header">
-                <div class="modal-title-container">
-                    <div class="modal-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <h2 id="joinModalTitle">Gruba Katıl</h2>
-                </div>
-                <button class="close-btn" id="closeJoinModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
             <form id="joinGroupForm" class="modal-body">
                 <div class="join-info-section">
+                    <button class="join-modal-close-btn" id="closeJoinModal">
+                        <i class="fas fa-times"></i>
+                    </button>
                     <div class="join-group-info">
                         <div class="join-group-avatar">
                             <img id="joinGroupAvatar" src="/images/open-book.webp" alt="Grup Avatar">
@@ -290,89 +282,91 @@
                     </div>
                 </div>
 
-                <div class="form-section">
-                    <h4 class="section-title">
-                        <i class="fas fa-user"></i>
-                        Kullanıcı Bilgileriniz
-                    </h4>
-                    
-                    <div class="form-group">
-                        <label for="joinProfileImageInput">Profil Resmi</label>
-                        <div class="input-container">
-                            <label for="joinProfileImageInput" class="file-input-label">
-                                <i class="fas fa-image file-input-icon"></i>
-                                <span class="file-input-text">Bir resim seçin...</span>
-                            </label>
-                            <input type="file" id="joinProfileImageInput" accept="image/*">
-                            <button type="button" class="join-avatar-btn" id="joinAvatarBtn">
-                                ✨
-                            </button>
+                <div class="join-form-content">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-user"></i>
+                            Kullanıcı Bilgileriniz
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label for="joinProfileImageInput">Profil Resmi</label>
+                            <div class="input-container">
+                                <label for="joinProfileImageInput" class="file-input-label">
+                                    <i class="fas fa-image file-input-icon"></i>
+                                    <span class="file-input-text">Bir resim seçin...</span>
+                                </label>
+                                <input type="file" id="joinProfileImageInput" accept="image/*">
+                                <button type="button" class="join-avatar-btn" id="joinAvatarBtn">
+                                    ✨
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="joinUserNameInput">Kullanıcı Adı</label>
+                            <div class="input-container">
+                                <i class="fas fa-user input-icon"></i>
+                                <input type="text" id="joinUserNameInput" required placeholder="Kullanıcı adınızı giriniz" maxlength="40">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="joinUserNameInput">Kullanıcı Adı</label>
-                        <div class="input-container">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="joinUserNameInput" required placeholder="Kullanıcı adınızı giriniz" maxlength="40">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-key"></i>
+                            Üye Girişi Bilgileriniz
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label for="joinMemberNameInput">Üye Adı</label>
+                            <div class="input-container">
+                                <i class="fas fa-id-card input-icon"></i>
+                                <input type="text" id="joinMemberNameInput" required placeholder="Üye adınızı giriniz" maxlength="40">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="joinMemberPasswordInput">Üye Şifresi</label>
+                            <div class="input-container">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" id="joinMemberPasswordInput" required placeholder="Üye şifrenizi giriniz" maxlength="40">
+                                <button type="button" class="password-toggle" id="joinPasswordToggle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div id="joinPasswordError" class="error-message" style="display: none;"></div>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-section">
-                    <h4 class="section-title">
-                        <i class="fas fa-key"></i>
-                        Üye Girişi Bilgileriniz
-                    </h4>
-                    
-                    <div class="form-group">
-                        <label for="joinMemberNameInput">Üye Adı</label>
-                        <div class="input-container">
-                            <i class="fas fa-id-card input-icon"></i>
-                            <input type="text" id="joinMemberNameInput" required placeholder="Üye adınızı giriniz" maxlength="40">
+                    <div class="join-status-message" id="joinStatusMessage" style="display: none;">
+                        <div class="status-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="status-text">
+                            <h4>İstek Gönderildi!</h4>
+                            <p>Katılma isteğiniz grup yöneticisine iletildi. Onay bekleniyor...</p>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="joinMemberPasswordInput">Üye Şifresi</label>
-                        <div class="input-container">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="joinMemberPasswordInput" required placeholder="Üye şifrenizi giriniz" maxlength="40">
-                            <button type="button" class="password-toggle" id="joinPasswordToggle">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <div id="joinPasswordError" class="error-message" style="display: none;"></div>
-                    </div>
-                </div>
-
-                <div class="join-status-message" id="joinStatusMessage" style="display: none;">
-                    <div class="status-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="status-text">
-                        <h4>İstek Gönderildi!</h4>
-                        <p>Katılma isteğiniz grup yöneticisine iletildi. Onay bekleniyor...</p>
-                    </div>
-                </div>
-
-                <div class="group-form-actions">
-                    <button type="button" class="btn-secondary" id="cancelJoin">
-                        <i class="fas fa-times-circle"></i>
-                        İptal
-                    </button>
-                    <button type="submit" class="btn-primary" id="submitJoinRequest">
-                        <i class="fas fa-paper-plane"></i>
-                        Katılma İsteği Gönder
-                    </button>
-                    <div id="successActions" style="display: none;">
-                        <button type="button" class="btn-danger" id="cancelJoinRequest">
+                    <div class="group-form-actions">
+                        <button type="button" class="btn-secondary" id="cancelJoin">
                             <i class="fas fa-times-circle"></i>
-                            İptal Et
+                            İptal
                         </button>
-                        <button type="button" class="btn-primary" id="goToHomePage">
-                            Grubu Görüntüle
+                        <button type="submit" class="btn-primary" id="submitJoinRequest">
+                            <i class="fas fa-paper-plane"></i>
+                            Katılma İsteği Gönder
                         </button>
+                        <div id="successActions" style="display: none;">
+                            <button type="button" class="btn-danger" id="cancelJoinRequest">
+                                <i class="fas fa-times-circle"></i>
+                                İptal Et
+                            </button>
+                            <button type="button" class="btn-primary" id="goToHomePage">
+                                Grubu Görüntüle
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>

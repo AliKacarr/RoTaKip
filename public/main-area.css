@@ -1075,23 +1075,29 @@ input[type="file"] {
 .ready-images-modal-content .modal-close-btn {
     background: none;
     border: none;
-    font-size: 20px;
-    color: #6c757d;
+    font-size: 1.2rem;
+    color: #6b7280;
     cursor: pointer;
-    padding: 5px;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ready-images-modal-content .modal-close-btn:hover {
-    background-color: #e9ecef;
-    color: #495057;
+    background: rgba(0, 0, 0, 0.05);
+    color: #374151;
 }
 
 .ready-images-modal-content .modal-body {
     padding: 20px;
     max-height: 60vh;
     overflow-y: auto;
+    transition: max-height 0.3s ease-out;
 }
 
 .ready-images-modal-content .avatar-grid {
@@ -1099,6 +1105,7 @@ input[type="file"] {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: 15px;
     padding: 5px;
+    transition: height 0.3s ease-out;
 }
 
 .ready-images-modal-content .avatar-item {

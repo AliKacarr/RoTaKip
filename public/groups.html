@@ -194,74 +194,76 @@
             </div>
           </div>
 
-          <!-- Kullanıcı Bilgileri Bölümü -->
-          <div class="groups-auth-join-form-section">
-            <h4 class="groups-auth-join-section-title">
-              <i class="fas fa-user"></i>
-              Kullanıcı Bilgileriniz
-            </h4>
-            
-            <div class="groups-auth-join-form-group">
-              <div class="groups-auth-join-form-label">Profil Resmi</div>
-              <div class="groups-auth-join-input-container">
-                <label for="groupsAuthJoinProfileImageInput" class="groups-auth-join-file-input-label">
-                  <i class="fas fa-image groups-auth-join-file-input-icon"></i>
-                  <span class="groups-auth-join-file-input-text">Bir resim seçin...</span>
-                  <span class="groups-auth-join-file-name" id="groupsAuthJoinFileName" style="display: none;"></span>
-                </label>
-                <input type="file" id="groupsAuthJoinProfileImageInput" accept="image/*">
-                <button type="button" class="groups-auth-join-avatar-btn" id="groupsAuthJoinAvatarBtn">
-                  ✨
-                </button>
+          <div class="groups-auth-join-form-content">
+            <!-- Kullanıcı Bilgileri Bölümü -->
+            <div class="groups-auth-join-form-section">
+              <h4 class="groups-auth-join-section-title">
+                <i class="fas fa-user"></i>
+                Kullanıcı Bilgileriniz
+              </h4>
+              
+              <div class="groups-auth-join-form-group">
+                <div class="groups-auth-join-form-label">Profil Resmi</div>
+                <div class="groups-auth-join-input-container">
+                  <label for="groupsAuthJoinProfileImageInput" class="groups-auth-join-file-input-label">
+                    <i class="fas fa-image groups-auth-join-file-input-icon"></i>
+                    <span class="groups-auth-join-file-input-text">Bir resim seçin...</span>
+                    <span class="groups-auth-join-file-name" id="groupsAuthJoinFileName" style="display: none;"></span>
+                  </label>
+                  <input type="file" id="groupsAuthJoinProfileImageInput" accept="image/*">
+                  <button type="button" class="groups-auth-join-avatar-btn" id="groupsAuthJoinAvatarBtn">
+                    ✨
+                  </button>
+                </div>
+              </div>
+
+              <div class="groups-auth-join-form-group">
+                <label for="groupsAuthJoinUserNameInput">Kullanıcı Adı</label>
+                <div class="groups-auth-join-input-container">
+                  <i class="fas fa-user groups-auth-join-input-icon"></i>
+                  <input type="text" id="groupsAuthJoinUserNameInput" class="groups-auth-join-form-input" required placeholder="Kullanıcı adınızı giriniz" maxlength="40">
+                </div>
               </div>
             </div>
 
-            <div class="groups-auth-join-form-group">
-              <label for="groupsAuthJoinUserNameInput">Kullanıcı Adı</label>
-              <div class="groups-auth-join-input-container">
-                <i class="fas fa-user groups-auth-join-input-icon"></i>
-                <input type="text" id="groupsAuthJoinUserNameInput" class="groups-auth-join-form-input" required placeholder="Kullanıcı adınızı giriniz" maxlength="40">
+            <!-- Üye Girişi Bilgileri Bölümü -->
+            <div class="groups-auth-join-form-section">
+              <h4 class="groups-auth-join-section-title">
+                <i class="fas fa-key"></i>
+                Üye Girişi Bilgileriniz
+              </h4>
+              
+              <div class="groups-auth-join-form-group">
+                <label for="groupsAuthJoinMemberNameInput">Üye Adı</label>
+                <div class="groups-auth-join-input-container">
+                  <i class="fas fa-id-card groups-auth-join-input-icon"></i>
+                  <input type="text" id="groupsAuthJoinMemberNameInput" class="groups-auth-join-form-input" required placeholder="Üye adınızı giriniz" maxlength="40">
+                </div>
+              </div>
+
+              <div class="groups-auth-join-form-group">
+                <label for="groupsAuthJoinMemberPasswordInput">Üye Şifresi</label>
+                <div class="groups-auth-join-input-container">
+                  <i class="fas fa-lock groups-auth-join-input-icon"></i>
+                  <input type="password" id="groupsAuthJoinMemberPasswordInput" class="groups-auth-join-form-input" required placeholder="Üye şifrenizi giriniz" maxlength="40">
+                  <button type="button" class="groups-auth-join-password-toggle" id="groupsAuthJoinPasswordToggle">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Üye Girişi Bilgileri Bölümü -->
-          <div class="groups-auth-join-form-section">
-            <h4 class="groups-auth-join-section-title">
-              <i class="fas fa-key"></i>
-              Üye Girişi Bilgileriniz
-            </h4>
-            
-            <div class="groups-auth-join-form-group">
-              <label for="groupsAuthJoinMemberNameInput">Üye Adı</label>
-              <div class="groups-auth-join-input-container">
-                <i class="fas fa-id-card groups-auth-join-input-icon"></i>
-                <input type="text" id="groupsAuthJoinMemberNameInput" class="groups-auth-join-form-input" required placeholder="Üye adınızı giriniz" maxlength="40">
-              </div>
+            <!-- Butonlar -->
+            <div class="groups-auth-join-actions">
+              <button type="button" class="groups-auth-join-cancel-btn" id="groupsAuthJoinCancelBtn">
+                <i class="fas fa-times-circle"></i>
+                İptal
+              </button>
+              <button type="button" class="groups-auth-join-submit-btn" id="groupsAuthJoinSubmitBtn">
+                <i class="fas fa-paper-plane"></i>
+                Katılma İsteği Gönder
+              </button>
             </div>
-
-            <div class="groups-auth-join-form-group">
-              <label for="groupsAuthJoinMemberPasswordInput">Üye Şifresi</label>
-              <div class="groups-auth-join-input-container">
-                <i class="fas fa-lock groups-auth-join-input-icon"></i>
-                <input type="password" id="groupsAuthJoinMemberPasswordInput" class="groups-auth-join-form-input" required placeholder="Üye şifrenizi giriniz" maxlength="40">
-                <button type="button" class="groups-auth-join-password-toggle" id="groupsAuthJoinPasswordToggle">
-                  <i class="fas fa-eye"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Butonlar -->
-          <div class="groups-auth-join-actions">
-            <button type="button" class="groups-auth-join-cancel-btn" id="groupsAuthJoinCancelBtn">
-              <i class="fas fa-times-circle"></i>
-              İptal
-            </button>
-            <button type="button" class="groups-auth-join-submit-btn" id="groupsAuthJoinSubmitBtn">
-              <i class="fas fa-paper-plane"></i>
-              Katılma İsteği Gönder
-            </button>
           </div>
         </div>
       </div>
@@ -318,8 +320,9 @@
               </div>
             </div>
 
-            <!-- Kullanıcı Bilgileri Formu -->
-            <div class="welcome-invite-form">
+            <div class="welcome-invite-form-content">
+              <!-- Kullanıcı Bilgileri Formu -->
+              <div class="welcome-invite-form">
               
               <!-- Profil Resmi Seçimi -->
               <div class="welcome-form-group">
@@ -392,17 +395,18 @@
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div class="welcome-invite-actions">
-              <button type="button" class="welcome-invite-cancel-btn" id="welcomeInviteCancelBtn">
-                <i class="fas fa-times-circle"></i>
-                İptal
-              </button>
-              <button type="button" class="welcome-invite-join-btn" id="welcomeInviteJoinBtn">
-                <i class="fas fa-save"></i>
-                Kaydet
-              </button>
+              </div>
+              
+              <div class="welcome-invite-actions">
+                <button type="button" class="welcome-invite-cancel-btn" id="welcomeInviteCancelBtn">
+                  <i class="fas fa-times-circle"></i>
+                  İptal
+                </button>
+                <button type="button" class="welcome-invite-join-btn" id="welcomeInviteJoinBtn">
+                  <i class="fas fa-save"></i>
+                  Kaydet
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1588,7 +1592,7 @@
           <i class="fa-solid fa-images"></i>
           Avatar Seç
         </h3>
-        <button type="button" class="modal-close-btn" onclick="toggleGroupsAuthJoinAvatarModal()">
+        <button type="button" class="groups-auth-join-avatar-close-btn" onclick="toggleGroupsAuthJoinAvatarModal()">
           <i class="fas fa-times"></i>
         </button>
       </div>
