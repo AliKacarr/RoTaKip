@@ -435,10 +435,10 @@ async function loadDailyReminder() {
     const data = await response.json();
     
     const text = data.sentence || 'Bugün için hatırlatma bulunamadı.';
-    reminderText.textContent = text;
+    reminderText.textContent = `• ${text}`;
   } catch (error) {
     console.error('Hatırlatma yükleme hatası:', error);
-    reminderText.textContent = 'Hatırlatma yüklenemedi.';
+    reminderText.textContent = '• Hatırlatma yüklenemedi.';
   }
 }
 
