@@ -18,19 +18,19 @@ const SESSION_CHECK_DEBOUNCE = 5000; // 5 saniye
 const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 dakika (milisaniye)
 
 // Session kontrolü yardımcı fonksiyonu (global erişim için)
-window.checkSessionTimeout = function() {
+window.checkSessionTimeout = function () {
     const now = Date.now();
     // 5 saniye içinde kontrol edilmediyse kontrol et
     if (now - lastSessionCheckTime > SESSION_CHECK_DEBOUNCE) {
         const sessionStartTime = parseInt(localStorage.getItem('pageSessionStartTime') || '0');
         const timeElapsed = now - sessionStartTime;
-        
+
         if (timeElapsed >= SESSION_TIMEOUT) {
             //15 dakika geçmiş, panel aç
             showSessionTimeoutModal();
             return true; // İşlemi durdur
         }
-        
+
         lastSessionCheckTime = now;
     }
     return false; // İşleme devam edilebilir
@@ -44,7 +44,7 @@ async function updateUserStatsAreaWithStreak() {
     const userId = userInfo.userId;
     const groupId = userInfo.groupId;
     const totalReading = userReadingCounts.get(userId) || 0;
-    
+
     try {
         // Giriş serisi bilgisini server'dan al
         const response = await fetch('/api/update-login-streak', {
@@ -52,7 +52,7 @@ async function updateUserStatsAreaWithStreak() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, groupId })
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             const loginStreakElement = document.getElementById('userLoginStreak');
@@ -111,7 +111,7 @@ function updateUserStatsArea() {
 function updateLeagueProgress(totalReading) {
     // Mevcut ligi bul
     const currentLeague = LEAGUES.find(league => totalReading >= league.min && totalReading < league.max) || LEAGUES[LEAGUES.length - 1];
-    
+
     // Sonraki ligi bul
     const currentIndex = LEAGUES.indexOf(currentLeague);
     const nextLeague = currentIndex < LEAGUES.length - 1 ? LEAGUES[currentIndex + 1] : currentLeague;
@@ -136,13 +136,13 @@ function updateLeagueProgress(totalReading) {
     const progressText = document.getElementById('leagueProgressText');
     const progressFill = document.getElementById('leagueProgressFill');
     const progressStatus = document.getElementById('leagueProgressStatus');
-    
+
     if (progressText && progressFill && progressStatus) {
         const progress = totalReading - currentLeague.min;
         const totalNeeded = currentLeague.max - currentLeague.min;
         const percentage = Math.min((progress / totalNeeded) * 100, 100);
         const remaining = totalNeeded - progress;
-        
+
         // Üst kısım: "197 / 200⭐" formatı, renkli
         progressText.innerHTML = `<span style="font-weight: 700; ">${totalReading}</span><span style="font-weight: 500;">/${currentLeague.max}</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>`;
 
@@ -170,10 +170,10 @@ function updateUserStatsCache(userId, date, status) {
     if (!userStatsCache.has(userId)) {
         userStatsCache.set(userId, { days: [], lastUpdated: Date.now() });
     }
-    
+
     const cache = userStatsCache.get(userId);
     const existingIndex = cache.days.findIndex(day => day.date === date);
-    
+
     if (status) {
         if (existingIndex >= 0) {
             cache.days[existingIndex].status = status;
@@ -185,14 +185,14 @@ function updateUserStatsCache(userId, date, status) {
             cache.days.splice(existingIndex, 1);
         }
     }
-    
+
     cache.lastUpdated = Date.now();
 }
 
 function getUserStatsFromCache(userId) {
     const cache = userStatsCache.get(userId);
     if (!cache) return {};
-    
+
     const statsMap = {};
     cache.days.forEach(day => {
         statsMap[day.date] = day.status;
@@ -222,7 +222,7 @@ const LEAGUES = [
 function getWeekDates(offset = 0) {
     const today = new Date();
     const dayOfWeek = today.getDay();
-    
+
     let actualFirstDay;
     if (firstDayOfWeek === 'default') {
         // Varsayılan: Bugünden sonraki gün haftanın ilk günü olsun
@@ -232,7 +232,7 @@ function getWeekDates(offset = 0) {
         // Özel gün seçildiğinde direkt kullan (0=Pazar, 1=Pazartesi, 2=Salı...)
         actualFirstDay = firstDayOfWeek;
     }
-    
+
     let daysToFirstDay;
     if (dayOfWeek >= actualFirstDay) {
         daysToFirstDay = dayOfWeek - actualFirstDay;
@@ -289,13 +289,13 @@ function getMonthNameInTurkish(monthIndex) {
 
 async function loadTrackerTable() {
     console.log('🔍 Tracker Table Loading...');
-    
+
     // Tablo yüklenirken kaydırma çubuğunu gizle
     if (tableArea) {
         tableArea.style.overflowX = 'hidden';
         tableArea.style.overflowY = 'hidden';
     }
-    
+
     const dates = getWeekDates(weekOffset);
     currentWeekDisplay.textContent = formatDateRange(dates);
     if (weekOffset < 0) {
@@ -310,7 +310,7 @@ async function loadTrackerTable() {
     }
     const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
     const { users, stats } = data;
-    
+
     // stats'in iterable olduğundan emin ol
     const statsArray = Array.isArray(stats) ? stats : [];
     const statMap = {};
@@ -318,16 +318,16 @@ async function loadTrackerTable() {
         if (!statMap[s.userId]) statMap[s.userId] = {};
         statMap[s.userId][s.date] = s.status;
     }
-    
+
     // Kullanıcı okuma sayılarını hesapla ve önbelleğe al
     userReadingCounts.clear();
     userStatsCache.clear(); // Cache'i temizle
-    
+
     for (let user of users) {
         const userStats = statMap[user._id] || {};
         const okudumDays = Object.values(userStats).filter(s => s === 'okudum').length;
         userReadingCounts.set(user._id, okudumDays);
-        
+
         // Cache'i doldur
         const cacheData = { days: [], lastUpdated: Date.now() };
         for (const [date, status] of Object.entries(userStats)) {
@@ -365,7 +365,7 @@ async function loadTrackerTable() {
         const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
         const isCurrentUser = currentUserInfo && currentUserInfo.userId === user._id;
         const currentUserClass = isCurrentUser ? ' current-user-row' : '';
-        
+
         let row = `<tr class="user-row${currentUserClass}"><td class="user-item" data-user-id="${user._id}" style="background: ${league.bg};">`;
         const profileImage = user.profileImage || '/images/default.png';
         row += `<img src="${profileImage}" alt="${user.name}" class="tracker-profile-image tracker-profile-image-loading" onload="this.classList.remove('tracker-profile-image-loading')" onerror="this.classList.remove('tracker-profile-image-loading'); this.src='/images/default.png'" />`;
@@ -376,14 +376,14 @@ async function loadTrackerTable() {
             if (status === 'okudum') symbol = '✔';
             else if (status === 'okumadım') symbol = '✖';
             let className = '';
-            
+
             // Bugünden sonraki tarihler için • ikonu ve disabled sınıfı
             const currentDate = new Date();
             // UTC+3 saat dilimi ekle (Türkiye saati)
             currentDate.setHours(currentDate.getHours() + 3);
             const todayString = currentDate.toISOString().split('T')[0];
             const isFutureDate = date > todayString;
-            
+
             if (isFutureDate) {
                 symbol = '•';
                 className += ' future-date';
@@ -391,14 +391,7 @@ async function loadTrackerTable() {
             if (status === 'okudum') {
                 className = 'green';
             } else if (status === 'okumadım') {
-                const streakLength = userStreaks[date] || 0;
-                if (streakLength === 1) {
-                    className = 'pink';
-                } else if (streakLength === 2) {
-                    className = 'lila';
-                } else if (streakLength >= 3) {
-                    className = 'red';
-                }
+                className = 'red';
             } else if (!isFutureDate) {
                 // Bugün ve öncesi için boş hücreler empty sınıfına sahip olsun
                 className += ' empty';
@@ -449,24 +442,24 @@ async function loadTrackerTable() {
     // Tüm tablo elementlerini gizle
     trackerTable.classList.remove('visible');
     trackerTable.querySelector('tbody').classList.remove('tracker-table-visible');
-    
+
     setTimeout(() => {
         // Tüm tablo elementlerini aynı anda göster
         trackerTable.classList.add('visible');
         trackerTable.querySelector('tbody').classList.add('tracker-table-visible');
-        
+
         // Sadece ilk yüklemede sayfanın en üstüne kaydır
         if (isFirstLoad) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             isFirstLoad = false;
         }
     }, 20);
-    
+
     // Kullanıcı istatistik alanını güncelle (giriş serisi hesaplaması ile)
     updateUserStatsAreaWithStreak().catch(error => {
         console.error('Kullanıcı istatistik alanı güncellenemedi:', error);
     });
-    
+
     tableArea.style.display = 'block';
 }
 
@@ -598,7 +591,7 @@ async function toggleStatus(userId, date) {
     const current = cell.innerText;
     let status;
     let newSymbol;
-    
+
     // Tüm günler için yeni sıra: ➖ → ✔ → ✖ → ➖
     if (current === '➖') {
         status = 'okudum';
@@ -614,23 +607,23 @@ async function toggleStatus(userId, date) {
         status = '';
         newSymbol = '➖';
     }
-    
+
     // Hücre ikonunu güncelle
     cell.innerText = newSymbol;
 
     // Cache'i güncelle
     updateUserStatsCache(userId, date, status);
-    
+
     // Tüm satırdaki hücrelerin renklerini yeniden hesapla
     const rowEl = cell.closest('tr');
-    
+
     if (rowEl) {
         const dateCells = rowEl.querySelectorAll('td[onclick*="toggleStatus"]');
         const dates = getWeekDates(weekOffset);
-        
+
         // Cache'den güncel verileri al
         const userStatsMap = getUserStatsFromCache(userId);
-        
+
         const weekStatsMap = {};
         dateCells.forEach((dateCell, index) => {
             const cellDate = dates[index];
@@ -641,42 +634,35 @@ async function toggleStatus(userId, date) {
                 weekStatsMap[cellDate] = 'okumadım';
             }
         });
-        
+
         // Yeni değişikliği de ekle
         if (status) {
             weekStatsMap[date] = status;
         } else {
             delete weekStatsMap[date];
         }
-        
+
         // Seri hesaplamalarını yap 
         const streakMap = findConsecutiveStreaks(weekStatsMap);
-        
+
         // Her hücrenin rengini güncelle
         dateCells.forEach((dateCell, index) => {
             const cellDate = dates[index];
             const cellStatus = userStatsMap[cellDate];
-            
+
             // Eski sınıfları temizle
             dateCell.classList.remove('green', 'pink', 'lila', 'red', 'empty');
-            
+
             // Yeni sınıfı belirle
             if (cellStatus === 'okudum') {
                 dateCell.classList.add('green');
             } else if (cellStatus === 'okumadım') {
-                const streakLength = streakMap[cellDate] || 0;
-                if (streakLength === 1) {
-                    dateCell.classList.add('pink');
-                } else if (streakLength === 2) {
-                    dateCell.classList.add('lila');
-                } else if (streakLength >= 3) {
-                    dateCell.classList.add('red');
-                }
+                dateCell.classList.add('red');
             } else {
                 // Boş hücreler için empty sınıfı
                 dateCell.classList.add('empty');
             }
-            
+
             // Bugün sınıfını koru
             const today = new Date();
             // UTC+3 saat dilimi ekle (Türkiye saati)
@@ -691,7 +677,7 @@ async function toggleStatus(userId, date) {
     // Önbellekteki okuma sayısını güncelle
     const currentCount = userReadingCounts.get(userId) || 0;
     let newCount = currentCount;
-    
+
     if (current === '➖' && status === 'okudum') {
         // Boş -> Okudum: +1
         newCount = currentCount + 1;
@@ -714,10 +700,10 @@ async function toggleStatus(userId, date) {
                 // Eski seri sayısını al
                 const oldStreakText = lastTd.textContent || lastTd.innerText;
                 const oldStreak = oldStreakText === '-' ? 0 : parseInt(oldStreakText.replace('⭐', '').trim()) || 0;
-                
+
                 // Yeni seri sayısını ayarla
                 lastTd.innerHTML = newStreak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${newStreak}` : '-';
-                
+
                 // Seri artışı varsa animasyon ekle
                 if (newStreak > oldStreak && newStreak > 0) {
                     animateStreakIncrease(lastTd, oldStreak, newStreak, cell);
@@ -728,7 +714,7 @@ async function toggleStatus(userId, date) {
         console.error('Seri güncellenemedi:', e);
     }
 
-        
+
     userReadingCounts.set(userId, newCount);
 
     // Global store'u senkronize et
@@ -750,7 +736,7 @@ async function toggleStatus(userId, date) {
             try {
                 // Tüm kullanıcıların background rengini güncelle
                 updateAllUserBackgroundColors();
-                
+
                 if (typeof window.loadUserCards === 'function') {
                     window.loadUserCards();
                 }
@@ -771,21 +757,21 @@ async function toggleStatus(userId, date) {
         console.error('Debounce ayarlanamadı:', err);
     }
 
-        // Veri tabanı güncellemesini hemen yap
-        await fetch(`/api/update-status/${window.groupid}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                userId, 
-                date, 
-                status,
-                requestingUserId: userInfo.userId,
-                requestingUserAuthority: userInfo.userAuthority
-            })
-        });
-        
-        // Kullanıcı istatistik alanını güncelle (sadece okuma sayısı ve lig bilgisi)
-        updateUserStatsArea();
+    // Veri tabanı güncellemesini hemen yap
+    await fetch(`/api/update-status/${window.groupid}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            userId,
+            date,
+            status,
+            requestingUserId: userInfo.userId,
+            requestingUserAuthority: userInfo.userAuthority
+        })
+    });
+
+    // Kullanıcı istatistik alanını güncelle (sadece okuma sayısı ve lig bilgisi)
+    updateUserStatsArea();
 }
 
 // Tüm kullanıcıların background rengini güncelle (önbellekten)
@@ -794,7 +780,7 @@ function updateAllUserBackgroundColors() {
         userReadingCounts.forEach((okudumDays, userId) => {
             // Lig hesapla
             const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
-            
+
             // Kullanıcının user-item elementini bul ve background rengini güncelle
             const userItem = document.querySelector(`[data-user-id="${userId}"]`);
             if (userItem) {
@@ -813,12 +799,12 @@ async function updateUserBackgroundColor(userId) {
         const response = await fetch(`/api/user-stats/${window.groupid}/${userId}`);
         if (!response.ok) return;
         const { stats } = await response.json();
-        
+
         // Okuma günlerini hesapla
         const okudumDays = stats.filter(s => s.status === 'okudum').length;
         // Lig hesapla
         const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
-        
+
         // Kullanıcının user-item elementini bul ve background rengini güncelle
         const userItem = document.querySelector(`[data-user-id="${userId}"]`);
         if (userItem) {
@@ -833,13 +819,13 @@ async function updateUserBackgroundColor(userId) {
 function animateStarToUserStats(clickedCell) {
     // Tıklanan hücrenin pozisyonunu al
     const clickedRect = clickedCell.getBoundingClientRect();
-    
+
     // User stats reading icon'u bul
     const userStatsReadingIcon = document.querySelector('.user-stats-reading-icon');
     if (!userStatsReadingIcon) return;
-    
+
     const targetRect = userStatsReadingIcon.getBoundingClientRect();
-    
+
     // Geçici yıldız elementi oluştur
     const flyingStar = document.createElement('div');
     flyingStar.innerHTML = '⭐';
@@ -851,23 +837,23 @@ function animateStarToUserStats(clickedCell) {
     flyingStar.style.pointerEvents = 'none';
     flyingStar.style.transition = 'all 0.8s ease-out';
     flyingStar.style.transform = 'scale(0.6)';
-    
+
     document.body.appendChild(flyingStar);
-    
+
     // Yıldızı hedefe hareket ettir
     setTimeout(() => {
         flyingStar.style.left = (targetRect.left + targetRect.width / 2 - 20) + 'px';
         flyingStar.style.top = (targetRect.top + targetRect.height / 2 - 20) + 'px';
         flyingStar.style.transform = 'scale(1)';
     }, 50);
-    
+
     // Hedefe ulaştığında reading icon'u animasyonla
     setTimeout(() => {
         userStatsReadingIcon.classList.add('userStatsReadingPulse');
         setTimeout(() => {
             userStatsReadingIcon.classList.remove('userStatsReadingPulse');
         }, 600);
-        
+
         // Uçan yıldızı kaldır
         document.body.removeChild(flyingStar);
     }, 850);
@@ -877,11 +863,11 @@ function animateStarToUserStats(clickedCell) {
 function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell) {
     // Tıklanan hücrenin pozisyonunu al
     const clickedRect = clickedCell.getBoundingClientRect();
-    
+
     // Seri hücresindeki yıldızın pozisyonunu al
     const starElement = streakElement.querySelector('.weekly-fire-emoji');
     const starRect = starElement.getBoundingClientRect();
-    
+
     // Geçici yıldız elementi oluştur
     const flyingStar = document.createElement('div');
     flyingStar.innerHTML = '⭐';
@@ -893,16 +879,16 @@ function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell)
     flyingStar.style.pointerEvents = 'none';
     flyingStar.style.transition = 'all 0.8s ease-out';
     flyingStar.style.transform = 'scale(0.6)';
-    
+
     document.body.appendChild(flyingStar);
-    
+
     // Yıldızı hedefe hareket ettir
     setTimeout(() => {
         flyingStar.style.left = (starRect.left + starRect.width / 2 - 12.5) + 'px'; // Yıldızın tam ortası (25px/2 = 12.5)
         flyingStar.style.top = (starRect.top + starRect.height / 2 - 12.5) + 'px'; // Yıldızın tam ortası
         flyingStar.style.transform = 'scale(1)';
     }, 50);
-    
+
     // Hedefe ulaştığında seri hücresini animasyonla
     setTimeout(() => {
         if (starElement) {
@@ -911,11 +897,11 @@ function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell)
                 starElement.classList.remove('streak-star-animation');
             }, 600);
         }
-        
+
         // Uçan yıldızı kaldır
         document.body.removeChild(flyingStar);
     }, 850);
-    
+
 }
 
 // refresh butonu kaldırıldı
@@ -934,11 +920,11 @@ async function shareTrackerTable() {
     const prepareImages = async () => {
         const profileImages = trackerTable.querySelectorAll('.tracker-profile-image');
         const imageUpdates = [];
-        
+
         profileImages.forEach(img => {
             const src = img.src || img.getAttribute('src') || '';
             const isLocalPath = src.includes('/images/') || src.includes('/userAvatars/');
-            
+
             if (src && (src.startsWith('http://') || src.startsWith('https://')) && !isLocalPath) {
                 imageUpdates.push({
                     img: img,
@@ -947,7 +933,7 @@ async function shareTrackerTable() {
                 img.src = '/images/default.png';
             }
         });
-        
+
         await Promise.all(imageUpdates.map(({ img }) => {
             return new Promise((resolve) => {
                 if (img.complete) {
@@ -982,12 +968,12 @@ async function shareTrackerTable() {
 function showSessionTimeoutModal() {
     const modal = document.getElementById('sessionTimeoutModal');
     if (!modal) return;
-    
+
     modal.style.display = 'flex';
     setTimeout(() => {
         modal.classList.add('show');
     }, 10);
-    
+
     // Geri sayım başlat
     startSessionTimeoutCountdown();
 }
@@ -999,17 +985,17 @@ let sessionCountdownInterval = null;
 function startSessionTimeoutCountdown() {
     const countdownElement = document.getElementById('sessionTimeoutCountdown');
     if (!countdownElement) return;
-    
+
     // Önceki interval'i temizle (varsa)
     if (sessionCountdownInterval) {
         clearInterval(sessionCountdownInterval);
     }
-    
+
     let countdown = 3;
     countdownElement.textContent = countdown;
-    
+
     sessionCountdownInterval = setInterval(() => {
-        
+
         if (countdown >= 0) {
             countdownElement.textContent = countdown;
             // Sayı değiştiğinde animasyon efekti
@@ -1035,7 +1021,7 @@ function reloadPageAfterSessionTimeout() {
         clearInterval(sessionCountdownInterval);
         sessionCountdownInterval = null;
     }
-    
+
     const modal = document.getElementById('sessionTimeoutModal');
     if (modal) {
         modal.classList.remove('show');
@@ -1060,17 +1046,17 @@ document.addEventListener('DOMContentLoaded', () => {
             loadTrackerTable();
         }
     });
-    
+
     // Month share modal setup
     window.setupShareModal('monthShareModal', 'closeMonthShareModal', () => {
         // Monthly calendar için restore işlemi gerekmiyor
     });
-    
+
     // Longest series share modal setup
     window.setupShareModal('longestSeriesShareModal', 'closeLongestSeriesShareModal', () => {
         // Restore işlemi gerekmiyor
     });
-    
+
     // Reading stats share modal setup
     window.setupShareModal('readingStatsShareModal', 'closeReadingStatsShareModal', () => {
         // Restore işlemi gerekmiyor

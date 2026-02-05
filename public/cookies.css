@@ -61,6 +61,7 @@
 
 .cookie-button.accept {
     background-color: #4285F4;
+    border: 1px solid #1566ec;
     color: white;
 }
 
@@ -70,6 +71,7 @@
 
 .cookie-button.decline {
     background-color: #f1f1f1;
+    border: 1px solid #dbdbdb;
     color: #333;
 }
 
