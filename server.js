@@ -3470,6 +3470,9 @@ async function sendOneSignalNotification(message, source = 'vecize') {
   }
 }
 
+// Global değişkenler - zamanlayıcıları saklamak için
+let vecizeJobMorning = null;
+let vecizeJobEvening = null;
 function scheduleDailyNotifications() {
   
   if (!(process.env.ONESIGNAL_APP_ID && process.env.ONESIGNAL_API_KEY)) {
@@ -3477,26 +3480,42 @@ function scheduleDailyNotifications() {
     return null;
   }
   
+  // Önceki zamanlayıcıları iptal et (eğer varsa)
+  if (vecizeJobMorning) {
+    console.log('⚠️ Önceki sabah zamanlayıcısı iptal ediliyor...');
+    vecizeJobMorning.cancel();
+    vecizeJobMorning = null;
+  }
+  
+  if (vecizeJobEvening) {
+    console.log('⚠️ Önceki akşam zamanlayıcısı iptal ediliyor...');
+    vecizeJobEvening.cancel();
+    vecizeJobEvening = null;
+  }
+  
   // TR: 09:00
-  const jobMorning = schedule.scheduleJob({ rule: '0 9 * * *', tz: 'Europe/Istanbul' }, async () => {
+  vecizeJobMorning = schedule.scheduleJob({ rule: '0 9 * * *', tz: 'Europe/Istanbul' }, async () => {
     console.log('🌅 Sabah 9:00 cron job çalışıyor');
     const result = await getRandomVecizeForPush();
     await sendOneSignalNotification(result.message, result.source);
   });
+  
   // TR: 21:00
-  const jobEvening = schedule.scheduleJob({ rule: '0 21 * * *', tz: 'Europe/Istanbul' }, async () => {
+  vecizeJobEvening = schedule.scheduleJob({ rule: '0 21 * * *', tz: 'Europe/Istanbul' }, async () => {
     console.log('🌙 Akşam 21:00 cron job çalışıyor');
     const result = await getRandomVecizeForPush();
     await sendOneSignalNotification(result.message, result.source);
   });
   
+  console.log('✅ Vecize bildirim zamanlayıcıları başlatıldı (Sabah 9:00, Akşam 21:00)');
+  
   process.on('SIGINT', async () => {
     console.log('Cron job\'lar kapatılıyor...');
-    jobMorning?.cancel();
-    jobEvening?.cancel();
+    vecizeJobMorning?.cancel();
+    vecizeJobEvening?.cancel();
   });
   
-  return { jobMorning, jobEvening };
+  return { jobMorning: vecizeJobMorning, jobEvening: vecizeJobEvening };
 }
 
 // Sağlık kontrolü endpoint'i
