@@ -407,7 +407,7 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap 5px;
+      gap: 5px;
     }
 
     .btn-change-video {
@@ -2473,8 +2473,8 @@
                 }
               } else {
                 progressBlock.classList.remove("soft-phase");
-                progressFill.classList.add("indeterminate");
-                progressFill.style.width = "";
+                progressFill.classList.remove("indeterminate");
+                progressFill.style.width = displayedProgressPercent + "%";
                 progressLine1.textContent = "İşleniyor…";
                 progressPercentLabelActive = false;
                 progressLine2.textContent = pickProgressMessage(st.message, "Adımlar işleniyor...");
