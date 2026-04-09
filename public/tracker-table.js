@@ -339,6 +339,24 @@ async function loadTrackerTable() {
     for (let user of users) {
         streakMap[user._id] = findConsecutiveStreaks(statMap[user._id] || {});
     }
+    // Her tarih için okuyan/okumayan/boş sayılarını hesapla
+    const dateCounts = {};
+    const now = new Date();
+    now.setHours(now.getHours() + 3);
+    const nowString = now.toISOString().split('T')[0];
+    for (let d of dates) {
+        let readCount = 0, notReadCount = 0, emptyCount = 0;
+        const isFuture = d > nowString;
+        for (let user of users) {
+            const st = (statMap[user._id] || {})[d];
+            if (st === 'okudum') readCount++;
+            else if (st === 'okumadım') notReadCount++;
+            else if (!isFuture) emptyCount++; // geçmiş/bugün için boş say
+        }
+        dateCounts[d] = { readCount, notReadCount, emptyCount };
+    }
+
+    const totalUsers = users.length;
     let theadHTML = `<tr><th>Kullanıcılar</th>`;
     const today = new Date();
     // UTC+3 saat dilimi ekle (Türkiye saati)
@@ -408,6 +426,34 @@ async function loadTrackerTable() {
         tbodyHTML += row;
     }
     trackerTable.querySelector('tbody').innerHTML = tbodyHTML;
+
+    // tfoot: istatistik satırı oluştur veya güncelle
+    let tfoot = trackerTable.querySelector('tfoot');
+    if (!tfoot) {
+        tfoot = document.createElement('tfoot');
+        trackerTable.appendChild(tfoot);
+    }
+    let tfootHTML = `<tr class="stats-footer-row"><td class="stats-footer-label"><span class="col-user-count">${totalUsers} kişi</span></td>`;
+    for (let d of dates) {
+        const { readCount, notReadCount, emptyCount } = dateCounts[d];
+        const isToday = d === todayString;
+        const todayClass = isToday ? ' today-column' : '';
+        tfootHTML += `<td class="stats-footer-cell${todayClass}">`
+            + `<span class="col-counts" data-date="${d}">`
+            + `<span class="col-counts-row1"><span class="col-empty">${emptyCount}➖</span><span class="col-not-read">${notReadCount}✖</span></span>`
+            + `<span class="col-counts-row2"><span class="col-read">${readCount}✔</span></span>`
+            + `</span></td>`;
+    }
+    // Son hücre: haftanın toplamı
+    const totalEmpty = dates.reduce((s, d) => s + (dateCounts[d].emptyCount || 0), 0);
+    const totalNotRead = dates.reduce((s, d) => s + (dateCounts[d].notReadCount || 0), 0);
+    const totalRead = dates.reduce((s, d) => s + (dateCounts[d].readCount || 0), 0);
+    tfootHTML += `<td class="stats-footer-cell stats-footer-total">`
+        + `<span class="col-counts" id="stats-footer-total-counts">`
+        + `<span class="col-counts-row1"><span class="col-empty" id="tfoot-total-empty">${totalEmpty}➖</span><span class="col-not-read" id="tfoot-total-notread">${totalNotRead}✖</span></span>`
+        + `<span class="col-counts-row2"><span class="col-read" id="tfoot-total-read">${totalRead}✔</span></span>`
+        + `</span></td></tr>`;
+    tfoot.innerHTML = tfootHTML;
     // Kullanıcıya tıklanınca ilgili kartı göster ve scroll et
     trackerTable.querySelectorAll('.user-item').forEach(item => {
         item.addEventListener('click', function () {
@@ -614,6 +660,9 @@ async function toggleStatus(userId, date) {
     // Cache'i güncelle
     updateUserStatsCache(userId, date, status);
 
+    // Sütun başlığındaki sayaçları güncelle
+    updateDateColumnCounts(date, current, status);
+
     // Tüm satırdaki hücrelerin renklerini yeniden hesapla
     const rowEl = cell.closest('tr');
 
@@ -772,6 +821,58 @@ async function toggleStatus(userId, date) {
 
     // Kullanıcı istatistik alanını güncelle (sadece okuma sayısı ve lig bilgisi)
     updateUserStatsArea();
+}
+
+// tfoot'taki tarih sütunu sayaçlarını anlık güncelle
+function updateDateColumnCounts(date, prevSymbol, newStatus) {
+    try {
+        const tfoot = trackerTable.querySelector('tfoot');
+        if (!tfoot) return;
+        const countsEl = tfoot.querySelector(`.col-counts[data-date="${date}"]`);
+        if (!countsEl) return;
+
+        const readEl = countsEl.querySelector('.col-read');
+        const notReadEl = countsEl.querySelector('.col-not-read');
+        const emptyEl = countsEl.querySelector('.col-empty');
+        if (!readEl || !notReadEl || !emptyEl) return;
+
+        let readCount = parseInt(readEl.textContent) || 0;
+        let notReadCount = parseInt(notReadEl.textContent) || 0;
+        let emptyCount = parseInt(emptyEl.textContent) || 0;
+
+        // Önceki durumu çıkar
+        if (prevSymbol === '✔') { readCount = Math.max(0, readCount - 1); emptyCount++; }
+        else if (prevSymbol === '✖') { notReadCount = Math.max(0, notReadCount - 1); emptyCount++; }
+        else if (prevSymbol === '➖') { emptyCount = Math.max(0, emptyCount - 1); }
+
+        // Yeni durumu ekle
+        if (newStatus === 'okudum') { readCount++; emptyCount = Math.max(0, emptyCount - 1); }
+        else if (newStatus === 'okumadım') { notReadCount++; emptyCount = Math.max(0, emptyCount - 1); }
+
+        readEl.textContent = readCount + '✔';
+        notReadEl.textContent = notReadCount + '✖';
+        emptyEl.textContent = emptyCount + '➖';
+
+        // Haftalık toplam hücrelerini de güncelle
+        const totalReadEl = document.getElementById('tfoot-total-read');
+        const totalNotReadEl = document.getElementById('tfoot-total-notread');
+        const totalEmptyEl = document.getElementById('tfoot-total-empty');
+        if (totalReadEl && totalNotReadEl && totalEmptyEl) {
+            // Tüm günlerin toplamlarını yeniden hesapla
+            let sumRead = 0, sumNotRead = 0, sumEmpty = 0;
+            const tfoot = trackerTable.querySelector('tfoot');
+            tfoot.querySelectorAll('.col-counts[data-date]').forEach(el => {
+                sumRead += parseInt(el.querySelector('.col-read')?.textContent) || 0;
+                sumNotRead += parseInt(el.querySelector('.col-not-read')?.textContent) || 0;
+                sumEmpty += parseInt(el.querySelector('.col-empty')?.textContent) || 0;
+            });
+            totalReadEl.textContent = sumRead + '✔';
+            totalNotReadEl.textContent = sumNotRead + '✖';
+            totalEmptyEl.textContent = sumEmpty + '➖';
+        }
+    } catch (e) {
+        console.error('Sütun sayaçları güncellenemedi:', e);
+    }
 }
 
 // Tüm kullanıcıların background rengini güncelle (önbellekten)

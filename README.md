@@ -52,6 +52,7 @@ Modern ve kullanıcı dostu bir okuma takip platformu. Grup üyelerinin günlük
 - **Responsive**: Tüm cihazlarda uyumlu
 - **Push Notifications**: OneSignal entegrasyonu
 - **Hızlı Yükleme**: Optimize edilmiş performans
+- **Video Sessizlik Kaldırıcı**: `/video-silence-remover` adresinden video içindeki sessiz bölümleri kısaltma
 
 ## 🛠️ Teknolojiler
 
@@ -341,6 +342,7 @@ Uygulama şu anda [Render.com](https://rotakip.onrender.com/) üzerinde çalış
 - Dropbox API token
 - OneSignal hesabı
 - YouTube API key
+- Video sessizlik kaldırıcı için Python 3 ve FFmpeg
 
 **Environment Variables:**
 
@@ -354,13 +356,14 @@ YOUTUBE_API_KEY=...
 ### Docker
 
 ```dockerfile
-FROM node:18-alpine
+FROM node:20-bookworm-slim
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg python3 && rm -rf /var/lib/apt/lists/*
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 COPY . .
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
 ```
 
 **Docker Compose:**

@@ -100,16 +100,16 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
             uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
         }
         imagePreviewContainer.style.display = 'none';
-        
+
         // Input-profile-image'i varsayılan resme döndür
         inputProfileImage.src = '/images/default.png';
-        
+
         // Add-user-input-profile-image'i de varsayılan resme döndür
         const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
         if (addUserInputProfileImage) {
             addUserInputProfileImage.src = '/images/default.png';
         }
-        
+
         // Avatar seçimini sıfırla
         selectedAddUserAvatarPath = null;
 
@@ -162,20 +162,20 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
 
     // Toplam kullanıcı sayısını kontrol et
     const currentTotalCount = await getTotalUserCount();
-    
+
     // Kendi hesabını silme kontrolü
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
     const isDeletingSelf = currentUserInfo && currentUserInfo.userId === id;
-    
+
     let confirmMessage;
-    
+
     // Eğer son kullanıcıyı silmeye çalışıyorsa grup da silinecek
     if (currentTotalCount <= 1) {
         confirmMessage = `Silmek istediğine emin misin: ->  ${userName}  <- Bu kullanıcı gruptaki son kullanıcıdır. Silindiğinde grup da tamamen silinecektir.\n\nBu işlem geri alınamaz!`;
     } else if (isDeletingSelf) {
         confirmMessage = `Kendi hesabınızı silmek istediğinizi onaylıyor musunuz?\n\n` +
-                        `Bu işlem sonrasında otomatik olarak çıkış yapacaksınız ve hesabınız tamamen silinecektir.\n\n` +
-                        `Bu işlem geri alınamaz!`;
+            `Bu işlem sonrasında otomatik olarak çıkış yapacaksınız ve hesabınız tamamen silinecektir.\n\n` +
+            `Bu işlem geri alınamaz!`;
     } else {
         confirmMessage = `Silmek istediğine emin misin: ->  ${userName}  <- Bu işlem geri alınamaz.`;
     }
@@ -199,7 +199,7 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
             });
 
             const result = await response.json();
-            
+
             // Eğer grup silindi ise ana sayfaya yönlendir
             if (result.groupDeleted) {
                 showSuccessMessage('Kullanıcı ve grup silindi. Ana sayfaya yönlendiriliyorsunuz...');
@@ -233,7 +233,7 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
                 // En uzun serileri yeniden hesapla
                 await window.globalDataStore._buildLongestStreaks();
             }
-            
+
             if (LocalStorageManager.isAdmin()) {
                 renderUserList();
             }
@@ -301,18 +301,18 @@ async function saveUserName(userId) {   //Kullanıcı adını güncelleme fonksi
         nameSpan.style.display = 'inline-block';
         nameInput.style.display = 'none';
         saveButton.style.display = 'none';
-        
+
         const cancelButton = userItem.querySelector('.cancel-edit-button');
         if (cancelButton) {
             cancelButton.style.display = 'none';
         }
-        
+
         // Show edit button and settings button
         const editButton = userItem.querySelector('.edit-name-button');
         if (editButton) {
             editButton.style.display = 'inline-block';
         }
-        
+
         const settingsButton = userItem.querySelector('.settings-button');
         if (settingsButton) {
             settingsButton.style.display = 'inline-block';
@@ -347,31 +347,31 @@ async function saveUserName(userId) {   //Kullanıcı adını güncelleme fonksi
         loadReadingStats();
         renderLongestSeries();
         if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
-        
+
         // Update user select dropdown for invites (only the dropdown, not the entire list)
         updateUserSelectDropdownForSingleUser(userId, newName);
-        
+
         saveButton.disabled = false;
         showSuccessMessage('Kullanıcı adı başarıyla güncellendi!');
 
     } catch (error) {
         console.error('Kullanıcı adı güncelleme hatası:', error);
         showErrorMessage('Kullanıcı adı güncellenirken hata oluştu!');
-        
+
         // Reset button state
         saveButton.disabled = false;
-        
+
         // Hide cancel button and show edit button and settings button again on error
         const cancelButton = userItem.querySelector('.cancel-edit-button');
         if (cancelButton) {
             cancelButton.style.display = 'none';
         }
-        
+
         const editButton = userItem.querySelector('.edit-name-button');
         if (editButton) {
             editButton.style.display = 'inline-block';
         }
-        
+
         const settingsButton = userItem.querySelector('.settings-button');
         if (settingsButton) {
             settingsButton.style.display = 'inline-block';
@@ -391,13 +391,13 @@ function editUserName(userId) {     //Kullanıcı adını düzenleme fonksiyonu
         console.error('User container bulunamadı, userId:', userId);
         return;
     }
-    
+
     const userItem = userContainer.querySelector('li');
     if (!userItem) {
         console.error('Li element bulunamadı, userId:', userId);
         return;
     }
-    
+
     const nameSpan = userItem.querySelector('.profil-image-user-name');
     const nameInput = userItem.querySelector('.edit-name-input');
     const editButton = userItem.querySelector('.edit-name-button');
@@ -413,14 +413,14 @@ function editUserName(userId) {     //Kullanıcı adını düzenleme fonksiyonu
     if (nameInput) nameInput.style.display = 'inline-block';
     if (saveButton) saveButton.style.display = 'inline-block';
     if (cancelButton) cancelButton.style.display = 'inline-block';
-    
+
     // Profile image'ı belirgin hale getir
     if (profileImage) {
         profileImage.style.border = '1px solid rgb(0 13 255)';
         profileImage.style.boxShadow = '0 0 5px rgba(78, 84, 200, 0.5)'
         profileImage.style.transition = 'all 0.3s ease';
     }
-    
+
     // Focus on input and select text
     if (nameInput) {
         nameInput.focus();
@@ -449,7 +449,7 @@ function changeUserImage(userId) {     //Kullanıcı resmi değiştirme fonksiyo
     fileInput.addEventListener('change', async function () {
         if (this.files.length > 0) {
             const file = this.files[0];
-            
+
             // Önce UI'da resmi güncelle
             const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
             if (!userContainer) {
@@ -486,7 +486,7 @@ function changeUserImage(userId) {     //Kullanıcı resmi değiştirme fonksiyo
                 }
 
                 const result = await response.json();
-                
+
                 // GlobalDataStore'u güncelle
                 if (window.globalDataStore) {
                     // Kullanıcının profil resmini güncelle
@@ -533,7 +533,7 @@ let selectedAddUserAvatarPath = null; // Kullanıcı ekleme için seçilen avata
 
 // Upload butonu event listener
 if (uploadBtn) {
-    uploadBtn.addEventListener('click', function() {
+    uploadBtn.addEventListener('click', function () {
         if (profileImageInput) {
             profileImageInput.click();
         }
@@ -554,41 +554,41 @@ if (addUserAvatarBtn) {
 // Sil butonu event listener
 const addUserRemoveBtn = document.getElementById('addUserRemoveBtn');
 if (addUserRemoveBtn) {
-    addUserRemoveBtn.addEventListener('click', function() {
+    addUserRemoveBtn.addEventListener('click', function () {
         if (typeof logUnauthorizedAccess === 'function') {
             logUnauthorizedAccess('Kullanıcı ekleme resim silme');
         }
-        
+
         // Profil önizlemesini varsayılan resme döndür
         const previewImg = document.getElementById('addUserInputProfileImage');
         if (previewImg) {
             previewImg.src = '/images/default.png';
         }
-        
+
         // Dosya input'unu temizle
         if (profileImageInput) {
             profileImageInput.value = '';
         }
-        
+
         // Avatar seçimini sıfırla
         selectedAddUserAvatarPath = null;
-        
+
         // Resim önizleme container'ını gizle
         if (imagePreviewContainer) {
             imagePreviewContainer.style.display = 'none';
         }
-        
+
         // Buton metnini sıfırla
         if (uploadBtn) {
             uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
         }
-        
+
     });
 }
 
 // inputProfileImage tıklanınca file seçim işlemi
 if (inputProfileImage) {
-    inputProfileImage.addEventListener('click', function() {
+    inputProfileImage.addEventListener('click', function () {
         const fileInputLabel = document.querySelector('label.custom-file-input');
         if (fileInputLabel) {
             fileInputLabel.click();
@@ -599,7 +599,7 @@ if (inputProfileImage) {
 // addUserInputProfileImage tıklanınca file seçim işlemi
 const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
 if (addUserInputProfileImage) {
-    addUserInputProfileImage.addEventListener('click', function() {
+    addUserInputProfileImage.addEventListener('click', function () {
         if (profileImageInput) {
             profileImageInput.click();
         }
@@ -612,16 +612,16 @@ function resetImagePreview() {    // Resim önizleme kapatma fonksiyonu
         uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
     }
     profileImageInput.value = ''; // Input değerini de temizle
-    
+
     // Input-profile-image'i varsayılan resme döndür
     inputProfileImage.src = '/images/default.png';
-    
+
     // Add-user-input-profile-image'i de varsayılan resme döndür
     const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
     if (addUserInputProfileImage) {
         addUserInputProfileImage.src = '/images/default.png';
     }
-    
+
     // Avatar seçimini de sıfırla
     selectedAddUserAvatarPath = null;
 }
@@ -648,16 +648,16 @@ if (profileImageInput) {
                 // Ana önizleme alanını güncelle
                 imagePreview.src = e.target.result;
                 imagePreviewContainer.style.display = 'flex';
-                
+
                 // Input-profile-image'i güncelle
                 inputProfileImage.src = e.target.result;
-                
+
                 // Add-user-input-profile-image'i de güncelle
                 const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
                 if (addUserInputProfileImage) {
                     addUserInputProfileImage.src = e.target.result;
                 }
-                
+
                 // Avatar seçimini sıfırla (tek seçim mantığı)
                 selectedAddUserAvatarPath = null;
             }
@@ -672,7 +672,7 @@ if (profileImageInput) {
 function showSuccessMessage(message) {
     // Mesajı kuyruğa ekle
     messageQueue.push({ message, type: 'success' });
-    
+
     // Eğer şu anda mesaj gösterilmiyorsa, kuyruktan mesaj göster
     if (!isShowingMessage) {
         processMessageQueue();
@@ -682,7 +682,7 @@ function showSuccessMessage(message) {
 function showErrorMessage(message) {
     // Mesajı kuyruğa ekle
     messageQueue.push({ message, type: 'error' });
-    
+
     // Eğer şu anda mesaj gösterilmiyorsa, kuyruktan mesaj göster
     if (!isShowingMessage) {
         processMessageQueue();
@@ -701,13 +701,13 @@ function toggleDeleteButton(userId) {     //Kullanıcı silme butonunu açma fon
         console.error('User container bulunamadı, userId:', userId);
         return;
     }
-    
+
     const userItem = userContainer.querySelector('li');
     if (!userItem) {
         console.error('Li element bulunamadı, userId:', userId);
         return;
     }
-    
+
     const deleteButton = userItem.querySelector('.delete-button');
     const settingsButton = userItem.querySelector('.settings-button');
     const cancelButton = userItem.querySelector('.cancel-settings-button');
@@ -805,7 +805,7 @@ async function getTotalUserCount() {
     try {
         const response = await fetch(`/api/users/${window.groupid}`);
         if (!response.ok) return 0;
-        
+
         const data = await response.json();
         return data.users.length;
     } catch (error) {
@@ -819,7 +819,7 @@ async function getAdminCount() {
     try {
         const response = await fetch(`/api/users/${window.groupid}`);
         if (!response.ok) return 0;
-        
+
         const data = await response.json();
         return data.users.filter(user => user.authority === 'admin').length;
     } catch (error) {
@@ -839,10 +839,10 @@ async function changeUserAuthority(userId, newAuthority) {
     // Admin sayısını kontrol et (önce admin sayısını kontrol et)
     const currentAdminCount = await getAdminCount();
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
-    
+
     // Eğer son admin'i üye yapmaya çalışıyorsa engelle
-    if (currentUserInfo && currentUserInfo.userId === userId && 
-        currentUserInfo.userAuthority === 'admin' && newAuthority === 'member' && 
+    if (currentUserInfo && currentUserInfo.userId === userId &&
+        currentUserInfo.userAuthority === 'admin' && newAuthority === 'member' &&
         currentAdminCount <= 1) {
         showErrorMessage('En az bir yönetici hesabı bulunmalıdır!');
         // Combobox'ı eski değerine geri döndür
@@ -859,7 +859,7 @@ async function changeUserAuthority(userId, newAuthority) {
         const currentAuthority = currentUserInfo.userAuthority;
         const newAuthorityText = newAuthority === 'admin' ? 'Yönetici' : 'Üye';
         const currentAuthorityText = currentAuthority === 'admin' ? 'Yönetici' : 'Üye';
-        
+
         if (currentAuthority === newAuthority) {
             // Aynı yetkiye değiştirmeye çalışıyor, combobox'ı eski değerine döndür
             const authoritySelect = document.querySelector(`#userList [data-user-id="${userId}"] .authority-select`);
@@ -868,13 +868,13 @@ async function changeUserAuthority(userId, newAuthority) {
             }
             return;
         }
-        
+
         // Kendi yetkisini değiştirmek istediğini onayla
         const confirmed = confirm(
             `Kendi yetkinizi "${currentAuthorityText}" den "${newAuthorityText}" ye değiştirmek istediğinizi onaylıyor musunuz?\n\n` +
             `Bu işlem sonrasında yetkiniz değişecek ve bazı işlemler için yeniden giriş yapmanız gerekebilir.`
         );
-        
+
         if (!confirmed) {
             // Onaylanmadı, combobox'ı eski değerine döndür
             const authoritySelect = document.querySelector(`#userList [data-user-id="${userId}"] .authority-select`);
@@ -900,7 +900,7 @@ async function changeUserAuthority(userId, newAuthority) {
         if (response.ok) {
             const result = await response.json();
             showSuccessMessage(`Kullanıcı yetkisi başarıyla ${newAuthority === 'admin' ? 'Yönetici' : 'Üye'} olarak güncellendi!`);
-            
+
             // GlobalDataStore'u güncelle
             if (window.globalDataStore) {
                 // Kullanıcının yetkisini güncelle
@@ -911,7 +911,7 @@ async function changeUserAuthority(userId, newAuthority) {
                     window.globalDataStore._rebuildIndexes();
                 }
             }
-            
+
             // Eğer kendi yetkisini değiştirdiyse
             if (currentUserInfo && currentUserInfo.userId === userId) {
                 // Kendi yetkisi değişti, otomatik çıkış yap
@@ -924,7 +924,7 @@ async function changeUserAuthority(userId, newAuthority) {
                 }, 1500);
                 return;
             }
-      
+
             if (newAuthority === 'admin' && currentUserInfo && currentUserInfo.userAuthority === 'admin') {
                 // Sayfayı yenile veya admin indicator'ı güncelle
                 if (typeof showAdminIndicator === 'function') {
@@ -937,7 +937,7 @@ async function changeUserAuthority(userId, newAuthority) {
     } catch (error) {
         console.error('Yetki güncelleme hatası:', error);
         showErrorMessage('Yetki güncellenirken hata oluştu!');
-        
+
         // Hata durumunda combobox'ı eski değerine geri döndür
         const authoritySelect = document.querySelector(`li[data-user-id="${userId}"] .authority-select`);
         if (authoritySelect) {
@@ -958,10 +958,10 @@ async function changeUserAuthority(userId, newAuthority) {
 function updateUserSelectDropdown(users) {
     const userSelect = document.getElementById('userSelectForInvite');
     if (!userSelect) return;
-    
+
     // Mevcut seçimi temizle (ilk seçenek hariç)
     userSelect.innerHTML = '<option value="">Kullanıcı seçiniz...</option>';
-    
+
     // Kullanıcıları seçim kutusuna ekle
     users.forEach(user => {
         const option = document.createElement('option');
@@ -975,7 +975,7 @@ function updateUserSelectDropdown(users) {
 function updateUserSelectDropdownForSingleUser(userId, newName) {
     const userSelect = document.getElementById('userSelectForInvite');
     if (!userSelect) return;
-    
+
     // İlgili kullanıcının option'ını bul ve güncelle
     const options = userSelect.querySelectorAll('option');
     options.forEach(option => {
@@ -991,29 +991,29 @@ async function inviteSelectedUser() {
     if (typeof logUnauthorizedAccess === 'function') {
         logUnauthorizedAccess('Kullanıcı davet etme');
     }
-    
+
     const userSelect = document.getElementById('userSelectForInvite');
     const inviteBtn = document.querySelector('.invite-selected-btn');
-    
+
     if (!userSelect || !inviteBtn) {
         showErrorMessage('Davet sistemi bulunamadı!');
         return;
     }
-    
+
     const selectedUserId = userSelect.value;
     if (!selectedUserId) {
         showErrorMessage('Lütfen davet edilecek kullanıcıyı seçiniz!');
         return;
     }
-    
+
     // Kullanıcı adını al
     const selectedUserName = userSelect.options[userSelect.selectedIndex].textContent;
-    
+
     // Butonu devre dışı bırak
     inviteBtn.disabled = true;
     const originalText = inviteBtn.innerHTML;
     inviteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    
+
     try {
         // Davet token'ı oluştur
         const response = await fetch(`/api/create-invite/${window.groupid}`, {
@@ -1035,19 +1035,16 @@ async function inviteSelectedUser() {
         const baseUrl = window.location.origin;
         const quickLoginUrl = `${baseUrl}/groupid=${window.groupid}?quick-login&invite=${inviteToken}`;
         const groupUrl = `${baseUrl}/groupid=${window.groupid}`;
-        
+
         // Davet metnini oluştur
         const inviteText = `*${groupName} okuma grubu*
 
 *• Katılma linkiniz:*
-${quickLoginUrl}
+${quickLoginUrl}`;
 
-*• Grup sayfası:*
-${groupUrl}`;
-        
         // Panoya kopyala
         await navigator.clipboard.writeText(inviteText);
-        
+
         // Web Share API'yi dene
         if (navigator.share) {
             try {
@@ -1062,10 +1059,10 @@ ${groupUrl}`;
         } else {
             showSuccessMessage(`${selectedUserName} için davet linki panoya kopyalandı!`);
         }
-        
+
         // Seçimi temizle
         userSelect.value = '';
-        
+
     } catch (error) {
         console.error('Davet hatası:', error);
         showErrorMessage('Davet linki oluşturulamadı. Lütfen tekrar deneyin.');
@@ -1102,40 +1099,40 @@ function performRenderUserList() {
         console.error('userList element bulunamadı');
         return;
     }
-    
+
     const prevScrollTop = userList.scrollTop; // scroll pozisyonunu koru
-    
+
     fetch(`/api/users/${window.groupid}`)
         .then(res => res.json())
         .then(data => {
             const users = data.users;
-            
+
             // Kullanıcı listesini tamamen temizle ve yeniden oluştur
             userList.innerHTML = '';
-            
+
             // Tüm kullanıcıları yeniden oluştur
             users.forEach((user, index) => {
                 const userProfileImage = user.profileImage || '/images/default.png';
                 const liHTML = `<div class="kullanıcı-item"><img src="${userProfileImage}" alt="${user.name}" class="user-profile-image user-profile-image-loading" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${user.name}</span><input type="text" class="edit-name-input" value="${user.name}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
-                
+
                 // Kullanıcı container'ı oluştur
                 const userContainer = document.createElement('div');
                 userContainer.className = 'user-container';
                 userContainer.setAttribute('data-user-id', user._id);
-                
+
                 // Li elementini oluştur ve container'a ekle
                 const li = document.createElement('li');
                 li.setAttribute('data-user-id', user._id); // data-user-id attribute'u ekle
-                
+
                 // Giriş yapılan kullanıcı için özel class ekle
                 const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
                 if (currentUserInfo && currentUserInfo.userId === user._id) {
                     li.classList.add('current-user');
                 }
-                
+
                 li.innerHTML = liHTML;
                 userContainer.appendChild(li);
-                
+
                 // Authority select'i oluştur ve container'a ekle
                 const authoritySelect = document.createElement('select');
                 authoritySelect.className = 'authority-select';
@@ -1146,14 +1143,14 @@ function performRenderUserList() {
                     <option value="admin" ${user.authority === 'admin' ? 'selected' : ''}>Yönetici</option>
                 `;
                 userContainer.appendChild(authoritySelect);
-                
+
                 // Davet butonunu kaldır - artık ayrı bir davet sistemi kullanıyoruz
-                
+
                 userList.appendChild(userContainer);
             });
-            
+
             userList.scrollTop = prevScrollTop; // scroll pozisyonunu geri yükle
-            
+
             // Kullanıcı seçim kutusunu güncelle
             updateUserSelectDropdown(users);
         })
@@ -1173,16 +1170,16 @@ async function loadGroupSettings() {
         if (response.ok) {
             const data = await response.json();
             const group = data.group;
-            
+
             // Form alanlarını doldur
             document.getElementById('groupName').value = group.groupName || '';
             document.getElementById('groupDescription').value = group.description || '';
             document.getElementById('groupVisibility').value = group.visibility || 'public';
-            
+
             // Grup resmini ayarla
             const groupImage = document.getElementById('currentGroupImage');
             const removeBtn = document.querySelector('.group-image-remove-btn');
-            
+
             if (group.groupImage) {
                 groupImage.src = group.groupImage;
                 removeBtn.style.display = 'flex';
@@ -1190,7 +1187,7 @@ async function loadGroupSettings() {
                 groupImage.src = '/images/open-book.webp';
                 removeBtn.style.display = 'none';
             }
-            
+
             // Görünürlük ikonunu güncelle
             updateVisibilityIcon(group.visibility || 'public');
         }
@@ -1204,7 +1201,7 @@ function checkCharacterLimit(event) {
     const input = event.target;
     const currentLength = input.value.length;
     const maxLength = parseInt(input.getAttribute('maxlength'));
-    
+
     if (currentLength >= maxLength) {
         // Fazla karakter durumunda uyarı göster
         if (input.id === 'groupName') {
@@ -1212,7 +1209,7 @@ function checkCharacterLimit(event) {
         } else if (input.id === 'groupDescription') {
             showErrorMessage('Grup açıklaması en fazla 200 karakter olabilir!');
         }
-        
+
         // Fazla karakterleri kes
         input.value = input.value.substring(0, maxLength);
     }
@@ -1223,17 +1220,17 @@ function updateVisibilityIcon(visibility) {
     const icon = document.getElementById('visibilityIcon');
     const info = document.getElementById('visibilityInfo');
     const infoSpan = info ? info.querySelector('span') : null;
-    
+
     if (!icon) return;
-    
+
     // Mevcut sınıfları temizle
     icon.classList.remove('public', 'private');
     if (info) info.classList.remove('public', 'private');
-    
+
     // Yeni sınıfı ekle
     icon.classList.add(visibility);
     if (info) info.classList.add(visibility);
-    
+
     // İkonu değiştir
     if (visibility === 'public') {
         icon.className = 'fa-solid fa-eye visibility-icon public';
@@ -1262,7 +1259,7 @@ function toggleReadyImagesModal() {
     if (typeof logUnauthorizedAccess === 'function') {
         logUnauthorizedAccess('Hazır görseller modal açma');
     }
-    
+
     const modal = document.getElementById('readyImagesModal');
     if (modal.classList.contains('show')) {
         modal.classList.remove('show');
@@ -1281,9 +1278,9 @@ async function loadAvatarOptions() {
         if (response.ok) {
             const avatars = await response.json();
             const avatarGrid = document.getElementById('avatarGrid');
-            
+
             avatarGrid.innerHTML = '';
-            
+
             if (avatars.length === 0) {
                 avatarGrid.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #6c757d;">
@@ -1294,19 +1291,19 @@ async function loadAvatarOptions() {
                 `;
                 return;
             }
-            
+
             avatars.forEach(avatar => {
                 const avatarItem = document.createElement('div');
                 avatarItem.className = 'avatar-item';
                 avatarItem.dataset.avatarPath = avatar.path;
-                
+
                 avatarItem.innerHTML = `
                     <img src="${avatar.path}" alt="Avatar">
                     <div class="check-icon">
                         <i class="fa-solid fa-check"></i>
                     </div>
                 `;
-                
+
                 avatarItem.addEventListener('click', () => selectAvatar(avatar.path, avatarItem));
                 avatarGrid.appendChild(avatarItem);
             });
@@ -1324,21 +1321,21 @@ function selectAvatar(avatarPath, avatarElement) {
     document.querySelectorAll('.avatar-item').forEach(item => {
         item.classList.remove('selected');
     });
-    
+
     // Yeni seçimi işaretle
     avatarElement.classList.add('selected');
-    
+
     // Grup resmini güncelle
     const currentGroupImage = document.getElementById('currentGroupImage');
     currentGroupImage.src = avatarPath;
-    
+
     // Sil butonunu göster (hazır avatar seçildi, artık bir resim var)
     const removeBtn = document.querySelector('.group-image-remove-btn');
     removeBtn.style.display = 'flex';
-    
+
     // Modal'ı kapat
     toggleReadyImagesModal();
-    
+
     // Grup resmini güncelle (sunucuya gönder)
     updateGroupImageFromAvatar(avatarPath);
 }
@@ -1351,20 +1348,20 @@ async function updateGroupImageFromAvatar(avatarPath) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 avatarPath: avatarPath
             })
         });
-        
+
         if (response.ok) {
             const result = await response.json();
-            
+
             // secretAdminLogin resmini de güncelle
             const secretAdminLoginImages = document.querySelectorAll('.secretAdminLoginImage');
             secretAdminLoginImages.forEach(img => {
                 img.src = result.imageUrl;
             });
-            
+
             showSuccessMessage('Grup resmi başarıyla güncellendi!');
         } else {
             console.error('Grup resmi güncellenemedi');
@@ -1454,7 +1451,7 @@ async function changeGroupImage() {
 
     const fileInput = document.getElementById('groupImage');
     const file = fileInput.files[0];
-    
+
     if (!file) return;
 
     const formData = new FormData();
@@ -1474,10 +1471,10 @@ async function changeGroupImage() {
         if (response.ok) {
             const data = await response.json();
             const groupImage = document.getElementById('currentGroupImage');
-            
+
             groupImage.src = data.imageUrl;
             document.querySelector('.group-image-remove-btn').style.display = 'flex';
-            
+
             // secretAdminLogin'deki grup resmini de güncelle
             const secretAdminImage = document.querySelector('.secretAdminLogin img');
             const secretAdminLoginImage = document.querySelector('.secretAdminLoginImage');
@@ -1487,7 +1484,7 @@ async function changeGroupImage() {
             if (secretAdminLoginImage) {
                 secretAdminLoginImage.src = data.imageUrl;
             }
-            
+
             showSuccessMessage('Grup resmi başarıyla güncellendi!');
         } else {
             throw new Error('Grup resmi güncellenemedi');
@@ -1525,7 +1522,7 @@ async function removeGroupImage() {
         if (response.ok) {
             document.getElementById('currentGroupImage').src = '/images/open-book.webp';
             document.querySelector('.group-image-remove-btn').style.display = 'none';
-            
+
             // secretAdminLogin'deki grup resmini de güncelle
             const secretAdminImage = document.querySelector('.secretAdminLogin img');
             const secretAdminLoginImage = document.querySelector('.secretAdminLoginImage');
@@ -1535,7 +1532,7 @@ async function removeGroupImage() {
             if (secretAdminLoginImage) {
                 secretAdminLoginImage.src = '/images/open-book.webp';
             }
-            
+
             showSuccessMessage('Grup resmi başarıyla kaldırıldı!');
         } else {
             throw new Error('Grup resmi kaldırılamadı');
@@ -1554,7 +1551,7 @@ function toggleDeleteGroupButton() {
     const deleteBtn = document.querySelector('.delete-group-btn');
     const toggleBtn = document.querySelector('.danger-toggle-btn');
     const dangerText = toggleBtn.querySelector('.danger-text');
-    
+
     if (deleteBtn.style.display === 'none' || deleteBtn.style.display === '') {
         deleteBtn.style.display = 'flex';
         toggleBtn.classList.add('active');
@@ -1573,16 +1570,16 @@ async function shareGroup() {
     try {
         // Grup adını al
         const groupName = document.getElementById('groupName').value || 'Grup';
-        
+
         // URL formatını oluştur
         const groupUrl = `${window.location.origin}/groupid=${window.groupid}`;
-        
+
         // Paylaşım metnini oluştur
         const shareText = `RoTaKip ${groupName}\n${groupUrl}`;
-        
+
         // Her durumda panoya kopyala
         await navigator.clipboard.writeText(shareText);
-        
+
         // Web Share API'yi de dene (eğer varsa)
         if (navigator.share) {
             try {
@@ -1599,7 +1596,7 @@ async function shareGroup() {
             // Web Share API yoksa sadece panoya kopyalama mesajı göster
             showSuccessMessage('Grup davet linki panoya kopyalandı!');
         }
-        
+
     } catch (error) {
         console.error('Paylaşım hatası:', error);
         showErrorMessage('Link kopyalanamadı. Lütfen manuel olarak kopyalayın.');
@@ -1621,7 +1618,7 @@ async function deleteGroup() {
 
     const groupName = document.getElementById('groupName').value || 'Bu grup';
     const confirmed = confirm(`"${groupName}" grubunu silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz ve tüm grup verileri (kullanıcılar, okuma kayıtları, vb.) kalıcı olarak silinecektir.`);
-    
+
     if (!confirmed) {
         return;
     }
@@ -1646,10 +1643,10 @@ async function deleteGroup() {
 
         if (response.ok) {
             showSuccessMessage('Grup başarıyla silindi!');
-            
+
             // Yeni sistem ile çıkış yap
             LocalStorageManager.logoutUser();
-            
+
             setTimeout(() => {
                 window.location.href = '/';
             }, 1500);
@@ -1672,10 +1669,10 @@ async function deleteGroup() {
 }
 
 // Event listener'ları ekle
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Avatar'ları önceden yükle
     preloadMainAreaAvatars();
-    
+
     // Grup ayarları butonları
     const saveGroupBtn = document.querySelector('.save-group-btn');
     const changeImageBtn = document.querySelector('.change-image-btn');
@@ -1714,7 +1711,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (deleteGroupBtn) {
-        deleteGroupBtn.addEventListener('click', function(e) {
+        deleteGroupBtn.addEventListener('click', function (e) {
             e.preventDefault();
             deleteGroup();
         });
@@ -1723,7 +1720,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Görünürlük değiştiğinde ikonu güncelle
     const groupVisibilitySelect = document.getElementById('groupVisibility');
     if (groupVisibilitySelect) {
-        groupVisibilitySelect.addEventListener('change', function() {
+        groupVisibilitySelect.addEventListener('change', function () {
             updateVisibilityIcon(this.value);
         });
     }
@@ -1732,41 +1729,41 @@ document.addEventListener('DOMContentLoaded', function() {
     if (LocalStorageManager.isUserLoggedIn()) {
         loadGroupSettings();
     }
-    
+
     // Karakter sınırı kontrolü event listener'ları
     const groupNameInput = document.getElementById('groupName');
     const groupDescriptionInput = document.getElementById('groupDescription');
-    
+
     if (groupNameInput) {
         groupNameInput.addEventListener('input', checkCharacterLimit);
     }
-    
+
     if (groupDescriptionInput) {
         groupDescriptionInput.addEventListener('input', checkCharacterLimit);
     }
-    
+
     // Modal dışına tıklandığında kapat
     const readyImagesModal = document.getElementById('readyImagesModal');
     if (readyImagesModal) {
-        readyImagesModal.addEventListener('click', function(e) {
+        readyImagesModal.addEventListener('click', function (e) {
             if (e.target === readyImagesModal) {
                 toggleReadyImagesModal();
             }
         });
     }
-    
+
     // Add user avatar modal dışına tıklandığında kapat
     const addUserAvatarModal = document.getElementById('addUserAvatarModal');
     if (addUserAvatarModal) {
-        addUserAvatarModal.addEventListener('click', function(e) {
+        addUserAvatarModal.addEventListener('click', function (e) {
             if (e.target === addUserAvatarModal) {
                 toggleAddUserAvatarModal();
             }
         });
     }
-    
+
     // ESC tuşu ile modal'ı kapat
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('readyImagesModal');
             if (modal && modal.classList.contains('show')) {
@@ -1799,7 +1796,7 @@ async function loadJoinRequests() {
 // Katılma isteklerini görüntüle
 function displayJoinRequests(requests) {
     const joinRequestsList = document.getElementById('joinRequestsList');
-    
+
     if (!requests || requests.length === 0) {
         joinRequestsList.innerHTML = '<div class="no-join-requests"><i class="fa-solid fa-exclamation-circle"></i> Gruba katılma isteği bulunmamakta.</div>';
         return;
@@ -1846,7 +1843,7 @@ async function acceptJoinRequest(requestId) {
     if (typeof logUnauthorizedAccess === 'function') {
         logUnauthorizedAccess('Katılma isteği kabul etme');
     }
-    
+
     try {
         const response = await fetch(`/api/accept-join-request/${requestId}`, {
             method: 'POST',
@@ -1860,16 +1857,16 @@ async function acceptJoinRequest(requestId) {
         }
 
         const data = await response.json();
-        
+
         // Başarı mesajı göster
         showSuccessMessage(data.message);
-        
+
         // İsteği listeden kaldır
         const requestItem = document.querySelector(`[data-request-id="${requestId}"]`);
         if (requestItem) {
             requestItem.remove();
         }
-        
+
         // GlobalDataStore'u güncelle ve render işlemlerini bekle
         if (window.globalDataStore && data.user) {
             // Yeni kullanıcıyı users array'ine ekle
@@ -1878,7 +1875,7 @@ async function acceptJoinRequest(requestId) {
             window.globalDataStore._rebuildIndexes();
             // En uzun serileri yeniden hesapla
             await window.globalDataStore._buildLongestStreaks();
-            
+
             // GlobalDataStore güncellendikten SONRA tüm alanları yenile
             renderUserList();
             loadTrackerTable();
@@ -1925,10 +1922,10 @@ async function rejectJoinRequest(requestId) {
         }
 
         const data = await response.json();
-        
+
         // Başarı mesajı göster
         showSuccessMessage(data.message);
-        
+
         // İsteği listeden kaldır
         const requestItem = document.querySelector(`[data-request-id="${requestId}"]`);
         if (requestItem) {
@@ -1952,7 +1949,7 @@ async function rejectJoinRequest(requestId) {
 function showNotification(message, type = 'info') {
     // Mesajı kuyruğa ekle
     messageQueue.push({ message, type });
-    
+
     // Eğer şu anda mesaj gösterilmiyorsa, kuyruktan mesaj göster
     if (!isShowingMessage) {
         processMessageQueue();
@@ -1979,26 +1976,26 @@ async function loadAddUserAvatarOptions() {
         // userAvatars klasöründeki resimleri yükle
         const response = await fetch('/api/user-avatars');
         const avatars = await response.json();
-        
+
         avatarGrid.innerHTML = '';
-        
+
         avatars.forEach((avatar, index) => {
             const avatarItem = document.createElement('div');
             avatarItem.className = 'avatar-item';
             avatarItem.innerHTML = `
                 <img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">
             `;
-            
-            avatarItem.addEventListener('click', function() {
+
+            avatarItem.addEventListener('click', function () {
                 // Seçili avatar'ı profil önizlemesine uygula
                 const previewImg = document.getElementById('addUserInputProfileImage');
                 if (previewImg) {
                     const avatarPath = `/userAvatars/${avatar}`;
                     previewImg.src = avatarPath;
-                    
+
                     // Avatar yolunu kaydet
                     selectedAddUserAvatarPath = avatarPath;
-                    
+
                     // Dosya yükleme işlemini sıfırla (tek seçim mantığı)
                     if (profileImageInput) {
                         profileImageInput.value = '';
@@ -2009,13 +2006,13 @@ async function loadAddUserAvatarOptions() {
                     if (imagePreviewContainer) {
                         imagePreviewContainer.style.display = 'none';
                     }
-                    
+
                 }
-                
+
                 // Modal'ı kapat
                 toggleAddUserAvatarModal();
             });
-            
+
             avatarGrid.appendChild(avatarItem);
         });
     } catch (error) {

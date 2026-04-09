@@ -1,4 +1,115 @@
 /* Haftalık Tablo */
+
+/* Sütun başlığındaki kullanıcı sayısı */
+.col-user-count {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5b9bd5;
+    background: #e8f4ff;
+    border-radius: 10px;
+    padding: 2px 8px;
+    letter-spacing: 0.3px;
+}
+
+/* Tfoot istatistik sayaçları — 2 satırlı layout */
+.col-counts {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Üst satır: boş + okumadım yan yana */
+.col-counts-row1 {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+}
+
+/* Alt satır: okudum ortada */
+.col-counts-row2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Boş (➖) */
+.col-empty {
+    color: #888;
+    background: #f0f0f0;
+    border-radius: 8px;
+    padding: 2px 6px;
+    min-width: 24px;
+    text-align: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Okumadım (✖) */
+.col-not-read {
+    color: #e05050;
+    background: #ffe8e8;
+    border-radius: 8px;
+    padding: 2px 6px;
+    min-width: 24px;
+    text-align: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Okudum (✔) */
+.col-read {
+    color: #2a9d49;
+    background: #e6f9ed;
+    border-radius: 8px;
+    padding: 2px 6px;
+    min-width: 24px;
+    text-align: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* İstatistik footer satırı (tfoot) */
+.stats-footer-row {
+    background: #eaf4fb;
+}
+
+.stats-footer-label {
+    border: 1px solid #b8d9ef;
+    padding: 8px 10px;
+    text-align: center;
+    background: #d6ecf8;
+    /* açık mavi — "kişi" hücresi */
+    font-weight: 600;
+}
+
+.stats-footer-cell {
+    border: 1px solid #d4e8be;
+    padding: 8px 10px;
+    text-align: center;
+    background: #f0f9e4;
+    /* açık yeşil-sarı — tarih hücreleri */
+    cursor: default;
+}
+
+.stats-footer-cell.today-column {
+    background-color: #d6ecf8;
+    /* bugün sütunu mavi */
+    border-color: #88bfde;
+}
+
+/* Haftalık toplam hücresi */
+.stats-footer-total {
+    background: #e8f0fe !important;
+    /* açık indigo */
+    border-color: #aabde8 !important;
+    font-weight: 700;
+}
+
+
 .table-area {
     flex: 3;
     overflow-x: auto;
@@ -67,8 +178,12 @@
 }
 
 @keyframes tracker-profile-image-spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
 }
 
 /* Renk kodlamaları */
@@ -332,6 +447,7 @@
     border-color: #dbc5e9;
     color: #3a6fa8;
 }
+
 .share-table-btn:active {
     transform: scale(0.98);
     background-color: #b8e8f5;
@@ -612,4 +728,3 @@
         font-size: 56px;
     }
 }
-

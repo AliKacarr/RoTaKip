@@ -1,0 +1,2571 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Video Sessizlik Kaldırıcı</title>
+  <link rel="icon" href="/video-silence-remover/wave-sound.png" type="image/x-icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    :root {
+      --bg: #eef0f5;
+      --bg-soft: #e4e6ed;
+      --text: #111827;
+      --muted: #4d5566;
+      --border: #e2e5ec;
+      --border-strong: #cdd2dc;
+      --radius: 14px;
+      --radius-lg: 22px;
+      --shadow: 0 1px 3px rgba(17, 24, 39, 0.06), 0 16px 40px rgba(17, 24, 39, 0.08);
+      --panel-bg: #ffffff;
+      --surface: #ffffff;
+      --accent: #1d4ed8;
+      --accent-hover: #1e40af;
+      --accent-soft: rgba(29, 78, 216, 0.16);
+      --bg-muted: #f6f7fa;
+      --toggle-hover: #eef0f6;
+      --input-bg: #fafbfc;
+      --focus-ring: rgba(29, 78, 216, 0.32);
+      --btn-primary-bg: var(--accent);
+      --btn-primary-fg: #ffffff;
+      --error-border: #e5e7eb;
+      --error-bg: #f9fafb;
+      --progress-track: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+
+    html {
+      background: var(--bg);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 90% 85% at 0% 48%, rgba(29, 78, 216, 0.09), transparent 58%),
+        radial-gradient(ellipse 90% 85% at 100% 52%, rgba(29, 78, 216, 0.08), transparent 58%),
+        radial-gradient(ellipse 100% 65% at 50% -5%, rgba(255, 255, 255, 0.72), transparent 48%),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 31px,
+          rgba(17, 24, 39, 0.022) 31px,
+          rgba(17, 24, 39, 0.022) 32px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 31px,
+          rgba(17, 24, 39, 0.022) 31px,
+          rgba(17, 24, 39, 0.022) 32px
+        );
+      background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @media (max-width: 560px) {
+      body {
+        background-image:
+          radial-gradient(ellipse 95% 90% at 0% 50%, rgba(29, 78, 216, 0.065), transparent 60%),
+          radial-gradient(ellipse 95% 90% at 100% 50%, rgba(29, 78, 216, 0.055), transparent 60%),
+          radial-gradient(ellipse 100% 55% at 50% 0%, rgba(255, 255, 255, 0.55), transparent 45%);
+        background-repeat: no-repeat;
+      }
+    }
+
+    .page {
+      flex: 1 0 auto;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 30px 20px 25px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main { flex: 1; }
+
+    h1.page-title {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.2;
+      margin: 0 0 14px;
+      text-align: center;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-title-icons {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+    }
+
+    .page-title-icons svg {
+      display: block;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      max-width: 36em;
+      margin: 0 0 20px;
+      text-align: center;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid #aeb7cb;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 1px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: visible;
+    }
+
+    .panel.has-video {
+      gap: 16px;
+    }
+
+    .dropzone {
+      position: relative;
+      min-height: 415px;
+      padding: 44px 20px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 18px;
+      border: 1px solid rgba(17, 24, 39, 0.07);
+      --check-grid-alt: #f2f3f7;
+      background-color: var(--check-grid-alt);
+      background-image: repeating-conic-gradient(#ffffff 0 25%, transparent 0 50%);
+      background-size: 28px 28px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 2px 8px rgba(17, 24, 39, 0.04);
+      user-select: none;
+      transition: box-shadow 0.25s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .panel.has-video .dropzone {
+      display: none;
+    }
+
+    .dropzone:hover,
+    .dropzone:focus-visible {
+      border-color: #60a5fa;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 2px 8px rgba(17, 24, 39, 0.04),
+        0 0 0 3px var(--accent-soft);
+      outline: none;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 4px var(--accent-soft);
+    }
+
+    .dropzone-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      max-width: 22rem;
+    }
+
+    .drop-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-sizing: border-box;
+      height: 3.5rem;
+      padding: 0 22px 0 19px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 500;
+      font-size: 1.0625rem;
+      letter-spacing: -0.02em;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 4px 14px rgba(29, 78, 216, 0.35),
+        0 1px 2px rgba(0, 0, 0, 0.08);
+      pointer-events: none;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .dropzone:hover .drop-cta,
+    .dropzone:focus-visible .drop-cta,
+    .dropzone.dragover .drop-cta {
+      background: var(--accent-hover);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 6px 18px rgba(29, 78, 216, 0.4),
+        0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .drop-cta-icon {
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+      display: grid;
+      place-items: center;
+    }
+
+    .drop-cta-icon svg {
+      width:  18px;
+      height: 18px;
+      stroke: #fff;
+      stroke-width: 2.5;
+    }
+
+    .drop-secondary {
+      margin: 20px 0 0;
+      padding: 0 8px;
+      font-size: 17px;
+      font-weight: 600;
+      color: #111827;
+      letter-spacing: -0.025em;
+      line-height: 1.4;
+    }
+
+    .drop-formats {
+      margin: 10px 0 0;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    input[type="file"] { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+
+    .body-pad {
+      box-sizing: border-box;
+      padding: 0;
+    }
+
+    /* Başlangıçta dropzone altında beyaz şerit bırakmamak için padding sadece videoyu seçince */
+    .panel.has-video .body-pad {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .after-video-pick {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel.has-video .after-video-pick {
+      display: flex;
+    }
+
+    .video-info-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .video-info-side {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .video-info-thumb {
+      position: relative;
+      flex-shrink: 0;
+      width: clamp(150px, 32vw, 220px);
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      overflow: hidden;
+      background: linear-gradient(145deg, #1e1b4b, #312e81);
+      border: 1px solid var(--border-strong);
+    }
+
+    .video-info-thumb video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .video-thumb-play {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      margin: 0;
+      padding: 0;
+      border: none;
+      cursor: pointer;
+      background: rgba(17, 24, 39, 0.18);
+      transition: background 0.2s ease, opacity 0.25s ease;
+    }
+
+    .video-thumb-play:hover {
+      background: rgba(17, 24, 39, 0.28);
+    }
+
+    .video-thumb-play:focus {
+      outline: none;
+    }
+
+    .video-thumb-play:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: -4px;
+    }
+
+    .video-thumb-play-icon {
+      display: grid;
+      place-items: center;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--text);
+    }
+
+    .video-thumb-play-icon svg {
+      width: 25px;
+      height: 25px;
+      margin-left: 3px;
+      fill: currentColor;
+    }
+
+    .video-info-thumb.is-playing .video-thumb-play {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .video-thumb-play[hidden] {
+      display: none !important;
+    }
+
+    .video-info-main {
+      min-width: 0;
+      text-align: left;
+    }
+
+    .video-info-name {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .video-info-meta {
+      margin-top: 4px;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .video-info-dot {
+      margin: 0 0.35em;
+      opacity: 0.7;
+    }
+
+    .video-info-actions {
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap 5px;
+    }
+
+    .btn-change-video {
+      appearance: none;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 46px;
+      padding: 0 12px 0 8px;
+      font: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #4b5563;
+      cursor: pointer;
+      border-radius: 10px;
+      white-space: nowrap;
+      border: none;
+      background: var(--surface);
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-change-video-icon {
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      color: inherit;
+    }
+
+    .btn-change-video-icon svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .btn-change-video:hover {
+      background: var(--toggle-hover);
+      color: var(--text);
+    }
+
+    .btn-change-video:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
+    .btn-change-video:active {
+      transform: scale(0.99);
+    }
+
+    @media (max-width: 560px) {
+      .dropzone {
+        min-height: 0;
+        aspect-ratio: 16 / 9;
+        padding: 20px 16px 22px;
+      }
+
+      .drop-secondary {
+        display: none;
+      }
+
+      .video-info-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+      }
+
+      .video-info-card .video-info-side {
+        align-items: stretch;
+      }
+      .video-info-thumb {
+        width: 100%;
+        max-width: none;
+      }
+      .video-info-side {
+        padding-top: 0;
+      }
+      .video-info-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    .btn-remove-video {
+      flex-shrink: 0;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 46px;
+      padding: 0 12px 0 10px;
+      border: none;
+      border-radius: 11px;
+      background: var(--surface);
+      color: #4b5563;
+      font: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      appearance: none;
+      margin: 0;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .btn-remove-video:hover {
+      background: var(--toggle-hover);
+      color: #b91c1c;
+    }
+
+    .btn-remove-video-icon {
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+    }
+
+    .btn-remove-video-icon svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .chevron {
+      flex-shrink: 0;
+      box-sizing: border-box;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+    }
+
+    .chevron svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .chevron svg { stroke: var(--text); }
+
+    .advanced-wrap {
+      margin-bottom: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-muted);
+      overflow: hidden;
+    }
+
+    .advanced-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+      color: var(--text);
+    }
+
+    .advanced-toggle:hover { background: var(--toggle-hover); }
+
+    .advanced-label {
+      font-weight: 600;
+      font-size: 0.9375rem;
+    }
+
+    .advanced-toggle:hover .chevron {
+      background: var(--toggle-hover);
+      border-color: var(--border-strong);
+    }
+
+    .chevron {
+      transition:
+        transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+        background 0.2s ease,
+        border-color 0.2s ease;
+    }
+
+    .advanced-wrap.open .chevron { transform: rotate(180deg); }
+
+    .panel.is-processing .advanced-wrap {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .advanced-toggle:disabled {
+      cursor: not-allowed;
+      opacity: 0.75;
+    }
+
+    .advanced-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .advanced-wrap.open .advanced-body {
+      grid-template-rows: 1fr;
+    }
+
+    .advanced-body-inner {
+      min-height: 0;
+      overflow: hidden;
+      padding: 0 16px;
+      padding-bottom: 0;
+      border-top: 1px solid var(--border);
+      opacity: 0;
+      transform: translateY(-6px);
+      transition:
+        opacity 0.35s ease 0.04s,
+        transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+        padding-bottom 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .advanced-wrap.open .advanced-body-inner {
+      opacity: 1;
+      transform: translateY(0);
+      padding-bottom: 16px;
+    }
+
+    .advanced-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      padding-top: 2px;
+    }
+
+    .btn-advanced-reset {
+      margin-left: auto;
+      appearance: none;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font: inherit;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+      background: var(--surface);
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-advanced-reset:hover {
+      background: var(--toggle-hover);
+      border-color: var(--border-strong);
+    }
+
+    .progress-pct-mobile {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      #progressLine2 {
+        display: none !important;
+      }
+
+      .progress-pct-mobile {
+        display: inline;
+        font-weight: 600;
+        color: var(--text);
+        margin-left: 0.35em;
+        flex-shrink: 0;
+      }
+
+      .progress-heading {
+        min-width: 0;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+      }
+
+      .advanced-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .advanced-footer .btn-advanced-reset {
+        order: 1;
+      }
+
+      .advanced-footer .btn-reprocess {
+        order: 2;
+      }
+
+      .advanced-footer .btn-reprocess,
+      .advanced-footer .btn-advanced-reset {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin-left: 0;
+        box-sizing: border-box;
+      }
+    }
+
+    .fields {
+      display: grid;
+      gap: 16px;
+      padding-top: 16px;
+    }
+
+    @media (min-width: 520px) {
+      .fields { grid-template-columns: 1fr 1fr; }
+    }
+
+    label.field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .field-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: 2px;
+    }
+
+    .field input {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--input-bg);
+    }
+
+    .field input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+
+    .btn-primary {
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      height: 3.5rem;
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      padding: 0 22px 0 19px;
+      font-weight: 600;
+      font-size: 1.0625rem;
+      cursor: pointer;
+      color: var(--btn-primary-fg);
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 4px 14px rgba(29, 78, 216, 0.38);
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s, opacity 0.2s;
+    }
+
+    a.btn-primary {
+      text-decoration: none;
+    }
+
+    a.btn-primary:visited {
+      color: var(--btn-primary-fg);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 6px 20px rgba(29, 78, 216, 0.42);
+    }
+    .btn-primary:active:not(:disabled) { transform: scale(0.99); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-primary[hidden] {
+      display: none !important;
+    }
+
+    .btn-reprocess {
+      appearance: none;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .btn-reprocess:hover:not(:disabled) {
+      background: var(--toggle-hover);
+      border-color: var(--muted);
+    }
+
+    .btn-reprocess:active:not(:disabled) { transform: scale(0.99); }
+    .btn-reprocess:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-reprocess[hidden] {
+      display: none !important;
+    }
+
+    .progress-block {
+      display: none;
+      margin: 0;
+    }
+
+    .progress-block.active { display: block; }
+
+    .progress-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px 14px;
+      margin-bottom: 8px;
+      font-size: 0.875rem;
+    }
+
+    .progress-heading {
+      display: flex;
+      flex: 1;
+      min-width: min(200px, 100%);
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .btn-cancel-job {
+      flex-shrink: 0;
+      appearance: none;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .btn-cancel-job:hover {
+      background: var(--toggle-hover);
+      border-color: var(--muted);
+    }
+
+    .btn-cancel-job[hidden] {
+      display: none !important;
+    }
+
+    .progress-label { color: var(--text); }
+    .progress-value { font-weight: 600; color: var(--text); }
+
+    .progress-block.soft-phase .progress-heading {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .progress-block.soft-phase .progress-value {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 100%;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--progress-track);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      position: relative;
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #3b82f6);
+      overflow: hidden;
+      transition: width 0.35s ease;
+    }
+
+    .progress-fill::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        110deg,
+        rgba(255, 255, 255, 0) 12%,
+        rgba(255, 255, 255, 0.34) 42%,
+        rgba(255, 255, 255, 0) 72%
+      );
+      transform: translateX(-130%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .progress-fill.indeterminate {
+      width: 40% !important;
+      animation: indet 1.2s ease-in-out infinite;
+    }
+
+    .progress-fill.indeterminate::after {
+      opacity: 1;
+      animation: progress-sheen 1.2s linear infinite;
+    }
+
+    @keyframes indet {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+
+    @keyframes progress-sheen {
+      0% { transform: translateX(-130%); }
+      100% { transform: translateX(130%); }
+    }
+
+    .error-box {
+      display: none;
+      margin: 0;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--error-border);
+      background: var(--error-bg);
+      color: var(--text);
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 160px;
+      overflow: auto;
+    }
+
+    .error-box.show { display: block; }
+
+    .download-wrap {
+      display: none;
+      margin: 0;
+    }
+
+    .download-wrap.show { display: block; }
+
+    .download-success {
+      margin-bottom: 18px;
+      padding: 20px 16px 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: linear-gradient(165deg, #faf8ff 0%, #ffffff 45%, #f6f7fa 100%);
+      box-shadow: 0 1px 3px rgba(17, 24, 39, 0.05);
+    }
+
+    .download-success-badge {
+      margin: 0 0 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .download-success-title {
+      margin: 0 0 15px;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.35;
+    }
+
+    .download-success-sub {
+      margin: 0 0 18px;
+      font-size: 0.9375rem;
+      color: var(--text);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .download-success-sub:empty {
+      display: none;
+      margin: 0;
+    }
+
+    .compare-videos {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px 12px;
+      align-items: stretch;
+    }
+
+    .compare-col {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .compare-col.compare-col--hidden {
+      display: none;
+    }
+
+    .compare-videos.compare-videos--single {
+      grid-template-columns: 1fr;
+    }
+
+    .compare-videos.compare-videos--single .compare-mid {
+      display: none;
+    }
+
+    .compare-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 1.1em;
+    }
+
+    .compare-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .compare-label-duration {
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      letter-spacing: 0;
+      text-transform: none;
+      flex-shrink: 0;
+    }
+
+    .compare-thumb {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      overflow: hidden;
+      background: linear-gradient(145deg, #1e1b4b, #312e81);
+      border: 1px solid var(--border-strong);
+    }
+
+    .compare-thumb video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .compare-mid {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: center;
+      padding-top: 1.5rem;
+    }
+
+    .compare-arrow {
+      font-size: 28px;
+      color: var(--accent);
+      font-weight: 700;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 520px) {
+      .compare-videos {
+        grid-template-columns: 1fr;
+      }
+      .compare-mid {
+        display: none;
+      }
+      .compare-col.compare-col--hidden ~ .compare-mid {
+        display: none;
+      }
+    }
+
+    .download-note {
+      margin: 0;
+      margin-top: 13px;
+      font-size: 0.8125rem;
+      color: var(--text);
+      text-align: center;
+    }
+
+    footer.site-footer {
+      flex-shrink: 0;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: auto;
+      padding: 20px max(20px, env(safe-area-inset-left)) 28px max(20px, env(safe-area-inset-right));
+      border-top: 1px solid var(--focus-ring);
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .site-footer__row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(min-content, max-content) minmax(0, 1fr);
+      align-items: center;
+      gap: 12px 24px;
+    }
+
+    .social-footer {
+      margin: 0;
+      justify-self: start;
+    }
+
+    .social-footer__list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px 5px;
+    }
+
+    .footer-legal {
+      margin: 0;
+      justify-self: center;
+      text-align: center;
+      grid-column: 2;
+      max-width: min(42rem, 92vw);
+    }
+
+    .footer-meta-links {
+      justify-self: end;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px 4px;
+      font-weight: 500;
+    }
+
+    .footer-meta-links a {
+      color: var(--muted);
+      text-decoration: none;
+      text-decoration-color: transparent;
+      text-underline-offset: 0.2em;
+      padding: 4px 2px;
+      border-radius: 4px;
+      transition: color 0.2s, text-decoration-color 0.2s;
+    }
+
+    .footer-meta-links a:visited {
+      color: var(--muted);
+    }
+
+    .footer-meta-links a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-color: currentColor;
+    }
+
+    .footer-meta-links a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+    }
+
+    .footer-meta-sep {
+      color: var(--muted);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    @media (max-width: 820px) {
+      .site-footer__row {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .social-footer {
+        justify-self: center;
+      }
+
+      .social-footer__list {
+        justify-content: center;
+      }
+
+      .footer-legal {
+        grid-column: 1;
+        order: 3;
+        max-width: none;
+      }
+
+      .footer-meta-links {
+        justify-self: center;
+        justify-content: center;
+        order: 2;
+      }
+
+      .social-footer {
+        order: 1;
+      }
+    }
+
+    .social-footer__link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.5rem;
+      min-height: 2.5rem;
+      padding: 6px;
+      border-radius: 6px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      box-shadow: none;
+      text-decoration: none;
+      transition: color 0.2s, transform 0.2s ease;
+    }
+
+    .social-footer__link:hover,
+    .social-footer__link:visited,
+    .social-footer__link:active {
+      text-decoration: none;
+      background: none;
+      border: none;
+      box-shadow: none;
+    }
+
+    .social-footer__link:hover {
+      color: var(--accent);
+      transform: scale(1.15);
+    }
+
+    .social-footer__link:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      color: var(--accent);
+    }
+
+    .social-footer__link .fa-brands,
+    .social-footer__link .fa-solid {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="page">
+    <main>
+      <h1 class="page-title">
+        <span class="page-title-icons" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5.42 9.42 8 12" />
+            <circle cx="4" cy="8" r="2" />
+            <path d="m14 6-8.58 8.58" />
+            <circle cx="4" cy="16" r="2" />
+            <path d="M10.8 14.8 14 18" />
+            <path d="M16 12h-2" />
+            <path d="M22 12h-2" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 10v3" />
+            <path d="M6 6v11" />
+            <path d="M10 3v18" />
+            <path d="M14 8v7" />
+            <path d="M18 5v13" />
+            <path d="M22 10v3" />
+          </svg>
+        </span>
+        Sessizlik Kaldırıcı
+      </h1>
+      <p class="subtitle">
+        Videolarınızdaki sessiz anları otomatik tespit edip saniyeler içinde temizleyin. Dosyanızı yükleyin ve daha akıcı hale gelmiş videonuzu ücretsiz olarak indirin.
+      </p>
+
+      <div class="panel" id="mainPanel">
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Video seçin veya sürükleyin">
+          <div class="dropzone-content">
+            <div class="drop-cta" aria-hidden="true">
+              <span class="drop-cta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </span>
+              <span>Bir videoyla başlayın</span>
+            </div>
+            <p class="drop-secondary">Ya da buraya bir video bırakın</p>
+          </div>
+        </div>
+        <input type="file" id="fileInput" accept="video/*,.mp4,.mov,.mkv,.webm,.avi,.m4v" />
+
+        <div class="body-pad">
+          <div class="after-video-pick" id="afterVideoPick">
+          <div class="video-info-card" id="videoInfoCard" aria-live="polite">
+            <div class="video-info-thumb" id="videoInfoThumb">
+              <video id="videoPreview" muted playsinline preload="metadata" aria-hidden="true"></video>
+              <button type="button" class="video-thumb-play" id="btnThumbPlay" hidden aria-label="Önizlemeyi oynat">
+                <span class="video-thumb-play-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z" /></svg>
+                </span>
+              </button>
+            </div>
+            <div class="video-info-side">
+              <div class="video-info-main">
+                <div class="video-info-name" id="videoCardName"></div>
+                <div class="video-info-meta">
+                  <span id="videoCardSize"></span><span class="video-info-dot">·</span><span id="videoCardDuration">—</span>
+                </div>
+              </div>
+              <div class="video-info-actions" id="videoFileActions">
+                <button type="button" class="btn-change-video" id="btnChangeVideo" title="Başka video seçin; pencerede İptal derseniz mevcut video kalır">
+                  <span class="btn-change-video-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 4v6h-6" />
+                      <path d="M1 20v-6h6" />
+                      <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                    </svg>
+                  </span>
+                  <span>Videoyu değiştir</span>
+                </button>
+                <button type="button" class="btn-remove-video" id="btnRemoveVideo" title="Videoyu kaldır" aria-label="Videoyu kaldır">
+                  <span class="btn-remove-video-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
+                      <path d="M10 11v6M14 11v6" />
+                    </svg>
+                  </span>
+                  <span>Videoyu kaldır</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="advanced-wrap" id="advancedWrap">
+            <button type="button" class="advanced-toggle" id="advancedToggle" aria-expanded="false" aria-controls="advancedBody">
+              <span class="advanced-label">Gelişmiş ayarlar</span>
+              <span class="chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </span>
+            </button>
+            <div class="advanced-body" id="advancedBody">
+              <div class="advanced-body-inner">
+                <div class="fields">
+                  <label class="field">
+                    <span class="field-label">Sessizlik Eşiği (desibel)</span>
+                    <span class="field-desc">Bu seviyenin altındaki sesler silinir. Daha fazla alanı kesmek için -25'i, daha az alanı kesmek için -45'i deneyin.</span>
+                    <input type="text" name="threshold_level" id="thresholdLevelInput" placeholder="-35" data-default="-35" data-min="-70" data-max="0" autocomplete="off" spellcheck="false" inputmode="numeric" />
+                  </label>
+                  <label class="field">
+                    <span class="field-label">Minimum Sessizlik Süresi (saniye)</span>
+                    <span class="field-desc">Sadece bu süreden uzun boşluklar silinir. Doğal konuşma akışını ve nefes payını korumak için süreyi artırın.</span>
+                    <input type="text" name="threshold_duration" id="thresholdDurationInput" placeholder="0,6" data-default="0.6" autocomplete="off" spellcheck="false" inputmode="decimal" />
+                  </label>
+                </div>
+                <div class="advanced-footer">
+                  <button type="button" class="btn-reprocess" id="btnReprocess" hidden title="Çalışan işi iptal edip bu ayarlarla yeniden işler">
+                    Yeni Ayarlarla Kes
+                  </button>
+                  <button type="button" class="btn-advanced-reset" id="btnAdvancedReset" aria-label="Varsayılan değerlere sıfırla" title="Bu iki alanı program varsayılanlarına döndürür">Varsayılanlara Dön</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn-primary" id="btnProcess" disabled>✨ Sessizlikleri kaldır</button>
+          </div>
+
+          <div class="progress-block" id="progressBlock">
+            <div class="progress-top">
+              <div class="progress-heading">
+                <span class="progress-label" id="progressLine1">İşleniyor…</span>
+                <span class="progress-pct-mobile" id="progressPctMobile" aria-hidden="true"></span>
+                <span class="progress-value" id="progressLine2">—</span>
+              </div>
+              <button type="button" class="btn-cancel-job" id="btnCancelJob" hidden>İptal et</button>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+
+          <div class="error-box" id="errorBox"></div>
+
+          <div class="download-wrap" id="downloadWrap">
+            <div class="download-success" id="downloadCelebrate" hidden>
+              <p class="download-success-badge">Tamamlandı</p>
+              <h3 class="download-success-title" id="downloadTitle"></h3>
+              <p class="download-success-sub" id="downloadSub"></p>
+              <div class="compare-videos" id="compareVideos">
+                <div class="compare-col" id="compareColIn">
+                  <div class="compare-label-row">
+                    <span class="compare-label">Orijinal</span>
+                    <span class="compare-label-duration" id="compareInDuration" aria-label="Orijinal video süresi"></span>
+                  </div>
+                  <div class="compare-thumb">
+                    <video id="compareVideoIn" controls playsinline preload="metadata"></video>
+                  </div>
+                </div>
+                <div class="compare-mid" aria-hidden="true">
+                  <span class="compare-arrow">→</span>
+                </div>
+                <div class="compare-col" id="compareColOut">
+                  <div class="compare-label-row">
+                    <span class="compare-label">Yeni video</span>
+                    <span class="compare-label-duration" id="compareOutDuration" aria-label="Yeni video süresi"></span>
+                  </div>
+                  <div class="compare-thumb">
+                    <video id="compareVideoOut" controls playsinline preload="metadata"></video>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a class="btn-primary" id="downloadLink" href="#" download>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l4-4m-4 4l-4-4"/><path d="M4 21h16"/></svg>
+              Videoyu indir
+            </a>
+            <p class="download-note" id="downloadNote"></p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+      <div class="site-footer__row">
+        <nav class="social-footer" aria-label="Sosyal medya ve bağlantılar">
+          <ul class="social-footer__list">
+            <li>
+              <a class="social-footer__link" href="https://www.youtube.com/@%C3%87at%C4%B1Kat%C4%B1-u7m" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                <span class="fa-brands fa-youtube" aria-hidden="true"></span>
+              </a>
+            </li>
+            <li>
+              <a class="social-footer__link" href="https://www.instagram.com/catikatimelazig" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <span class="fa-brands fa-instagram" aria-hidden="true"></span>
+              </a>
+            </li>
+            <li>
+              <a class="social-footer__link" href="https://x.com/catikatimelazig" target="_blank" rel="noopener noreferrer" aria-label="X">
+                <span class="fa-brands fa-x-twitter" aria-hidden="true"></span>
+              </a>
+            </li>
+            <li>
+              <a class="social-footer__link" href="https://www.facebook.com/catikatim" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <span class="fa-brands fa-facebook" aria-hidden="true"></span>
+              </a>
+            </li>
+            <li>
+              <a class="social-footer__link" href="https://open.spotify.com/show/1QIENVd5g588MS1eF1ZcKi?si=YjGkdeDLQkG0AYYCfcNbVg" target="_blank" rel="noopener noreferrer" aria-label="Spotify">
+                <span class="fa-brands fa-spotify" aria-hidden="true"></span>
+              </a>
+            </li>
+            <li>
+              <a class="social-footer__link" href="https://www.tiktok.com/@kehf.studio" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                <span class="fa-brands fa-tiktok" aria-hidden="true"></span>
+              </a>
+            </li>
+            <li>
+              <a class="social-footer__link" href="https://play.google.com/store/apps/details?id=com.ateizmfikrinecevaplar&pcampaignid=web_share" target="_blank" rel="noopener noreferrer" aria-label="Google Play">
+                <span class="fa-brands fa-google-play" aria-hidden="true"></span>
+              </a>
+            </li>
+            <li>
+              <a class="social-footer__link" href="https://www.ateizmfikri.com/" target="_blank" rel="noopener noreferrer" aria-label="Web sitesi">
+                <span class="fa-solid fa-globe" aria-hidden="true"></span>
+              </a>
+            </li>
+            <li>
+              <a class="social-footer__link" href="https://github.com/AliKacarr" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                <span class="fa-brands fa-github" aria-hidden="true"></span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <p class="footer-legal">Çatı Katı İlim ve Kültür Derneği © Tüm hakları saklıdır.</p>
+        <nav class="footer-meta-links" aria-label="Kurumsal bağlantılar">
+          <a href="/video-silence-remover/hakkimizda.html">Hakkımızda</a>
+          <span class="footer-meta-sep" aria-hidden="true">·</span>
+          <a href="/video-silence-remover/gizlilik-politikasi.html">Gizlilik politikası</a>
+          <span class="footer-meta-sep" aria-hidden="true">·</span>
+          <a href="/video-silence-remover/cerez-politikasi.html">Çerez Politikası</a>
+        </nav>
+      </div>
+  </footer>
+
+  <script>
+    (function () {
+      var TOOL_BASE_PATH = "/video-silence-remover";
+      var API_BASE = TOOL_BASE_PATH + "/api";
+      var mainPanel = document.getElementById("mainPanel");
+      var dropzone = document.getElementById("dropzone");
+      var fileInput = document.getElementById("fileInput");
+      var videoPreview = document.getElementById("videoPreview");
+      var videoInfoThumb = document.getElementById("videoInfoThumb");
+      var btnThumbPlay = document.getElementById("btnThumbPlay");
+      var videoCardName = document.getElementById("videoCardName");
+      var videoCardSize = document.getElementById("videoCardSize");
+      var videoCardDuration = document.getElementById("videoCardDuration");
+      var btnChangeVideo = document.getElementById("btnChangeVideo");
+      var btnRemoveVideo = document.getElementById("btnRemoveVideo");
+      var videoFileActions = document.getElementById("videoFileActions");
+      var btnCancelJob = document.getElementById("btnCancelJob");
+      var btnProcess = document.getElementById("btnProcess");
+      var btnReprocess = document.getElementById("btnReprocess");
+      var lastAppliedAdvancedSnapshot = null;
+      var advancedWrap = document.getElementById("advancedWrap");
+      var advancedToggle = document.getElementById("advancedToggle");
+      var advancedBodyInner = document.querySelector(".advanced-body-inner");
+      var btnAdvancedReset = document.getElementById("btnAdvancedReset");
+      var ADV_STORAGE_KEY = "silenceAdvancedParams";
+      var saveAdvancedTimer = null;
+
+      function getAdvancedInputs() {
+        return document.querySelectorAll(".fields input[name]");
+      }
+
+      function getAdvancedParamsNormalized() {
+        var tl = document.querySelector('input[name="threshold_level"]');
+        var td = document.querySelector('input[name="threshold_duration"]');
+        var tlRaw = (tl && (tl.value || "").trim()) || "";
+        var tdRaw = (td && (td.value || "").trim()) || "";
+        var tlDef = (tl && tl.getAttribute("data-default")) || "-35";
+        var tdDef = (td && td.getAttribute("data-default")) || "0.6";
+        var tlVal = tlRaw !== "" ? tlRaw : tlDef;
+        var tdVal = tdRaw !== "" ? tdRaw.replace(",", ".") : tdDef.replace(",", ".");
+        return { threshold_level: tlVal, threshold_duration: tdVal };
+      }
+
+      function syncReprocessButton() {
+        if (!btnReprocess) return;
+        if (!selectedFile) {
+          btnReprocess.hidden = true;
+          return;
+        }
+        if (!lastAppliedAdvancedSnapshot) {
+          btnReprocess.hidden = true;
+          return;
+        }
+        if (btnProcess && !btnProcess.hidden) {
+          btnReprocess.hidden = true;
+          return;
+        }
+        try {
+          var cur = JSON.stringify(getAdvancedParamsNormalized());
+          btnReprocess.hidden = cur === lastAppliedAdvancedSnapshot;
+        } catch (e) {
+          btnReprocess.hidden = true;
+        }
+      }
+
+      function cleanupJobUiLocal() {
+        if (pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+        currentJobId = null;
+        progressBlock.classList.remove("soft-phase");
+        progressFill.classList.remove("indeterminate");
+        progressBlock.classList.remove("active");
+        progressFill.style.width = "0%";
+        resetProgressTween();
+        if (btnCancelJob) btnCancelJob.hidden = true;
+        setAdvancedLocked(false);
+        if (videoFileActions) videoFileActions.hidden = false;
+      }
+
+      function cancelAllEditingState() {
+        if (currentJobId) {
+          var jid = currentJobId;
+          fetch(API_BASE + "/cancel/" + jid, { method: "POST" }).catch(function () {});
+        }
+        cleanupJobUiLocal();
+      }
+
+      async function cancelActiveJobSilently() {
+        if (!currentJobId) return;
+        var jid = currentJobId;
+        try {
+          await fetch(API_BASE + "/cancel/" + jid, { method: "POST" });
+        } catch (e) {}
+        cleanupJobUiLocal();
+      }
+
+      function sanitizeThresholdLevelString(s) {
+        var out = "";
+        for (var i = 0; i < s.length; i++) {
+          var c = s[i];
+          if (c >= "0" && c <= "9") out += c;
+          else if (c === "-" && out.length === 0) out += "-";
+        }
+        return out;
+      }
+
+      function sanitizeThresholdDurationString(s) {
+        var out = "";
+        var hasSep = false;
+        for (var i = 0; i < s.length; i++) {
+          var c = s[i];
+          if (c >= "0" && c <= "9") out += c;
+          else if (c === "+" && out.length === 0) out += "+";
+          else if ((c === "." || c === ",") && !hasSep) {
+            hasSep = true;
+            out += ".";
+          }
+        }
+        return out;
+      }
+
+      function clampThresholdLevel(inp) {
+        if (!inp || inp.name !== "threshold_level") return;
+        var v = (inp.value || "").trim();
+        if (v === "" || v === "-") return;
+        var n = parseFloat(v);
+        if (isNaN(n)) return;
+        if (n > 0) {
+          inp.value = inp.getAttribute("data-default") || "-35";
+          return;
+        }
+        var lo = -70;
+        if (n < lo) inp.value = String(lo);
+      }
+
+      function clampThresholdDuration(inp) {
+        if (!inp || inp.name !== "threshold_duration") return;
+        var v = (inp.value || "").trim();
+        if (v === "" || v === "+" || v === ".") return;
+        var n = parseFloat(v.replace(",", "."));
+        if (isNaN(n)) return;
+        if (n < 0) {
+          inp.value = inp.getAttribute("data-default") || "0.6";
+          return;
+        }
+        if (n > 100) inp.value = "100";
+      }
+
+      function loadAdvancedFromStorage() {
+        try {
+          var raw = localStorage.getItem(ADV_STORAGE_KEY);
+          if (!raw) return;
+          var obj = JSON.parse(raw);
+          if (!obj || typeof obj !== "object") return;
+          getAdvancedInputs().forEach(function (inp) {
+            if (Object.prototype.hasOwnProperty.call(obj, inp.name) && obj[inp.name] != null && obj[inp.name] !== "") {
+              inp.value = String(obj[inp.name]);
+            }
+          });
+          var tl = document.querySelector('input[name="threshold_level"]');
+          if (tl) {
+            tl.value = sanitizeThresholdLevelString(tl.value);
+            clampThresholdLevel(tl);
+          }
+          var td = document.querySelector('input[name="threshold_duration"]');
+          if (td) {
+            td.value = sanitizeThresholdDurationString(td.value);
+            clampThresholdDuration(td);
+          }
+        } catch (e) {}
+      }
+
+      function saveAdvancedToStorage() {
+        try {
+          var o = {};
+          getAdvancedInputs().forEach(function (inp) {
+            o[inp.name] = (inp.value || "").trim();
+          });
+          localStorage.setItem(ADV_STORAGE_KEY, JSON.stringify(o));
+        } catch (e) {}
+      }
+
+      function scheduleSaveAdvanced() {
+        if (saveAdvancedTimer) clearTimeout(saveAdvancedTimer);
+        saveAdvancedTimer = setTimeout(function () {
+          saveAdvancedTimer = null;
+          saveAdvancedToStorage();
+          syncReprocessButton();
+        }, 350);
+      }
+
+      function resetAdvancedToDefaults() {
+        getAdvancedInputs().forEach(function (inp) {
+          var d = inp.getAttribute("data-default");
+          inp.value = d != null ? d : "";
+        });
+        saveAdvancedToStorage();
+        syncReprocessButton();
+      }
+
+      var hadAdvancedStorage = false;
+      try {
+        hadAdvancedStorage = !!localStorage.getItem(ADV_STORAGE_KEY);
+      } catch (e) {}
+      loadAdvancedFromStorage();
+      if (!hadAdvancedStorage) {
+        resetAdvancedToDefaults();
+      }
+
+      getAdvancedInputs().forEach(function (inp) {
+        if (inp.name === "threshold_level") {
+          inp.addEventListener("input", function () {
+            var next = sanitizeThresholdLevelString(inp.value);
+            if (inp.value !== next) inp.value = next;
+            clampThresholdLevel(inp);
+            scheduleSaveAdvanced();
+            syncReprocessButton();
+          });
+          inp.addEventListener("change", function () {
+            clampThresholdLevel(inp);
+            saveAdvancedToStorage();
+            syncReprocessButton();
+          });
+          inp.addEventListener("blur", function () {
+            clampThresholdLevel(inp);
+            saveAdvancedToStorage();
+            syncReprocessButton();
+          });
+        } else if (inp.name === "threshold_duration") {
+          inp.addEventListener("input", function () {
+            var next = sanitizeThresholdDurationString(inp.value);
+            if (inp.value !== next) inp.value = next;
+            clampThresholdDuration(inp);
+            scheduleSaveAdvanced();
+            syncReprocessButton();
+          });
+          inp.addEventListener("change", function () {
+            clampThresholdDuration(inp);
+            saveAdvancedToStorage();
+            syncReprocessButton();
+          });
+          inp.addEventListener("blur", function () {
+            clampThresholdDuration(inp);
+            saveAdvancedToStorage();
+            syncReprocessButton();
+          });
+        } else {
+          inp.addEventListener("input", scheduleSaveAdvanced);
+          inp.addEventListener("change", saveAdvancedToStorage);
+        }
+      });
+
+      if (btnAdvancedReset) {
+        btnAdvancedReset.addEventListener("click", function () {
+          resetAdvancedToDefaults();
+        });
+      }
+      var progressBlock = document.getElementById("progressBlock");
+      var progressLine1 = document.getElementById("progressLine1");
+      var progressLine2 = document.getElementById("progressLine2");
+      var progressPctMobile = document.getElementById("progressPctMobile");
+      var progressFill = document.getElementById("progressFill");
+      var errorBox = document.getElementById("errorBox");
+      var downloadWrap = document.getElementById("downloadWrap");
+      var downloadLink = document.getElementById("downloadLink");
+      var downloadNote = document.getElementById("downloadNote");
+      var downloadCelebrate = document.getElementById("downloadCelebrate");
+      var downloadTitle = document.getElementById("downloadTitle");
+      var downloadSub = document.getElementById("downloadSub");
+      var compareVideos = document.getElementById("compareVideos");
+      var compareColIn = document.getElementById("compareColIn");
+      var compareVideoIn = document.getElementById("compareVideoIn");
+      var compareVideoOut = document.getElementById("compareVideoOut");
+      var compareInDuration = document.getElementById("compareInDuration");
+      var compareOutDuration = document.getElementById("compareOutDuration");
+
+      var selectedFile = null;
+      var pollTimer = null;
+      var currentJobId = null;
+      var previewObjectUrl = null;
+      var documentTitleDefault = document.title;
+      var lastProgressMessage = "";
+      var lastProgressMessageAt = 0;
+      var displayedProgressPercent = 0;
+      var progressTweenTimer = null;
+      var progressPercentLabelActive = false;
+      var progressPercentSuffix = "";
+      var progressTweenTarget = 0;
+
+      function resetDocumentTitle() {
+        document.title = documentTitleDefault;
+      }
+
+      function setDocumentTitleDone() {
+        document.title = "İşlem Tamamlandı! — " + documentTitleDefault;
+      }
+
+      function setAdvancedLocked(locked) {
+        // İşlem başladıktan sonra bu alanlar bir sonraki deneme için değiştirilebilir kalır.
+        // O anki iş, butona basıldığı andaki FormData ile zaten sabitlenir.
+        if (mainPanel) mainPanel.classList.remove("is-processing");
+        if (advancedToggle) advancedToggle.disabled = false;
+        document.querySelectorAll(".fields input, #btnAdvancedReset").forEach(function (el) {
+          el.disabled = false;
+        });
+      }
+
+      function endProcessingUi(opts) {
+        opts = opts || {};
+        if (opts.clearPoll !== false && pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+        currentJobId = null;
+        setAdvancedLocked(false);
+        if (videoFileActions) videoFileActions.hidden = false;
+        if (btnCancelJob) btnCancelJob.hidden = true;
+        if (opts.showProcessButton) {
+          btnProcess.hidden = false;
+          btnProcess.disabled = !selectedFile;
+        }
+        if (opts.showProcessButton === true) {
+          resetDocumentTitle();
+        }
+        syncReprocessButton();
+      }
+
+      function beginProcessingAfterValidation() {
+        resetDocumentTitle();
+        btnProcess.hidden = true;
+        if (videoFileActions) videoFileActions.hidden = true;
+        setAdvancedLocked(true);
+        if (btnCancelJob) {
+          btnCancelJob.hidden = false;
+          btnCancelJob.disabled = true;
+        }
+      }
+
+      function revokePreviewObjectUrl() {
+        if (previewObjectUrl) {
+          URL.revokeObjectURL(previewObjectUrl);
+          previewObjectUrl = null;
+        }
+      }
+
+      function formatSize(n) {
+        if (n < 1024) return n + " B";
+        if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+        if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + " MB";
+        return (n / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+      }
+
+      function formatClock(sec) {
+        if (sec == null || isNaN(sec)) return "—";
+        sec = Math.floor(sec);
+        var m = Math.floor(sec / 60);
+        var s = sec % 60;
+        if (m >= 60) {
+          var h = Math.floor(m / 60);
+          m = m % 60;
+          return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+        }
+        return m + ":" + String(s).padStart(2, "0");
+      }
+
+      function formatDurationTurkish(totalSec) {
+        if (totalSec == null || isNaN(totalSec)) return "";
+        var sec = Math.floor(Math.max(0, totalSec));
+        if (sec === 0) return "0 saniye";
+        var h = Math.floor(sec / 3600);
+        var m = Math.floor((sec % 3600) / 60);
+        var s = sec % 60;
+        var parts = [];
+        if (h > 0) parts.push(h + " saat");
+        if (m > 0) parts.push(m + " dakika");
+        if (s > 0 || parts.length === 0) parts.push(s + " saniye");
+        return parts.join(" ");
+      }
+
+      function pickProgressMessage(serverMessage, fallback) {
+        var msg = (serverMessage || "").trim();
+        var generic = {
+          "": true,
+          "Sırada…": true,
+          "Video işleniyor…": true,
+          "İşleniyor…": true,
+          "Hazır.": true
+        };
+        if (msg && !generic[msg]) {
+          lastProgressMessage = msg;
+          lastProgressMessageAt = Date.now();
+          return msg;
+        }
+        if (lastProgressMessage && Date.now() - lastProgressMessageAt < 1800) {
+          return lastProgressMessage;
+        }
+        return fallback;
+      }
+
+      function clearProgressPctMobile() {
+        if (progressPctMobile) progressPctMobile.textContent = "";
+      }
+
+      function syncProgressPctMobile(n) {
+        if (!progressPctMobile) return;
+        if (n == null || n === "" || (typeof n === "number" && !isFinite(n))) {
+          progressPctMobile.textContent = "";
+          return;
+        }
+        var v = Math.floor(Math.min(100, Math.max(0, Number(n))));
+        progressPctMobile.textContent = "%" + v;
+      }
+
+      function resetProgressTween() {
+        displayedProgressPercent = 0;
+        progressTweenTarget = 0;
+        progressPercentLabelActive = false;
+        progressPercentSuffix = "";
+        clearProgressPctMobile();
+        if (progressTweenTimer) {
+          clearTimeout(progressTweenTimer);
+          progressTweenTimer = null;
+        }
+      }
+
+      function renderProgressPercentLabel() {
+        if (!progressPercentLabelActive) return;
+        progressLine2.textContent = "%" + displayedProgressPercent + " · " + progressPercentSuffix;
+        syncProgressPctMobile(displayedProgressPercent);
+      }
+
+      function progressMessageByPercent(pct) {
+        pct = Math.floor(Math.min(99, Math.max(0, pct)));
+        if (pct < 6) return "Sesler analiz ediliyor...";
+        if (pct < 20) return "Sessizlikler tespit ediliyor...";
+        if (pct < 95) return "Video yeniden kurgulanıyor...";
+        return "Son rötuşlar yapılıyor...";
+      }
+
+      function progressTweenDelayMs() {
+        if (displayedProgressPercent < 12) return 130;
+        if (displayedProgressPercent < 40) return 78;
+        return 52;
+      }
+
+      function setProgressPercentSmooth(targetPct) {
+        var target = Math.min(99, Math.max(0, Math.floor(targetPct || 0)));
+        progressTweenTarget = target;
+        if (target <= displayedProgressPercent) {
+          if (progressTweenTimer) {
+            clearTimeout(progressTweenTimer);
+            progressTweenTimer = null;
+          }
+          displayedProgressPercent = target;
+          progressPercentSuffix = progressMessageByPercent(displayedProgressPercent);
+          progressFill.style.width = displayedProgressPercent + "%";
+          renderProgressPercentLabel();
+          return;
+        }
+        if (progressTweenTimer) return;
+
+        function step() {
+          if (displayedProgressPercent >= progressTweenTarget) {
+            progressTweenTimer = null;
+            return;
+          }
+          displayedProgressPercent += 1;
+          progressPercentSuffix = progressMessageByPercent(displayedProgressPercent);
+          progressFill.style.width = displayedProgressPercent + "%";
+          renderProgressPercentLabel();
+          if (displayedProgressPercent >= progressTweenTarget) {
+            progressTweenTimer = null;
+            return;
+          }
+          progressTweenTimer = setTimeout(step, progressTweenDelayMs());
+        }
+
+        progressTweenTimer = setTimeout(step, progressTweenDelayMs());
+      }
+
+      function clearDownloadCompare() {
+        if (compareVideoIn) {
+          compareVideoIn.pause();
+          compareVideoIn.removeAttribute("src");
+          compareVideoIn.load();
+        }
+        if (compareVideoOut) {
+          compareVideoOut.pause();
+          compareVideoOut.removeAttribute("src");
+          compareVideoOut.load();
+        }
+        if (downloadCelebrate) downloadCelebrate.hidden = true;
+        if (compareColIn) compareColIn.classList.remove("compare-col--hidden");
+        if (compareVideos) compareVideos.classList.remove("compare-videos--single");
+        if (downloadTitle) downloadTitle.textContent = "";
+        if (downloadSub) downloadSub.textContent = "";
+        if (compareInDuration) compareInDuration.textContent = "";
+        if (compareOutDuration) compareOutDuration.textContent = "";
+      }
+
+      function populateDownloadSuccess(jobId, st) {
+        clearDownloadCompare();
+        var inpDur = st.input_duration_sec;
+        var outDur = st.output_duration_sec;
+        var saved = st.duration_saved_sec;
+        if (inpDur == null && videoPreview && isFinite(videoPreview.duration) && videoPreview.duration > 0) {
+          inpDur = videoPreview.duration;
+        }
+        if (saved == null && inpDur != null && outDur != null) {
+          saved = Math.max(0, inpDur - outDur);
+        }
+        var hasIn = !!(previewObjectUrl && compareVideoIn);
+        if (compareColIn) {
+          compareColIn.classList.toggle("compare-col--hidden", !hasIn);
+        }
+        if (compareVideos) {
+          compareVideos.classList.toggle("compare-videos--single", !hasIn);
+        }
+        if (downloadCelebrate) downloadCelebrate.hidden = false;
+        if (saved != null && saved > 0.5 && downloadTitle) {
+          downloadTitle.textContent =
+            "Harika! Videonuz " + formatDurationTurkish(saved) + " kısaldı. 🎉🎉";
+        } else if (downloadTitle) {
+          downloadTitle.textContent = "Videonuz hazır!";
+        }
+        if (downloadSub) {
+          downloadSub.textContent = "";
+        }
+        if (hasIn && compareVideoIn) {
+          compareVideoIn.src = previewObjectUrl;
+        }
+        if (compareVideoOut && jobId) {
+          compareVideoOut.src = API_BASE + "/preview/" + jobId;
+        }
+        if (compareInDuration) {
+          compareInDuration.textContent =
+            hasIn && inpDur != null && isFinite(Number(inpDur))
+              ? formatClock(Math.floor(inpDur))
+              : "";
+        }
+        if (compareOutDuration) {
+          compareOutDuration.textContent =
+            outDur != null && isFinite(Number(outDur))
+              ? formatClock(Math.floor(outDur))
+              : "";
+        }
+      }
+
+      function syncPanelVideoState() {
+        if (mainPanel) {
+          mainPanel.classList.toggle("has-video", !!selectedFile);
+        }
+      }
+
+      function resetThumbPreviewPlayback() {
+        if (videoInfoThumb) videoInfoThumb.classList.remove("is-playing");
+        if (videoPreview) {
+          videoPreview.pause();
+          videoPreview.removeAttribute("controls");
+          videoPreview.muted = true;
+          videoPreview.setAttribute("aria-hidden", "true");
+        }
+      }
+
+      if (videoPreview && videoInfoThumb) {
+        videoPreview.addEventListener("pause", function () {
+          if (videoPreview.ended) return;
+          videoInfoThumb.classList.remove("is-playing");
+          videoPreview.removeAttribute("controls");
+          videoPreview.muted = true;
+          videoPreview.setAttribute("aria-hidden", "true");
+        });
+        videoPreview.addEventListener("ended", function () {
+          videoInfoThumb.classList.remove("is-playing");
+          videoPreview.pause();
+          videoPreview.currentTime = 0;
+          videoPreview.removeAttribute("controls");
+          videoPreview.muted = true;
+          videoPreview.setAttribute("aria-hidden", "true");
+        });
+      }
+
+      if (btnThumbPlay && videoPreview && videoInfoThumb) {
+        btnThumbPlay.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (!videoPreview.src) return;
+          videoPreview.setAttribute("controls", "");
+          videoPreview.muted = false;
+          videoPreview.setAttribute("aria-hidden", "false");
+          videoInfoThumb.classList.add("is-playing");
+          videoPreview.play().catch(function () {
+            videoInfoThumb.classList.remove("is-playing");
+            videoPreview.removeAttribute("controls");
+            videoPreview.muted = true;
+            videoPreview.setAttribute("aria-hidden", "true");
+          });
+        });
+      }
+
+      function setFile(file) {
+        selectedFile = file;
+        if (!file) {
+          resetDocumentTitle();
+          clearDownloadCompare();
+          revokePreviewObjectUrl();
+          resetThumbPreviewPlayback();
+          if (videoPreview) {
+            videoPreview.onloadedmetadata = null;
+            videoPreview.removeAttribute("src");
+            videoPreview.load();
+          }
+          if (btnThumbPlay) btnThumbPlay.hidden = true;
+          if (videoCardName) videoCardName.textContent = "";
+          if (videoCardSize) videoCardSize.textContent = "";
+          if (videoCardDuration) videoCardDuration.textContent = "—";
+          btnProcess.disabled = true;
+          btnProcess.hidden = false;
+          lastAppliedAdvancedSnapshot = null;
+          syncReprocessButton();
+          syncPanelVideoState();
+          return;
+        }
+        cancelAllEditingState();
+        showError("");
+        resetDocumentTitle();
+        downloadWrap.classList.remove("show");
+        clearDownloadCompare();
+        lastAppliedAdvancedSnapshot = null;
+        if (downloadNote) downloadNote.textContent = "";
+        if (downloadLink) {
+          downloadLink.setAttribute("href", "#");
+          downloadLink.removeAttribute("download");
+        }
+        resetThumbPreviewPlayback();
+        var prevBlobUrl = previewObjectUrl;
+        previewObjectUrl = URL.createObjectURL(file);
+        if (videoPreview) {
+          videoPreview.onloadedmetadata = function () {
+            var d = videoPreview.duration;
+            if (videoCardDuration) {
+              videoCardDuration.textContent = d && isFinite(d) ? formatClock(Math.floor(d)) : "—";
+            }
+          };
+          videoPreview.src = previewObjectUrl;
+          videoPreview.load();
+          try {
+            videoPreview.currentTime = 0;
+          } catch (e2) {}
+        }
+        if (prevBlobUrl) {
+          URL.revokeObjectURL(prevBlobUrl);
+        }
+        if (btnThumbPlay) btnThumbPlay.hidden = false;
+        if (videoCardName) videoCardName.textContent = file.name;
+        if (videoCardSize) videoCardSize.textContent = formatSize(file.size);
+        if (videoCardDuration) videoCardDuration.textContent = "—";
+        btnProcess.disabled = false;
+        btnProcess.hidden = false;
+        syncReprocessButton();
+        syncPanelVideoState();
+      }
+
+      function resetUploadUi() {
+        cancelAllEditingState();
+        selectedFile = null;
+        fileInput.value = "";
+        setFile(null);
+        showError("");
+        downloadWrap.classList.remove("show");
+      }
+
+      function showError(msg) {
+        errorBox.textContent = msg || "";
+        errorBox.classList.toggle("show", !!msg);
+      }
+
+      function setAdvancedPanelOpen(open) {
+        advancedWrap.classList.toggle("open", open);
+        if (advancedToggle) {
+          advancedToggle.setAttribute("aria-expanded", open ? "true" : "false");
+        }
+        if (advancedBodyInner) {
+          if (open) {
+            advancedBodyInner.removeAttribute("inert");
+            advancedBodyInner.setAttribute("aria-hidden", "false");
+          } else {
+            advancedBodyInner.setAttribute("inert", "");
+            advancedBodyInner.setAttribute("aria-hidden", "true");
+          }
+        }
+      }
+
+      if (advancedToggle) {
+        advancedToggle.addEventListener("click", function () {
+          setAdvancedPanelOpen(!advancedWrap.classList.contains("open"));
+        });
+      }
+      setAdvancedPanelOpen(advancedWrap && advancedWrap.classList.contains("open"));
+
+      dropzone.addEventListener("click", function () { fileInput.click(); });
+      dropzone.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
+      });
+
+      ["dragenter", "dragover"].forEach(function (ev) {
+        dropzone.addEventListener(ev, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add("dragover");
+        });
+      });
+      ["dragleave", "drop"].forEach(function (ev) {
+        dropzone.addEventListener(ev, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove("dragover");
+        });
+      });
+      dropzone.addEventListener("drop", function (e) {
+        var f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) setFile(f);
+      });
+
+      fileInput.addEventListener("change", function () {
+        var f = fileInput.files && fileInput.files[0];
+        setFile(f || null);
+      });
+
+      if (btnRemoveVideo) {
+        btnRemoveVideo.addEventListener("click", function (e) {
+          e.stopPropagation();
+          resetUploadUi();
+        });
+      }
+      if (btnChangeVideo) {
+        btnChangeVideo.addEventListener("click", function (e) {
+          e.stopPropagation();
+          fileInput.value = "";
+          fileInput.click();
+        });
+      }
+
+      if (btnCancelJob) {
+        btnCancelJob.addEventListener("click", async function () {
+          if (!currentJobId) return;
+          var jid = currentJobId;
+          try {
+            await fetch(API_BASE + "/cancel/" + jid, { method: "POST" });
+          } catch (e) {}
+          if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+          }
+          progressFill.classList.remove("indeterminate");
+          progressBlock.classList.remove("active");
+          progressFill.style.width = "0%";
+          endProcessingUi({ showProcessButton: true, clearPoll: false });
+          showError("İşlem iptal edildi.");
+        });
+      }
+
+      function collectFormData() {
+        var fd = new FormData();
+        if (selectedFile) fd.append("file", selectedFile);
+        document.querySelectorAll(".fields input[name]").forEach(function (inp) {
+          var key = inp.getAttribute("name");
+          var val = (inp.value || "").trim();
+          var def = inp.getAttribute("data-default");
+          if (val !== "" && val !== def) fd.append(key, val);
+        });
+        return fd;
+      }
+
+      function abortProcessStartUi() {
+        progressBlock.classList.remove("active");
+        progressFill.classList.remove("indeterminate");
+        if (btnProcess && !btnProcess.hidden) btnProcess.disabled = false;
+        syncReprocessButton();
+      }
+
+      async function runStartProcessJob(fromReprocessClick) {
+        if (!selectedFile) return;
+        if (fromReprocessClick && btnReprocess) {
+          btnReprocess.disabled = true;
+          try {
+            await cancelActiveJobSilently();
+          } finally {
+            btnReprocess.disabled = false;
+          }
+          clearDownloadCompare();
+        }
+        showError("");
+        downloadWrap.classList.remove("show");
+        progressBlock.classList.add("active");
+        progressFill.style.width = "0%";
+        progressFill.classList.remove("indeterminate");
+        resetProgressTween();
+        progressPercentLabelActive = true;
+        progressPercentSuffix = "Sesler analiz ediliyor...";
+        progressLine1.textContent = "İşleniyor…";
+        renderProgressPercentLabel();
+        btnProcess.disabled = true;
+
+        var tlPre = document.querySelector('input[name="threshold_level"]');
+        if (tlPre) {
+          clampThresholdLevel(tlPre);
+          var tv = (tlPre.value || "").trim();
+          if (tv !== "") {
+            var tnum = parseFloat(tv.replace(",", "."));
+            if (!isNaN(tnum)) {
+              if (tnum > 0) {
+                abortProcessStartUi();
+                showError("Ses eşiği -70 ile 0 arasında olmalıdır (pozitif olamaz).");
+                return;
+              }
+              if (tnum < -70) {
+                abortProcessStartUi();
+                showError("Ses eşiği -70 ile 0 arasında olmalıdır.");
+                return;
+              }
+            }
+          }
+        }
+
+        var tdPre = document.querySelector('input[name="threshold_duration"]');
+        if (tdPre) {
+          clampThresholdDuration(tdPre);
+          var dv = (tdPre.value || "").trim();
+          if (dv !== "") {
+            var dnum = parseFloat(dv.replace(",", "."));
+            if (!isNaN(dnum)) {
+              if (dnum < 0) {
+                abortProcessStartUi();
+                showError("Minimum sessizlik süresi 0 ile 100 saniye arasında olmalıdır.");
+                return;
+              }
+              if (dnum > 100) {
+                abortProcessStartUi();
+                showError("Minimum sessizlik süresi en fazla 100 saniye olabilir.");
+                return;
+              }
+            }
+          }
+        }
+
+        beginProcessingAfterValidation();
+
+        try {
+          var res = await fetch(API_BASE + "/process", { method: "POST", body: collectFormData() });
+          var data = await res.json().catch(function () { return {}; });
+          if (!res.ok) throw new Error(data.error || "Yükleme başarısız.");
+          var jobId = data.job_id;
+          if (!jobId) throw new Error("Sunucu yanıtı geçersiz.");
+
+          lastAppliedAdvancedSnapshot = JSON.stringify(getAdvancedParamsNormalized());
+          syncReprocessButton();
+
+          currentJobId = jobId;
+          if (btnCancelJob) {
+            btnCancelJob.hidden = false;
+            btnCancelJob.disabled = false;
+          }
+
+          if (pollTimer) clearInterval(pollTimer);
+          pollTimer = setInterval(async function () {
+            var s = await fetch(API_BASE + "/status/" + jobId);
+            var st = await s.json();
+            if (!s.ok) {
+              clearInterval(pollTimer);
+              pollTimer = null;
+              progressBlock.classList.remove("soft-phase");
+              progressFill.classList.remove("indeterminate");
+              progressBlock.classList.remove("active");
+              showError(st.error || "Durum alınamadı.");
+              endProcessingUi({ showProcessButton: true, clearPoll: false });
+              return;
+            }
+
+            if (st.status === "running" || st.status === "queued") {
+              var elapsed = st.elapsed_seconds;
+              var rem = st.remaining_seconds;
+              var pct = st.progress_percent;
+              var etaExceeded = st.eta_exceeded === true;
+              var finishing = pct != null && st.eta_known && pct >= 95 && !etaExceeded;
+
+              if (pct != null) {
+                if (etaExceeded) {
+                  progressBlock.classList.add("soft-phase");
+                  progressFill.classList.add("indeterminate");
+                  progressFill.style.width = "";
+                  progressLine1.textContent = "İşleniyor…";
+                  progressLine2.textContent =
+                    "İşlem tamamlanmak üzere, videonuz kaydediliyor...";
+                  syncProgressPctMobile(pct);
+                } else if (finishing) {
+                  progressBlock.classList.add("soft-phase");
+                  progressFill.classList.add("indeterminate");
+                  progressFill.style.width = "";
+                  progressLine1.textContent = "Son aşama";
+                  progressLine2.textContent =
+                    "İşlem tamamlanmak üzere. Videonuz kaydediliyor; lütfen bu sayfada kalın.";
+                  syncProgressPctMobile(pct);
+                } else if (pct <= 0) {
+                  progressBlock.classList.remove("soft-phase");
+                  progressFill.classList.remove("indeterminate");
+                  if (progressTweenTimer) {
+                    clearTimeout(progressTweenTimer);
+                    progressTweenTimer = null;
+                  }
+                  displayedProgressPercent = 0;
+                  progressFill.style.width = "0%";
+                  progressLine1.textContent = "İşleniyor…";
+                  progressPercentLabelActive = true;
+                  progressPercentSuffix = "Sesler analiz ediliyor...";
+                  renderProgressPercentLabel();
+                } else {
+                  progressBlock.classList.remove("soft-phase");
+                  progressFill.classList.remove("indeterminate");
+                  setProgressPercentSmooth(pct);
+                  progressLine1.textContent = "İşleniyor…";
+                  if (st.eta_known) {
+                    // ETA'yı erken evrede göstermeyelim; kısa geçişte göz kırpma yapıyor.
+                    var showEta = (elapsed != null && elapsed >= 4) || pct >= 20;
+                    if (showEta) {
+                      progressPercentLabelActive = false;
+                      progressLine2.textContent =
+                        "%" + pct + " · Kalan Süre ~" + formatClock(rem != null ? rem : 0);
+                      syncProgressPctMobile(pct);
+                    } else {
+                      progressPercentLabelActive = true;
+                      if (!progressPercentSuffix) {
+                        progressPercentSuffix = pickProgressMessage(st.message, "Adımlar işleniyor...");
+                      }
+                      renderProgressPercentLabel();
+                    }
+                  } else {
+                    var stableMessage = progressMessageByPercent(displayedProgressPercent);
+                    progressPercentLabelActive = true;
+                    progressPercentSuffix = stableMessage;
+                    renderProgressPercentLabel();
+                  }
+                }
+              } else {
+                progressBlock.classList.remove("soft-phase");
+                progressFill.classList.add("indeterminate");
+                progressFill.style.width = "";
+                progressLine1.textContent = "İşleniyor…";
+                progressPercentLabelActive = false;
+                progressLine2.textContent = pickProgressMessage(st.message, "Adımlar işleniyor...");
+                clearProgressPctMobile();
+              }
+            }
+
+            if (st.status === "cancelled") {
+              clearInterval(pollTimer);
+              pollTimer = null;
+              progressBlock.classList.remove("soft-phase");
+              progressFill.classList.remove("indeterminate");
+              progressBlock.classList.remove("active");
+              progressFill.style.width = "0%";
+              resetProgressTween();
+              endProcessingUi({ showProcessButton: true, clearPoll: false });
+              showError("İşlem iptal edildi.");
+              return;
+            }
+
+            if (st.status === "done") {
+              clearInterval(pollTimer);
+              pollTimer = null;
+              if (progressTweenTimer) {
+                clearTimeout(progressTweenTimer);
+                progressTweenTimer = null;
+              }
+              var finishDoneUi = function () {
+                progressBlock.classList.remove("soft-phase");
+                progressFill.classList.remove("indeterminate");
+                progressFill.style.width = "100%";
+                resetProgressTween();
+                progressLine1.textContent = "Tamamlandı";
+                progressLine2.textContent = "";
+                clearProgressPctMobile();
+                progressBlock.classList.remove("active");
+                downloadLink.href = API_BASE + "/download/" + jobId;
+                downloadLink.setAttribute("download", st.output_name || "video_result.mp4");
+                var noteParts = [];
+                if (st.output_name) noteParts.push("Yeni Video: " + st.output_name);
+                if (st.output_size_bytes != null && isFinite(Number(st.output_size_bytes)) && Number(st.output_size_bytes) > 0) {
+                  noteParts.push("Boyut: " + formatSize(Math.floor(Number(st.output_size_bytes))));
+                }
+                if (downloadNote) downloadNote.textContent = noteParts.join(" · ");
+                populateDownloadSuccess(jobId, st);
+                downloadWrap.classList.add("show");
+                setDocumentTitleDone();
+                endProcessingUi({ showProcessButton: false, clearPoll: false });
+              };
+
+              progressBlock.classList.remove("soft-phase");
+              progressFill.classList.remove("indeterminate");
+              progressFill.style.width = "100%";
+              displayedProgressPercent = 100;
+              progressPercentLabelActive = false;
+              progressLine1.textContent = "İşleniyor…";
+              progressLine2.textContent = "%100 ✨ Videonuz hazır!";
+              syncProgressPctMobile(100);
+              setTimeout(finishDoneUi, 2000);
+              return;
+            }
+
+            if (st.status === "error") {
+              clearInterval(pollTimer);
+              pollTimer = null;
+              progressBlock.classList.remove("soft-phase");
+              progressFill.classList.remove("indeterminate");
+              progressBlock.classList.remove("active");
+              progressFill.style.width = "0%";
+              resetProgressTween();
+              showError((st.detail || "").trim() || st.message || "İşlem tamamlanamadı.");
+              endProcessingUi({ showProcessButton: true, clearPoll: false });
+            }
+          }, 250);
+        } catch (err) {
+          progressFill.classList.remove("indeterminate");
+          progressBlock.classList.remove("active");
+          showError(err.message || "İstek başarısız.");
+          endProcessingUi({ showProcessButton: true });
+        }
+      }
+
+      btnProcess.addEventListener("click", function () {
+        runStartProcessJob(false);
+      });
+      if (btnReprocess) {
+        btnReprocess.addEventListener("click", function () {
+          runStartProcessJob(true);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
