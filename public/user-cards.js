@@ -120,6 +120,52 @@ async function loadUserCards() {
 
   const weekDates = typeof getWeekDates === 'function' ? getWeekDates(weekOffset || 0) : [];
 
+  /** Bugünden geriye ardışık "okudum" gün sayısı (kart ve lig tebriği için ortak) */
+  function calculateStreakForUser(stats) {
+    if (!stats || stats.length === 0) return 0;
+    const statMap = {};
+    stats.forEach(s => { statMap[s.date] = s.status; });
+    const allDates = Object.keys(statMap).sort();
+    if (allDates.length === 0) return 0;
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayKey = `${year}-${month}-${day}`;
+    const todayStatus = statMap[todayKey];
+    let streak = 0;
+    let currentDate;
+
+    if (todayStatus === 'okudum') {
+      currentDate = todayKey;
+    } else if (todayStatus === 'okumadım') {
+      return 0;
+    } else {
+      const d = new Date(todayKey);
+      d.setDate(d.getDate() - 1);
+      const prevYear = d.getFullYear();
+      const prevMonth = String(d.getMonth() + 1).padStart(2, '0');
+      const prevDay = String(d.getDate()).padStart(2, '0');
+      currentDate = `${prevYear}-${prevMonth}-${prevDay}`;
+    }
+
+    while (true) {
+      if (statMap[currentDate] === 'okudum') {
+        streak++;
+        const d = new Date(currentDate);
+        d.setDate(d.getDate() - 1);
+        const prevYear = d.getFullYear();
+        const prevMonth = String(d.getMonth() + 1).padStart(2, '0');
+        const prevDay = String(d.getDate()).padStart(2, '0');
+        currentDate = `${prevYear}-${prevMonth}-${prevDay}`;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
   // Okuma serisi yapanları toplamak için array
   const activeStreaks = [];
 
@@ -139,55 +185,6 @@ async function loadUserCards() {
       return stat.status === 'okudum' ? 'ok' : 'not';
     });
 
-    // Yeni kod: Tüm okuma geçmişine bakarak bugünden geriye doğru seri hesapla
-    function calculateStreakForUser(stats) {
-      // stats: [{date, status}]
-      if (!stats || stats.length === 0) return 0;
-      // Tarihlere göre sıralayalım
-      const statMap = {};
-      stats.forEach(s => { statMap[s.date] = s.status; });
-      const allDates = Object.keys(statMap).sort();
-      if (allDates.length === 0) return 0;
-
-      // Bugünün tarihini al
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      const todayKey = `${year}-${month}-${day}`;
-      const todayStatus = statMap[todayKey];
-      let streak = 0;
-      let currentDate;
-      
-      if (todayStatus === 'okudum') {
-        currentDate = todayKey;
-      } else if (todayStatus === 'okumadım') {
-        return 0;
-      } else {
-        // Bugün işaretli değilse dünden başla
-        const d = new Date(todayKey);
-        d.setDate(d.getDate() - 1);
-        const prevYear = d.getFullYear();
-        const prevMonth = String(d.getMonth() + 1).padStart(2, '0');
-        const prevDay = String(d.getDate()).padStart(2, '0');
-        currentDate = `${prevYear}-${prevMonth}-${prevDay}`;
-      }
-      
-      while (true) {
-        if (statMap[currentDate] === 'okudum') {
-          streak++;
-          const d = new Date(currentDate);
-          d.setDate(d.getDate() - 1);
-          const prevYear = d.getFullYear();
-          const prevMonth = String(d.getMonth() + 1).padStart(2, '0');
-          const prevDay = String(d.getDate()).padStart(2, '0');
-          currentDate = `${prevYear}-${prevMonth}-${prevDay}`;
-        } else {
-          break;
-        }
-      }
-      return streak;
-    }
     const streak = calculateStreakForUser(userStats);
 
     // Seri > 0 ise activeStreaks listesine ekle
@@ -367,16 +364,16 @@ async function loadUserCards() {
   // Lig atlayanları bul
   const promotedUsers = [];
   users.forEach(user => {
-    const userStats = stats.filter(s => s.userId === user._id);
-    const okudumStats = userStats.filter(s => s.status === 'okudum');
+    const userStatsAll = stats.filter(s => s.userId === user._id);
+    const userStatsFiltered = stats.filter(s => s.userId === user._id && (s.status === 'okudum' || s.status === 'okumadım'));
+    const okudumStats = userStatsFiltered.filter(s => s.status === 'okudum');
     const okudumCount = okudumStats.length;
-    // Hangi lige yeni geçmiş?
     const newLeague = leagues.find(l => okudumCount === l.min);
     if (newLeague) {
-      // Bugün "okudum" ise
-      const todayStat = userStats.find(s => s.date === todayStr && s.status === 'okudum');
+      const todayStat = userStatsAll.find(s => s.date === todayStr && s.status === 'okudum');
       if (todayStat) {
-        promotedUsers.push({ name: user.name, league: newLeague.name });
+        const streakDays = calculateStreakForUser(userStatsFiltered);
+        promotedUsers.push({ name: user.name, league: newLeague.name, streakDays });
       }
     }
   });
@@ -397,14 +394,19 @@ async function loadUserCards() {
     const contentDiv = document.createElement('div');
     contentDiv.className = 'promotion-message-content';
 
-    let msg = 'Lig atlayan arkadaşlarımızı gönülden tebrik ediyoruz! 🎉🎉<br>';
+    let msg = 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉<br>';
+    const copyLines = [];
     msg += promotedUsers.map((u, index) => {
       const isLast = index === promotedUsers.length - 1;
       const punctuation = isLast ? '.' : ',';
-      return `<b class="promoted-username">${u.name}</b> <span class="promoted-league">${u.league.toLowerCase()}</span> lige yükseldi${punctuation}`;
+      const days = typeof u.streakDays === 'number' ? u.streakDays : 0;
+      copyLines.push(`⚡${days} gün - *${u.name}* ${u.league.toLowerCase()} lige yükseldi${punctuation}`);
+      return `⚡${days} gün - <b class="promoted-username">${u.name}</b> <span class="promoted-league">${u.league.toLowerCase()}</span> lige yükseldi${punctuation}`;
     }).join('<br>');
-    
+
     contentDiv.innerHTML = msg;
+    // Yalnızca panoya kopyalama: *isim* ve başlıktan sonra boş satır (sitede HTML aynı kalır)
+    contentDiv.__plainCopyText = `Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉\n\n${copyLines.join('\n')}`;
     promotedMsg.appendChild(contentDiv);
 
     // Confetti overlay ekle
@@ -449,14 +451,10 @@ async function loadUserCards() {
     promotedMsg.style.cursor = 'pointer'; // İşaretçiyi değiştirerek tıklanabilir olduğunu belirt
     promotedMsg.addEventListener('click', async () => {
       try {
-        // HTML'deki <br> etiketlerini gerçek yeni satırlara çevir
-        const textToCopy = contentDiv.innerHTML
-          .replace(/<br\s*\/?>(?=\s*<)/gi, '\n')
-          .replace(/<[^>]*>/g, '') // HTML etiketlerini kaldır
-          .replace(/\n\s*\n/g, '\n') // Çoklu boş satırları tek satıra çevir
-          .trim();
-        
-        await navigator.clipboard.writeText(textToCopy); // Metni panoya kopyala
+        const textToCopy = contentDiv.__plainCopyText
+          || contentDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
+
+        await navigator.clipboard.writeText(textToCopy);
 
         // Kopyala butonunu geçici olarak Kopyalandı yap
         const chip = promotedMsg.querySelector('.copy-chip');
