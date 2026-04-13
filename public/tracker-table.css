@@ -2,111 +2,96 @@
 
 /* Sütun başlığındaki kullanıcı sayısı */
 .col-user-count {
+    color: #333;
     display: inline-block;
-    margin-top: 4px;
-    font-size: 12px;
+    font-size: 18px;
     font-weight: 600;
-    color: #5b9bd5;
-    background: #e8f4ff;
-    border-radius: 10px;
-    padding: 2px 8px;
-    letter-spacing: 0.3px;
+    padding: 12px 8px;
+    letter-spacing: .3px;
 }
 
-/* Tfoot istatistik sayaçları — 2 satırlı layout */
+/* thead altı istatistik satırı sayaçları — okudum sayısı */
 .col-counts {
     display: inline-flex;
-    flex-direction: column;
     align-items: center;
-    gap: 3px;
-    font-size: 12px;
+    justify-content: center;
+    font-size: 17px;
     font-weight: 700;
     line-height: 1;
 }
 
-/* Üst satır: boş + okumadım yan yana */
-.col-counts-row1 {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    justify-content: center;
-}
-
-/* Alt satır: okudum ortada */
-.col-counts-row2 {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Boş (➖) */
-.col-empty {
-    color: #888;
-    background: #f0f0f0;
-    border-radius: 8px;
-    padding: 2px 6px;
-    min-width: 24px;
-    text-align: center;
-    transition: background 0.2s, color 0.2s;
-}
-
-/* Okumadım (✖) */
-.col-not-read {
-    color: #e05050;
-    background: #ffe8e8;
-    border-radius: 8px;
-    padding: 2px 6px;
-    min-width: 24px;
-    text-align: center;
-    transition: background 0.2s, color 0.2s;
+#trackerTable thead .stats-footer-row .col-counts {
+    font-size: 14px;
+    font-weight: 600;
 }
 
 /* Okudum (✔) */
 .col-read {
     color: #2a9d49;
-    background: #e6f9ed;
-    border-radius: 8px;
     padding: 2px 6px;
     min-width: 24px;
     text-align: center;
     transition: background 0.2s, color 0.2s;
 }
 
-/* İstatistik footer satırı (tfoot) */
-.stats-footer-row {
-    background: #eaf4fb;
+/* İstatistik satırı — ilk thead satırı (başlık) ile aynı gri palet ve çerçeve */
+#trackerTable thead .stats-footer-row th.stats-footer-label {
+    background-color: #f7f7f7;
+    color: #333;
+    border: 1px solid #c7c7c7;
+    padding: 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 17px;
 }
 
-.stats-footer-label {
-    border: 1px solid #b8d9ef;
-    padding: 8px 10px;
+#trackerTable thead .stats-footer-row th.stats-footer-cell {
+    background-color: #f0f0f0;
+    color: #888;
+    border: 1px solid #c7c7c7;
+    padding: 10px;
     text-align: center;
-    background: #d6ecf8;
-    /* açık mavi — "kişi" hücresi */
+    font-weight: 600;
+    font-size: 14px;
+    cursor: default;
+    user-select: none;
+}
+
+#trackerTable thead .stats-footer-row th.stats-footer-cell.today-column {
+    background-color: #ebf3fa;
+    border-color: #c7c7c7;
+    box-shadow: inset 0 0 0 2px rgba(91, 155, 213, 0.5);
+}
+
+/* Haftalık toplam — üst satırdaki "Okuma Serisi" vurgusu (kırmızı metin) */
+#trackerTable thead .stats-footer-row th.stats-footer-total {
+    background-color: #f0f0f0;
+    border: 1px solid #c7c7c7;
+    color: red;
+    font-size: 16px;
     font-weight: 600;
 }
 
-.stats-footer-cell {
-    border: 1px solid #d4e8be;
-    padding: 8px 10px;
-    text-align: center;
-    background: #f0f9e4;
-    /* açık yeşil-sarı — tarih hücreleri */
-    cursor: default;
+#trackerTable thead .stats-footer-row .col-read {
+    color: #2a9d49;
+    background: transparent;
+    font-weight: 600;
+    font-size: 17px;
 }
 
-.stats-footer-cell.today-column {
-    background-color: #d6ecf8;
-    /* bugün sütunu mavi */
-    border-color: #88bfde;
+#trackerTable thead .stats-footer-row th.stats-footer-cell.today-column .col-read {
+    color: #208a3c;
+    font-size: 18px;
+    font-weight: 600;
 }
 
-/* Haftalık toplam hücresi */
-.stats-footer-total {
-    background: #e8f0fe !important;
-    /* açık indigo */
-    border-color: #aabde8 !important;
-    font-weight: 700;
+#trackerTable thead .stats-footer-row .col-user-count {
+    font-size: 17px;
+}
+
+#trackerTable thead .stats-footer-row th.stats-footer-total .col-read {
+    color: #208a3c;
+    font-size: 18px;
 }
 
 
@@ -129,8 +114,8 @@
     white-space: nowrap;
 }
 
-/* Style the streak column header in the tracker table */
-#trackerTable tr th:last-child {
+/* Okuma serisi sütun başlığı (yalnızca ilk thead satırı; istatistik satırını hariç tut) */
+#trackerTable thead > tr:first-child th:last-child {
     font-size: 16px;
     font-weight: 600;
     color: red;

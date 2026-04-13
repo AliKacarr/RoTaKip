@@ -52,7 +52,6 @@ Modern ve kullanıcı dostu bir okuma takip platformu. Grup üyelerinin günlük
 - **Responsive**: Tüm cihazlarda uyumlu
 - **Push Notifications**: OneSignal entegrasyonu
 - **Hızlı Yükleme**: Optimize edilmiş performans
-- **Video Sessizlik Kaldırıcı**: `/video-silence-remover` adresinden video içindeki sessiz bölümleri kısaltma
 
 ## 🛠️ Teknolojiler
 

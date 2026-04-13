@@ -21,7 +21,6 @@ const { Dropbox } = require('dropbox');
 const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
-const { registerVideoSilenceRemover } = require('./video-silence-remover-routes');
 
 // Hash fonksiyonu
 function hashCode(str) {
@@ -35,8 +34,6 @@ function hashCode(str) {
 }
 const app = express();
 const port = process.env.PORT || 3000;
-
-registerVideoSilenceRemover(app);
 
 // Dosya varlık kontrolü
 function fileExists(filePath) {
