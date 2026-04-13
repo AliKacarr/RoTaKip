@@ -2,10 +2,8 @@
 node_modules/
 
 # Development dosyaları
-poll-data-extraction/
 add-quotes.js
 backupService.js
-sentence.py
 
 # Büyük statik dosya klasörleri (eğer Dropbox'da tutuluyorsa)
 public/risaleoku/
