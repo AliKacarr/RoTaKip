@@ -635,7 +635,6 @@ body {
 
 .no-results {
     text-align: center;
-    padding: 60px 20px;
     color: #2563EB;
 }
 
@@ -648,6 +647,20 @@ body {
 .no-results h3 {
     font-size: var(--font-2xl);
     margin-bottom: 10px;
+}
+
+.no-results p {
+    font-size: var(--font-base);
+    color: var(--gray-600);
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* Grup kartı açıklaması: mobilde .group-desc ile hizalanır */
+.group-desc {
+    width: 100%;
+    min-width: 0;
 }
 
 /* ==================== Modal Base Styles ==================== */
