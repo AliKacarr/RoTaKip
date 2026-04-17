@@ -110,8 +110,6 @@ class GroupsPage {
         
         // Debounce Timer
         this.searchTimeout = null;
-        /** Arama sorgusu yazıldı ama sonuç henüz gelmedi (debounce veya istek sürüyor) — boş sonuç mesajını gizlemek için */
-        this.searchAwaitingResults = false;
 
         this.init();
     }
@@ -303,6 +301,7 @@ class GroupsPage {
                     this.groups = [...this.groups, ...newGroups];
                     this.filteredGroups = this.groups;
                     await this.loadMemberCounts(newGroups);
+                    this.renderGroups();
                     this.currentPage++;
                 }
             } else {
@@ -327,6 +326,7 @@ class GroupsPage {
 
                 this.filteredGroups = this.groups;
                 await this.loadMemberCounts(newGroups);
+                this.renderGroups();
                 this.currentPage++;
 
                 // Eğer yüklenen grup sayısı limit'ten azsa, daha fazla grup yok demektir
@@ -350,85 +350,56 @@ class GroupsPage {
 
     async loadUserGroups() {
         try {
-            const userGroupsRaw = localStorage.getItem('groups');
-            if (!userGroupsRaw) return;
+            // LocalStorage'dan kullanıcının gruplarını al
+            const userGroups = localStorage.getItem('groups');
+            if (!userGroups) return;
 
-            let groupsData;
-            try {
-                groupsData = JSON.parse(userGroupsRaw);
-            } catch (e) {
-                console.warn('groups localStorage geçersiz JSON, temizleniyor:', e);
-                localStorage.removeItem('groups');
-                return;
-            }
-            if (!groupsData || typeof groupsData !== 'object') return;
-
+            const groupsData = JSON.parse(userGroups);
             const groupIds = Object.keys(groupsData);
+
             if (groupIds.length === 0) return;
 
-            const staleGroupIds = new Set();
+            // Silinmiş grupları tutmak için array
+            const deletedGroupIds = [];
 
+            // Her grup için detayları al
             const groupPromises = groupIds.map(async (groupId) => {
-                const safeId = encodeURIComponent(groupId);
                 try {
-                    const response = await fetch(`/api/group/${safeId}`);
-
-                    if (response.status === 404) {
-                        console.log(`⚠️ Grup veritabanında yok, LocalStorage temizlenecek: ${groupId}`);
-                        staleGroupIds.add(groupId);
-                        return { groupId, group: null, ok: false };
+                    const response = await fetch(`/api/group/${groupId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return { groupId, group: data.group, exists: true };
+                    } else if (response.status === 404) {
+                        // Grup bulunamadı - silinmiş
+                        console.log(`⚠️ Grup bulunamadı, LocalStorage'dan temizlenecek: ${groupId}`);
+                        deletedGroupIds.push(groupId);
+                        return { groupId, group: null, exists: false };
                     }
-
-                    if (!response.ok) {
-                        return { groupId, group: null, ok: false, transient: true };
-                    }
-
-                    let data;
-                    try {
-                        data = await response.json();
-                    } catch (parseErr) {
-                        console.error(`Grup yanıtı okunamadı (${groupId}):`, parseErr);
-                        return { groupId, group: null, ok: false, transient: true };
-                    }
-
-                    const group = data && data.group;
-                    if (!group || typeof group.groupId !== 'string' || !group.groupId) {
-                        console.log(`⚠️ Grup bilgisi eksik, LocalStorage temizlenecek: ${groupId}`);
-                        staleGroupIds.add(groupId);
-                        return { groupId, group: null, ok: false };
-                    }
-
-                    return { groupId, group, ok: true };
                 } catch (error) {
                     console.error(`Error loading group ${groupId}:`, error);
-                    return { groupId, group: null, ok: false, transient: true };
                 }
+                return { groupId, group: null, exists: false };
             });
 
             const results = await Promise.all(groupPromises);
             const userGroupsData = results
-                .filter((r) => r.ok && r.group)
-                .map((r) => r.group);
+                .filter(result => result.exists && result.group !== null)
+                .map(result => result.group);
 
-            if (staleGroupIds.size > 0) {
-                staleGroupIds.forEach((groupId) => {
+            // Silinmiş grupları LocalStorage'dan temizle
+            if (deletedGroupIds.length > 0) {
+                deletedGroupIds.forEach(groupId => {
                     LocalStorageManager.removeUserFromGroup(groupId);
-                    LocalStorageManager.removeJoinRequest(groupId);
-                    this.memberCounts.delete(groupId);
-                    console.log(`✅ Geçersiz/silinmiş grup kaydı temizlendi: ${groupId}`);
+                    console.log(`✅ Silinmiş grup LocalStorage'dan temizlendi: ${groupId}`);
                 });
-                this.groups = this.groups.filter((g) => !staleGroupIds.has(g.groupId));
-                this.filteredGroups = this.filteredGroups.filter((g) => !staleGroupIds.has(g.groupId));
             }
 
             if (userGroupsData.length > 0) {
+                // Kullanıcının gruplarını en başa ekle
                 this.groups = [...userGroupsData, ...this.groups];
                 this.filteredGroups = this.groups;
                 await this.loadMemberCounts(userGroupsData);
                 await this.loadUserAuthorities(userGroupsData, groupsData);
-            }
-
-            if (staleGroupIds.size > 0 || userGroupsData.length > 0) {
                 this.renderGroups();
             }
         } catch (error) {
@@ -511,8 +482,6 @@ class GroupsPage {
         const groupsGrid = document.getElementById('groupsGrid');
         const noResults = document.getElementById('noResults');
         const noPublicGroups = document.getElementById('noPublicGroups');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const loadingVisible = loadingSpinner && window.getComputedStyle(loadingSpinner).display !== 'none';
         
         // Grupları sırala: 1) Yetki sahibi olduğumuz gruplar, 2) Katılma isteği gönderdiğimiz gruplar, 3) Rastgele gruplar
         const sortedGroups = this.sortGroupsByPriority(this.filteredGroups);
@@ -541,23 +510,19 @@ class GroupsPage {
             }
         });
 
-        const hasNoCards = this.filteredGroups.length === 0;
-        const searchActive = (this.searchQuery || '').trim() !== '';
-        const searchBusy = searchActive && (this.searchAwaitingResults || loadingVisible);
-
-        if (hasNoCards) {
-            if (searchActive) {
-                if (noResults) noResults.style.display = searchBusy ? 'none' : 'block';
+        if (this.filteredGroups.length === 0 && !this.isLoading) {
+            if (this.searchQuery) {
+                noResults.style.display = 'block';
                 if (noPublicGroups) noPublicGroups.style.display = 'none';
-            } else if (this.totalPublicGroups === 0 && !loadingVisible) {
-                if (noResults) noResults.style.display = 'none';
+            } else if (this.totalPublicGroups === 0) {
+                noResults.style.display = 'none';
                 if (noPublicGroups) noPublicGroups.style.display = 'block';
             } else {
-                if (noResults) noResults.style.display = 'none';
+                noResults.style.display = 'none';
                 if (noPublicGroups) noPublicGroups.style.display = 'none';
             }
         } else {
-            if (noResults) noResults.style.display = 'none';
+            noResults.style.display = 'none';
             if (noPublicGroups) noPublicGroups.style.display = 'none';
         }
     }
@@ -567,12 +532,6 @@ class GroupsPage {
         const query = e.target.value.trim().toLowerCase();
         this.searchQuery = query;
 
-        if (!query) {
-            this.searchAwaitingResults = false;
-        } else {
-            this.searchAwaitingResults = true;
-        }
-
         const clearBtn = document.getElementById('clearSearch');
         clearBtn.style.display = query ? 'block' : 'none';
 
@@ -581,19 +540,17 @@ class GroupsPage {
         this.searchTimeout = setTimeout(() => {
             this.performSearch();
         }, CONFIG.SEARCH_DEBOUNCE_MS);
-
-        this.renderGroups();
     }
 
     async performSearch() {
         if (this.searchQuery === '') {
-            this.searchAwaitingResults = false;
             this.filteredGroups = this.groups;
             this.renderGroups();
             return;
         }
 
         try {
+            this.isLoading = true;
             this.showLoading(true);
             this.renderGroups();
             const response = await fetch(`/api/groups?search=${this.searchQuery}&limit=50`);
@@ -611,7 +568,7 @@ class GroupsPage {
             console.error('Search error:', error);
             this.showError('Search failed. Please try again.');
         } finally {
-            this.searchAwaitingResults = false;
+            this.isLoading = false;
             this.showLoading(false);
             this.renderGroups();
         }
@@ -623,7 +580,6 @@ class GroupsPage {
 
         searchInput.value = '';
         this.searchQuery = '';
-        this.searchAwaitingResults = false;
         clearBtn.style.display = 'none';
 
         this.filteredGroups = this.groups;
@@ -1023,9 +979,6 @@ class GroupsPage {
         }
         card.setAttribute('data-group-id', group.groupId);
 
-        const rawDesc = (group.description || '').trim();
-        const descPreview = rawDesc.length > 200 ? rawDesc.slice(0, 200) : rawDesc;
-
         card.innerHTML = `
             <div class="group-header">
                 <div class="group-avatar">
@@ -1038,8 +991,8 @@ class GroupsPage {
                 ${lockIcon}
                 ${userGroupIcon}
             </div>
-            <div class="group-desc">
-               <span class="groupDescription">${this.escapeHtml(descPreview)}</span>
+            <div>
+               <span class="groupDescription">${this.escapeHtml((group.description || '').substring(0, 100))}</span>
             </div>
 
         <div class="group-stats">
