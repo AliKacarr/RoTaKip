@@ -809,8 +809,8 @@ app.get('/api/groups', async (req, res) => {
       ]
     } : {};
 
-    // Arama yapılıyorsa tüm grupları göster, yoksa sadece "public" olanları göster
-    const visibilityFilter = search ? {} : { visibility: 'public' };
+    // Keşfet ve arama sonuçlarında gizli (private) grupları hiçbir durumda gösterme
+    const visibilityFilter = { visibility: 'public' };
 
     // Tüm filtreleri birleştir
     const finalFilter = {
