@@ -356,7 +356,8 @@ async function validateGroup() {
 
     const data = await response.json();
     const group = data.group;
-    
+    window.currentGroupVisibility = group.visibility || 'public';
+
     // Davet parametrelerini kontrol et
     const inviteParams = getInviteParams();
     

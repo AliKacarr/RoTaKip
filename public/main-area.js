@@ -1170,6 +1170,7 @@ async function loadGroupSettings() {
         if (response.ok) {
             const data = await response.json();
             const group = data.group;
+            window.currentGroupVisibility = group.visibility || 'public';
 
             // Form alanlarını doldur
             document.getElementById('groupName').value = group.groupName || '';
@@ -1425,6 +1426,7 @@ async function saveGroupSettings() {
         });
 
         if (response.ok) {
+            window.currentGroupVisibility = groupVisibility;
             showSuccessMessage('Grup ayarları başarıyla kaydedildi!');
             // Sayfa başlığını güncelle
             if (typeof updatePageTitle === 'function') {

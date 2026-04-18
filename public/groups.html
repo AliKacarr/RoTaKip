@@ -1694,6 +1694,50 @@
         </div>
       </div>
     </div>
+
+    <!-- Gizli grup: çıkış öncesi bilgilendirme -->
+    <div id="privateGroupLogoutModal" class="private-group-logout-modal" style="display: none;">
+      <div class="private-group-logout-content">
+        <div class="private-group-logout-header">
+          <h2 class="private-group-logout-title">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Gizli gruptan çıkış
+          </h2>
+          <button type="button" class="private-group-logout-close-btn" onclick="closePrivateGroupLogoutModal()" aria-label="Kapat">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+        <div class="private-group-logout-body">
+          <p class="private-group-logout-intro">
+            <i class="fa-solid fa-exclamation-circle private-group-logout-intro-icon" aria-hidden="true"></i>
+            <span class="private-group-logout-intro-text">Bu sayfa dışarıdan erişime kapalıdır. Çıkış yaptığınızda içeriklere ulaşmak için tekrar giriş yapmanız gerekecektir.</span>
+          </p>
+          <div class="private-group-logout-link-section">
+            <label class="private-group-logout-url-label" for="privateGroupLogoutUrlInput">Grup bağlantısı</label>
+            <div class="private-group-logout-url-row">
+              <input type="text" id="privateGroupLogoutUrlInput" class="private-group-logout-url-input" readonly>
+              <button type="button" class="private-group-logout-copy-btn" onclick="copyPrivateGroupLogoutLink()">
+                <i class="fa-solid fa-copy"></i>
+                Kopyala
+              </button>
+            </div>
+          </div>
+          <p class="private-group-logout-note">
+            <strong>Bağlantıyı saklayın:</strong> Sayfaya daha sonra kolayca ulaşmak için yukarıdaki adresi kopyalayabilirsiniz.
+          </p>
+          <div class="private-group-logout-actions">
+            <button type="button" class="private-group-logout-secondary" onclick="closePrivateGroupLogoutModal()">
+              <i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>
+              İptal
+            </button>
+            <button type="button" class="private-group-logout-primary" onclick="confirmPrivateGroupLogout()">
+              <i class="fa-solid fa-sign-out-alt"></i>
+              Çıkış yap
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   
     <!-- Profil Avatar Seçim Modal -->
     <div id="profileAvatarModal" class="profile-avatar-modal">

@@ -1904,22 +1904,84 @@ async function deleteAccount() {
     }
 }
 
+function performLogoutFromProfile() {
+    LocalStorageManager.logoutUser();
+    closePrivateGroupLogoutModal();
+    closeProfileModal();
+
+    showAdminIndicator();
+
+    showToast('Çıkış yapıldı!', 'success');
+
+    loadTrackerTable();
+
+    if (typeof window.updateProfileButton === 'function') {
+        window.updateProfileButton();
+    }
+}
+
 function logoutFromProfile() {
-            // Yeni sistem ile çıkış yap
-            LocalStorageManager.logoutUser();
-            closeProfileModal();
+    if (window.currentGroupVisibility === 'private') {
+        openPrivateGroupLogoutModal();
+        return;
+    }
+    performLogoutFromProfile();
+}
 
-            showAdminIndicator();
-            
-            showToast('Çıkış yapıldı!', 'success');
-            
-            // Reload data to update UI without admin privileges
-            loadTrackerTable();
+function openPrivateGroupLogoutModal() {
+    const modal = document.getElementById('privateGroupLogoutModal');
+    const urlInput = document.getElementById('privateGroupLogoutUrlInput');
+    if (urlInput) {
+        urlInput.value = window.location.href || '';
+    }
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
 
-            // Profil butonunu güncelle
-            if (typeof window.updateProfileButton === 'function') {
-                window.updateProfileButton();
+function closePrivateGroupLogoutModal() {
+    const modal = document.getElementById('privateGroupLogoutModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+function copyPrivateGroupLogoutLink() {
+    const url = window.location.href || '';
+    const done = () => showToast('Bağlantı panoya kopyalandı!', 'success');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => {
+            const input = document.getElementById('privateGroupLogoutUrlInput');
+            if (input) {
+                input.select();
+                input.setSelectionRange(0, 99999);
+                try {
+                    document.execCommand('copy');
+                    done();
+                } catch (e) {
+                    showToast('Kopyalanamadı; bağlantıyı elle seçebilirsiniz.', 'error');
+                }
             }
+        });
+    } else {
+        const input = document.getElementById('privateGroupLogoutUrlInput');
+        if (input) {
+            input.select();
+            input.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                done();
+            } catch (e) {
+                showToast('Kopyalanamadı; bağlantıyı elle seçebilirsiniz.', 'error');
+            }
+        }
+    }
+}
+
+function confirmPrivateGroupLogout() {
+    performLogoutFromProfile();
 }
 
 
@@ -1928,7 +1990,11 @@ document.addEventListener('click', function(event) {
     const profileModal = document.getElementById('profileModal');
     const avatarModal = document.getElementById('profileAvatarModal');
     const settingsModal = document.getElementById('profileSettingsModal');
-    
+    const privateGroupLogoutModal = document.getElementById('privateGroupLogoutModal');
+
+    if (event.target === privateGroupLogoutModal) {
+        closePrivateGroupLogoutModal();
+    }
     if (event.target === profileModal) {
         closeProfileModal();
     }
