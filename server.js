@@ -208,41 +208,26 @@ async function handleLoginStreak(user, groupId) {
 // Middleware'ler
 // Gzip sıkıştırma (compression)
 app.use(compression());
-app.use(express.static(path.join(__dirname, 'public'), {
-  etag: true,
-  lastModified: true,
-  maxAge: '3d' // 3 gün cache
-}));
-app.use('/uploads', express.static('public/uploads', {
-  etag: true,
-  lastModified: true,
-  maxAge: '3d'
-}));
-app.use('/images', express.static('public/images', {
-  etag: true,
-  lastModified: true,
-  maxAge: '3d'
-}));
-app.use('/groupAvatars', express.static('public/groupAvatars', {
-  etag: true,
-  lastModified: true,
-  maxAge: '3d'
-}));
-app.use('/groupImages', express.static('public/groupImages', {
-  etag: true,
-  lastModified: true,
-  maxAge: '3d'
-}));
-app.use('/userAvatars', express.static('public/userAvatars', {
-  etag: true,
-  lastModified: true,
-  maxAge: '3d'
-}));
-app.use('/quotes', express.static('public/quotes', {
-  etag: true,
-  lastModified: true,
-  maxAge: '3d'
-}));
+// Statik dosyalar: varsayılan 3 gün cache (canlıda ek env gerekmez).
+// Yerel geliştirme: proje kökündeki .env içine NODE_ENV=development ekleyin → maxAge 0.
+const staticMaxAge = process.env.NODE_ENV === 'development' ? 0 : '3d';
+console.log(staticMaxAge);
+
+function createStaticOptions() {
+  return {
+    etag: true,
+    lastModified: true,
+    maxAge: staticMaxAge
+  };
+}
+
+app.use(express.static(path.join(__dirname, 'public'), createStaticOptions()));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), createStaticOptions()));
+app.use('/images', express.static(path.join(__dirname, 'public/images'), createStaticOptions()));
+app.use('/groupAvatars', express.static(path.join(__dirname, 'public/groupAvatars'), createStaticOptions()));
+app.use('/groupImages', express.static(path.join(__dirname, 'public/groupImages'), createStaticOptions()));
+app.use('/userAvatars', express.static(path.join(__dirname, 'public/userAvatars'), createStaticOptions()));
+app.use('/quotes', express.static(path.join(__dirname, 'public/quotes'), createStaticOptions()));
 app.use(express.json());
 
 // Ana sayfa route'u

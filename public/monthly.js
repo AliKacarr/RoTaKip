@@ -327,6 +327,15 @@ function loadMonthlyCalendar() {
             return;
         }
 
+        const dateStr = formatDateForTable(day, month, year);
+        // Haftalık tabloyla uyumlu şekilde Türkiye saatine göre bugünden sonrası engellenir.
+        const today = new Date();
+        today.setHours(today.getHours() + 3);
+        const todayString = today.toISOString().split('T')[0];
+        if (dateStr > todayString) {
+            return;
+        }
+
         // Session kontrolü
         if (window.checkSessionTimeout && window.checkSessionTimeout()) {
             return; // İşlemi durdur
@@ -363,8 +372,6 @@ function loadMonthlyCalendar() {
         continueWithToggle();
         
         function continueWithToggle() {
-            const dateStr = formatDateForTable(day, month, year);
-
             // Mevcut durumu hücreden tespit et
             let currentStatus = '';
             if (clickedCell.classList.contains('read')) {

@@ -253,7 +253,6 @@ async function loadUserCards() {
         card.classList.add('current-user-card');
       }
       
-      container.appendChild(card);
       // Observer'ı başlat
       observer.observe(card);
     } else {
@@ -269,6 +268,11 @@ async function loadUserCards() {
       
       observer.observe(card);
     }
+
+    // Kullanıcılar sıralandıktan sonra kartların DOM sırasını da güncelle.
+    // appendChild mevcut bir elementi sona taşıdığı için yeniden sıralama sağlar.
+    container.appendChild(card);
+
     card.innerHTML = `
       <div class="user-card-header" style="background: ${headerBg};">
         <div class="profile-img-wrapper">
@@ -729,6 +733,13 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
       return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
     const dateStr = formatDateForTable(day, month, year);
+    // Haftalık/aylık ile uyumlu: Türkiye saatine göre bugünden sonrası engelli.
+    const today = new Date();
+    today.setHours(today.getHours() + 3);
+    const todayString = today.toISOString().split('T')[0];
+    if (dateStr > todayString) {
+      return;
+    }
 
     // 1. ÖNCE UI'YI GÜNCELLE (Anında görsel geri bildirim)
     // Mevcut durumu tıklanan elementten tespit et
@@ -756,11 +767,13 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
     updateDayCircleStatus(clickedElement, newStatus);
 
     // 2. SONRA VERİTABANINI GÜNCELLE
+    let targetUserId = null;
     fetch(`/api/all-data/${window.groupid}`)
       .then(response => response.json())
       .then(data => {
         const user = data.users.find(u => u.name === userName);
         if (!user) throw new Error('Kullanıcı bulunamadı');
+        targetUserId = user._id;
 
         return fetch(`/api/update-status/${window.groupid}`, {
           method: 'POST',
@@ -778,8 +791,8 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
         if (response && response.ok) {
           // Global store'u da güncelle
           try {
-            if (window.globalDataStore) {
-              window.globalDataStore.applyLocalUpdate(userInfo.userId, dateStr, newStatus);
+            if (window.globalDataStore && targetUserId) {
+              window.globalDataStore.applyLocalUpdate(targetUserId, dateStr, newStatus);
             }
           } catch (e) {
             console.error('Global store senkronizasyon hatası:', e);
