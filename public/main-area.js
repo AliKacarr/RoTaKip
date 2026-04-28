@@ -435,89 +435,8 @@ function changeUserImage(userId) {     //Kullanıcı resmi değiştirme fonksiyo
         return;
     }
 
-    // Create a hidden file input
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
-    document.body.appendChild(fileInput);
-
-    // Trigger click on the file input
-    fileInput.click();
-
-    // Handle file selection
-    fileInput.addEventListener('change', async function () {
-        if (this.files.length > 0) {
-            const file = this.files[0];
-
-            // Önce UI'da resmi güncelle
-            const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
-            if (!userContainer) {
-                console.error('User container not found for userId:', userId);
-                return;
-            }
-            const userItem = userContainer.querySelector('li');
-            if (userItem) {
-                const userImage = userItem.querySelector('.user-profile-image');
-                if (userImage) {
-                    // Yeni resmi önizleme olarak göster
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        userImage.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
-
-            // Resim güncelleme (yeni sistem: önce uploads klasörüne, sonra Dropbox)
-            const formData = new FormData();
-            formData.append('userId', userId);
-            formData.append('profileImage', file);
-            formData.append('useTempFolder', 'true'); // uploads klasörünü kullan
-
-            try {
-                const response = await fetch(`/api/update-user-image/${window.groupid}`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error('Resim güncelleme başarısız');
-                }
-
-                const result = await response.json();
-
-                // GlobalDataStore'u güncelle
-                if (window.globalDataStore) {
-                    // Kullanıcının profil resmini güncelle
-                    const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
-                    if (userIndex !== -1) {
-                        window.globalDataStore.users[userIndex].profileImage = result.imageUrl;
-                        // Index'leri yeniden oluştur
-                        window.globalDataStore._rebuildIndexes();
-                        console.log(result.imageUrl);
-                    }
-                }
-                showSuccessMessage('Kullanıcı resmi başarıyla güncellendi!');
-                // Diğer bileşenleri güncelle (yerel resim ile başlar, Dropbox yüklemesi arka planda olur)
-                loadTrackerTable();
-                loadUserCards();
-
-            } catch (error) {
-                console.error('Resim güncelleme hatası:', error);
-                // Hata durumunda resmi eski haline geri döndür
-                if (userItem) {
-                    const userImage = userItem.querySelector('.user-profile-image');
-                    if (userImage) {
-                        userImage.src = userImage.src; // Sayfayı yenile
-                    }
-                }
-                showErrorMessage('Resim güncellenirken hata oluştu!');
-            }
-
-            document.body.removeChild(fileInput);
-        }
-    });
+    avatarSelectionContext = { mode: 'existing-user', userId };
+    toggleAddUserAvatarModal();
 }
 
 // File input display handler
@@ -530,6 +449,7 @@ const inputProfileImage = document.getElementById('imagePreview'); // imagePrevi
 
 // Add User Avatar Selection
 let selectedAddUserAvatarPath = null; // Kullanıcı ekleme için seçilen avatar yolu
+let avatarSelectionContext = { mode: 'add-user', userId: null }; // add-user | existing-user
 
 // Upload butonu event listener
 if (uploadBtn) {
@@ -1961,12 +1881,239 @@ function showNotification(message, type = 'info') {
 // Add User Avatar Modal Functions
 function toggleAddUserAvatarModal() {
     const modal = document.getElementById('addUserAvatarModal');
+    ensureExistingUserUploadAreaInAvatarModal();
+    const headerTitle = modal ? modal.querySelector('.modal-header h3') : null;
+    const uploadWrap = modal ? modal.querySelector('.existing-user-upload-wrap') : null;
+    if (headerTitle) {
+        if (avatarSelectionContext.mode === 'existing-user') {
+            headerTitle.innerHTML = '<i class="fa-solid fa-user"></i> Profil Resmi';
+        } else {
+            headerTitle.innerHTML = '<i class="fa-solid fa-images"></i> Avatar Seç';
+        }
+    }
+    if (uploadWrap) {
+        uploadWrap.style.display = avatarSelectionContext.mode === 'existing-user' ? 'block' : 'none';
+    }
     if (modal.classList.contains('show')) {
         modal.classList.remove('show');
         document.body.style.overflow = 'auto';
+        avatarSelectionContext = { mode: 'add-user', userId: null };
     } else {
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
+    }
+}
+
+async function updateExistingUserImageFromAvatar(userId, avatarPath) {
+    try {
+        const response = await fetch('/api/update-user-avatar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId,
+                groupId: window.groupid,
+                avatarPath
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Avatar güncellenemedi');
+        }
+
+        if (window.globalDataStore) {
+            const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (userIndex !== -1) {
+                window.globalDataStore.users[userIndex].profileImage = avatarPath;
+                window.globalDataStore._rebuildIndexes();
+            }
+        }
+
+        const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+        if (userContainer) {
+            const userImage = userContainer.querySelector('.user-profile-image');
+            if (userImage) {
+                userImage.src = avatarPath;
+            }
+        }
+
+        loadTrackerTable();
+        loadUserCards();
+        showSuccessMessage('Kullanıcı avatarı başarıyla güncellendi!');
+    } catch (error) {
+        console.error('Kullanıcı avatar güncelleme hatası:', error);
+        showErrorMessage('Avatar güncellenirken hata oluştu!');
+    }
+}
+
+async function updateExistingUserImageFromFile(userId, file) {
+    try {
+        const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+        const userItem = userContainer ? userContainer.querySelector('li') : null;
+        if (userItem) {
+            const userImage = userItem.querySelector('.user-profile-image');
+            if (userImage) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    userImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        const formData = new FormData();
+        formData.append('userId', userId);
+        formData.append('profileImage', file);
+        formData.append('useTempFolder', 'true');
+
+        const response = await fetch(`/api/update-user-image/${window.groupid}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Resim güncelleme başarısız');
+        }
+
+        const result = await response.json();
+        if (window.globalDataStore) {
+            const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (userIndex !== -1) {
+                window.globalDataStore.users[userIndex].profileImage = result.imageUrl;
+                window.globalDataStore._rebuildIndexes();
+            }
+        }
+
+        loadTrackerTable();
+        loadUserCards();
+        showSuccessMessage('Kullanıcı resmi başarıyla güncellendi!');
+    } catch (error) {
+        console.error('Resim güncelleme hatası:', error);
+        showErrorMessage('Resim güncellenirken hata oluştu!');
+    }
+}
+
+async function removeExistingUserImage(userId) {
+    try {
+        const response = await fetch('/api/remove-user-profile-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId,
+                groupId: window.groupid
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Profil resmi silinemedi');
+        }
+
+        if (window.globalDataStore) {
+            const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (userIndex !== -1) {
+                window.globalDataStore.users[userIndex].profileImage = '/images/default.png';
+                window.globalDataStore._rebuildIndexes();
+            }
+        }
+
+        const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+        if (userContainer) {
+            const userImage = userContainer.querySelector('.user-profile-image');
+            if (userImage) {
+                userImage.src = '/images/default.png';
+            }
+        }
+
+        loadTrackerTable();
+        loadUserCards();
+        showSuccessMessage('Kullanıcı profil resmi kaldırıldı!');
+    } catch (error) {
+        console.error('Profil resmi kaldırma hatası:', error);
+        showErrorMessage('Profil resmi kaldırılırken hata oluştu!');
+    }
+}
+
+function ensureExistingUserUploadAreaInAvatarModal() {
+    const modal = document.getElementById('addUserAvatarModal');
+    if (!modal) return;
+    const modalBody = modal.querySelector('.modal-body');
+    if (!modalBody) return;
+
+    let uploadWrap = modalBody.querySelector('.existing-user-upload-wrap');
+    if (!uploadWrap) {
+        uploadWrap = document.createElement('div');
+        uploadWrap.className = 'existing-user-upload-wrap';
+        uploadWrap.innerHTML = `
+            <div class="existing-user-upload-row">
+                <div class="existing-user-current-image-wrap">
+                    <img class="existing-user-current-image" src="/images/default.png" alt="Mevcut profil resmi">
+                </div>
+                <div class="existing-user-actions">
+                    <button type="button" class="existing-user-upload-btn">
+                        <i class="fa-solid fa-upload"></i> Cihazdan resim seç
+                    </button>
+                    <button type="button" class="existing-user-remove-btn">
+                        <i class="fa-solid fa-trash"></i> Profil resmini kaldır
+                    </button>
+                </div>
+            </div>
+            <input type="file" class="existing-user-upload-input" accept="image/*">
+        `;
+        modalBody.insertBefore(uploadWrap, modalBody.firstChild);
+    }
+
+    const currentImagePreview = uploadWrap.querySelector('.existing-user-current-image');
+    const uploadBtn = uploadWrap.querySelector('.existing-user-upload-btn');
+    const uploadInput = uploadWrap.querySelector('.existing-user-upload-input');
+    const removeBtn = uploadWrap.querySelector('.existing-user-remove-btn');
+
+    if (currentImagePreview) {
+        const { mode, userId } = avatarSelectionContext;
+        if (mode === 'existing-user' && userId) {
+            let profileImage = '/images/default.png';
+            if (window.globalDataStore && Array.isArray(window.globalDataStore.users)) {
+                const currentUser = window.globalDataStore.users.find(u => u._id === userId);
+                if (currentUser && currentUser.profileImage) {
+                    profileImage = currentUser.profileImage;
+                }
+            } else {
+                const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+                const userImage = userContainer ? userContainer.querySelector('.user-profile-image') : null;
+                if (userImage && userImage.src) {
+                    profileImage = userImage.src;
+                }
+            }
+            currentImagePreview.src = profileImage;
+        } else {
+            currentImagePreview.src = '/images/default.png';
+        }
+    }
+
+    if (uploadBtn && uploadInput && !uploadBtn.dataset.bound) {
+        uploadBtn.dataset.bound = '1';
+        uploadBtn.addEventListener('click', () => uploadInput.click());
+        uploadInput.addEventListener('change', async function () {
+            if (!this.files || this.files.length === 0) return;
+            const { mode, userId } = avatarSelectionContext;
+            if (mode !== 'existing-user' || !userId) return;
+            await updateExistingUserImageFromFile(userId, this.files[0]);
+            this.value = '';
+            toggleAddUserAvatarModal();
+        });
+    }
+    if (removeBtn && !removeBtn.dataset.bound) {
+        removeBtn.dataset.bound = '1';
+        removeBtn.addEventListener('click', async () => {
+            const { mode, userId } = avatarSelectionContext;
+            if (mode !== 'existing-user' || !userId) return;
+            await removeExistingUserImage(userId);
+            toggleAddUserAvatarModal();
+        });
     }
 }
 
@@ -1988,11 +2135,18 @@ async function loadAddUserAvatarOptions() {
                 <img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">
             `;
 
-            avatarItem.addEventListener('click', function () {
-                // Seçili avatar'ı profil önizlemesine uygula
+            avatarItem.addEventListener('click', async function () {
+                const avatarPath = `/userAvatars/${avatar}`;
+
+                if (avatarSelectionContext.mode === 'existing-user' && avatarSelectionContext.userId) {
+                    await updateExistingUserImageFromAvatar(avatarSelectionContext.userId, avatarPath);
+                    toggleAddUserAvatarModal();
+                    return;
+                }
+
+                // Seçili avatar'ı kullanıcı ekleme önizlemesine uygula
                 const previewImg = document.getElementById('addUserInputProfileImage');
                 if (previewImg) {
-                    const avatarPath = `/userAvatars/${avatar}`;
                     previewImg.src = avatarPath;
 
                     // Avatar yolunu kaydet
@@ -2008,7 +2162,6 @@ async function loadAddUserAvatarOptions() {
                     if (imagePreviewContainer) {
                         imagePreviewContainer.style.display = 'none';
                     }
-
                 }
 
                 // Modal'ı kapat

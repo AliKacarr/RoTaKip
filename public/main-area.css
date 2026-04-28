@@ -1165,6 +1165,75 @@ input[type="file"] {
     opacity: 1;
 }
 
+.ready-images-modal-content .existing-user-upload-wrap {
+    display: none;
+    margin: 0 10px 15px 10px;
+    padding: 5px;
+    border: 1px dashed #b7c6ff;
+    border-radius: 10px;
+    background: #f5f8ff;
+}
+
+.ready-images-modal-content .existing-user-upload-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.ready-images-modal-content .existing-user-current-image-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ready-images-modal-content .existing-user-current-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #cfd8ff;
+}
+
+.ready-images-modal-content .existing-user-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ready-images-modal-content .existing-user-upload-btn,
+.ready-images-modal-content .existing-user-remove-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.ready-images-modal-content .existing-user-upload-btn {
+    background: #4e54c8;
+}
+
+.ready-images-modal-content .existing-user-remove-btn {
+    background: #d9534f;
+}
+
+.ready-images-modal-content .existing-user-upload-input {
+    display: none;
+}
+
 .group-details-section {
     display: flex;
     flex-direction: column;
