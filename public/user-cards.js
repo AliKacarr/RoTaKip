@@ -166,6 +166,34 @@ async function loadUserCards() {
     return streak;
   }
 
+  function formatDateTurkish(dateStr) {
+    if (!dateStr) return '-';
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, (month || 1) - 1, day || 1);
+    return date.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  function getRelativeReadText(dateStr) {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const readDate = new Date(year, (month || 1) - 1, day || 1);
+    readDate.setHours(0, 0, 0, 0);
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const diffMs = now - readDate;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) return 'Bugün';
+    if (diffDays === 1) return 'Dün';
+    return `${diffDays} gün önce`;
+  }
+
   // Okuma serisi yapanları toplamak için array
   const activeStreaks = [];
 
@@ -174,6 +202,9 @@ async function loadUserCards() {
     const okudumStats = userStats.filter(s => s.status === 'okudum');
     const totalDays = userStats.length;
     const okudumDays = okudumStats.length;
+    const lastReadDate = okudumStats.length > 0
+      ? okudumStats.reduce((latest, stat) => (stat.date > latest ? stat.date : latest), okudumStats[0].date)
+      : '';
 
     // Lig belirle
     const league = leagues.find(l => okudumDays >= l.min && okudumDays < l.max) || leagues[leagues.length - 1];
@@ -201,7 +232,7 @@ async function loadUserCards() {
     if (userStreak && userStreak.streak > 0) {
       const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
       const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
-      longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En Uzun Seri: </span> ${start} - ${end} (<span class="streak-days">${userStreak.streak} gün</span>)`;
+      longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En Uzun Seri: </span><span class="streak-range">${start} - ${end}</span> <span class="streak-days">(${userStreak.streak} gün)</span>`;
     }
 
     // Lig bilgisi için gösterim
@@ -319,6 +350,7 @@ async function loadUserCards() {
         </div>
         <span class="progress-percent">%${percent}</span>
       </div>
+      <div class="user-card-last-read">📅 <span class="last-read-label">Son okuma:</span> ${lastReadDate ? `${formatDateTurkish(lastReadDate)} <span class="last-read-relative">(${getRelativeReadText(lastReadDate)})</span>` : '-'}</div>
       <div class="user-card-longest-streak">${longestStreakText}</div>
     `;
     // .weekly-status-day-group click event ekle

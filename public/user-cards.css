@@ -383,10 +383,37 @@
     font-weight: 600;
 }
 
+.user-card .user-card-last-read {
+    font-size: 1.08em;
+    color: #222;
+    margin-top: 5px;
+    margin-left: 22px;
+    margin-right: 22px;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+}
+
+.user-card .user-card-last-read .last-read-label,
+.user-card .user-card-last-read .last-read-relative {
+    color: #243926;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.user-card .user-card-last-read .last-read-label {
+    margin: 0 5px 0 5px;
+}
+
+.user-card .user-card-last-read .last-read-relative {
+    margin-left: 5px;
+}
+
 .user-card .user-card-longest-streak .streak-days {
     color: #243926;
     font-weight: 700;
-    font-size: 1.08em;
+    font-size: 18px;
+    margin-left: 5px;
 }
 
 .user-card .user-card-longest-streak .streak-icon-label {
