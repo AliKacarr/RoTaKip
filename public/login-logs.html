@@ -324,7 +324,7 @@
           }
 
           // Sort logs by date (newest first)
-          logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+          logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
           // Create a map of IP+device+screen combinations to colors
           window.ipColors = {};
@@ -332,8 +332,9 @@
           // Create unique combinations of IP, device info, and screen size
           const uniqueCombinations = [];
           logs.forEach(log => {
+            const device = log.deviceInfo || {};
             const deviceInfo = formatDeviceInfo(log.deviceInfo);
-            const screenSize = `${log.deviceInfo.screenWidth || '?'}x${log.deviceInfo.screenHeight || '?'}`;
+            const screenSize = `${device.screenWidth || '?'}x${device.screenHeight || '?'}`;
             const ipDeviceScreen = `${log.ipAddress || 'Bilinmiyor'}-${deviceInfo}-${screenSize}`;
             if (!uniqueCombinations.includes(ipDeviceScreen)) {
               uniqueCombinations.push(ipDeviceScreen);
@@ -355,7 +356,7 @@
           // Group logs by date
           const logsByDate = {};
           logs.forEach(log => {
-            const date = new Date(log.date);
+            const date = new Date(log.timestamp);
             const day = date.getDate();
             const month = getMonthName(date.getMonth());
             const year = date.getFullYear();
@@ -420,7 +421,7 @@
 
 
               // Format date
-              const date = new Date(log.date);
+              const date = new Date(log.timestamp);
               const day = date.getDate();
               const month = getMonthName(date.getMonth());
               const year = date.getFullYear();
@@ -430,15 +431,10 @@
               // Format date with styled day and month
               const formattedDate = `<span style="font-weight: bold; color: #11171c;">${day} ${month}</span> ${year} ${hours}:${minutes}`;
 
-              // Check if deviceInfo exists
-              if (!log.deviceInfo) {
-                console.error('Missing deviceInfo for log:', log);
-                continue; // Skip this log
-              }
-
+              const device = log.deviceInfo || {};
               const ipAddress = log.ipAddress || 'Bilinmiyor';
               const deviceInfo = formatDeviceInfo(log.deviceInfo);
-              const screenSize = `${log.deviceInfo.screenWidth || '?'}x${log.deviceInfo.screenHeight || '?'}`;
+              const screenSize = `${device.screenWidth || '?'}x${device.screenHeight || '?'}`;
               const ipDeviceScreen = `${ipAddress}-${deviceInfo}-${screenSize}`;
               const ipColor = window.ipColors[ipDeviceScreen];
 
@@ -545,7 +541,7 @@
         dateGroupTableBody.innerHTML = '';
 
         // Sort by time (newest first)
-        dateGroup.sort((a, b) => new Date(b.date) - new Date(a.date));
+        dateGroup.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
         // Initialize pagination for date group
         const itemsPerPage = 10;
@@ -562,14 +558,15 @@
             const log = dateGroup[i];
             const row = document.createElement('tr');
 
-            const date = new Date(log.date);
+            const date = new Date(log.timestamp);
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
             const seconds = String(date.getSeconds()).padStart(2, '0');
 
+            const device = log.deviceInfo || {};
             const ipAddress = log.ipAddress || 'Bilinmiyor';
             const deviceInfo = formatDeviceInfo(log.deviceInfo);
-            const screenSize = `${log.deviceInfo.screenWidth || '?'}x${log.deviceInfo.screenHeight || '?'}`;
+            const screenSize = `${device.screenWidth || '?'}x${device.screenHeight || '?'}`;
             const ipDeviceScreen = `${ipAddress}-${deviceInfo}-${screenSize}`;
             const ipColor = window.ipColors[ipDeviceScreen];
 

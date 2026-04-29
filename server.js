@@ -2471,11 +2471,11 @@ app.get('/api/login-logs', async (req, res) => {
       query.groupId = groupId;
     }
     
-    const logs = await LoginLog.find(query).sort({ date: -1 }).lean();
+    const logs = await LoginLog.find(query).sort({ timestamp: -1 }).lean();
 
     // Format the dates before sending to client
     const formattedLogs = logs.map(log => {
-      const date = new Date(log.date);
+      const date = new Date(log.timestamp);
       const day = date.getDate();
       const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
         'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -2488,9 +2488,10 @@ app.get('/api/login-logs', async (req, res) => {
       const formattedDate = `${day} ${month} ${year} ${hours}:${minutes}`;
 
       // Return the log with both raw date (for sorting) and formatted date
+      // Note: logs are fetched with .lean(), so use plain object fields directly.
       return {
-        ...log._doc,
-        date: log.date,
+        ...log,
+        timestamp: log.timestamp,
         formattedDate: formattedDate
       };
     });
@@ -2505,7 +2506,7 @@ app.get('/api/login-logs', async (req, res) => {
 const requestIp = require('request-ip');
 
 const loginLogSchema = new mongoose.Schema({
-  date: { type: Date, default: Date.now },
+  timestamp: { type: Date, default: Date.now },
   ipAddress: String,
   deviceInfo: Object,
   groupId: String
@@ -2531,6 +2532,28 @@ app.post('/api/log-visit', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Error logging visit:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Ziyaret logu için adblock'a daha az takılan alternatif endpoint
+app.post('/api/visit-event', async (req, res) => {
+  try {
+    const { deviceInfo, groupId, userName } = req.body;
+
+    // Get client IP address
+    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    const log = new LoginLog({
+      deviceInfo,
+      ipAddress: userName || ipAddress,
+      groupId: groupId || 'catikati23'
+    });
+
+    await log.save();
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error logging visit event:', error);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });

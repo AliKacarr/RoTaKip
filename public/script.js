@@ -602,6 +602,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // YENİ YETKİ KONTROLÜ SİSTEMİ
     await initializeAuthSystem();
+    
+    // Sayfa ziyaretini erken logla; sonraki yüklemelerde hata olsa bile kaydı kaçırmayalım.
+    logPageVisit().catch(err => console.error('Sayfa ziyareti loglama hatası:', err));
 
     // Grup doğrulama
     await validateGroup();
@@ -796,8 +799,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       (typeof ArticlesManager !== 'undefined'
         ? (window.articlesManager = new ArticlesManager(), Promise.resolve())
         : Promise.resolve()),
-      (LocalStorageManager.isAdmin() ? renderUserList() : Promise.resolve()),
-      logPageVisit()
+      (LocalStorageManager.isAdmin() ? renderUserList() : Promise.resolve())
     ]).catch(err => console.error("Son yükleme grubunda hata:", err));
 
   } catch (error) {
@@ -881,18 +883,36 @@ async function logUnauthorizedAccess(action) {
 
 // Sayfa ziyaretleri kontrolü
 async function logPageVisit() {
+  const currentPath = window.location.pathname;
+  const groupId = getGroupIdFromUrl();
+  const userName = localStorage.getItem('userName');
+  const cookieConsent = localStorage.getItem('cookieConsent');
+
+  console.log('[logPageVisit] başlatıldı', {
+    path: currentPath,
+    groupId,
+    hasUserName: !!userName,
+    cookieConsent
+  });
+
   if (localStorage.getItem('cookieConsent') !== 'accepted') {
+    console.log('[logPageVisit] atlandı: cookieConsent accepted değil');
     return;
   }
 
-  // userName kontrolü
-  const userName = localStorage.getItem('userName');
+  if (!groupId) {
+    console.log('[logPageVisit] atlandı: groupId bulunamadı');
+    return;
+  }
+
   if (!userName) {
+    console.log('[logPageVisit] atlandı: userName bulunamadı (giriş yapılmamış)');
     return;
   }
   
   // Ad blocker veya güvenlik yazılımı kontrolü
   if (typeof fetch === 'undefined') {
+    console.log('[logPageVisit] atlandı: fetch tanımsız');
     return;
   }
   
@@ -903,23 +923,50 @@ async function logPageVisit() {
       screenHeight: window.screen.height,
     };
 
-    const response = await fetch('/api/log-visit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        deviceInfo,
-        groupId: getGroupIdFromUrl(),
-        userName: userName
-      })
+    const payload = JSON.stringify({
+      deviceInfo,
+      groupId: groupId,
+      userName: userName
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const endpoints = ['/api/visit-event', '/api/log-visit'];
+    let logged = false;
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log('[logPageVisit] endpoint deneniyor:', endpoint);
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        console.log('[logPageVisit] endpoint başarılı:', endpoint);
+        logged = true;
+        break;
+      } catch (endpointError) {
+        lastError = endpointError;
+        console.warn('[logPageVisit] endpoint başarısız:', endpoint, endpointError?.message || endpointError);
+      }
     }
+
+    if (!logged) {
+      throw lastError || new Error('Tüm log endpoint denemeleri başarısız oldu');
+    }
+
+    console.log('[logPageVisit] başarıyla loglandı', {
+      groupId,
+      userName
+    });
     
   } catch (error) {
     // Sadece gerçek hataları logla, ad blocker'ları sessizce geç
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      console.warn('[logPageVisit] fetch başarısız (muhtemel adblocker/ağ):', error.message);
     } else {
       console.error('Error logging page visit:', error);
     }
