@@ -1671,8 +1671,34 @@ class AvatarModalManager {
 let groupsPageInstance = null;
 let avatarModalManager = null;
 
+async function logHomePageVisit(userName) {
+    try {
+        const deviceInfo = {
+            userAgent: navigator.userAgent,
+            screenWidth: window.screen.width,
+            screenHeight: window.screen.height
+        };
+
+        await fetch('/api/log-home-visit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userName: userName || null,
+                deviceInfo
+            })
+        });
+    } catch (error) {
+        console.error('Ana sayfa ziyaret logu gönderilemedi:', error);
+    }
+}
+
 /* ==================== DOM Content Loaded ==================== */
 document.addEventListener('DOMContentLoaded', function() {
+    const cachedUserName = localStorage.getItem('userName');
+    logHomePageVisit(cachedUserName);
+
     // 1. Çerezleri temizle
     LocalStorageManager.clearCookies();
     

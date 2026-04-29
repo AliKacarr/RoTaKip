@@ -950,6 +950,14 @@ app.post('/api/groups', uploadGroupImage.fields([
     // Yeni grup için index'leri oluştur
     await createIndexesForGroup(finalGroupId);
 
+    await logSiteActivity({
+      action: 'group_created',
+      req,
+      groupId: finalGroupId,
+      userName: adminName,
+      deviceInfo: req.body?.deviceInfo
+    });
+
     res.status(201).json({ success: true, group: newGroup, userId: defaultUser._id });
   } catch (error) {
     console.error('Error creating group:', error);
@@ -1220,6 +1228,7 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
 app.delete('/api/delete-group/:groupId', async (req, res) => {
   try {
     const { groupId } = req.params;
+    const actorUserName = req.body?.userName || req.query?.userName || null;
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -1285,6 +1294,14 @@ app.delete('/api/delete-group/:groupId', async (req, res) => {
     }
 
     // Admin kaydı artık users koleksiyonunda, ayrı silmeye gerek yok
+
+    await logSiteActivity({
+      action: 'group_deleted',
+      req,
+      groupId,
+      userName: actorUserName,
+      deviceInfo: req.body?.deviceInfo
+    });
 
     // Grubu sil
     await UserGroup.findOneAndDelete({ groupId });
@@ -2514,6 +2531,99 @@ const loginLogSchema = new mongoose.Schema({
 
 const LoginLog = mongoose.model('LoginLog', loginLogSchema);
 
+const siteActivityLogSchema = new mongoose.Schema({
+  action: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now },
+  deviceInfo: Object,
+  ipAddress: String,
+  groupId: String
+});
+
+const SiteActivityLog = mongoose.model('SiteActivityLog', siteActivityLogSchema, 'siteactivitylogs');
+
+function extractClientIp(req) {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
+    return forwardedFor[0];
+  }
+  if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  return req.connection?.remoteAddress || req.socket?.remoteAddress || '';
+}
+
+function buildDeviceInfo(req, fallbackDeviceInfo = {}) {
+  if (fallbackDeviceInfo && Object.keys(fallbackDeviceInfo).length > 0) {
+    return fallbackDeviceInfo;
+  }
+
+  return {
+    userAgent: req.headers['user-agent'] || 'unknown'
+  };
+}
+
+async function logSiteActivity({ action, req, groupId, userName, deviceInfo }) {
+  try {
+    const clientIp = extractClientIp(req);
+    const normalizedUserName = typeof userName === 'string' && userName.trim()
+      ? userName.trim()
+      : null;
+
+    const log = new SiteActivityLog({
+      action,
+      timestamp: new Date(),
+      deviceInfo: buildDeviceInfo(req, deviceInfo),
+      ipAddress: normalizedUserName || clientIp,
+      groupId: groupId || 'catikati23'
+    });
+
+    await log.save();
+  } catch (error) {
+    console.error('Error writing site activity log:', error);
+  }
+}
+
+// Site activity logs endpoint
+app.get('/api/site-activity-logs', async (req, res) => {
+  try {
+    const { groupId, action } = req.query;
+    const query = {};
+
+    if (groupId) {
+      query.groupId = groupId;
+    }
+    if (action) {
+      query.action = action;
+    }
+
+    const logs = await SiteActivityLog.find(query).sort({ timestamp: -1 }).lean();
+    res.json(logs);
+  } catch (error) {
+    console.error('Error fetching site activity logs:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Ana sayfa görüntüleme log endpoint'i
+app.post('/api/log-home-visit', async (req, res) => {
+  try {
+    const { deviceInfo, userName } = req.body || {};
+
+    await logSiteActivity({
+      action: 'home_page_viewed',
+      req,
+      groupId: null,
+      userName,
+      deviceInfo
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error logging home visit:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 // Ziyaret logu endpoint'i
 app.post('/api/log-visit', async (req, res) => {
   try {
@@ -2529,6 +2639,13 @@ app.post('/api/log-visit', async (req, res) => {
     });
 
     await log.save();
+    await logSiteActivity({
+      action: 'group_page_viewed',
+      req,
+      groupId,
+      userName,
+      deviceInfo
+    });
     res.json({ success: true });
   } catch (error) {
     console.error('Error logging visit:', error);
@@ -2551,6 +2668,13 @@ app.post('/api/visit-event', async (req, res) => {
     });
 
     await log.save();
+    await logSiteActivity({
+      action: 'group_page_viewed',
+      req,
+      groupId,
+      userName,
+      deviceInfo
+    });
     res.json({ success: true });
   } catch (error) {
     console.error('Error logging visit event:', error);

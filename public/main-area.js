@@ -1556,11 +1556,23 @@ async function deleteGroup() {
     deleteBtn.disabled = true;
 
     try {
+        const userInfo = LocalStorageManager.getCurrentUserInfo();
+        const actorUserName = userInfo?.userName || localStorage.getItem('userName');
+        const deviceInfo = {
+            userAgent: navigator.userAgent,
+            screenWidth: window.screen.width,
+            screenHeight: window.screen.height
+        };
+
         const response = await fetch(`/api/delete-group/${window.groupid}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                userName: actorUserName || null,
+                deviceInfo
+            })
         });
 
         if (response.ok) {

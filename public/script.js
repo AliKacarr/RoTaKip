@@ -886,30 +886,18 @@ async function logPageVisit() {
   const currentPath = window.location.pathname;
   const groupId = getGroupIdFromUrl();
   const userName = localStorage.getItem('userName');
-  const cookieConsent = localStorage.getItem('cookieConsent');
 
   console.log('[logPageVisit] başlatıldı', {
     path: currentPath,
     groupId,
-    hasUserName: !!userName,
-    cookieConsent
+    hasUserName: !!userName
   });
-
-  if (localStorage.getItem('cookieConsent') !== 'accepted') {
-    console.log('[logPageVisit] atlandı: cookieConsent accepted değil');
-    return;
-  }
 
   if (!groupId) {
     console.log('[logPageVisit] atlandı: groupId bulunamadı');
     return;
   }
 
-  if (!userName) {
-    console.log('[logPageVisit] atlandı: userName bulunamadı (giriş yapılmamış)');
-    return;
-  }
-  
   // Ad blocker veya güvenlik yazılımı kontrolü
   if (typeof fetch === 'undefined') {
     console.log('[logPageVisit] atlandı: fetch tanımsız');
@@ -926,7 +914,7 @@ async function logPageVisit() {
     const payload = JSON.stringify({
       deviceInfo,
       groupId: groupId,
-      userName: userName
+      userName: userName || null
     });
     const endpoints = ['/api/visit-event', '/api/log-visit'];
     let logged = false;
@@ -960,7 +948,7 @@ async function logPageVisit() {
 
     console.log('[logPageVisit] başarıyla loglandı', {
       groupId,
-      userName
+      userName: userName || 'anonymous'
     });
     
   } catch (error) {

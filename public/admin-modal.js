@@ -1848,11 +1848,21 @@ async function deleteAccount() {
         try {
             if (shouldDeleteGroup) {
                 // Grup silme işlemi - mevcut delete-group endpoint'ini kullan
+                const deviceInfo = {
+                    userAgent: navigator.userAgent,
+                    screenWidth: window.screen.width,
+                    screenHeight: window.screen.height
+                };
+
                 const response = await fetch(`/api/delete-group/${userInfo.groupId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({
+                        userName: userInfo.userName || null,
+                        deviceInfo
+                    })
                 });
 
                 if (response.ok) {
