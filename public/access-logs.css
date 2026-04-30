@@ -369,13 +369,42 @@ body {
     background-color: #e9f2ff;
 }
 
-.date-summary-item-active h4 {
+.date-summary-item-active .date-summary-item-header h4 {
     color: #ff5722;
 }
 
-.date-summary-item h4 {
-    margin: 0 0 10px 0;
+.date-summary-item-header {
+    position: relative;
+    margin-bottom: 10px;
+    padding-right: 26px;
+}
+
+.date-summary-item-header h4 {
+    margin: 0;
     color: #19366f;
+    line-height: 1.25;
+    padding-right: 2px;
+}
+
+.date-summary-delete-btn {
+    position: absolute;
+    top: -3px;
+    right: -8px;
+    background: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #8a3a3a;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.date-summary-delete-btn:hover {
+    background: rgba(244, 67, 54, 0.12);
+    color: #c62828;
 }
 
 .date-summary-item p {

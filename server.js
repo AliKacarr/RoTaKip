@@ -2441,13 +2441,24 @@ app.post('/api/log-unauthorized', async (req, res) => {
     // Get client IP address
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
+    const storedActor = userName || ipAddress;
+    const gid = groupId || 'catikati23';
+
+    if (await hasLogInSameTurkeyMinute(AccessLog, {
+      groupId: gid,
+      action,
+      ipAddress: storedActor
+    })) {
+      return res.json({ success: true });
+    }
+
     // Create a new log entry
     const log = new AccessLog({
       action,
       timestamp: new Date(),
       deviceInfo,
-      ipAddress: userName || ipAddress, // userName varsa onu kullan, yoksa IP
-      groupId: groupId || 'catikati23'
+      ipAddress: storedActor,
+      groupId: gid
     });
 
     await log.save();
@@ -2473,6 +2484,32 @@ app.get('/api/access-logs', async (req, res) => {
     res.json(logs);
   } catch (error) {
     console.error('Error fetching access logs:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Belirli bir İstanbul takvim günündeki accesslogs kayıtlarını sil (grup bazlı)
+app.delete('/api/access-logs/day', async (req, res) => {
+  try {
+    const { trDate, groupId } = req.body || {};
+    if (!trDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(trDate))) {
+      return res.status(400).json({ error: 'trDate (YYYY-MM-DD) gerekli' });
+    }
+    const gid = groupId ? String(groupId).trim() : '';
+    if (!gid) {
+      return res.status(400).json({ error: 'groupId gerekli' });
+    }
+    const bounds = getTurkeyDayBoundsFromTrDateString(trDate);
+    if (!bounds) {
+      return res.status(400).json({ error: 'Geçersiz trDate' });
+    }
+    const result = await AccessLog.deleteMany({
+      groupId: gid,
+      timestamp: { $gte: bounds.start, $lt: bounds.end }
+    });
+    res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Error deleting access logs by day:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -2520,6 +2557,32 @@ app.get('/api/login-logs', async (req, res) => {
   }
 });
 
+// Belirli bir İstanbul takvim günündeki loginlogs kayıtlarını sil (grup bazlı)
+app.delete('/api/login-logs/day', async (req, res) => {
+  try {
+    const { trDate, groupId } = req.body || {};
+    if (!trDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(trDate))) {
+      return res.status(400).json({ error: 'trDate (YYYY-MM-DD) gerekli' });
+    }
+    const gid = groupId ? String(groupId).trim() : '';
+    if (!gid) {
+      return res.status(400).json({ error: 'groupId gerekli' });
+    }
+    const bounds = getTurkeyDayBoundsFromTrDateString(trDate);
+    if (!bounds) {
+      return res.status(400).json({ error: 'Geçersiz trDate' });
+    }
+    const result = await LoginLog.deleteMany({
+      groupId: gid,
+      timestamp: { $gte: bounds.start, $lt: bounds.end }
+    });
+    res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Error deleting login logs by day:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 const requestIp = require('request-ip');
 
 const loginLogSchema = new mongoose.Schema({
@@ -2540,6 +2603,38 @@ const siteActivityLogSchema = new mongoose.Schema({
 });
 
 const SiteActivityLog = mongoose.model('SiteActivityLog', siteActivityLogSchema, 'siteactivitylogs');
+
+/** TR (UTC+3) takvimine göre şu anki dakikanın [başlangıç, sonraki dakika) aralığı — aynı yıl/ay/gün/saat/dakika dedup için */
+function getTurkeyMinuteBounds(at = new Date()) {
+  const m = moment(at).utcOffset(3);
+  const start = m.clone().startOf('minute').toDate();
+  const end = m.clone().add(1, 'minute').startOf('minute').toDate();
+  return { start, end };
+}
+
+/** timestamp aynı TR dakikasında ve alanlar eşleşiyorsa true */
+async function hasLogInSameTurkeyMinute(Model, matchFields) {
+  const { start, end } = getTurkeyMinuteBounds();
+  const found = await Model.findOne({
+    ...matchFields,
+    timestamp: { $gte: start, $lt: end }
+  })
+    .select('_id')
+    .lean();
+  return !!found;
+}
+
+/** trDate: YYYY-MM-DD (İstanbul takvim günü) — o günün [00:00, ertesi gün 00:00) aralığı UTC Date olarak */
+function getTurkeyDayBoundsFromTrDateString(trDate) {
+  const parts = String(trDate).split('-').map((x) => parseInt(x, 10));
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) {
+    return null;
+  }
+  const [y, mo, d] = parts;
+  const start = moment({ year: y, month: mo - 1, date: d, hour: 0, minute: 0, second: 0, millisecond: 0 }).utcOffset(3, true);
+  const end = start.clone().add(1, 'day');
+  return { start: start.toDate(), end: end.toDate() };
+}
 
 function extractClientIp(req) {
   const forwardedFor = req.headers['x-forwarded-for'];
@@ -2569,12 +2664,23 @@ async function logSiteActivity({ action, req, groupId, userName, deviceInfo }) {
       ? userName.trim()
       : null;
 
+    const storedActor = normalizedUserName || clientIp;
+    const storedGroupId = groupId || 'catikati23';
+
+    if (await hasLogInSameTurkeyMinute(SiteActivityLog, {
+      groupId: storedGroupId,
+      action,
+      ipAddress: storedActor
+    })) {
+      return;
+    }
+
     const log = new SiteActivityLog({
       action,
       timestamp: new Date(),
       deviceInfo: buildDeviceInfo(req, deviceInfo),
-      ipAddress: normalizedUserName || clientIp,
-      groupId: groupId || 'catikati23'
+      ipAddress: storedActor,
+      groupId: storedGroupId
     });
 
     await log.save();
@@ -2600,6 +2706,31 @@ app.get('/api/site-activity-logs', async (req, res) => {
     res.json(logs);
   } catch (error) {
     console.error('Error fetching site activity logs:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Belirli bir İstanbul takvim günündeki siteactivitylogs kayıtlarını sil; action gönderilirse sadece o eylem
+app.delete('/api/site-activity-logs/day', async (req, res) => {
+  try {
+    const { trDate, action } = req.body || {};
+    if (!trDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(trDate))) {
+      return res.status(400).json({ error: 'trDate (YYYY-MM-DD) gerekli' });
+    }
+    const bounds = getTurkeyDayBoundsFromTrDateString(trDate);
+    if (!bounds) {
+      return res.status(400).json({ error: 'Geçersiz trDate' });
+    }
+    const q = {
+      timestamp: { $gte: bounds.start, $lt: bounds.end }
+    };
+    if (action && String(action).trim()) {
+      q.action = String(action).trim();
+    }
+    const result = await SiteActivityLog.deleteMany(q);
+    res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Error deleting site activity logs by day:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -2632,13 +2763,21 @@ app.post('/api/log-visit', async (req, res) => {
     // Get client IP address
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    const log = new LoginLog({
-      deviceInfo,
-      ipAddress: userName || ipAddress,
-      groupId: groupId || 'catikati23'
-    });
+    const storedActor = userName || ipAddress;
+    const gid = groupId || 'catikati23';
 
-    await log.save();
+    if (!(await hasLogInSameTurkeyMinute(LoginLog, {
+      groupId: gid,
+      ipAddress: storedActor
+    }))) {
+      const log = new LoginLog({
+        deviceInfo,
+        ipAddress: storedActor,
+        groupId: gid
+      });
+      await log.save();
+    }
+
     await logSiteActivity({
       action: 'group_page_viewed',
       req,
@@ -2661,13 +2800,21 @@ app.post('/api/visit-event', async (req, res) => {
     // Get client IP address
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    const log = new LoginLog({
-      deviceInfo,
-      ipAddress: userName || ipAddress,
-      groupId: groupId || 'catikati23'
-    });
+    const storedActor = userName || ipAddress;
+    const gid = groupId || 'catikati23';
 
-    await log.save();
+    if (!(await hasLogInSameTurkeyMinute(LoginLog, {
+      groupId: gid,
+      ipAddress: storedActor
+    }))) {
+      const log = new LoginLog({
+        deviceInfo,
+        ipAddress: storedActor,
+        groupId: gid
+      });
+      await log.save();
+    }
+
     await logSiteActivity({
       action: 'group_page_viewed',
       req,

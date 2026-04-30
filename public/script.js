@@ -216,7 +216,7 @@ async function initializeAuthSystem() {
   
   // Admin sayfaları için çerezleri silme
   const currentPath = window.location.pathname;
-  if (currentPath === '/login-logs.html' || currentPath === '/admin-logs.html') {
+  if (currentPath === '/login-logs.html' || currentPath === '/access-logs.html') {
     return true;
   }
   
@@ -588,7 +588,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     // Admin sayfaları için özel kontrol
     const currentPath = window.location.pathname;
-    if (currentPath === '/login-logs.html' || currentPath === '/admin-logs.html') {
+    if (currentPath === '/login-logs.html' || currentPath === '/access-logs.html') {
       // Admin sayfaları için çerezleri silmeden devam et
       return;
     }

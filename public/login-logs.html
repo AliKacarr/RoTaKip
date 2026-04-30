@@ -121,6 +121,18 @@
 
 
   <script>
+    function getTurkeyYmdFromTimestamp(ts) {
+      return new Date(ts).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' });
+    }
+    function turkishDateLabelFromTrYmd(ymd) {
+      const parts = String(ymd).split('-');
+      if (parts.length !== 3) return String(ymd);
+      const y = parseInt(parts[0], 10);
+      const mo = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      if ([y, mo, d].some(function (n) { return Number.isNaN(n); })) return String(ymd);
+      return d + ' ' + getMonthName(mo - 1) + ' ' + y;
+    }
     document.addEventListener('DOMContentLoaded', async function () {
       const accessDenied = document.getElementById('accessDenied');
       const logsSection = document.getElementById('logsSection');
@@ -353,20 +365,14 @@
             window.ipColors[combo] = colors[index % colors.length];
           });
 
-          // Group logs by date
+          // Group logs by İstanbul calendar day (YYYY-MM-DD)
           const logsByDate = {};
           logs.forEach(log => {
-            const date = new Date(log.timestamp);
-            const day = date.getDate();
-            const month = getMonthName(date.getMonth());
-            const year = date.getFullYear();
-            const dateKey = `${day} ${month} ${year}`;
-
-            if (!logsByDate[dateKey]) {
-              logsByDate[dateKey] = [];
+            const trYmd = getTurkeyYmdFromTimestamp(log.timestamp);
+            if (!logsByDate[trYmd]) {
+              logsByDate[trYmd] = [];
             }
-
-            logsByDate[dateKey].push(log);
+            logsByDate[trYmd].push(log);
           });
 
           // Create date summary cards
@@ -374,26 +380,60 @@
           dateSummaryList.innerHTML = '';
 
           // Sort dates (newest first)
-          const sortedDates = Object.keys(logsByDate).sort((a, b) => {
-            const dateA = new Date(a.replace(/(\d+) (\w+) (\d+)/, '$3 $2 $1'));
-            const dateB = new Date(b.replace(/(\d+) (\w+) (\d+)/, '$3 $2 $1'));
-            return dateB - dateA;
-          });
+          const sortedDates = Object.keys(logsByDate).sort((a, b) => b.localeCompare(a));
 
-          sortedDates.forEach(dateKey => {
-            const dateCount = logsByDate[dateKey].length;
-            const uniqueIPs = new Set(logsByDate[dateKey].map(log => log.ipAddress)).size;
+          sortedDates.forEach(trYmd => {
+            const dateKey = turkishDateLabelFromTrYmd(trYmd);
+            const dateCount = logsByDate[trYmd].length;
+            const uniqueIPs = new Set(logsByDate[trYmd].map(log => log.ipAddress)).size;
 
             const dateCard = document.createElement('div');
             dateCard.className = 'date-summary-item';
+            dateCard.dataset.trDate = trYmd;
             dateCard.innerHTML = `
-              <h4>${dateKey}</h4>
+              <div class="date-summary-item-header">
+                <h4>${dateKey}</h4>
+                <button type="button" class="date-summary-delete-btn" title="Bu günün kayıtlarını sil" aria-label="Bu günün kayıtlarını sil">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+              </div>
               <p>Kullanıcı Adları: <span style="color: black; font-weight: 500;">${uniqueIPs}</span> farklı</p>
               <p>Giriş: <span class="date-summary-count">${dateCount}</span></p>
             `;
 
+            const delBtn = dateCard.querySelector('.date-summary-delete-btn');
+            if (delBtn) {
+              delBtn.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                if (!confirm('"' + dateKey + '" tarihine ait giriş kayıtları silinsin mi?')) return;
+                try {
+                  const res = await fetch('/api/login-logs/day', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trDate: trYmd, groupId: groupId })
+                  });
+                  const data = await res.json().catch(function () { return {}; });
+                  if (!res.ok) {
+                    alert(data.error || 'Kayıtlar silinemedi.');
+                    return;
+                  }
+                  document.getElementById('dateGroupContainer').style.display = 'none';
+                  document.getElementById('dateGroupPaginationContainer').style.display = 'none';
+                  const mainTables = document.querySelectorAll('.logs-table');
+                  if (mainTables[0]) mainTables[0].style.display = 'table';
+                  document.getElementById('paginationContainer').style.display = 'flex';
+                  const fc = document.getElementById('filterContainer');
+                  if (fc) fc.innerHTML = '';
+                  await loadLogs(groupId, true);
+                } catch (err) {
+                  console.error(err);
+                  alert('Kayıtlar silinirken bir hata oluştu.');
+                }
+              });
+            }
+
             dateCard.addEventListener('click', () => {
-              showDateGroup(dateKey, logsByDate[dateKey]);
+              showDateGroup(dateKey, logsByDate[trYmd]);
               // Sayfanın en üstüne yavaşça kaydır
               window.scrollTo({
                 top: 0,
