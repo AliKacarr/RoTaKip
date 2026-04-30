@@ -674,6 +674,25 @@ document.addEventListener('DOMContentLoaded', async function () {
         getStatMap() { return this.statMap; }
         getUserReadingCounts() { return this.userReadingCounts; }
 
+        patchUsersLastCongratulated(items) {
+          if (!Array.isArray(items)) return;
+          for (const it of items) {
+            const uid = it.userId;
+            const leagueName = it.leagueName;
+            if (!uid || !leagueName) continue;
+            const u = this.userMap.get(uid);
+            if (u) u.lastCongratulatedLeague = leagueName;
+            const idStr = String(uid);
+            for (let i = 0; i < this.users.length; i++) {
+              const x = this.users[i];
+              if (x && (x._id === uid || String(x._id) === idStr)) {
+                x.lastCongratulatedLeague = leagueName;
+                break;
+              }
+            }
+          }
+        }
+
         async _buildLongestStreaks() {
           // Sunucudan almak yerine eldeki stats üzerinden hesapla
           const results = [];

@@ -669,6 +669,90 @@
     color: #313131;
 }
 
+.league-promotion-message .promotion-date-label,
+.league-promotion-backlog .promotion-date-label {
+    font-size: 0.88em;
+    font-weight: 500;
+    color: #607d8b;
+}
+
+.league-promotion-backlog {
+    width: 93%;
+    max-width: 1200px;
+    background: #e8f4fc;
+    border-radius: 10px;
+    line-height: 1.7;
+    margin: 10px auto 18px auto;
+    padding: 60px 20px 35px 20px;
+    font-size: 17px;
+    color: #444;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(30, 136, 229, 0.08);
+    text-align: center;
+    border: 1px solid #90caf9;
+    letter-spacing: 0.01em;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    cursor: pointer;
+}
+
+.league-promotion-backlog::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 28px;
+    background-image: url('images/kurdele.webp');
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: top center;
+    z-index: 1;
+    margin: 0 auto;
+}
+
+.league-promotion-backlog.message-fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.league-promotion-backlog .backlog-title {
+    display: block;
+    font-size: 1.05em;
+    color: #37474f;
+    margin-bottom: 4px;
+}
+
+.league-promotion-backlog .promotion-subtitle {
+    display: block;
+    margin-top: 12px;
+    font-size: 0.92em;
+    font-weight: 500;
+    color: #546e7a;
+    font-style: normal;
+}
+
+.league-promotion-backlog .left-emoji {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/clapping_hands.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+.league-promotion-backlog .promoted-username,
+.league-promotion-backlog .promoted-league {
+    font-style: italic;
+}
+
 .consecutive-missed-message {
     width: 93%;
     max-width: 1200px;

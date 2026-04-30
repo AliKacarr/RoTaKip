@@ -1321,7 +1321,8 @@ const userSchema = new mongoose.Schema({
   userpassword: String,
   authority: String,
   loginStreak: { type: Number, default: 0 },
-  lastLoginDate: { type: String, default: null }
+  lastLoginDate: { type: String, default: null },
+  lastCongratulatedLeague: { type: String, default: 'Bronz' }
 });
 
 const readingStatusSchema = new mongoose.Schema({
@@ -1907,6 +1908,46 @@ app.get('/api/all-data/:groupId', async (req, res) => {
     res.json({ users: usersData, stats: statsData, group });
   } catch (error) {
     console.error('Error fetching all data:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Lig tebriği: kullanıcıların son kutlanan lig alanını güncelle (panoda kopyalama sonrası)
+app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { items } = req.body || {};
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'items dizisi gerekli' });
+    }
+
+    const group = await UserGroup.findOne({ groupId }).lean();
+    if (!group) {
+      return res.status(404).json({ error: 'Grup bulunamadı' });
+    }
+
+    const allowedLeagues = new Set([
+      'Bronz', 'Gümüş', 'Altın', 'İnci', 'Safir', 'Zümrüt', 'Elmas', 'Yakut', 'Mercan', 'Pırlanta'
+    ]);
+
+    const { users } = getGroupCollections(groupId);
+    let updated = 0;
+    for (const raw of items) {
+      const userId = raw && raw.userId != null ? String(raw.userId).trim() : '';
+      const leagueName =
+        raw && raw.leagueName != null ? String(raw.leagueName).trim() : '';
+      if (!userId || !allowedLeagues.has(leagueName)) continue;
+      const r = await users.findByIdAndUpdate(
+        userId,
+        { $set: { lastCongratulatedLeague: leagueName } },
+        { new: true }
+      ).lean();
+      if (r) updated++;
+    }
+
+    res.json({ success: true, updated });
+  } catch (error) {
+    console.error('Error updating lastCongratulatedLeague:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

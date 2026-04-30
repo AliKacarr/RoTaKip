@@ -1,3 +1,28 @@
+async function postLastCongratulatedLeagues(items) {
+  if (!items || !items.length) return;
+  const gid = typeof window !== 'undefined' && window.groupid ? window.groupid : '';
+  if (!gid) return;
+  try {
+    const res = await fetch(`/api/last-congratulated-league/${gid}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(function () {
+        return {};
+      });
+      console.error('Son kutlanan lig güncellenemedi:', err.error || res.status);
+      return;
+    }
+    if (window.globalDataStore && typeof window.globalDataStore.patchUsersLastCongratulated === 'function') {
+      window.globalDataStore.patchUsersLastCongratulated(items);
+    }
+  } catch (e) {
+    console.error('Son kutlanan lig isteği başarısız:', e);
+  }
+}
+
 async function loadUserCards() {
   console.log('🔍 User Cards Loading...');
   const container = document.querySelector('.user-cards-container');
@@ -25,7 +50,14 @@ async function loadUserCards() {
     const streaks = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
 
     // Giriş yapılan kullanıcı bilgisi
-    const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
+  const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
+  const currentAuthority =
+    currentUserInfo && currentUserInfo.userAuthority
+      ? String(currentUserInfo.userAuthority).toLowerCase()
+      : currentUserInfo && currentUserInfo.authority
+      ? String(currentUserInfo.authority).toLowerCase()
+      : '';
+  const isAdminUser = currentAuthority === 'admin';
 
     // Kullanıcıları lig sıralamasına göre düzenle (en yüksek ligden en düşüğe)
     users.sort((user1, user2) => {
@@ -375,12 +407,10 @@ async function loadUserCards() {
     leagueInfoBar.style.display = 'flex';
   }
 
-  // --- LİG ATLAMA BİLGİSİ ---
-  // Önce mevcut lig atlama mesajını kaldır
-  const existingPromotedMsg = document.querySelector('.league-promotion-message');
-  if (existingPromotedMsg) {
-    existingPromotedMsg.remove();
-  }
+  // --- LİG ATLAMA BİLGİSİ (lastCongratulatedLeague) ---
+  document
+    .querySelectorAll('.league-promotion-message, .league-promotion-backlog')
+    .forEach((el) => el.remove());
 
   // Önce mevcut art arda okumama mesajını kaldır
   const existingMissedMsg = document.querySelector('.consecutive-missed-message');
@@ -397,117 +427,217 @@ async function loadUserCards() {
   }
   const todayStr = formatDate(today);
 
-  // Lig atlayanları bul
-  const promotedUsers = [];
-  users.forEach(user => {
-    const userStatsAll = stats.filter(s => s.userId === user._id);
-    const userStatsFiltered = stats.filter(s => s.userId === user._id && (s.status === 'okudum' || s.status === 'okumadım'));
-    const okudumStats = userStatsFiltered.filter(s => s.status === 'okudum');
-    const okudumCount = okudumStats.length;
-    const newLeague = leagues.find(l => okudumCount === l.min);
-    if (newLeague) {
-      const todayStat = userStatsAll.find(s => s.date === todayStr && s.status === 'okudum');
-      if (todayStat) {
-        const streakDays = calculateStreakForUser(userStatsFiltered);
-        promotedUsers.push({ name: user.name, league: newLeague.name, streakDays });
-      }
+  function leagueRankByName(name) {
+    const i = leagues.findIndex((l) => l.name === name);
+    return i < 0 ? -1 : i;
+  }
+
+  function getFirstDateAtOrAboveMinOkudum(userId, minOkudum) {
+    const uid = String(userId);
+    const okudum = stats
+      .filter((s) => String(s.userId) === uid && s.status === 'okudum')
+      .sort((a, b) => a.date.localeCompare(b.date));
+    let cum = 0;
+    for (const s of okudum) {
+      cum += 1;
+      if (cum >= minOkudum) return s.date;
     }
+    return null;
+  }
+
+  const sortByLeagueHighFirst = (a, b) => leagueRankByName(b.league) - leagueRankByName(a.league);
+
+  const promotedToday = [];
+  const promotedBacklog = [];
+
+  users.forEach((user) => {
+    const userId = user._id;
+    const uidStr = String(userId);
+    const userStatsFiltered = stats.filter(
+      (s) => String(s.userId) === uidStr && (s.status === 'okudum' || s.status === 'okumadım')
+    );
+    const okudumCount = userStatsFiltered.filter((s) => s.status === 'okudum').length;
+    const currentLeague =
+      leagues.find((l) => okudumCount >= l.min && okudumCount < l.max) || leagues[leagues.length - 1];
+
+    const streakDays = calculateStreakForUser(userStatsFiltered);
+    const promotionDate = getFirstDateAtOrAboveMinOkudum(uidStr, currentLeague.min);
+    if (!promotionDate) return;
+
+    const row = {
+      userId,
+      name: user.name,
+      league: currentLeague.name,
+      streakDays,
+      promotionDate
+    };
+
+    if (promotionDate === todayStr) {
+      promotedToday.push(row);
+      return;
+    }
+
+    const lastC =
+      user.lastCongratulatedLeague != null && String(user.lastCongratulatedLeague).trim() !== ''
+        ? String(user.lastCongratulatedLeague).trim()
+        : 'Bronz';
+    if (currentLeague.name === lastC) return;
+
+    const rCur = leagueRankByName(currentLeague.name);
+    const rLast = leagueRankByName(lastC);
+    if (rCur < rLast) return;
+
+    promotedBacklog.push(row);
   });
 
-  
-  // Eğer lig atlayan varsa mesajı oluştur
-  if (promotedUsers.length > 0) {
-    const promotedMsg = document.createElement('div');
-    promotedMsg.className = 'league-promotion-message';
+  promotedToday.sort(sortByLeagueHighFirst);
+  promotedBacklog.sort((a, b) => {
+    const byDate = b.promotionDate.localeCompare(a.promotionDate);
+    return byDate !== 0 ? byDate : sortByLeagueHighFirst(a, b);
+  });
 
-    // Lig atlayanları lige göre sırala (en yüksek ligden en düşüğe)
-    promotedUsers.sort((u1, u2) => {
-      const leagueOrder1 = leagues.findIndex(l => l.name === u1.league);
-      const leagueOrder2 = leagues.findIndex(l => l.name === u2.league);
-      return leagueOrder2 - leagueOrder1; // Ters sıralama: Yüksek lig önce
-    });
+  function buildCongratulateItems(rows) {
+    return rows.map((r) => ({ userId: r.userId, leagueName: r.league }));
+  }
+
+  function mountPromotionPanel(rows, options, insertBeforeNode) {
+    const { panelClass, titleHtml, withConfetti, subtitleHtml, allowLeagueUpdate } = options;
+    if (!rows.length) return null;
+
+    const panel = document.createElement('div');
+    panel.className = panelClass;
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'promotion-message-content';
 
-    let msg = 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉<br>';
+    let msg = titleHtml ? titleHtml + '<br>' : '';
     const copyLines = [];
-    msg += promotedUsers.map((u, index) => {
-      const isLast = index === promotedUsers.length - 1;
-      const punctuation = isLast ? '.' : ',';
-      const days = typeof u.streakDays === 'number' ? u.streakDays : 0;
-      copyLines.push(`⚡${days} gün - *${u.name}* ${u.league.toLowerCase()} lige yükseldi${punctuation}`);
-      return `⚡${days} gün - <b class="promoted-username">${u.name}</b> <span class="promoted-league">${u.league.toLowerCase()}</span> lige yükseldi${punctuation}`;
-    }).join('<br>');
+    msg += rows
+      .map((u, index) => {
+        const isLast = index === rows.length - 1;
+        const punctuation = isLast ? '.' : ',';
+        const leagueDef = leagues.find((l) => l.name === u.league);
+        const days = leagueDef ? leagueDef.min : 0;
+        copyLines.push(
+          `⚡${days} gün - *${u.name}* ${u.league.toLowerCase()} lige yükseldi${punctuation}`
+        );
+        return `⚡${days} gün - <b class="promoted-username">${u.name}</b> <span class="promoted-league">${u.league.toLowerCase()}</span> lige yükseldi${punctuation}`;
+      })
+      .join('<br>');
 
-    contentDiv.innerHTML = msg;
-    // Yalnızca panoya kopyalama: *isim* ve başlıktan sonra boş satır (sitede HTML aynı kalır)
-    contentDiv.__plainCopyText = `Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉\n\n${copyLines.join('\n')}`;
-    promotedMsg.appendChild(contentDiv);
-
-    // Confetti overlay ekle
-    const confettiOverlay = document.createElement('div');
-    confettiOverlay.className = 'confetti-overlay';
-    promotedMsg.appendChild(confettiOverlay);
-
-    // Sol alt köşe emoji ekle
-    const leftEmoji = document.createElement('div');
-    leftEmoji.className = 'left-emoji';
-    promotedMsg.appendChild(leftEmoji);
-
-    // Kopyala yazısı ve emoji ekle
-    const copyText = document.createElement('div');
-    copyText.className = 'copy-chip';
-    copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
-    copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
-    promotedMsg.appendChild(copyText);
-
-    // user-cards-section'ın en başına ekle
-    const userCardsSection = document.querySelector('.user-cards-section');
-    if (userCardsSection) {
-      userCardsSection.insertBefore(promotedMsg, userCardsSection.firstChild);
+    if (subtitleHtml) {
+      msg += `<br><span class="promotion-subtitle">${subtitleHtml}</span>`;
     }
 
-    // Intersection Observer ile confetti animasyonunu tetikle
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !entry.target.classList.contains('confetti-triggered')) {
-          entry.target.classList.add('confetti-triggered');
-          const confetti = entry.target.querySelector('.confetti-overlay');
-          if (confetti) {
-            confetti.classList.add('show');
-          }
-        }
-      });
-    }, { threshold: 0.5 });
+    contentDiv.innerHTML = msg;
+    const headerPlain = titleHtml.replace(/<[^>]+>/g, '').trim();
+    contentDiv.__plainCopyText = `${headerPlain}\n\n${copyLines.join('\n')}`;
+    panel.appendChild(contentDiv);
 
-    observer.observe(promotedMsg);
+    if (withConfetti) {
+      const confettiOverlay = document.createElement('div');
+      confettiOverlay.className = 'confetti-overlay';
+      panel.appendChild(confettiOverlay);
+    }
 
-    // Tıklama ile panoya kopyalama ve bildirim
-    promotedMsg.style.cursor = 'pointer'; // İşaretçiyi değiştirerek tıklanabilir olduğunu belirt
-    promotedMsg.addEventListener('click', async () => {
+    const leftEmoji = document.createElement('div');
+    leftEmoji.className = 'left-emoji';
+    panel.appendChild(leftEmoji);
+
+    const copyChip = document.createElement('div');
+    copyChip.className = 'copy-chip';
+    copyChip.style.cssText =
+      'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
+    copyChip.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
+    panel.appendChild(copyChip);
+
+    const userCardsSection = document.querySelector('.user-cards-section');
+    const ref =
+      insertBeforeNode ||
+      document.querySelector('.user-cards-header') ||
+      document.querySelector('.league-info-bar');
+    if (userCardsSection && ref) {
+      userCardsSection.insertBefore(panel, ref);
+    }
+
+    if (withConfetti) {
+      const promoObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !entry.target.classList.contains('confetti-triggered')) {
+              entry.target.classList.add('confetti-triggered');
+              const confetti = entry.target.querySelector('.confetti-overlay');
+              if (confetti) confetti.classList.add('show');
+            }
+          });
+        },
+        { threshold: 0.5 }
+      );
+      promoObserver.observe(panel);
+    }
+
+    const items = buildCongratulateItems(rows);
+    panel.style.cursor = 'pointer';
+    panel.addEventListener('click', async () => {
       try {
-        const textToCopy = contentDiv.__plainCopyText
-          || contentDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
-
+        const textToCopy =
+          contentDiv.__plainCopyText ||
+          contentDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
         await navigator.clipboard.writeText(textToCopy);
-
-        // Kopyala butonunu geçici olarak Kopyalandı yap
-        const chip = promotedMsg.querySelector('.copy-chip');
+        if (allowLeagueUpdate) {
+          await postLastCongratulatedLeagues(items);
+        }
+        const chip = panel.querySelector('.copy-chip');
         if (chip) {
           const prev = chip.innerHTML;
           chip.innerHTML = 'Kopyalandı ✅';
-          setTimeout(() => { chip.innerHTML = prev; }, 1500);
+          setTimeout(() => {
+            chip.innerHTML = prev;
+          }, 1500);
         }
-
       } catch (err) {
-        console.error('Panoya kopyalama başarısız oldu:', err);
+        console.error('Panoya kopyalama veya kayıt hatası:', err);
       }
     });
 
-    setTimeout(() => {
-      promotedMsg.classList.add('message-fade-in');
-    }, 50);
+    setTimeout(() => panel.classList.add('message-fade-in'), 50);
+    return panel;
+  }
+
+  const leagueBarEl = document.querySelector('.league-info-bar');
+  const userCardsHeaderEl = document.querySelector('.user-cards-header');
+  let insertAnchor = userCardsHeaderEl || leagueBarEl;
+
+  if (promotedBacklog.length > 0) {
+    const bl = mountPromotionPanel(
+      promotedBacklog,
+      {
+        panelClass: 'league-promotion-backlog',
+        titleHtml: 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
+        withConfetti: false,
+        subtitleHtml: isAdminUser
+          ? 'Kopyaladığınızda listedeki kişilerin son kutlanan lig bilgisi güncellenir.'
+     
+          : '',
+        allowLeagueUpdate: isAdminUser
+      },
+      insertAnchor
+    );
+    if (bl) insertAnchor = bl;
+  }
+
+  if (promotedToday.length > 0) {
+    mountPromotionPanel(
+      promotedToday,
+      {
+        panelClass: 'league-promotion-message',
+        titleHtml: 'Bugün lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
+        withConfetti: true,
+        subtitleHtml: '',
+        allowLeagueUpdate: isAdminUser
+      },
+      insertAnchor
+    );
   }
 
   // --- ART ARDA OKUMAYANLAR BİLGİSİ ---
@@ -574,7 +704,6 @@ async function loadUserCards() {
   // Gün sayısına göre sırala (en yüksekten en düşüğe)
   consecutiveMissed.sort((a, b) => b.days - a.days);
 
-  const afterElem = document.querySelector('.league-promotion-message') || leagueInfoBar;
   if (consecutiveMissed.length > 0) {
     const missedMsg = document.createElement('div');
     missedMsg.className = 'consecutive-missed-message';
@@ -608,10 +737,20 @@ async function loadUserCards() {
     missedMsg.appendChild(chainText);
     missedMsg.appendChild(messageContent);
     
-    // user-cards-section'ın en başına ekle
     const userCardsSection = document.querySelector('.user-cards-section');
     if (userCardsSection) {
-      userCardsSection.insertBefore(missedMsg, userCardsSection.firstChild);
+      const firstPromotionPanel = userCardsSection.querySelector(
+        '.league-promotion-message, .league-promotion-backlog'
+      );
+      if (firstPromotionPanel) {
+        userCardsSection.insertBefore(missedMsg, firstPromotionPanel);
+      } else if (userCardsHeaderEl) {
+        userCardsSection.insertBefore(missedMsg, userCardsHeaderEl);
+      } else if (leagueInfoBar) {
+        userCardsSection.insertBefore(missedMsg, leagueInfoBar);
+      } else {
+        userCardsSection.insertBefore(missedMsg, userCardsSection.firstChild);
+      }
     }
 
     // Tıklama ile panoya kopyalama ve bildirim
@@ -680,10 +819,20 @@ async function loadUserCards() {
       copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
       missedMsg.appendChild(copyText);
       
-      // user-cards-section'ın en başına ekle
       const userCardsSection = document.querySelector('.user-cards-section');
       if (userCardsSection) {
-        userCardsSection.insertBefore(missedMsg, userCardsSection.firstChild);
+        const firstPromotionPanel = userCardsSection.querySelector(
+          '.league-promotion-message, .league-promotion-backlog'
+        );
+        if (firstPromotionPanel) {
+          userCardsSection.insertBefore(missedMsg, firstPromotionPanel);
+        } else if (userCardsHeaderEl) {
+          userCardsSection.insertBefore(missedMsg, userCardsHeaderEl);
+        } else if (leagueInfoBar) {
+          userCardsSection.insertBefore(missedMsg, leagueInfoBar);
+        } else {
+          userCardsSection.insertBefore(missedMsg, userCardsSection.firstChild);
+        }
       }
     // Tıklama ile panoya kopyalama ve bildirim
     missedMsg.style.cursor = 'pointer';
