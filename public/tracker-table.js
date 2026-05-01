@@ -603,13 +603,11 @@ async function toggleStatus(userId, date) {
 
     const userInfo = LocalStorageManager.getCurrentUserInfo();
     if (!userInfo) {
-        logUnauthorizedAccess('Haftalık tabloya tıklama-kullanıcı bulunamadı');
         return;
     }
 
     // Member kullanıcıları sadece kendi verilerini güncelleyebilir
     if (userInfo.userAuthority === 'member' && userInfo.userId !== userId) {
-        logUnauthorizedAccess('Başka üyenin haftalık tablosuna tıklama');
         return;
     }
 

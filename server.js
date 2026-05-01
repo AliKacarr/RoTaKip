@@ -1070,7 +1070,7 @@ app.post('/api/groups', uploadGroupImage.fields([
     await createIndexesForGroup(finalGroupId);
 
     await logSiteActivity({
-      action: 'group_created',
+      action: 'grup_olusturma',
       req,
       groupId: finalGroupId,
       userName: adminName,
@@ -1420,7 +1420,7 @@ app.delete('/api/delete-group/:groupId', async (req, res) => {
     // Admin kaydı artık users koleksiyonunda, ayrı silmeye gerek yok
 
     await logSiteActivity({
-      action: 'group_deleted',
+      action: 'grup_silme',
       req,
       groupId,
       userName: actorUserName,
@@ -2808,10 +2808,10 @@ app.delete('/api/site-activity-logs/day', async (req, res) => {
 // Ana sayfa görüntüleme log endpoint'i
 app.post('/api/log-home-visit', async (req, res) => {
   try {
-    const { deviceInfo, userName } = req.body || {};
+    const { deviceInfo, userName, action } = req.body || {};
 
     await logSiteActivity({
-      action: 'home_page_viewed',
+      action: action || 'ana_sayfa_görüntüleme',
       req,
       groupId: null,
       userName,
@@ -2828,7 +2828,9 @@ app.post('/api/log-home-visit', async (req, res) => {
 // Ziyaret logu endpoint'i
 app.post('/api/log-visit', async (req, res) => {
   try {
-    const { deviceInfo, groupId, userName } = req.body;
+    const { deviceInfo, groupId, userName, action } = req.body || {};
+    const siteAction = action || 'grup_görüntüleme';
+    const shouldWriteAccessLog = siteAction === 'grup_görüntüleme';
 
     // Get client IP address
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -2836,20 +2838,22 @@ app.post('/api/log-visit', async (req, res) => {
     const storedActor = userName || ipAddress;
     const gid = groupId || 'catikati23';
 
-    if (!(await hasLogInSameTurkeyMinute(LoginLog, {
-      groupId: gid,
-      ipAddress: storedActor
-    }))) {
-      const log = new LoginLog({
-        deviceInfo,
-        ipAddress: storedActor,
-        groupId: gid
-      });
-      await log.save();
+    if (shouldWriteAccessLog) {
+      if (!(await hasLogInSameTurkeyMinute(LoginLog, {
+        groupId: gid,
+        ipAddress: storedActor
+      }))) {
+        const log = new LoginLog({
+          deviceInfo,
+          ipAddress: storedActor,
+          groupId: gid
+        });
+        await log.save();
+      }
     }
 
     await logSiteActivity({
-      action: 'group_page_viewed',
+      action: siteAction,
       req,
       groupId,
       userName,
@@ -2865,7 +2869,9 @@ app.post('/api/log-visit', async (req, res) => {
 // Ziyaret logu için adblock'a daha az takılan alternatif endpoint
 app.post('/api/visit-event', async (req, res) => {
   try {
-    const { deviceInfo, groupId, userName } = req.body;
+    const { deviceInfo, groupId, userName, action } = req.body || {};
+    const siteAction = action || 'grup_görüntüleme';
+    const shouldWriteAccessLog = siteAction === 'grup_görüntüleme';
 
     // Get client IP address
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -2873,20 +2879,22 @@ app.post('/api/visit-event', async (req, res) => {
     const storedActor = userName || ipAddress;
     const gid = groupId || 'catikati23';
 
-    if (!(await hasLogInSameTurkeyMinute(LoginLog, {
-      groupId: gid,
-      ipAddress: storedActor
-    }))) {
-      const log = new LoginLog({
-        deviceInfo,
-        ipAddress: storedActor,
-        groupId: gid
-      });
-      await log.save();
+    if (shouldWriteAccessLog) {
+      if (!(await hasLogInSameTurkeyMinute(LoginLog, {
+        groupId: gid,
+        ipAddress: storedActor
+      }))) {
+        const log = new LoginLog({
+          deviceInfo,
+          ipAddress: storedActor,
+          groupId: gid
+        });
+        await log.save();
+      }
     }
 
     await logSiteActivity({
-      action: 'group_page_viewed',
+      action: siteAction,
       req,
       groupId,
       userName,

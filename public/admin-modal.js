@@ -868,6 +868,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Join group button
     if (welcomeInviteJoinBtn) {
         welcomeInviteJoinBtn.addEventListener('click', async function () {
+            if (typeof window.logActionForAudit === 'function') {
+                window.logActionForAudit('welcomeInviteModal_kaydet');
+            }
             // Get form values
             const userName = document.getElementById('welcomeInviteUserName').value.trim();
             const memberName = document.getElementById('welcomeInviteMemberName').value.trim();
@@ -1524,6 +1527,9 @@ function selectProfileImage() {
 
 async function uploadProfileImage(file) {
     try {
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('profilden_kullanıcı_resmi_degistirme');
+        }
         const userInfo = LocalStorageManager.getCurrentUserInfo();
         if (!userInfo) return;
 
@@ -1576,6 +1582,9 @@ async function uploadProfileImage(file) {
 async function removeProfileImage() {
     if (confirm('Profil resmini silmek istediğinizden emin misiniz?')) {
         try {
+            if (typeof window.logActionForAudit === 'function') {
+                window.logActionForAudit('profilden_kullanıcı_resmi_degistirme');
+            }
             const userInfo = LocalStorageManager.getCurrentUserInfo();
             if (!userInfo) return;
 
@@ -1669,6 +1678,9 @@ async function loadProfileAvatars() {
 
 async function selectProfileAvatar(avatarPath) {
     try {
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('profilden_kullanıcı_resmi_degistirme');
+        }
         const userInfo = LocalStorageManager.getCurrentUserInfo();
         if (!userInfo) return;
 
@@ -1780,6 +1792,9 @@ async function saveProfileSettings() {
         if (typeof logUnauthorizedAccess === 'function') {
             logUnauthorizedAccess('Kullanıcı bilgileri güncelleme');
         }
+        if (typeof window.logSiteActivityEvent === 'function') {
+            window.logSiteActivityEvent('profilden_kullanıcı_adi_degistirme');
+        }
         
         const userInfo = LocalStorageManager.getCurrentUserInfo();
         if (!userInfo) return;
@@ -1853,6 +1868,10 @@ async function checkTotalUserCountInGroup(groupId) {
 async function deleteAccount() {
     const userInfo = LocalStorageManager.getCurrentUserInfo();
     if (!userInfo) return;
+
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('profilden_kendi_hesabini_silme');
+    }
 
     // Önce grup içindeki toplam kullanıcı sayısını kontrol et
     const totalUserCount = await checkTotalUserCountInGroup(userInfo.groupId);

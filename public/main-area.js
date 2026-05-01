@@ -50,6 +50,9 @@ function processMessageQueue() {
 
 newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonksiyonu
     e.preventDefault();
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('gruba_yeni_kullanıcı_ekleme');
+    }
 
     // Check if user is authenticated and has admin rights
     if (!LocalStorageManager.isAdmin()) {
@@ -145,6 +148,9 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
 });
 
 async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('gruptan_kullanıcı_silme');
+    }
     // Check if user is authenticated and has admin rights
     if (!LocalStorageManager.isAdmin()) {
         logUnauthorizedAccess('Kullanıcı silme');
@@ -257,6 +263,9 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
 }
 
 async function saveUserName(userId) {   //Kullanıcı adını güncelleme fonksiyonu
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('kullanıcı_listesinden_kullanıcı_adi_değiştirme');
+    }
     // Check if user is authenticated and has admin rights
     if (!LocalStorageManager.isAdmin()) {
         logUnauthorizedAccess('Kullanıcı adı güncelleme');
@@ -1296,6 +1305,9 @@ async function updateGroupImageFromAvatar(avatarPath) {
 
 // Grup ayarlarını kaydet
 async function saveGroupSettings() {
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('grup_ayarlarindan_diger_ayarlari_degistirme');
+    }
     if (!LocalStorageManager.isAdmin()) {
         showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
         return;
@@ -1366,6 +1378,9 @@ async function saveGroupSettings() {
 
 // Grup resmini değiştir
 async function changeGroupImage() {
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('grup_ayarlarindan_grup_resmi_guncelleme');
+    }
     if (!LocalStorageManager.isAdmin()) {
         showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
         return;
@@ -1423,6 +1438,9 @@ async function changeGroupImage() {
 
 // Grup resmini kaldır
 async function removeGroupImage() {
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('grup_ayarlarindan_grup_resmi_guncelleme');
+    }
     if (!LocalStorageManager.isAdmin()) {
         showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
         return;
@@ -1918,6 +1936,9 @@ function toggleAddUserAvatarModal() {
 
 async function updateExistingUserImageFromAvatar(userId, avatarPath) {
     try {
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('kullanıcı_listesinden_profil_resmi_degistirme');
+        }
         const response = await fetch('/api/update-user-avatar', {
             method: 'POST',
             headers: {
@@ -1966,6 +1987,9 @@ async function updateExistingUserImageFromAvatar(userId, avatarPath) {
 
 async function updateExistingUserImageFromFile(userId, file) {
     try {
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('kullanıcı_listesinden_profil_resmi_degistirme');
+        }
         const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
         const userItem = userContainer ? userContainer.querySelector('li') : null;
         if (userItem) {
@@ -2017,6 +2041,9 @@ async function updateExistingUserImageFromFile(userId, file) {
 
 async function removeExistingUserImage(userId) {
     try {
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('kullanıcı_listesinden_profil_resmi_degistirme');
+        }
         const response = await fetch('/api/remove-user-profile-image', {
             method: 'POST',
             headers: {

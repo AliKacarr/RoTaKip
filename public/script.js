@@ -900,6 +900,55 @@ async function logUnauthorizedAccess(action) {
   }
 }
 
+// Site activity log'u (çerez onayına bağlı değildir)
+async function logSiteActivityEvent(action, options = {}) {
+  if (!action || typeof fetch === 'undefined') {
+    return;
+  }
+
+  const payload = {
+    action,
+    groupId: options.groupId || getGroupIdFromUrl() || null,
+    userName: Object.prototype.hasOwnProperty.call(options, 'userName')
+      ? options.userName
+      : (localStorage.getItem('userName') || null),
+    deviceInfo: {
+      userAgent: navigator.userAgent,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height
+    }
+  };
+
+  const endpoints = ['/api/visit-event', '/api/log-visit'];
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) {
+        return;
+      }
+    } catch (error) {
+      if (!(error.name === 'TypeError' && error.message.includes('Failed to fetch'))) {
+        console.error('Error logging site activity event:', error);
+      }
+    }
+  }
+}
+
+window.logSiteActivityEvent = logSiteActivityEvent;
+
+window.logActionForAudit = function logActionForAudit(action, options = {}) {
+  if (typeof logUnauthorizedAccess === 'function') {
+    logUnauthorizedAccess(action);
+  }
+  if (typeof logSiteActivityEvent === 'function') {
+    logSiteActivityEvent(action, options);
+  }
+};
+
 // Sayfa ziyaretleri kontrolü
 async function logPageVisit() {
   const currentPath = window.location.pathname;
@@ -926,6 +975,7 @@ async function logPageVisit() {
     };
 
     const payload = JSON.stringify({
+      action: 'grup_görüntüleme',
       deviceInfo,
       groupId: groupId,
       userName: userName || null
