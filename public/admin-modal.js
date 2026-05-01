@@ -960,6 +960,27 @@ document.addEventListener('DOMContentLoaded', function () {
                         updateData.groupName,
                         updateData.name
                     );
+
+                    // Grafikler / özetler globalDataStore üzerinden; sayfa yenilemeden senkronize et
+                    if (window.globalDataStore && updateData.userId != null) {
+                        const uid = String(updateData.userId);
+                        const userIndex = window.globalDataStore.users.findIndex(
+                            (u) => String(u._id) === uid
+                        );
+                        if (userIndex !== -1) {
+                            if (updateData.profileImage != null) {
+                                window.globalDataStore.users[userIndex].profileImage = updateData.profileImage;
+                            }
+                            if (updateData.name) {
+                                window.globalDataStore.users[userIndex].name = updateData.name;
+                            }
+                            if (updateData.username) {
+                                window.globalDataStore.users[userIndex].username = updateData.username;
+                            }
+                            window.globalDataStore._rebuildIndexes();
+                            await window.globalDataStore._buildLongestStreaks();
+                        }
+                    }
                     
                     // Giriş serisi güncelle
                     try {
@@ -1011,6 +1032,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (typeof loadReadingStats === 'function') loadReadingStats();
                     if (typeof renderLongestSeries === 'function') renderLongestSeries();
                     if (typeof loadMonthlyCalendar === 'function') loadMonthlyCalendar();
+                    if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
 
                     // Clean URL
                     window.history.replaceState({}, document.title, window.location.pathname);

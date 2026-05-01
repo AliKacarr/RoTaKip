@@ -460,6 +460,9 @@ async function loadUserCards() {
     const currentLeague =
       leagues.find((l) => okudumCount >= l.min && okudumCount < l.max) || leagues[leagues.length - 1];
 
+    // Varsayılan başlangıç ligi (Bronz, min=0) "lig atlama" olarak sayılmamalı.
+    if (currentLeague.min === 0) return;
+
     const streakDays = calculateStreakForUser(userStatsFiltered);
     const promotionDate = getFirstDateAtOrAboveMinOkudum(uidStr, currentLeague.min);
     if (!promotionDate) return;

@@ -906,11 +906,6 @@ async function logPageVisit() {
   const groupId = getGroupIdFromUrl();
   const userName = localStorage.getItem('userName');
 
-  console.log('[logPageVisit] başlatıldı', {
-    path: currentPath,
-    groupId,
-    hasUserName: !!userName
-  });
 
   if (!groupId) {
     console.log('[logPageVisit] atlandı: groupId bulunamadı');
@@ -941,7 +936,6 @@ async function logPageVisit() {
 
     for (const endpoint of endpoints) {
       try {
-        console.log('[logPageVisit] endpoint deneniyor:', endpoint);
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -964,11 +958,6 @@ async function logPageVisit() {
     if (!logged) {
       throw lastError || new Error('Tüm log endpoint denemeleri başarısız oldu');
     }
-
-    console.log('[logPageVisit] başarıyla loglandı', {
-      groupId,
-      userName: userName || 'anonymous'
-    });
     
   } catch (error) {
     // Sadece gerçek hataları logla, ad blocker'ları sessizce geç

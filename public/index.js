@@ -103,6 +103,7 @@ class GroupsPage {
         this.avatarsLoaded = false; // Avatar'ların yüklenip yüklenmediğini takip et
         this.adminAvatarsLoaded = false; // Admin avatar'larının yüklenip yüklenmediğini takip et
         this.createGroupStage = 1; // 1: Group Info, 2: Admin Info
+        this.isCreatingGroup = false; // Grup oluşturma isteği devam ediyor mu
         
         // Message Queue
         this.messageQueue = [];
@@ -829,8 +830,26 @@ class GroupsPage {
         this.toggleAdminAvatarModal();
     }
 
+    setCreateGroupSubmitting(isSubmitting) {
+        this.isCreatingGroup = isSubmitting;
+        const createBtn = document.getElementById('createGroupBtn');
+        if (!createBtn) return;
+        if (isSubmitting) {
+            createBtn.disabled = true;
+            createBtn.dataset.originalText = createBtn.textContent;
+            createBtn.textContent = 'Oluşturuluyor...';
+        } else {
+            createBtn.disabled = false;
+            if (createBtn.dataset.originalText) {
+                createBtn.textContent = createBtn.dataset.originalText;
+                delete createBtn.dataset.originalText;
+            }
+        }
+    }
+
     async handleCreateGroup(event) {
         event.preventDefault();
+        if (this.isCreatingGroup) return;
         
         const groupNameEl = document.getElementById('groupNameInput');
         const groupDescEl = document.getElementById('groupDescInput');
@@ -912,6 +931,7 @@ class GroupsPage {
             formData.append('adminProfileImage', adminProfileImageInput.files[0]);
         }
 
+        this.setCreateGroupSubmitting(true);
         try {
             const response = await fetch('/api/groups', {
                 method: 'POST',
@@ -932,6 +952,8 @@ class GroupsPage {
         } catch (error) {
             console.error('Grup oluşturma hatası:', error);
             alert('Grup oluşturulurken bir hata oluştu.');
+        } finally {
+            this.setCreateGroupSubmitting(false);
         }
     }
 

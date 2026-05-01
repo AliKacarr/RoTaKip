@@ -417,10 +417,65 @@ function normalizeFileName(fileName) {
     .replace(/[^a-zA-Z0-9\-\.]/g, '-'); // Özel karakterleri tire ile değiştir
 }
 
-// WebP dönüştürme fonksiyonu
+/** Dropbox dosya adı parçaları (Türkçe vb. normalizeFileName ile latin + tire) */
+function slugSegment(str, maxLen) {
+  const normalized = normalizeFileName(String(str == null ? '' : str).trim());
+  const flat = normalized.replace(/\./g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const sliced = (flat || 'x').slice(0, maxLen);
+  return sliced || 'x';
+}
+
+function todayYmd() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function shortUniqSuffix() {
+  return `${String(Date.now()).slice(-5)}${Math.random().toString(36).slice(2, 5)}`;
+}
+
+/**
+ * Dropbox'ta okunabilir dosya adı: prefix + grup adı + grup id + kullanıcı etiketi + tarih + kaynak + benzersiz + uzantı
+ * (Aynı gün çoklu yükleme için kısa benzersiz sonek tutulur.)
+ */
+function buildDropboxImageFileName({ prefix, groupName, groupId, userLabel, sourceBase, ext }) {
+  const p = slugSegment(prefix, 18);
+  const gName = slugSegment(groupName, 26);
+  const gid = slugSegment(groupId, 22);
+  const u = slugSegment(userLabel, 22);
+  const base = slugSegment(sourceBase, 18);
+  const dateStr = todayYmd();
+  const uniq = shortUniqSuffix();
+  const e = String(ext || '.webp').toLowerCase();
+  const extNorm = e.startsWith('.') ? e : `.${e}`;
+  return normalizeFileName(`${p}-${gName}-${gid}-${u}-${dateStr}-${base}-${uniq}${extNorm}`);
+}
+
+async function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Windows / OneDrive / antivirüs kilitlerine karşı güvenli silme */
+async function unlinkWithRetry(filePath, { maxAttempts = 15, delayMs = 60 } = {}) {
+  if (!filePath) return false;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      if (!fs.existsSync(filePath)) return true;
+      await fs.promises.unlink(filePath);
+      return true;
+    } catch {
+      await delay(delayMs);
+    }
+  }
+  console.log('⚠️ Dosya silinemedi (deneme aşıldı):', filePath);
+  return false;
+}
+
+// WebP dönüştürme fonksiyonu (giriş dosyasını bellekten oku — sharp giriş kilidini bırakır)
 async function convertToWebP(inputPath, outputPath) {
   try {
-    await sharp(inputPath)
+    const buf = await fs.promises.readFile(inputPath);
+    await sharp(buf)
       .webp({ 
         quality: 80, // Kalite (0-100)
         effort: 4    // Sıkıştırma seviyesi (0-6)
@@ -559,6 +614,41 @@ async function uploadToDropbox(fileBuffer, fileName, folder) {
   }
 }
 
+function isRetryableDropboxUploadError(err) {
+  if (!err) return false;
+  const code = err.code || err.errno;
+  if (code === 'ETIMEDOUT' || code === 'ECONNRESET' || code === 'ENOTFOUND' || code === 'ECONNREFUSED') {
+    return true;
+  }
+  const msg = String(err.message || '').toLowerCase();
+  if (msg.includes('timeout') || msg.includes('timed out') || msg.includes('etimedout')) {
+    return true;
+  }
+  if (err.type === 'system' && String(err.code || '').toUpperCase().includes('TIME')) {
+    return true;
+  }
+  return false;
+}
+
+/** Ağ geçici hatalarında Dropbox yüklemesini birkaç kez dene */
+async function uploadToDropboxWithRetry(fileBuffer, fileName, folder, options = {}) {
+  const maxAttempts = options.maxAttempts != null ? options.maxAttempts : 4;
+  const baseDelayMs = options.baseDelayMs != null ? options.baseDelayMs : 900;
+  let lastErr;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await uploadToDropbox(fileBuffer, fileName, folder);
+    } catch (err) {
+      lastErr = err;
+      if (attempt === maxAttempts || !isRetryableDropboxUploadError(err)) {
+        throw err;
+      }
+      await delay(baseDelayMs * attempt);
+    }
+  }
+  throw lastErr;
+}
+
 async function deleteFromDropbox(fileName, folder) {
   try {
     const dropboxPath = `/${folder}/${fileName}`;
@@ -612,24 +702,38 @@ async function deleteFromDropboxByUrl(fileUrl) {
   }
 }
 
+function isDropboxHostedUrl(fileUrl) {
+  if (!fileUrl || typeof fileUrl !== 'string') return false;
+  return fileUrl.includes('dropbox.com') || fileUrl.includes('dropboxusercontent.com');
+}
+
 // URL'den grup resmini Dropbox'tan sil
 async function deleteGroupImageFromDropboxByUrl(fileUrl) {
   try {
     // Sadece Dropbox linklerinde silme yap
-    if (!fileUrl || !fileUrl.includes('dropbox.com')) {
+    if (!isDropboxHostedUrl(fileUrl)) {
       return; // Local veya başka bir kaynak: Dropbox'tan silme
     }
 
-    // Paylaşımlı Dropbox URL'sinden gerçek Dropbox yolunu çıkar
+    // Paylaşımlı Dropbox URL'sinden dosya adını çıkar
     // Örn: https://www.dropbox.com/scl/fi/.../group-123.webp?rlkey=...&dl=0
     const url = new URL(fileUrl);
-    // Önce dosya adını al
     const pathname = url.pathname || '';
-    const fileName = pathname.split('/').pop();
+    const rawFileName = pathname.split('/').pop();
+    const fileName = rawFileName ? decodeURIComponent(rawFileName) : '';
     if (!fileName) return;
 
-    // Biz yüklerken /groupImages/<fileName> yolunu kullanıyoruz
-    const dropboxPath = `/groupImages/${fileName}`;
+    // groupImages klasöründeki gerçek dosya adını bul (normalizasyon/encoding farklarına dayanıklı)
+    const listResponse = await dbx.filesListFolder({ path: '/groupImages' });
+    const exactFile = listResponse.result.entries.find((f) => {
+      if (f.name === fileName) return true;
+      const dbTimestamp = String(f.name || '').split('-')[0];
+      const urlTimestamp = String(fileName || '').split('-')[0];
+      return dbTimestamp && urlTimestamp && dbTimestamp === urlTimestamp;
+    });
+    if (!exactFile) return;
+
+    const dropboxPath = `/groupImages/${exactFile.name}`;
 
     // Dropbox'tan sil
     await dbx.filesDeleteV2({ path: dropboxPath });
@@ -847,6 +951,24 @@ app.post('/api/groups', uploadGroupImage.fields([
       selectedGroupAvatarPath,
       selectedAdminAvatarPath 
     } = req.body;
+
+    if (!groupName) {
+      return res.status(400).json({ error: 'Grup adı gereklidir' });
+    }
+
+    if (!adminUserName || !adminName || !adminPassword) {
+      return res.status(400).json({ error: 'Kullanıcı adı, yönetici adı ve şifresi gereklidir' });
+    }
+
+    const baseGroupId = generateGroupId(groupName);
+    let finalGroupId = baseGroupId;
+    let counter = 1;
+    let existingGroup = await UserGroup.findOne({ groupId: finalGroupId }).lean();
+    while (existingGroup) {
+      finalGroupId = `${baseGroupId}${counter}`;
+      counter++;
+      existingGroup = await UserGroup.findOne({ groupId: finalGroupId }).lean();
+    }
     
     let groupImageUrl = null;
     let adminProfileImageUrl = null;
@@ -856,7 +978,17 @@ app.post('/api/groups', uploadGroupImage.fields([
       groupImageUrl = selectedGroupAvatarPath;
     } else if (req.files && req.files.groupImage) {
       try {
-        const fileName = `${Date.now()}-${req.files.groupImage[0].originalname}`;
+        const orig = req.files.groupImage[0].originalname;
+        const base = path.parse(normalizeFileName(orig)).name;
+        const ext = (path.extname(orig) || '.webp').toLowerCase();
+        const fileName = buildDropboxImageFileName({
+          prefix: 'grup-resmi',
+          groupName,
+          groupId: finalGroupId,
+          userLabel: adminUserName,
+          sourceBase: base,
+          ext
+        });
         const fileBuffer = fs.readFileSync(req.files.groupImage[0].path);
         groupImageUrl = await uploadToDropbox(fileBuffer, fileName, 'groupImages');
         
@@ -872,7 +1004,17 @@ app.post('/api/groups', uploadGroupImage.fields([
       adminProfileImageUrl = selectedAdminAvatarPath;
     } else if (req.files && req.files.adminProfileImage) {
       try {
-        const fileName = `${Date.now()}-${req.files.adminProfileImage[0].originalname}`;
+        const orig = req.files.adminProfileImage[0].originalname;
+        const base = path.parse(normalizeFileName(orig)).name;
+        const ext = (path.extname(orig) || '.jpg').toLowerCase();
+        const fileName = buildDropboxImageFileName({
+          prefix: 'admin-profil',
+          groupName,
+          groupId: finalGroupId,
+          userLabel: adminUserName,
+          sourceBase: base,
+          ext
+        });
         const fileBuffer = fs.readFileSync(req.files.adminProfileImage[0].path);
         adminProfileImageUrl = await uploadToDropbox(fileBuffer, fileName, 'userImages');
         
@@ -884,29 +1026,6 @@ app.post('/api/groups', uploadGroupImage.fields([
       }
     } else {
       adminProfileImageUrl = "/images/default.png";
-    }
-
-    if (!groupName) {
-      return res.status(400).json({ error: 'Grup adı gereklidir' });
-    }
-
-    if (!adminUserName || !adminName || !adminPassword) {
-      return res.status(400).json({ error: 'Kullanıcı adı, yönetici adı ve şifresi gereklidir' });
-    }
-
-    // Benzersiz bir grup ID'si oluştur
-    const groupId = generateGroupId(groupName);
-
-    // Grup ID'si zaten var mı kontrol et
-    let finalGroupId = groupId;
-    let counter = 1;
-    let existingGroup = await UserGroup.findOne({ groupId: finalGroupId }).lean();
-
-    // Eğer ID zaten varsa, benzersiz bir ID oluşturana kadar sayı ekle
-    while (existingGroup) {
-      finalGroupId = `${groupId}${counter}`;
-      existingGroup = await UserGroup.findOne({ groupId: finalGroupId }).lean();
-      counter++;
     }
 
     // Yeni grup oluştur
@@ -1035,7 +1154,7 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
     }
 
     // Eski grup resmini Dropbox'tan sil
-    if (group.groupImage && group.groupImage.includes('dropbox.com')) {
+    if (isDropboxHostedUrl(group.groupImage)) {
       deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err => 
         console.error('Eski grup resmi silme hatası:', err)
       );
@@ -1061,30 +1180,35 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
       if (conversionSuccess) {
         // 3. Adım: WebP dosyasını Dropbox'a yükle
         const fileBuffer = fs.readFileSync(webpPath);
-        newImageUrl = await uploadToDropbox(fileBuffer, webpFileName, 'groupImages');
+        const dropboxName = buildDropboxImageFileName({
+          prefix: 'grup-resmi',
+          groupName: group.groupName,
+          groupId,
+          userLabel: 'gorsel',
+          sourceBase: baseFileName,
+          ext: '.webp'
+        });
+        newImageUrl = await uploadToDropbox(fileBuffer, dropboxName, 'groupImages');
         
-        // 4. Adım: Yerel dosyaları temizle (gecikmeli)
-        setTimeout(() => {
-          try {
-            if (fs.existsSync(tempPath)) {
-              fs.unlinkSync(tempPath); // Geçici orijinal dosya
-            }
-          } catch (unlinkError) {
-            console.log('⚠️ Geçici dosya silinemedi:', tempPath);
-          }
-        }, 1000); // 1 saniye bekle
-        
-        try {
-          if (fs.existsSync(webpPath)) {
-            fs.unlinkSync(webpPath); // WebP dosya
-          }
-        } catch (unlinkError) {
+        // 4. Adım: Yerel dosyaları temizle
+        if (!(await unlinkWithRetry(tempPath))) {
+          console.log('⚠️ Geçici dosya silinemedi:', tempPath);
+        }
+        if (!(await unlinkWithRetry(webpPath))) {
           console.log('⚠️ WebP dosya silinemedi:', webpPath);
         }
       } else {
         // Dönüştürme başarısızsa orijinal dosyayı kullan
         const fileBuffer = fs.readFileSync(tempPath);
-        newImageUrl = await uploadToDropbox(fileBuffer, tempFileName, 'groupImages');
+        const dropboxName = buildDropboxImageFileName({
+          prefix: 'grup-resmi',
+          groupName: group.groupName,
+          groupId,
+          userLabel: 'gorsel',
+          sourceBase: baseFileName,
+          ext: (path.extname(originalFileName) || '.jpg').toLowerCase()
+        });
+        newImageUrl = await uploadToDropbox(fileBuffer, dropboxName, 'groupImages');
         
         // Geçici dosyayı temizle
         try {
@@ -1136,7 +1260,7 @@ app.post('/api/remove-group-image/:groupId', async (req, res) => {
     }
 
     // Eski grup resmini Dropbox'tan sil
-    if (group.groupImage && group.groupImage.includes('dropbox.com')) {
+    if (isDropboxHostedUrl(group.groupImage)) {
       deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err => 
         console.error('Grup resmi silme hatası:', err)
       );
@@ -1193,7 +1317,7 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
     }
 
     // Eski grup resmini Dropbox'tan sil (sadece Dropbox'ta varsa)
-    if (group.groupImage && group.groupImage.includes('dropbox.com')) {
+    if (isDropboxHostedUrl(group.groupImage)) {
       deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err => 
         console.error('Eski grup resmi silme hatası:', err)
       );
@@ -1237,7 +1361,7 @@ app.delete('/api/delete-group/:groupId', async (req, res) => {
     }
 
     // Grup resmini Dropbox'tan sil
-    if (group.groupImage && group.groupImage.includes('dropbox.com')) {
+    if (isDropboxHostedUrl(group.groupImage)) {
       deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err => 
         console.error('Grup resmi silme hatası:', err)
       );
@@ -1249,7 +1373,7 @@ app.delete('/api/delete-group/:groupId', async (req, res) => {
     // Tüm kullanıcıların profil resimlerini Dropbox'tan sil
     const allUsers = await users.find().lean();
     for (const user of allUsers) {
-      if (user.profileImage && user.profileImage.includes('dropbox.com')) {
+      if (isDropboxHostedUrl(user.profileImage)) {
         deleteFromDropboxByUrl(user.profileImage).catch(err => 
           console.error('Kullanıcı resmi silme hatası:', err)
         );
@@ -1403,6 +1527,8 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
 
     let profileImageUrl = '/images/default.png'; // Varsayılan resim URL'i
     let fileName = null;
+    /** WebP öncesi kopyalanan orijinal dosya (Dropbox hatası sonrası temizlik için; blok dışında erişilebilir olmalı) */
+    let profileUploadTempPath = null;
     
     // Avatar seçildiyse onu kullan
     if (selectedAvatarPath) {
@@ -1421,6 +1547,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
         
         const tempFileName = `${Date.now()}-${normalizedFileName}`;
         const tempPath = path.join(__dirname, 'public', 'uploads', tempFileName);
+        profileUploadTempPath = tempPath;
         fs.copyFileSync(req.file.path, tempPath);
         
         // 2. Adım: WebP formatına dönüştür
@@ -1431,17 +1558,11 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
         if (conversionSuccess) {
           fileName = webpFileName;
           profileImageUrl = `/uploads/${fileName}`;
-          // WebP başarılıysa orijinal dosyayı sil (gecikmeli)
-          setTimeout(() => {
-            try {
-              if (fs.existsSync(tempPath)) {
-                fs.unlinkSync(tempPath);
-                console.log('✅ Orijinal dosya silindi (WebP dönüştürme başarılı)');
-              }
-            } catch (unlinkError) {
-              console.log('⚠️ Orijinal dosya silinemedi:', tempPath);
-            }
-          }, 1000); // 1 saniye bekle
+          if (await unlinkWithRetry(tempPath)) {
+            console.log('✅ Orijinal dosya silindi (WebP dönüştürme başarılı)');
+          } else {
+            console.log('⚠️ Orijinal dosya silinemedi:', tempPath);
+          }
         } else {
           // Dönüştürme başarısızsa orijinal dosyayı kullan
           fileName = tempFileName;
@@ -1491,7 +1612,35 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     
     console.log(`Yeni kullanıcı ekleniyor: ${name}, username: ${username}, plainPassword: ${plainPassword}${attemptCount > 0 ? ` (${attemptCount} deneme sonrası)` : ''}`);
     
-    // 3. Adım: Kullanıcıyı kaydet (yerel resim URL'i ile birlikte)
+    // Dropbox: yükleme başarılı olmadan kayıt yapma (DB'de /uploads kalmasın)
+    if (fileName && !selectedAvatarPath) {
+      const localPath = path.join(__dirname, 'public', 'uploads', fileName);
+      try {
+        const fileBuffer = fs.readFileSync(localPath);
+        const dropboxFileName = buildDropboxImageFileName({
+          prefix: 'profil',
+          groupName: group.groupName,
+          groupId,
+          userLabel: name,
+          sourceBase: path.parse(fileName).name,
+          ext: path.extname(fileName) || '.webp'
+        });
+        profileImageUrl = await uploadToDropboxWithRetry(fileBuffer, dropboxFileName, 'userImages');
+        await unlinkWithRetry(localPath);
+      } catch (dropboxError) {
+        console.error('Dropbox yükleme hatası:', dropboxError);
+        await unlinkWithRetry(localPath);
+        if (profileUploadTempPath) {
+          await unlinkWithRetry(profileUploadTempPath);
+        }
+        return res.status(503).json({
+          error:
+            'Profil resmi buluta yüklenemedi. İnternet bağlantınızı kontrol edip bir süre sonra tekrar deneyin.'
+        });
+      }
+    }
+
+    // 3. Adım: Kullanıcıyı kaydet (Dropbox veya avatar / varsayılan URL ile)
     const today = moment().format("YYYY-MM-DD");
     const user = new users({ 
       name, 
@@ -1504,66 +1653,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     });
     await user.save();
     
-    // 4. Adım: Kullanıcıya hemen yanıt ver
     res.json({ success: true, user: user, fileName: fileName });
-
-    // 5. Adım: Dropbox'a yükle (arka planda) - sadece dosya yüklendiyse
-    if (fileName && user && !selectedAvatarPath) {
-      try {
-        const localPath = path.join(__dirname, 'public', 'uploads', fileName);
-        const fileBuffer = fs.readFileSync(localPath);
-        const dropboxFileName = fileName; // Zaten WebP formatında
-        const newImageUrl = await uploadToDropbox(fileBuffer, dropboxFileName, 'userImages');
-
-        // 5. Adım: Veritabanını Dropbox URL'i ile güncelle
-        await users.findByIdAndUpdate(
-          user._id,
-          { profileImage: newImageUrl }
-        );
-
-        // 6. Adım: Yerel dosyaları temizle (sadece Dropbox başarılıysa)
-        try {
-          if (fs.existsSync(localPath)) {
-            fs.unlinkSync(localPath);
-            console.log('✅ Yerel dosya silindi (Dropbox yüklemesi başarılı)');
-          }
-        } catch (unlinkError) {
-          console.log('⚠️ Yerel dosya silinemedi:', localPath);
-        }
-      } catch (dropboxError) {
-        console.error('Dropbox yükleme hatası:', dropboxError);
-        
-        // Dropbox hatası türüne göre log mesajı
-        if (dropboxError.status === 401) {
-          console.error('❌ Dropbox access token süresi dolmuş! Yerel resim kullanılıyor.');
-        } else if (dropboxError.status === 403) {
-          console.error('❌ Dropbox yetki hatası! Yerel resim kullanılıyor.');
-        } else {
-          console.error('❌ Dropbox bağlantı hatası! Yerel resim kullanılıyor.');
-        }
-        
-        // Dropbox hatası kullanıcıyı etkilemez, yerel resim zaten çalışıyor
-        // Yerel dosyayı silme - çünkü Dropbox'a yüklenemedi
-        try {
-          if (fs.existsSync(localPath)) {
-            fs.unlinkSync(localPath);
-            console.log('✅ Yerel dosya temizlendi (Dropbox hatası nedeniyle)');
-          }
-        } catch (cleanupError) {
-          console.error('Yerel dosya temizleme hatası:', cleanupError);
-        }
-        
-        // Orijinal temp dosyasını da temizle (Dropbox hatası durumunda)
-        try {
-          if (fs.existsSync(tempPath)) {
-            fs.unlinkSync(tempPath);
-            console.log('✅ Orijinal temp dosya temizlendi (Dropbox hatası nedeniyle)');
-          }
-        } catch (tempCleanupError) {
-          console.log('⚠️ Orijinal temp dosya silinemedi:', tempPath);
-        }
-      }
-    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Sunucu hatası' });
@@ -1603,9 +1693,16 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
       await readingStatuses.deleteMany({ userId: id });
       
       // Kullanıcının profil resmini Dropbox'tan sil (arka planda)
-      if (user.profileImage && user.profileImage.includes('dropbox.com')) {
+      if (isDropboxHostedUrl(user.profileImage)) {
         deleteFromDropboxByUrl(user.profileImage).catch(err => 
           console.error('Dropbox silme hatası:', err)
+        );
+      }
+
+      // Grup resmi Dropbox'ta ise onu da sil
+      if (isDropboxHostedUrl(group.groupImage)) {
+        deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
+          console.error('Grup resmi silme hatası:', err)
         );
       }
       
@@ -1632,7 +1729,7 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
       await readingStatuses.deleteMany({ userId: id });
       
       // Kullanıcının profil resmini Dropbox'tan sil (arka planda)
-      if (user.profileImage && user.profileImage.includes('dropbox.com')) {
+      if (isDropboxHostedUrl(user.profileImage)) {
         deleteFromDropboxByUrl(user.profileImage).catch(err => 
           console.error('Dropbox silme hatası:', err)
         );
@@ -1777,17 +1874,11 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
       let fileName;
       if (conversionSuccess) {
         fileName = webpFileName;
-        // WebP başarılıysa orijinal dosyayı sil (gecikmeli)
-        setTimeout(() => {
-          try {
-            if (fs.existsSync(tempPath)) {
-              fs.unlinkSync(tempPath);
-              console.log('✅ Orijinal dosya silindi (WebP dönüştürme başarılı)');
-            }
-          } catch (unlinkError) {
-            console.log('⚠️ Orijinal dosya silinemedi:', tempPath);
-          }
-        }, 1000); // 1 saniye bekle
+        if (await unlinkWithRetry(tempPath)) {
+          console.log('✅ Orijinal dosya silindi (WebP dönüştürme başarılı)');
+        } else {
+          console.log('⚠️ Orijinal dosya silinemedi:', tempPath);
+        }
       } else {
         // Dönüştürme başarısızsa orijinal dosyayı kullan
         fileName = tempFileName;
@@ -1802,79 +1893,40 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
         console.log('⚠️ Multer geçici dosya silinemedi:', req.file.path);
       }
 
-      // 2. Adım: Veritabanını yerel yol ile güncelle
-      const localImageUrl = `/uploads/${fileName}`;
-      await users.findByIdAndUpdate(
-        userId,
-        { profileImage: localImageUrl }
-      );
-
-      // 3. Adım: Kullanıcıya hemen yanıt ver (yerel resim ile)
-      res.json({ success: true, imageUrl: localImageUrl, fileName: fileName });
-
-      // 4. Adım: Dropbox'a yükle (arka planda)
+      const localPath = path.join(__dirname, 'public', 'uploads', fileName);
+      let newImageUrl;
       try {
-        const localPath = path.join(__dirname, 'public', 'uploads', fileName);
         const fileBuffer = fs.readFileSync(localPath);
-        const dropboxFileName = fileName; // Zaten WebP formatında
-        const newImageUrl = await uploadToDropbox(fileBuffer, dropboxFileName, 'userImages');
-
-        // 5. Adım: Veritabanını Dropbox URL'i ile güncelle
-        await users.findByIdAndUpdate(
-          userId,
-          { profileImage: newImageUrl }
-        );
-
-        // 6. Adım: Yerel dosyaları temizle (sadece Dropbox başarılıysa)
-        try {
-          if (fs.existsSync(localPath)) {
-            fs.unlinkSync(localPath);
-            console.log('✅ Yerel dosya silindi (Dropbox yüklemesi başarılı)');
-          }
-        } catch (unlinkError) {
-          console.log('⚠️ Yerel dosya silinemedi:', localPath);
-        }
-
-        // 7. Adım: Eski resmi arka planda sil (Dropbox'tan)
-        if (oldImageUrl && oldImageUrl.includes('dropbox.com')) {
-          deleteFromDropboxByUrl(oldImageUrl).catch(err => 
-            console.error('Eski resim silme hatası:', err)
-          );
-        }
+        const dropboxFileName = buildDropboxImageFileName({
+          prefix: 'profil',
+          groupName: group.groupName,
+          groupId,
+          userLabel: user.name || user.username || String(userId),
+          sourceBase: baseFileName,
+          ext: path.extname(fileName) || '.webp'
+        });
+        newImageUrl = await uploadToDropboxWithRetry(fileBuffer, dropboxFileName, 'userImages');
       } catch (dropboxError) {
         console.error('Dropbox yükleme hatası:', dropboxError);
-        
-        // Dropbox hatası türüne göre log mesajı
-        if (dropboxError.status === 401) {
-          console.error('❌ Dropbox access token süresi dolmuş! Yerel resim kullanılıyor.');
-        } else if (dropboxError.status === 403) {
-          console.error('❌ Dropbox yetki hatası! Yerel resim kullanılıyor.');
-        } else {
-          console.error('❌ Dropbox bağlantı hatası! Yerel resim kullanılıyor.');
-        }
-        
-        // Dropbox hatası kullanıcıyı etkilemez, yerel resim zaten çalışıyor
-        // Yerel dosyayı silme - çünkü Dropbox'a yüklenemedi
-        try {
-          const localPath = path.join(__dirname, 'public', 'uploads', fileName);
-          if (fs.existsSync(localPath)) {
-            fs.unlinkSync(localPath);
-            console.log('✅ Yerel dosya temizlendi (Dropbox hatası nedeniyle)');
-          }
-        } catch (cleanupError) {
-          console.log('⚠️ Yerel dosya temizleme hatası:', cleanupError);
-        }
-        
-        // Orijinal temp dosyasını da temizle (Dropbox hatası durumunda)
-        try {
-          if (fs.existsSync(tempPath)) {
-            fs.unlinkSync(tempPath);
-            console.log('✅ Orijinal temp dosya temizlendi (Dropbox hatası nedeniyle)');
-          }
-        } catch (tempCleanupError) {
-          console.log('⚠️ Orijinal temp dosya silinemedi:', tempPath);
-        }
+        await unlinkWithRetry(localPath);
+        await unlinkWithRetry(tempPath);
+        return res.status(503).json({
+          error:
+            'Profil resmi buluta yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.'
+        });
       }
+
+      await unlinkWithRetry(localPath);
+
+      await users.findByIdAndUpdate(userId, { profileImage: newImageUrl });
+
+      if (isDropboxHostedUrl(oldImageUrl)) {
+        deleteFromDropboxByUrl(oldImageUrl).catch(err => 
+          console.error('Eski resim silme hatası:', err)
+        );
+      }
+
+      return res.json({ success: true, imageUrl: newImageUrl, fileName: fileName });
     } else {
       res.status(400).json({ error: 'No image file provided' });
     }
@@ -2274,58 +2326,34 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
     if (selectedAvatarPath) {
       profileImagePath = selectedAvatarPath;
     } else if (profileImageFile) {
-      // Yeni resmi yerel olarak kaydet
-      profileImagePath = `/uploads/${profileImageFile.filename}`;
-      
-      // Dropbox'a yükle (arka planda)
+      const localPath = path.join(__dirname, 'public', 'uploads', profileImageFile.filename);
       try {
-        const localPath = path.join(__dirname, 'public', 'uploads', profileImageFile.filename);
         const fileBuffer = fs.readFileSync(localPath);
-        const dropboxFileName = profileImageFile.filename;
-        const newImageUrl = await uploadToDropbox(fileBuffer, dropboxFileName, 'userImages');
+        const grpMeta = await UserGroup.findOne({ groupId }).lean();
+        const origName = profileImageFile.originalname || profileImageFile.filename;
+        const dropboxFileName = buildDropboxImageFileName({
+          prefix: 'davet-profil',
+          groupName: grpMeta ? grpMeta.groupName : groupId,
+          groupId,
+          userLabel: userName || memberName,
+          sourceBase: path.parse(normalizeFileName(origName)).name,
+          ext: (path.extname(origName) || '.jpg').toLowerCase()
+        });
+        profileImagePath = await uploadToDropboxWithRetry(fileBuffer, dropboxFileName, 'userImages');
+        await unlinkWithRetry(localPath);
 
-        // Veritabanını Dropbox URL'i ile güncelle
-        profileImagePath = newImageUrl;
-
-        // Yerel dosyayı temizle (sadece Dropbox başarılıysa)
-        try {
-          if (fs.existsSync(localPath)) {
-            fs.unlinkSync(localPath);
-            console.log('✅ Yerel dosya silindi (Dropbox yüklemesi başarılı)');
-          }
-        } catch (unlinkError) {
-          console.log('⚠️ Yerel dosya silinemedi:', localPath);
-        }
-
-        // Eski resmi arka planda sil (Dropbox'tan)
-        if (oldImageUrl && oldImageUrl.includes('dropbox.com')) {
+        if (isDropboxHostedUrl(oldImageUrl)) {
           deleteFromDropboxByUrl(oldImageUrl).catch(err => 
             console.error('Eski resim silme hatası:', err)
           );
         }
       } catch (dropboxError) {
         console.error('Dropbox yükleme hatası:', dropboxError);
-        
-        // Dropbox hatası türüne göre log mesajı
-        if (dropboxError.status === 401) {
-          console.error('❌ Dropbox access token süresi dolmuş! Yerel resim kullanılıyor.');
-        } else if (dropboxError.status === 403) {
-          console.error('❌ Dropbox yetki hatası! Yerel resim kullanılıyor.');
-        } else {
-          console.error('❌ Dropbox bağlantı hatası! Yerel resim kullanılıyor.');
-        }
-        
-        // Dropbox hatası kullanıcıyı etkilemez, yerel resim zaten çalışıyor
-        // Yerel dosyayı silme - çünkü Dropbox'a yüklenemedi
-        try {
-          const localPath = path.join(__dirname, 'public', 'uploads', profileImageFile.filename);
-          if (fs.existsSync(localPath)) {
-            fs.unlinkSync(localPath);
-            console.log('✅ Yerel dosya temizlendi (Dropbox hatası nedeniyle)');
-          }
-        } catch (unlinkError) {
-          console.log('⚠️ Yerel dosya temizlenemedi:', localPath);
-        }
+        await unlinkWithRetry(localPath);
+        return res.status(503).json({
+          error:
+            'Profil resmi buluta yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.'
+        });
       }
     }
 
@@ -2350,7 +2378,8 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
       userId: user._id,
       username: memberName,
       name: userName,
-      authority: user.authority
+      authority: user.authority,
+      profileImage: profileImagePath
     });
 
   } catch (error) {
@@ -3124,21 +3153,12 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
         
         if (conversionSuccess) {
           fileName = webpFileName;
-          profileImageUrl = `/images/${fileName}`;
-          // WebP başarılıysa orijinal dosyayı sil (gecikmeli)
-          setTimeout(() => {
-            try {
-              if (fs.existsSync(tempPath)) {
-                fs.unlinkSync(tempPath);
-              }
-            } catch (unlinkError) {
-              console.log('⚠️ Orijinal dosya silinemedi:', tempPath);
-            }
-          }, 1000);
+          if (!(await unlinkWithRetry(tempPath))) {
+            console.log('⚠️ Orijinal dosya silinemedi:', tempPath);
+          }
         } else {
           // Dönüştürme başarısızsa orijinal dosyayı kullan
           fileName = tempFileName;
-          profileImageUrl = `/images/${fileName}`;
         }
         
         // Geçici multer dosyasını temizle
@@ -3152,6 +3172,30 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
       } catch (error) {
         console.error('Yerel kaydetme hatası:', error);
         profileImageUrl = '/images/default.png';
+      }
+    }
+
+    if (fileName && !selectedAvatarPath) {
+      const localPath = path.join(__dirname, 'public', 'uploads', fileName);
+      try {
+        const fileBuffer = fs.readFileSync(localPath);
+        const dropboxFileName = buildDropboxImageFileName({
+          prefix: 'katil-istek',
+          groupName: group.groupName,
+          groupId,
+          userLabel: `${userName}-${memberName}`,
+          sourceBase: path.parse(fileName).name,
+          ext: path.extname(fileName) || '.webp'
+        });
+        profileImageUrl = await uploadToDropboxWithRetry(fileBuffer, dropboxFileName, 'userImages');
+        await unlinkWithRetry(localPath);
+      } catch (dropboxError) {
+        console.error('Dropbox yükleme hatası:', dropboxError);
+        await unlinkWithRetry(localPath);
+        return res.status(503).json({
+          error:
+            'Profil resmi buluta yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.'
+        });
       }
     }
 
@@ -3177,33 +3221,6 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
       message: 'Katılma isteğiniz başarıyla gönderildi'
     });
 
-    // Arka planda Dropbox'a yükle (eğer resim varsa ve avatar seçilmediyse)
-    if (fileName && !selectedAvatarPath) {
-      try {
-        const localPath = path.join(__dirname, 'public', 'uploads', fileName);
-        const fileBuffer = fs.readFileSync(localPath);
-        const dropboxFileName = fileName;
-        const newImageUrl = await uploadToDropbox(fileBuffer, dropboxFileName, 'userImages');
-
-        // Veritabanını Dropbox URL'i ile güncelle
-        await JoinRequest.findByIdAndUpdate(
-          joinRequest._id,
-          { profileImage: newImageUrl }
-        );
-
-        // Yerel dosyayı temizle
-        try {
-          if (fs.existsSync(localPath)) {
-            fs.unlinkSync(localPath);
-          }
-        } catch (unlinkError) {
-          console.log('⚠️ Yerel dosya silinemedi:', localPath);
-        }
-      } catch (dropboxError) {
-        console.error('Dropbox yükleme hatası:', dropboxError);
-      }
-    }
-
   } catch (error) {
     console.error('Katılma isteği hatası:', error);
     res.status(500).json({ error: 'Katılma isteği gönderilirken hata oluştu' });
@@ -3228,7 +3245,7 @@ app.delete('/api/cancel-join-request/:groupId', async (req, res) => {
     }
 
     // Eğer resim Dropbox'taysa sil
-    if (deletedRequest.profileImage && deletedRequest.profileImage.includes('dropbox.com')) {
+    if (isDropboxHostedUrl(deletedRequest.profileImage)) {
       deleteFromDropboxByUrl(deletedRequest.profileImage).catch(err => 
         console.error('Dropbox silme hatası:', err)
       );
@@ -3453,7 +3470,7 @@ app.post('/api/reject-join-request/:requestId', async (req, res) => {
     });
 
     // Dropbox'dan resmi sil (eğer varsa)
-    if (joinRequest.profileImage && joinRequest.profileImage.includes('dropboxusercontent.com')) {
+    if (isDropboxHostedUrl(joinRequest.profileImage)) {
       try {
         const dbx = new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN });
         const imagePath = joinRequest.profileImage.split('/').pop();
@@ -3494,7 +3511,7 @@ app.delete('/api/delete-join-request/:requestId', async (req, res) => {
     }
 
     // Dropbox'dan resmi sil (eğer varsa)
-    if (deletedRequest.profileImage && deletedRequest.profileImage.includes('dropboxusercontent.com')) {
+    if (isDropboxHostedUrl(deletedRequest.profileImage)) {
       try {
         const dbx = new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN });
         const imagePath = deletedRequest.profileImage.split('/').pop();
@@ -3530,7 +3547,7 @@ app.delete('/api/cancel-join-request-by-id/:requestId', async (req, res) => {
     }
 
     // Dropbox'dan resmi sil (eğer varsa)
-    if (deletedRequest.profileImage && deletedRequest.profileImage.includes('dropboxusercontent.com')) {
+    if (isDropboxHostedUrl(deletedRequest.profileImage)) {
       try {
         const fileName = deletedRequest.profileImage.split('/').pop();
         await dropbox.filesDeleteV2({ path: `/join-requests/${fileName}` });
@@ -3932,9 +3949,18 @@ app.post('/api/update-user-profile', upload.single('profileImage'), async (req, 
     const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
     
     if (req.file) {
-      // Dropbox'a yükle
-      const dropboxPath = `/profile-images/${groupId}/${userId}_${Date.now()}.jpg`;
-      const dropboxUrl = await uploadToDropbox(req.file.buffer, dropboxPath);
+      const grpMeta = await UserGroup.findOne({ groupId }).lean();
+      const uDoc = await User.findById(userId).lean();
+      const origName = req.file.originalname || 'profil.jpg';
+      const dropboxFileName = buildDropboxImageFileName({
+        prefix: 'profil',
+        groupName: grpMeta ? grpMeta.groupName : groupId,
+        groupId,
+        userLabel: (uDoc && (uDoc.name || uDoc.username)) || String(userId),
+        sourceBase: path.parse(origName).name,
+        ext: (path.extname(origName) || '.jpg').toLowerCase()
+      });
+      const dropboxUrl = await uploadToDropboxWithRetry(req.file.buffer, dropboxFileName, 'userImages');
       
       // Veritabanını güncelle
       await User.findByIdAndUpdate(userId, { profileImage: dropboxUrl });
@@ -4032,7 +4058,7 @@ app.post('/api/remove-user-profile-image', async (req, res) => {
     await User.findByIdAndUpdate(userId, { profileImage: '/images/default.png' });
     
     // Eski resmi Dropbox'tan sil (arka planda)
-    if (oldImageUrl && oldImageUrl.includes('dropbox.com')) {
+    if (isDropboxHostedUrl(oldImageUrl)) {
       deleteFromDropboxByUrl(oldImageUrl).catch(err => 
         console.error('Eski profil resmi silme hatası:', err)
       );

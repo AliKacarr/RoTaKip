@@ -1940,6 +1940,7 @@ async function updateExistingUserImageFromAvatar(userId, avatarPath) {
             if (userIndex !== -1) {
                 window.globalDataStore.users[userIndex].profileImage = avatarPath;
                 window.globalDataStore._rebuildIndexes();
+                await window.globalDataStore._buildLongestStreaks();
             }
         }
 
@@ -1953,6 +1954,9 @@ async function updateExistingUserImageFromAvatar(userId, avatarPath) {
 
         loadTrackerTable();
         loadUserCards();
+        loadReadingStats();
+        renderLongestSeries();
+        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
         showSuccessMessage('Kullanıcı avatarı başarıyla güncellendi!');
     } catch (error) {
         console.error('Kullanıcı avatar güncelleme hatası:', error);
@@ -1995,11 +1999,15 @@ async function updateExistingUserImageFromFile(userId, file) {
             if (userIndex !== -1) {
                 window.globalDataStore.users[userIndex].profileImage = result.imageUrl;
                 window.globalDataStore._rebuildIndexes();
+                await window.globalDataStore._buildLongestStreaks();
             }
         }
 
         loadTrackerTable();
         loadUserCards();
+        loadReadingStats();
+        renderLongestSeries();
+        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
         showSuccessMessage('Kullanıcı resmi başarıyla güncellendi!');
     } catch (error) {
         console.error('Resim güncelleme hatası:', error);
@@ -2030,6 +2038,7 @@ async function removeExistingUserImage(userId) {
             if (userIndex !== -1) {
                 window.globalDataStore.users[userIndex].profileImage = '/images/default.png';
                 window.globalDataStore._rebuildIndexes();
+                await window.globalDataStore._buildLongestStreaks();
             }
         }
 
@@ -2043,6 +2052,9 @@ async function removeExistingUserImage(userId) {
 
         loadTrackerTable();
         loadUserCards();
+        loadReadingStats();
+        renderLongestSeries();
+        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
         showSuccessMessage('Kullanıcı profil resmi kaldırıldı!');
     } catch (error) {
         console.error('Profil resmi kaldırma hatası:', error);
