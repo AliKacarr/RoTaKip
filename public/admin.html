@@ -23,10 +23,10 @@
             <label for="siteActivityActionFilter" class="admin-action-label">Eylem:</label>
             <select id="siteActivityActionFilter" class="admin-action-select">
             <option value="">Tümü</option>
-            <option value="group_page_viewed">Grup sayfası görüntüleme</option>
-            <option value="home_page_viewed">Ana sayfa görüntüleme</option>
-            <option value="group_created">Grup oluşturma</option>
-            <option value="group_deleted">Grup silme</option>
+            <option value="grup_görüntüleme">Grup sayfası görüntüleme</option>
+            <option value="ana_sayfa_görüntüleme">Ana sayfa görüntüleme</option>
+            <option value="grup_oluşturma">Grup oluşturma</option>
+            <option value="grup_silme">Grup silme</option>
           </select>
           </div>
           <button type="button" id="refreshAdminLogsButton" class="refresh-button admin-toolbar-refresh">
@@ -151,13 +151,13 @@
         const action = (log.action && String(log.action).trim()) || '';
 
         switch (action) {
-          case 'group_page_viewed':
+          case 'grup_görüntüleme':
             return escapeHtml(gid || '—') + ' grubunun sayfası görüntülendi';
-          case 'home_page_viewed':
+          case 'ana_sayfa_görüntüleme':
             return 'Ana sayfa görüntülendi';
-          case 'group_created':
+          case 'grup_oluşturma':
             return escapeHtml(gid || '—') + ' grubu oluşturuldu';
-          case 'group_deleted':
+          case 'grup_silme':
             return escapeHtml(gid || '—') + ' grubu silindi';
           default:
             return escapeHtml(action || 'bilinmeyen eylem') +
@@ -180,7 +180,9 @@
         const sel = document.getElementById('siteActivityActionFilter');
         const v = sel && sel.value ? String(sel.value) : '';
         if (!v) return siteActivityRawLogs.slice();
-        return siteActivityRawLogs.filter(function (l) { return l.action === v; });
+        return siteActivityRawLogs.filter(function (l) {
+          return ((l.action && String(l.action).trim()) || '') === v;
+        });
       }
 
       // Add refresh button functionality

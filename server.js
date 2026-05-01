@@ -1070,7 +1070,7 @@ app.post('/api/groups', uploadGroupImage.fields([
     await createIndexesForGroup(finalGroupId);
 
     await logSiteActivity({
-      action: 'grup_olusturma',
+      action: 'grup_oluşturma',
       req,
       groupId: finalGroupId,
       userName: adminName,
@@ -2729,6 +2729,18 @@ function buildDeviceInfo(req, fallbackDeviceInfo = {}) {
 
 async function logSiteActivity({ action, req, groupId, userName, deviceInfo }) {
   try {
+    const allowedSiteActions = new Set([
+      'grup_görüntüleme',
+      'ana_sayfa_görüntüleme',
+      'grup_oluşturma',
+      'grup_silme'
+    ]);
+    const normalizeSiteAction = (rawAction) => {
+      const a = typeof rawAction === 'string' ? rawAction.trim() : '';
+      return allowedSiteActions.has(a) ? a : (a || 'bilinmeyen_eylem');
+    };
+
+    const normalizedAction = normalizeSiteAction(action);
     const clientIp = extractClientIp(req);
     const normalizedUserName = typeof userName === 'string' && userName.trim()
       ? userName.trim()
@@ -2739,14 +2751,14 @@ async function logSiteActivity({ action, req, groupId, userName, deviceInfo }) {
 
     if (await hasLogInSameTurkeyMinute(SiteActivityLog, {
       groupId: storedGroupId,
-      action,
+      action: normalizedAction,
       ipAddress: storedActor
     })) {
       return;
     }
 
     const log = new SiteActivityLog({
-      action,
+      action: normalizedAction,
       timestamp: new Date(),
       deviceInfo: buildDeviceInfo(req, deviceInfo),
       ipAddress: storedActor,
@@ -2829,8 +2841,10 @@ app.post('/api/log-home-visit', async (req, res) => {
 app.post('/api/log-visit', async (req, res) => {
   try {
     const { deviceInfo, groupId, userName, action } = req.body || {};
-    const siteAction = action || 'grup_görüntüleme';
-    const shouldWriteAccessLog = siteAction === 'grup_görüntüleme';
+    const siteAction = (action || 'grup_görüntüleme').toString().trim();
+    const shouldWriteAccessLog = (
+      siteAction === 'grup_görüntüleme'
+    );
 
     // Get client IP address
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -2870,8 +2884,10 @@ app.post('/api/log-visit', async (req, res) => {
 app.post('/api/visit-event', async (req, res) => {
   try {
     const { deviceInfo, groupId, userName, action } = req.body || {};
-    const siteAction = action || 'grup_görüntüleme';
-    const shouldWriteAccessLog = siteAction === 'grup_görüntüleme';
+    const siteAction = (action || 'grup_görüntüleme').toString().trim();
+    const shouldWriteAccessLog = (
+      siteAction === 'grup_görüntüleme'
+    );
 
     // Get client IP address
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
