@@ -592,7 +592,8 @@
 
 
 /* Confetti efekti için ayrı element */
-.league-promotion-message .confetti-overlay {
+.league-promotion-message .confetti-overlay,
+.league-promotion-backlog .confetti-overlay {
     position: absolute;
     top: 0px;
     left: 0;
@@ -609,7 +610,8 @@
     pointer-events: none;
 }
 
-.league-promotion-message .confetti-overlay.show {
+.league-promotion-message .confetti-overlay.show,
+.league-promotion-backlog .confetti-overlay.show {
     animation: confetti-show 3s ease-in-out forwards;
 }
 

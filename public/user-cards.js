@@ -617,7 +617,7 @@ async function loadUserCards() {
       {
         panelClass: 'league-promotion-backlog',
         titleHtml: 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
-        withConfetti: false,
+        withConfetti: true,
         subtitleHtml: isAdminUser
           ? 'Kopyaladığınızda listedeki kişilerin son kutlanan lig bilgisi güncellenir.'
      
@@ -634,7 +634,7 @@ async function loadUserCards() {
       promotedToday,
       {
         panelClass: 'league-promotion-message',
-        titleHtml: 'Bugün lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
+        titleHtml: 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
         withConfetti: true,
         subtitleHtml: '',
         allowLeagueUpdate: isAdminUser
@@ -767,12 +767,12 @@ async function loadUserCards() {
         
         // Okuma serisi yapanlar kısmı
         if (activeStreaks.length > 0) {
-          copyText += 'Okuma serisi yapanlar:\n';
+          copyText += '*Okuma serisi yapanlar:*\n';
           copyText += activeStreaks.map(u => `${u.name} (${u.streak} gün)`).join(',\n') + '\n\n';
         }
         
         // Art arda okumayanlar kısmı
-        copyText += 'Art arda okumayanlar:\n';
+        copyText += '*Art arda okumayanlar:*\n';
         copyText += consecutiveMissed.map(u => `${u.name} (${u.days} gün)`).join(',\n');
         copyText += '\n\n' + randomReminder;
         
