@@ -412,11 +412,10 @@ async function loadUserCards() {
     .querySelectorAll('.league-promotion-message, .league-promotion-backlog')
     .forEach((el) => el.remove());
 
-  // Önce mevcut art arda okumama mesajını kaldır
-  const existingMissedMsg = document.querySelector('.consecutive-missed-message');
-  if (existingMissedMsg) {
-    existingMissedMsg.remove();
-  }
+  // Önce mevcut okuma serisi / zayıf halka / tebrik mesajı panellerini kaldır
+  document
+    .querySelectorAll('.reading-streak-message, .weak-link-message, .consecutive-missed-message')
+    .forEach((el) => el.remove());
 
   const today = new Date();
   function formatDate(date) {
@@ -513,27 +512,28 @@ async function loadUserCards() {
     const contentDiv = document.createElement('div');
     contentDiv.className = 'promotion-message-content';
 
-    let msg = titleHtml ? titleHtml + '<br>' : '';
     const copyLines = [];
-    msg += rows
-      .map((u, index) => {
-        const isLast = index === rows.length - 1;
-        const punctuation = isLast ? '.' : ',';
-        const leagueDef = leagues.find((l) => l.name === u.league);
-        const days = leagueDef ? leagueDef.min : 0;
-        copyLines.push(
-          `⚡${days} gün - *${u.name}* ${u.league.toLowerCase()} lige yükseldi${punctuation}`
-        );
-        return `⚡${days} gün - <b class="promoted-username">${u.name}</b> <span class="promoted-league">${u.league.toLowerCase()}</span> lige yükseldi${punctuation}`;
-      })
-      .join('<br>');
+    const listLines = rows.map((u, index) => {
+      const isLast = index === rows.length - 1;
+      const punctuation = isLast ? '.' : ',';
+      const leagueDef = leagues.find((l) => l.name === u.league);
+      const days = leagueDef ? leagueDef.min : 0;
+      copyLines.push(
+        `⚡${days} gün - *${u.name}* ${u.league.toLowerCase()} lige yükseldi${punctuation}`
+      );
+      return `⚡${days} gün - <b class="promoted-username">${u.name}</b> <span class="promoted-league">${u.league.toLowerCase()}</span> lige yükseldi${punctuation}`;
+    });
 
-    if (subtitleHtml) {
-      msg += `<br><span class="promotion-subtitle">${subtitleHtml}</span>`;
+    let bodyHtml = '';
+    if (titleHtml) {
+      bodyHtml += `<div class="promotion-panel-title">${titleHtml}</div>`;
     }
-
-    contentDiv.innerHTML = msg;
-    const headerPlain = titleHtml.replace(/<[^>]+>/g, '').trim();
+    bodyHtml += `<div class="promotion-promoted-list">${listLines.join('<br>')}</div>`;
+    if (subtitleHtml) {
+      bodyHtml += `<div class="promotion-subtitle-wrap"><span class="promotion-subtitle">${subtitleHtml}</span></div>`;
+    }
+    contentDiv.innerHTML = bodyHtml;
+    const headerPlain = (titleHtml || '').replace(/<[^>]+>/g, '').trim();
     contentDiv.__plainCopyText = `${headerPlain}\n\n${copyLines.join('\n')}`;
     panel.appendChild(contentDiv);
 
@@ -707,94 +707,136 @@ async function loadUserCards() {
   // Gün sayısına göre sırala (en yüksekten en düşüğe)
   consecutiveMissed.sort((a, b) => b.days - a.days);
 
-  if (consecutiveMissed.length > 0) {
-    const missedMsg = document.createElement('div');
-    missedMsg.className = 'consecutive-missed-message';
-    
-    // Zincir yazısı için element oluştur
+  function insertMotivationPanel(panelEl) {
+    const userCardsSection = document.querySelector('.user-cards-section');
+    if (!userCardsSection || !panelEl) return;
+    const firstPromotionPanel = userCardsSection.querySelector(
+      '.league-promotion-message, .league-promotion-backlog'
+    );
+    const ref =
+      firstPromotionPanel || userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
+    userCardsSection.insertBefore(panelEl, ref);
+  }
+
+  function addCopyChip(panelEl) {
+    const copyChip = document.createElement('div');
+    copyChip.className = 'copy-chip';
+    copyChip.style.cssText =
+      'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
+    copyChip.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
+    panelEl.appendChild(copyChip);
+    return copyChip;
+  }
+
+  if (activeStreaks.length > 0) {
+    const streakPanel = document.createElement('div');
+    streakPanel.className = 'reading-streak-message';
+
     const chainText = document.createElement('div');
     chainText.className = 'chain-text';
     chainText.textContent = 'Zinciri Kırma';
-    
-    // Ana mesaj içeriği
+
     const messageContent = document.createElement('div');
-    messageContent.style.display = '-webkit-inline-box';
+    messageContent.className = 'streak-panel-body';
     messageContent.innerHTML =
-      '<span class="missed-title">Art arda okumayanlar:<br></span> ' +
-      consecutiveMissed.map(u => `<b class="missed-username">${u.name}</b> (<span class="missed-days">${u.days} gün</span>)`).join(', ') +
-      '<span class="missed-reminder"><br>Okumaları unutmayalım!</span>';
-    
-    // Sol alt köşe emoji ekle
+      '<span class="streak-section-title">Okuma Serisi Yapanlar:</span>' +
+      '<div class="streak-names-block">' +
+      activeStreaks
+        .map(
+          (u) =>
+            `<b class="streak-username">${u.name}</b> (<span class="streak-days">${u.streak} gün</span>)`
+        )
+        .join(', ') +
+      '</div>' +
+      '<span class="streak-tagline">Az da olsa devamlı okumak.</span>';
+
     const leftEmoji = document.createElement('div');
-    leftEmoji.className = 'left-emoji';
-    missedMsg.appendChild(leftEmoji);
+    leftEmoji.className = 'left-emoji streak-clap-emoji';
+    streakPanel.appendChild(leftEmoji);
+    addCopyChip(streakPanel);
+    streakPanel.appendChild(chainText);
+    streakPanel.appendChild(messageContent);
 
-    // Kopyala yazısı ve emoji ekle
-    const copyText = document.createElement('div');
-    copyText.className = 'copy-chip';
-    copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
-    copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
-    missedMsg.appendChild(copyText);
-
-    // Elementleri birleştir
-    missedMsg.appendChild(chainText);
-    missedMsg.appendChild(messageContent);
-    
-    const userCardsSection = document.querySelector('.user-cards-section');
-    if (userCardsSection) {
-      const firstPromotionPanel = userCardsSection.querySelector(
-        '.league-promotion-message, .league-promotion-backlog'
-      );
-      if (firstPromotionPanel) {
-        userCardsSection.insertBefore(missedMsg, firstPromotionPanel);
-      } else if (userCardsHeaderEl) {
-        userCardsSection.insertBefore(missedMsg, userCardsHeaderEl);
-      } else if (leagueInfoBar) {
-        userCardsSection.insertBefore(missedMsg, leagueInfoBar);
-      } else {
-        userCardsSection.insertBefore(missedMsg, userCardsSection.firstChild);
-      }
-    }
-
-    // Tıklama ile panoya kopyalama ve bildirim
-    missedMsg.style.cursor = 'pointer'; // İşaretçiyi değiştirerek tıklanabilir olduğunu belirt
-    missedMsg.addEventListener('click', async () => {
+    insertMotivationPanel(streakPanel);
+    streakPanel.style.cursor = 'pointer';
+    streakPanel.addEventListener('click', async () => {
       try {
-        const randomReminder = reminderAlternatives[Math.floor(Math.random() * reminderAlternatives.length)];
-        
-        // Panoya kopyalanacak metni oluştur
-        let copyText = '';
-        
-        // Okuma serisi yapanlar kısmı
-        if (activeStreaks.length > 0) {
-          copyText += '*Okuma serisi yapanlar:*\n';
-          copyText += activeStreaks.map(u => `${u.name} (${u.streak} gün)`).join(',\n') + '\n\n';
-        }
-        
-        // Art arda okumayanlar kısmı
-        copyText += '*Art arda okumayanlar:*\n';
-        copyText += consecutiveMissed.map(u => `${u.name} (${u.days} gün)`).join(',\n');
-        copyText += '\n\n' + randomReminder;
-        
-        await navigator.clipboard.writeText(copyText); // Metni panoya kopyala
-
-        // Kopyala butonunu geçici olarak Kopyalandı yap
-        const chip = missedMsg.querySelector('.copy-chip');
+        const text =
+          '*Okuma serisi yapanlar:*\n' +
+          activeStreaks.map((u) => `${u.name} (${u.streak} gün)`).join(',\n');
+        await navigator.clipboard.writeText(text);
+        const chip = streakPanel.querySelector('.copy-chip');
         if (chip) {
           const prev = chip.innerHTML;
           chip.innerHTML = 'Kopyalandı ✅';
-          setTimeout(() => { chip.innerHTML = prev; }, 1500);
+          setTimeout(() => {
+            chip.innerHTML = prev;
+          }, 1500);
         }
-
       } catch (err) {
         console.error('Panoya kopyalama başarısız oldu:', err);
       }
     });
+    setTimeout(() => streakPanel.classList.add('message-fade-in'), 50);
+  }
 
-    setTimeout(() => {
-      missedMsg.classList.add('message-fade-in');
-    }, 50);
-  } else {
+  if (consecutiveMissed.length > 0) {
+    const weakPanel = document.createElement('div');
+    weakPanel.className = 'weak-link-message';
+
+    const banner = document.createElement('div');
+    banner.className = 'weak-link-banner';
+    banner.textContent = 'Zayıf Halka';
+
+    const messageContent = document.createElement('div');
+    messageContent.className = 'weak-link-body';
+    messageContent.innerHTML =
+      '<span class="missed-title">Art arda okumayanlar:</span>' +
+      '<div class="weak-names-block">' +
+      consecutiveMissed
+        .map(
+          (u) =>
+            `<b class="missed-username">${u.name}</b> (<span class="missed-days">${u.days} gün</span>)`
+        )
+        .join(', ') +
+      '</div>' +
+      '<span class="missed-reminder">Okumaları unutmayalım!</span>';
+
+    const leftEmoji = document.createElement('div');
+    leftEmoji.className = 'left-emoji';
+    weakPanel.appendChild(leftEmoji);
+    addCopyChip(weakPanel);
+    weakPanel.appendChild(banner);
+    weakPanel.appendChild(messageContent);
+
+    insertMotivationPanel(weakPanel);
+    weakPanel.style.cursor = 'pointer';
+    weakPanel.addEventListener('click', async () => {
+      try {
+        const randomReminder =
+          reminderAlternatives[Math.floor(Math.random() * reminderAlternatives.length)];
+        const text =
+          '*Art arda okumayanlar:*\n' +
+          consecutiveMissed.map((u) => `${u.name} (${u.days} gün)`).join(',\n') +
+          '\n\n' +
+          randomReminder;
+        await navigator.clipboard.writeText(text);
+        const chip = weakPanel.querySelector('.copy-chip');
+        if (chip) {
+          const prev = chip.innerHTML;
+          chip.innerHTML = 'Kopyalandı ✅';
+          setTimeout(() => {
+            chip.innerHTML = prev;
+          }, 1500);
+        }
+      } catch (err) {
+        console.error('Panoya kopyalama başarısız oldu:', err);
+      }
+    });
+    setTimeout(() => weakPanel.classList.add('message-fade-in'), 50);
+  }
+
+  if (consecutiveMissed.length === 0) {
     // Bugün herkesin okuduğunu kontrol et
     let everyoneReadToday = true;
     users.forEach(user => {

@@ -647,13 +647,36 @@
 }
 
 
-.promotion-message-content {
+/* Lig tebrik gövdeleri: başlık → yükselenler listesi → (varsa) alt not */
+.league-promotion-message .promotion-message-content,
+.league-promotion-backlog .promotion-message-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
     line-height: 1.7;
     font-size: 20px;
     color: #444;
     font-weight: 600;
     text-align: center;
     letter-spacing: 0.01em;
+}
+
+.promotion-message-content .promotion-panel-title {
+    display: block;
+    width: 100%;
+}
+
+.promotion-message-content .promotion-promoted-list {
+    display: block;
+    width: 100%;
+}
+
+.promotion-message-content .promotion-subtitle-wrap {
+    display: block;
+    width: 100%;
 }
 
 .league-promotion-message.message-fade-in {
@@ -721,16 +744,8 @@
     transform: translateY(0);
 }
 
-.league-promotion-backlog .backlog-title {
-    display: block;
-    font-size: 1.05em;
-    color: #37474f;
-    margin-bottom: 4px;
-}
-
 .league-promotion-backlog .promotion-subtitle {
     display: block;
-    margin-top: 12px;
     font-size: 0.92em;
     font-weight: 500;
     color: #546e7a;
@@ -743,7 +758,7 @@
     left: 12px;
     width: 32px;
     height: 32px;
-    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/clapping_hands.gif');
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/partying_face.gif');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -860,6 +875,206 @@
 }
 
 .consecutive-missed-message.message-fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Okuma serisi paneli (Zinciri Kırma + zincir.webp) */
+.reading-streak-message {
+    width: 93%;
+    max-width: 1200px;
+    background: #f0f4f9;
+    border-radius: 10px;
+    line-height: 1.7;
+    margin: 10px auto 18px auto;
+    padding: 55px 20px 35px 20px;
+    font-size: 19px;
+    color: #222;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(33, 58, 90, 0.08);
+    text-align: center;
+    border: 1px solid #abcdef;
+    letter-spacing: 0.01em;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    cursor: pointer;
+}
+
+.reading-streak-message::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 16px;
+    background-image: url('images/zincir.webp');
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: top center;
+    z-index: 1;
+    margin: 0 auto;
+}
+
+.reading-streak-message .chain-text {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #f0f4f9;
+    padding: 2px 8px;
+    height: 20px;
+    line-height: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    z-index: 2;
+    white-space: nowrap;
+}
+
+/* İki panelde gövde: üç blok (başlık, isimler, alt mesaj) + eşit dikey aralık */
+.reading-streak-message .streak-panel-body,
+.weak-link-message .weak-link-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    line-height: 1.75;
+}
+
+.reading-streak-message .streak-section-title {
+    display: block;
+    color: #222;
+}
+
+.reading-streak-message .streak-names-block {
+    display: block;
+    width: 100%;
+}
+
+.reading-streak-message .streak-username {
+    color: #505050;
+    font-size: 18px;
+    font-style: italic;
+}
+
+.reading-streak-message .streak-days {
+    color: #444;
+    font-weight: bold;
+}
+
+.reading-streak-message .streak-tagline {
+    display: block;
+    color: #333;
+    font-size: 19px;
+    font-style: italic;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.reading-streak-message .left-emoji.streak-clap-emoji {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    width: 35px;
+    height: 35px;
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/clapping_hands.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+.reading-streak-message.message-fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Art arda okumayanlar paneli (Zayıf Halka + dugum.webp) */
+.weak-link-message {
+    width: 93%;
+    max-width: 1200px;
+    background: #f7f4fb;
+    border-radius: 10px;
+    line-height: 1.7;
+    margin: 10px auto 18px auto;
+    padding: 55px 20px 35px 20px;
+    font-size: 19px;
+    color: #222;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(94, 53, 177, 0.08);
+    text-align: center;
+    border: 1px solid #abcdef;
+    letter-spacing: 0.01em;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    cursor: pointer;
+}
+
+.weak-link-message::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 18px;
+    background-image: url('images/dugum.webp');
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: top center;
+    z-index: 1;
+    margin: 0 auto;
+}
+
+.weak-link-message .weak-link-banner {
+    position: absolute;
+    top: 17px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #f7f4fb;
+    padding: 2px 10px;
+    height: 22px;
+    line-height: 16px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    z-index: 2;
+    white-space: nowrap;
+}
+
+.weak-link-message .weak-link-body .missed-title {
+    display: block;
+}
+
+.weak-link-message .weak-names-block {
+    display: block;
+    width: 100%;
+}
+
+.weak-link-message .weak-link-body .missed-reminder {
+    display: block;
+}
+
+.weak-link-message .left-emoji {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    width: 35px;
+    height: 35px;
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/frowning_face.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+.weak-link-message.message-fade-in {
     opacity: 1;
     transform: translateY(0);
 }
