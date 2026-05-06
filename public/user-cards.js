@@ -800,7 +800,7 @@ async function loadUserCards() {
         )
         .join(', ') +
       '</div>' +
-      '<span class="missed-reminder">Okumaları unutmayalım!</span>';
+      '<span class="missed-reminder">Hususî okumanı terk etme.</span>';
 
     const leftEmoji = document.createElement('div');
     leftEmoji.className = 'left-emoji';

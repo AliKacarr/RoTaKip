@@ -756,9 +756,10 @@
     position: absolute;
     bottom: 8px;
     left: 12px;
-    width: 32px;
-    height: 32px;
+    width: 35px;
+    height: 35px;
     background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/partying_face.gif');
+    transform: scaleX(-1);
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
