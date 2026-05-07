@@ -6,6 +6,21 @@ body {
   background-repeat: repeat;
   margin: 0;
   padding: 0;
+  isolation: isolate;
+}
+
+.groups-sparkle-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  min-height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  background: url('/images/space.gif');
+  background-size: 400px 400px;
+  background-repeat: repeat;
+  background-position: center center;
+  opacity: 0.5;
 }
 
 .main-container {
