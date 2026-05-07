@@ -21,26 +21,15 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "dropbox": "^10.34.0",
-<<<<<<< dependabot/npm_and_yarn/npm_and_yarn-7a591c4afc
-    "ejs": "^3.1.10",
-    "express": "^4.22.1",
-=======
     "ejs": "^5.0.2",
     "express": "^4.21.2",
->>>>>>> main
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
     "https": "^1.0.0",
     "moment": "^2.30.1",
-<<<<<<< dependabot/npm_and_yarn/npm_and_yarn-7a591c4afc
-    "mongodb": "^6.15.0",
-    "mongoose": "^8.22.1",
-    "multer": "^2.1.1",
-=======
     "mongodb": "^7.2.0",
     "mongoose": "^9.6.1",
     "multer": "^1.4.5-lts.2",
->>>>>>> main
     "node-schedule": "^2.1.1",
     "os": "^0.1.2",
     "path": "^0.12.7",
