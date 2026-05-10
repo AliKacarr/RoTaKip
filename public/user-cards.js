@@ -264,7 +264,7 @@ async function loadUserCards() {
     if (userStreak && userStreak.streak > 0) {
       const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
       const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
-      longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En Uzun Seri: </span><span class="streak-range">${start} - ${end}</span> <span class="streak-days">(${userStreak.streak} gün)</span>`;
+      longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span><span class="streak-range">${start} - ${end}</span> <span class="streak-days">(${userStreak.streak} gün)</span>`;
     }
 
     // Lig bilgisi için gösterim

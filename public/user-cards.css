@@ -386,7 +386,7 @@
 .user-card .user-card-last-read {
     font-size: 1.08em;
     color: #222;
-    margin-top: 5px;
+    margin-top: 10px;
     margin-left: 22px;
     margin-right: 22px;
     display: flex;
@@ -425,7 +425,7 @@
 
 .user-card .progress-bar-container {
     width: calc(100% - 44px);
-    margin: 2px 22px 0 27px;
+    margin: 5px 22px 0 27px;
     display: flex;
     align-items: center;
     gap: 5px;
