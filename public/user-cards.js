@@ -619,8 +619,7 @@ async function loadUserCards() {
         titleHtml: 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
         withConfetti: true,
         subtitleHtml: isAdminUser
-          ? 'Kopyaladığınızda listedeki kişilerin son kutlanan lig bilgisi güncellenir.'
-     
+          ? 'Lig atlaması henüz kutlanmamış kullanıcılar var. Panele tıklayıp mesajı kopyalayabilirsiniz.'
           : '',
         allowLeagueUpdate: isAdminUser
       },
@@ -636,7 +635,9 @@ async function loadUserCards() {
         panelClass: 'league-promotion-message',
         titleHtml: 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
         withConfetti: true,
-        subtitleHtml: '',
+        subtitleHtml: isAdminUser
+          ? 'Bugün lig atlayan kullanıcılar var. Panele tıklayıp mesajı kopyalayabilirsiniz.'
+          : '',
         allowLeagueUpdate: isAdminUser
       },
       insertAnchor
@@ -710,11 +711,9 @@ async function loadUserCards() {
   function insertMotivationPanel(panelEl) {
     const userCardsSection = document.querySelector('.user-cards-section');
     if (!userCardsSection || !panelEl) return;
-    const firstPromotionPanel = userCardsSection.querySelector(
-      '.league-promotion-message, .league-promotion-backlog'
-    );
+    // Lig tebrik panellerinden sonra, başlıktan önce: okuma serisi → art arda okumayanlar
     const ref =
-      firstPromotionPanel || userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
+      userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
     userCardsSection.insertBefore(panelEl, ref);
   }
 
@@ -866,17 +865,12 @@ async function loadUserCards() {
       
       const userCardsSection = document.querySelector('.user-cards-section');
       if (userCardsSection) {
-        const firstPromotionPanel = userCardsSection.querySelector(
-          '.league-promotion-message, .league-promotion-backlog'
-        );
-        if (firstPromotionPanel) {
-          userCardsSection.insertBefore(missedMsg, firstPromotionPanel);
-        } else if (userCardsHeaderEl) {
-          userCardsSection.insertBefore(missedMsg, userCardsHeaderEl);
-        } else if (leagueInfoBar) {
-          userCardsSection.insertBefore(missedMsg, leagueInfoBar);
+        const refBeforeHeader =
+          userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
+        if (refBeforeHeader) {
+          userCardsSection.insertBefore(missedMsg, refBeforeHeader);
         } else {
-          userCardsSection.insertBefore(missedMsg, userCardsSection.firstChild);
+          userCardsSection.appendChild(missedMsg);
         }
       }
     // Tıklama ile panoya kopyalama ve bildirim

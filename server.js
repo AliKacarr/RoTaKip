@@ -2792,6 +2792,20 @@ app.get('/api/site-activity-logs', async (req, res) => {
   }
 });
 
+// Etkinlik kayıtları sayfası: tüm grupların özeti (yalnızca kimlik / ad / görünürlük)
+app.get('/api/site-activity-groups', async (req, res) => {
+  try {
+    const groups = await UserGroup.find({})
+      .select('groupId groupName visibility')
+      .sort({ groupName: 1, groupId: 1 })
+      .lean();
+    res.json({ groups });
+  } catch (error) {
+    console.error('Error fetching groups for site activity admin:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Belirli bir İstanbul takvim günündeki siteactivitylogs kayıtlarını sil; action gönderilirse sadece o eylem
 app.delete('/api/site-activity-logs/day', async (req, res) => {
   try {

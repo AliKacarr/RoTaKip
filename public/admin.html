@@ -16,7 +16,10 @@
     <div class="admin-page-header">
       <h1 class="admin-page-title">Site Etkinlik Kayıtları</h1>
       <div class="admin-toolbar">
-        <a href="/" class="back-button admin-toolbar-home">Ana Sayfa</a>
+        <div class="admin-toolbar-nav">
+          <a href="/" class="back-button admin-toolbar-home">Ana Sayfa</a>
+          <button type="button" id="openGroupsPickerBtn" class="back-button">Gruba git</button>
+        </div>
         <div class="admin-toolbar-controls">
           <div id="filterContainer" class="admin-toolbar-filter"></div>
           <div class="admin-toolbar-action-row">
@@ -37,6 +40,18 @@
       </div>
     </div>
 
+    <div id="adminGroupsScreen" class="admin-groups-screen" style="display: none;">
+      <div class="admin-groups-screen-header">
+        <h2 class="admin-groups-screen-title">Mevcut gruplar</h2>
+      </div>
+      <p class="admin-groups-screen-hint">Bir satıra tıklayarak ilgili grup sayfasına gidebilirsiniz.</p>
+      <div id="groupsPickerLoading" class="admin-groups-loading">Gruplar yükleniyor…</div>
+      <div id="groupsPickerError" class="admin-groups-error" style="display: none;"></div>
+      <ul id="groupsPickerList" class="admin-groups-list" style="display: none;"></ul>
+      <p id="groupsPickerEmpty" class="admin-groups-empty" style="display: none;">Henüz kayıtlı grup bulunmuyor.</p>
+    </div>
+
+    <div id="adminLogsScreen">
     <table class="logs-table">
       <thead>
         <tr>
@@ -121,6 +136,7 @@
       • Henüz kayıt bulunmamaktadır.
       </div>
     </div>
+    </div>
 
 
     <script>
@@ -143,6 +159,98 @@
         div.textContent = String(text);
         return div.innerHTML;
       }
+
+      const adminLogsScreen = document.getElementById('adminLogsScreen');
+      const adminGroupsScreen = document.getElementById('adminGroupsScreen');
+      const groupsToggleBtn = document.getElementById('openGroupsPickerBtn');
+      let groupsPickerOpen = false;
+
+      function setGroupsToggleLabel() {
+        groupsToggleBtn.textContent = groupsPickerOpen ? 'Kayıtlara dön' : 'Gruba git';
+      }
+
+      function groupPageUrl(groupId) {
+        return '/groupid=' + encodeURIComponent(String(groupId || '').trim());
+      }
+
+      async function openGroupsPicker() {
+        groupsPickerOpen = true;
+        setGroupsToggleLabel();
+        adminLogsScreen.style.display = 'none';
+        adminGroupsScreen.style.display = 'block';
+        const listEl = document.getElementById('groupsPickerList');
+        const loadingEl = document.getElementById('groupsPickerLoading');
+        const emptyEl = document.getElementById('groupsPickerEmpty');
+        const errEl = document.getElementById('groupsPickerError');
+        listEl.style.display = 'none';
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'none';
+        errEl.style.display = 'none';
+        errEl.textContent = '';
+        loadingEl.style.display = 'block';
+
+        try {
+          const res = await fetch('/api/site-activity-groups');
+          if (!res.ok) {
+            throw new Error('HTTP ' + res.status);
+          }
+          const data = await res.json();
+          const groups = Array.isArray(data.groups) ? data.groups : [];
+          loadingEl.style.display = 'none';
+          if (!groups.length) {
+            emptyEl.style.display = 'block';
+            return;
+          }
+          groups.forEach(function (g) {
+            const gid = g.groupId != null ? String(g.groupId).trim() : '';
+            if (!gid) {
+              return;
+            }
+            const li = document.createElement('li');
+            li.className = 'admin-groups-list-item';
+            li.tabIndex = 0;
+            const nameRaw = (g.groupName != null && String(g.groupName).trim()) ? String(g.groupName).trim() : gid;
+            const visLabel = (g.visibility === 'private') ? 'Gizli' : 'Herkese açık';
+            li.innerHTML =
+              '<span class="admin-groups-list-name">' + escapeHtml(nameRaw) + '</span>' +
+              '<span class="admin-groups-list-meta">' +
+              '<span class="admin-groups-list-id">' + escapeHtml(gid) + '</span>' +
+              '<span class="admin-groups-list-vis">' + escapeHtml(visLabel) + '</span>' +
+              '</span>';
+            function go() {
+              window.location.href = groupPageUrl(gid);
+            }
+            li.addEventListener('click', go);
+            li.addEventListener('keydown', function (ev) {
+              if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                go();
+              }
+            });
+            listEl.appendChild(li);
+          });
+          listEl.style.display = 'block';
+        } catch (e) {
+          loadingEl.style.display = 'none';
+          errEl.style.display = 'block';
+          errEl.textContent = 'Gruplar yüklenirken hata oluştu. Lütfen tekrar deneyin.';
+        }
+      }
+
+      function closeGroupsPicker() {
+        adminGroupsScreen.style.display = 'none';
+        adminLogsScreen.style.display = 'block';
+        groupsPickerOpen = false;
+        setGroupsToggleLabel();
+      }
+
+      groupsToggleBtn.addEventListener('click', function () {
+        if (groupsPickerOpen) {
+          closeGroupsPicker();
+        } else {
+          openGroupsPicker();
+        }
+      });
 
       /** SiteActivityLog: action + groupId → Türkçe eylem metni */
       function formatSiteActivityEylem(log) {
