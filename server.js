@@ -1968,9 +1968,16 @@ app.get('/api/all-data/:groupId', async (req, res) => {
 app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { items } = req.body || {};
+    const { items, requestingUserId, requestingUserAuthority } = req.body || {};
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'items dizisi gerekli' });
+    }
+
+    if (!requestingUserId || !requestingUserAuthority) {
+      return res.status(401).json({ error: 'Kullanıcı bilgileri eksik' });
+    }
+    if (requestingUserAuthority !== 'admin') {
+      return res.status(403).json({ error: 'Bu işlem için yönetici yetkisi gerekli' });
     }
 
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -1978,11 +1985,16 @@ app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
+    const { users } = getGroupCollections(groupId);
+    const requester = await users.findById(requestingUserId).lean();
+    if (!requester || requester.authority !== 'admin') {
+      return res.status(403).json({ error: 'Geçersiz kullanıcı veya yetki' });
+    }
+
     const allowedLeagues = new Set([
       'Bronz', 'Gümüş', 'Altın', 'İnci', 'Safir', 'Zümrüt', 'Elmas', 'Yakut', 'Mercan', 'Pırlanta'
     ]);
 
-    const { users } = getGroupCollections(groupId);
     let updated = 0;
     for (const raw of items) {
       const userId = raw && raw.userId != null ? String(raw.userId).trim() : '';

@@ -1,12 +1,27 @@
+function isGroupAdminSession() {
+  return (
+    typeof LocalStorageManager !== 'undefined' &&
+    LocalStorageManager.isUserLoggedIn() &&
+    LocalStorageManager.isAdmin()
+  );
+}
+
 async function postLastCongratulatedLeagues(items) {
   if (!items || !items.length) return;
+  if (!isGroupAdminSession()) return;
+  const userInfo = LocalStorageManager.getCurrentUserInfo();
+  if (!userInfo) return;
   const gid = typeof window !== 'undefined' && window.groupid ? window.groupid : '';
   if (!gid) return;
   try {
     const res = await fetch(`/api/last-congratulated-league/${gid}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items })
+      body: JSON.stringify({
+        items,
+        requestingUserId: userInfo.userId,
+        requestingUserAuthority: userInfo.userAuthority
+      })
     });
     if (!res.ok) {
       const err = await res.json().catch(function () {
@@ -51,13 +66,7 @@ async function loadUserCards() {
 
     // Giriş yapılan kullanıcı bilgisi
   const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
-  const currentAuthority =
-    currentUserInfo && currentUserInfo.userAuthority
-      ? String(currentUserInfo.userAuthority).toLowerCase()
-      : currentUserInfo && currentUserInfo.authority
-      ? String(currentUserInfo.authority).toLowerCase()
-      : '';
-  const isAdminUser = currentAuthority === 'admin';
+  const isAdminUser = isGroupAdminSession();
 
     // Kullanıcıları lig sıralamasına göre düzenle (en yüksek ligden en düşüğe)
     users.sort((user1, user2) => {
@@ -503,7 +512,7 @@ async function loadUserCards() {
   }
 
   function mountPromotionPanel(rows, options, insertBeforeNode) {
-    const { panelClass, titleHtml, withConfetti, subtitleHtml, allowLeagueUpdate } = options;
+    const { panelClass, titleHtml, withConfetti, subtitleHtml } = options;
     if (!rows.length) return null;
 
     const panel = document.createElement('div');
@@ -587,7 +596,7 @@ async function loadUserCards() {
           contentDiv.__plainCopyText ||
           contentDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
         await navigator.clipboard.writeText(textToCopy);
-        if (allowLeagueUpdate) {
+        if (isGroupAdminSession()) {
           await postLastCongratulatedLeagues(items);
         }
         const chip = panel.querySelector('.copy-chip');
@@ -637,8 +646,7 @@ async function loadUserCards() {
         withConfetti: true,
         subtitleHtml: isAdminUser
           ? 'Bugün lig atlayan kullanıcılar var. Panele tıklayıp mesajı kopyalayabilirsiniz.'
-          : '',
-        allowLeagueUpdate: isAdminUser
+          : ''
       },
       insertAnchor
     );

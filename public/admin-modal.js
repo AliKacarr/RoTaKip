@@ -1966,6 +1966,10 @@ function performLogoutFromProfile() {
 
     loadTrackerTable();
 
+    if (typeof window.loadUserCards === 'function') {
+        window.loadUserCards();
+    }
+
     if (typeof window.updateProfileButton === 'function') {
         window.updateProfileButton();
     }
