@@ -287,6 +287,54 @@ function getMonthNameInTurkish(monthIndex) {
     return months[monthIndex];
 }
 
+/** Haftalık tablo: yalnızca işaretli günler (okudum + okumadım) */
+function computeWeekMarkedReadStats(users, statMap, dates) {
+    let okudum = 0;
+    let marked = 0;
+    for (const user of users) {
+        const userStats = statMap[user._id] || {};
+        for (const d of dates) {
+            const st = userStats[d];
+            if (st === 'okudum') {
+                okudum += 1;
+                marked += 1;
+            } else if (st === 'okumadım') {
+                marked += 1;
+            }
+        }
+    }
+    return { okudum, marked };
+}
+
+function formatWeekReadSuccessText(okudum, marked) {
+    if (!marked) return '%0✔';
+    const pct = Math.round((okudum / marked) * 100);
+    return `%${pct}✔`;
+}
+
+function computeWeekMarkedReadFromTable() {
+    const dates = getWeekDates(weekOffset);
+    const tbody = trackerTable && trackerTable.querySelector('tbody');
+    if (!tbody) return { okudum: 0, marked: 0 };
+
+    let okudum = 0;
+    let marked = 0;
+    tbody.querySelectorAll('tr.user-row').forEach(function (row) {
+        const cells = row.querySelectorAll('td[onclick*="toggleStatus"]');
+        cells.forEach(function (cell, index) {
+            if (index >= dates.length) return;
+            const symbol = (cell.textContent || '').trim();
+            if (symbol === '✔') {
+                okudum += 1;
+                marked += 1;
+            } else if (symbol === '✖') {
+                marked += 1;
+            }
+        });
+    });
+    return { okudum, marked };
+}
+
 async function loadTrackerTable() {
     console.log('🔍 Tracker Table Loading...');
 
@@ -375,10 +423,14 @@ async function loadTrackerTable() {
             + `<span class="col-read">${readCount}✔</span>`
             + `</span></th>`;
     }
-    const totalRead = dates.reduce((s, d) => s + (dateCounts[d].readCount || 0), 0);
-    statsRowHTML += `<th class="stats-footer-cell stats-footer-total" scope="col">`
+    const weekReadStats = computeWeekMarkedReadStats(users, statMap, dates);
+    const weekReadSuccessText = formatWeekReadSuccessText(
+        weekReadStats.okudum,
+        weekReadStats.marked
+    );
+    statsRowHTML += `<th class="stats-footer-cell stats-footer-total" scope="col" title="Haftalık okuma başarı oranı (okundu / işaretli gün)">`
         + `<span class="col-counts" id="stats-footer-total-counts">`
-        + `<span class="col-read" id="tfoot-total-read">${totalRead}✔</span>`
+        + `<span class="col-read" id="tfoot-total-read">${weekReadSuccessText}</span>`
         + `</span></th></tr>`;
     const oldTfoot = trackerTable.querySelector('tfoot');
     if (oldTfoot) oldTfoot.remove();
@@ -826,14 +878,14 @@ function updateDateColumnCounts(date, prevSymbol, newStatus) {
 
         readEl.textContent = readCount + '✔';
 
-        // Haftalık toplam hücresini de güncelle
+        // Haftalık okuma başarı oranını güncelle (okundu / işaretli gün)
         const totalReadEl = document.getElementById('tfoot-total-read');
         if (totalReadEl) {
-            let sumRead = 0;
-            statsRow.querySelectorAll('.col-counts[data-date]').forEach(el => {
-                sumRead += parseInt(el.querySelector('.col-read')?.textContent) || 0;
-            });
-            totalReadEl.textContent = sumRead + '✔';
+            const weekStats = computeWeekMarkedReadFromTable();
+            totalReadEl.textContent = formatWeekReadSuccessText(
+                weekStats.okudum,
+                weekStats.marked
+            );
         }
     } catch (e) {
         console.error('Sütun sayaçları güncellenemedi:', e);

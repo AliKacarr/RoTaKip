@@ -30,7 +30,7 @@ function loadMonthlyCalendar() {
         <label for="userSelector">Kullanıcı Seçin:</label>
         <select id="userSelector" class="user-selector"></select>
       `;
-        
+
         // Insert user selector into monthly-calendar-share-container before the calendar container
         const monthlyCalendarShareContainer = document.querySelector('.monthly-calendar-share-container');
         const monthlyCalendarContainer = document.querySelector('.monthly-calendar-container');
@@ -45,7 +45,7 @@ function loadMonthlyCalendar() {
 
     // Populate user selector with users from the main table
     function populateUserSelector() {
-            const userSelector = document.getElementById('userSelector');
+        const userSelector = document.getElementById('userSelector');
         if (!userSelector) return;
 
         // Clear existing options
@@ -56,39 +56,39 @@ function loadMonthlyCalendar() {
             const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [] };
             const data = { users: allData.users };
             if (data.users && Array.isArray(data.users)) {
-                    // Sort users alphabetically
-                    data.users.sort((a, b) => a.name.localeCompare(b.name));
+                // Sort users alphabetically
+                data.users.sort((a, b) => a.name.localeCompare(b.name));
 
-                    // Get current user info
-                    const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
-                    let defaultUser = null;
+                // Get current user info
+                const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
+                let defaultUser = null;
 
-                    // Add each user to the selector
-                    data.users.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.name;
-                        option.textContent = user.name;
-                        option.dataset.userId = user._id; // Store user ID for easier access
-                        userSelector.appendChild(option);
+                // Add each user to the selector
+                data.users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.name;
+                    option.textContent = user.name;
+                    option.dataset.userId = user._id; // Store user ID for easier access
+                    userSelector.appendChild(option);
 
-                        // If this is the current user, mark it as default
-                        if (currentUserInfo && currentUserInfo.userId === user._id) {
-                            defaultUser = user.name;
-                        }
-                    });
-
-                    // Set the default user (current user if logged in, otherwise first user)
-                    if (defaultUser) {
-                        selectedUser = defaultUser;
-                        userSelector.value = selectedUser;
-                    } else if (userSelector.options.length > 0) {
-                        selectedUser = userSelector.options[0].value;
-                        userSelector.value = selectedUser;
+                    // If this is the current user, mark it as default
+                    if (currentUserInfo && currentUserInfo.userId === user._id) {
+                        defaultUser = user.name;
                     }
-                    
-                    // Generate calendar with the selected user
-                    generateCalendar(currentMonth, currentYear);
+                });
+
+                // Set the default user (current user if logged in, otherwise first user)
+                if (defaultUser) {
+                    selectedUser = defaultUser;
+                    userSelector.value = selectedUser;
+                } else if (userSelector.options.length > 0) {
+                    selectedUser = userSelector.options[0].value;
+                    userSelector.value = selectedUser;
                 }
+
+                // Generate calendar with the selected user
+                generateCalendar(currentMonth, currentYear);
+            }
         } catch (error) {
             console.error('Error loading users from store:', error);
         }
@@ -352,12 +352,12 @@ function loadMonthlyCalendar() {
                         logUnauthorizedAccess('Aylık takvim okuma durumu değiştirme-kullanıcı bulunamadı');
                         return;
                     }
-                    
+
                     if (currentUser.name !== userName) {
                         logUnauthorizedAccess('Aylık takvim okuma durumu değiştirme-başka kullanıcı');
                         return;
                     }
-                    
+
                     // Yetki kontrolü başarılı, işlemi devam ettir
                     continueWithToggle();
                 })
@@ -367,10 +367,10 @@ function loadMonthlyCalendar() {
                 });
             return; // Async işlem başladı, fonksiyondan çık
         }
-        
+
         // Admin kullanıcılar için direkt devam et
         continueWithToggle();
-        
+
         function continueWithToggle() {
             // Mevcut durumu hücreden tespit et
             let currentStatus = '';
@@ -508,13 +508,13 @@ function loadMonthlyCalendar() {
     if (monthlyCalendarSection) {
         monthlyCalendarSection.style.display = 'block';
     }
-        
+
     // Expose the update function globally so it can be called from your main script
     window.updateMonthlyCalendar = updateCalendarWithUserData;
 
     // Try to populate users initially if the table is already loaded
     setTimeout(populateUserSelector, 500);
-    
+
     // Paylaş butonu için event listener ekle
     const monthShareBtn = document.getElementById('monthShareBtn');
     if (monthShareBtn) {
@@ -529,9 +529,13 @@ async function shareMonthlyCalendar() {
         console.warn('Monthly calendar share container bulunamadı');
         return;
     }
-    
+
     const monthYearHeader = document.getElementById('monthYearHeader');
     const titleText = monthYearHeader ? monthYearHeader.textContent.trim() : 'aylik-takvim';
+    const titleParts = titleText.split(' ');
+    const shareText = titleParts.length >= 2
+        ? `${titleParts[titleParts.length - 1]} ${titleParts.slice(0, -1).join(' ')} ayı okuma takviminiz`
+        : `${titleText} ayı okuma takviminiz`;
 
     await shareContainerAsImage({
         container: monthlyCalendarShareContainer,
@@ -539,7 +543,7 @@ async function shareMonthlyCalendar() {
         titleText: titleText,
         fileNamePrefix: 'aylik-takvim',
         shareTitle: 'Aylık Takvim',
-        shareText: `${titleText} aylık okuma takvimi`,
+        shareText: shareText,
         onRestore: () => {
             // Monthly calendar için restore işlemi gerekmiyor
             // Çünkü kullanıcı resmi bilgisi kullanmıyoruz
