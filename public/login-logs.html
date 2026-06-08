@@ -35,19 +35,21 @@
       </div>
     </div>
 
-    <table class="logs-table">
-      <thead>
-        <tr>
-          <th>Tarih</th>
-          <th>Kullanıcı Adı</th>
-          <th>Cihaz Bilgisi</th>
-          <th>Ekran Boyutu</th>
-        </tr>
-      </thead>
-      <tbody id="logsTableBody">
-        <!-- Logs will be loaded here -->
-      </tbody>
-    </table>
+    <div class="table-wrapper">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Kullanıcı Adı</th>
+            <th>Cihaz Bilgisi</th>
+            <th>Ekran Boyutu</th>
+          </tr>
+        </thead>
+        <tbody id="logsTableBody">
+          <!-- Logs will be loaded here -->
+        </tbody>
+      </table>
+    </div>
 
     <!-- Add pagination controls -->
     <div id="paginationContainer"
@@ -71,19 +73,22 @@
         </button>
         <h2 id="selectedDateTitle">Tarih Kayıtları</h2>
       </div>
-      <table class="logs-table">
-        <thead>
-          <tr>
-            <th>Saat</th>
-            <th>Kullanıcı Adı</th>
-            <th>Cihaz Bilgisi</th>
-            <th>Ekran Boyutu</th>
-          </tr>
-        </thead>
-        <tbody id="dateGroupTableBody">
-          <!-- Date-specific logs will be loaded here -->
-        </tbody>
-      </table>
+
+      <div class="table-wrapper">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>Saat</th>
+              <th>Kullanıcı Adı</th>
+              <th>Cihaz Bilgisi</th>
+              <th>Ekran Boyutu</th>
+            </tr>
+          </thead>
+          <tbody id="dateGroupTableBody">
+            <!-- Date-specific logs will be loaded here -->
+          </tbody>
+        </table>
+      </div>
 
       <!-- Add pagination controls for date group -->
       <div id="dateGroupPaginationContainer"
@@ -163,14 +168,14 @@
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-              username: userName, 
-              groupId: groupId 
+            body: JSON.stringify({
+              username: userName,
+              groupId: groupId
             })
           });
 
           const data = await response.json();
-          
+
           if (data.valid) {
             // Admin verified, show logs with group filtering
             logsSection.style.display = 'block';
@@ -469,7 +474,7 @@
               const minutes = String(date.getMinutes()).padStart(2, '0');
 
               // Format date with styled day and month
-              const formattedDate = `<span style="font-weight: bold; color: #11171c;">${day} ${month}</span> ${year} ${hours}:${minutes}`;
+              const formattedDate = `<span style="font-weight: bold; color: #11171c;">${day} ${month}</span><br><span>${year} ${hours}:${minutes}</span>`;
 
               const device = log.deviceInfo || {};
               const ipAddress = log.ipAddress || 'Bilinmiyor';

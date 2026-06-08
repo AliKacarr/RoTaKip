@@ -35,20 +35,22 @@
       </div>
     </div>
 
-    <table class="logs-table">
-      <thead>
-        <tr>
-          <th>Tarih</th>
-          <th>Kullanıcı Adı</th>
-          <th>Eylem</th>
-          <th>Cihaz Bilgisi</th>
-          <th>Ekran Boyutu</th>
-        </tr>
-      </thead>
-      <tbody id="logsTableBody">
-        <!-- Logs will be loaded here -->
-      </tbody>
-    </table>
+    <div class="table-wrapper">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Kullanıcı Adı</th>
+            <th>Eylem</th>
+            <th>Cihaz Bilgisi</th>
+            <th>Ekran Boyutu</th>
+          </tr>
+        </thead>
+        <tbody id="logsTableBody">
+          <!-- Logs will be loaded here -->
+        </tbody>
+      </table>
+    </div>
 
     <!-- Add pagination controls -->
     <div id="paginationContainer"
@@ -72,20 +74,22 @@
         </button>
         <h2 id="selectedDateTitle">Tarih Kayıtları</h2>
       </div>
-      <table class="logs-table">
-        <thead>
-          <tr>
-            <th>Saat</th>
-            <th>Kullanıcı Adı</th>
-            <th>Eylem</th>
-            <th>Cihaz Bilgisi</th>
-            <th>Ekran Boyutu</th>
-          </tr>
-        </thead>
-        <tbody id="dateGroupTableBody">
-          <!-- Date-specific logs will be loaded here -->
-        </tbody>
-      </table>
+      <div class="table-wrapper">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>Saat</th>
+              <th>Kullanıcı Adı</th>
+              <th>Eylem</th>
+              <th>Cihaz Bilgisi</th>
+              <th>Ekran Boyutu</th>
+            </tr>
+          </thead>
+          <tbody id="dateGroupTableBody">
+            <!-- Date-specific logs will be loaded here -->
+          </tbody>
+        </table>
+      </div>
 
       <!-- Add pagination controls for date group -->
       <div id="dateGroupPaginationContainer"
@@ -118,11 +122,11 @@
 
     <div id="noLogs" class="no-logs" style="display: none; margin-top: 20px;">
       • Henüz kayıt bulunmamaktadır.
-      </div>
     </div>
+  </div>
 
 
-    <script>
+  <script>
     function getTurkeyYmdFromTimestamp(ts) {
       return new Date(ts).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' });
     }
@@ -137,7 +141,7 @@
     }
     document.addEventListener('DOMContentLoaded', async function () {
       const accessDenied = document.getElementById('accessDenied');
-        const logsSection = document.getElementById('logsSection');
+      const logsSection = document.getElementById('logsSection');
 
       // Check admin authority from cookies
       async function checkAdminAccess() {
@@ -161,27 +165,27 @@
 
           // Try to verify admin status with the server
           const response = await fetch('/api/verify-admin', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-            body: JSON.stringify({ 
-              username: userName, 
-              groupId: groupId 
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: userName,
+              groupId: groupId
             })
-            });
+          });
 
-            const data = await response.json();
+          const data = await response.json();
 
           if (data.valid) {
             // Admin verified, show logs with group filtering
-              logsSection.style.display = 'block';
+            logsSection.style.display = 'block';
             loadLogs(groupId);
-            } else {
+          } else {
             // Admin verification failed
             showAccessDenied();
-            }
-          } catch (error) {
+          }
+        } catch (error) {
           console.error('Admin access check error:', error);
           showAccessDenied();
         }
@@ -307,13 +311,13 @@
           // Clear existing logs
           tableBody.innerHTML = '';
 
-            // Add fade-in class to table
+          // Add fade-in class to table
           document.querySelector('.logs-table').classList.add('fade-in');
 
-            // Remove fade-in class after animation completes
-            setTimeout(() => {
+          // Remove fade-in class after animation completes
+          setTimeout(() => {
             document.querySelector('.logs-table').classList.remove('fade-in');
-            }, 500);
+          }, 500);
 
           if (!logs || logs.length === 0) {
             noLogs.style.display = 'block';
@@ -322,7 +326,7 @@
 
             // Only update button state if this is a direct call (not from refresh button)
             if (updateButtonState) {
-            // Remove loading animation from button
+              // Remove loading animation from button
               refreshAdminLogsButton.classList.remove('refresh-admin-logs-button-loading');
             }
 
@@ -470,7 +474,7 @@
               const minutes = String(date.getMinutes()).padStart(2, '0');
 
               // Format date with styled day and month
-              const formattedDate = `<span style="font-weight: bold; color: #11171c;">${day} ${month}</span> ${year} ${hours}:${minutes}`;
+              const formattedDate = `<span style="font-weight: bold; color: #11171c;">${day} ${month}</span><br><span>${year} ${hours}:${minutes}</span>`;
 
               // Check if deviceInfo exists
               if (!log.deviceInfo) {
@@ -551,72 +555,72 @@
             }, 2000);
           }
         }
-        }
+      }
 
-        // Function to show logs for a specific date
-        function showDateGroup(dateKey, dateGroup) {
+      // Function to show logs for a specific date
+      function showDateGroup(dateKey, dateGroup) {
         // Clear any active IP filters when switching dates
-          const filterContainer = document.getElementById('filterContainer');
+        const filterContainer = document.getElementById('filterContainer');
         if (filterContainer && filterContainer.innerHTML !== '') {
-            filterContainer.innerHTML = '';
-          }
+          filterContainer.innerHTML = '';
+        }
 
         // Hide the main logs table but keep the date summary visible
         const mainTable = document.querySelectorAll('.logs-table')[0]; // Get the first table
         mainTable.style.display = 'none';
 
-          document.getElementById('dateGroupContainer').style.display = 'block';
-          document.getElementById('selectedDateTitle').textContent = `${dateKey} Kayıtları`;
+        document.getElementById('dateGroupContainer').style.display = 'block';
+        document.getElementById('selectedDateTitle').textContent = `${dateKey} Kayıtları`;
 
-          // Show pagination for date view with different ID
-          document.getElementById('paginationContainer').style.display = 'none';
-          document.getElementById('dateGroupPaginationContainer').style.display = 'flex';
+        // Show pagination for date view with different ID
+        document.getElementById('paginationContainer').style.display = 'none';
+        document.getElementById('dateGroupPaginationContainer').style.display = 'flex';
 
-          // Highlight the selected date card
-          const allDateCards = document.querySelectorAll('.date-summary-item');
-          allDateCards.forEach(card => {
-            // Remove active class from all cards
-            card.classList.remove('date-summary-item-active');
+        // Highlight the selected date card
+        const allDateCards = document.querySelectorAll('.date-summary-item');
+        allDateCards.forEach(card => {
+          // Remove active class from all cards
+          card.classList.remove('date-summary-item-active');
 
-            // Add active class to the selected card
-            if (card.querySelector('h4').textContent.includes(dateKey)) {
-              card.classList.add('date-summary-item-active');
-            }
-          });
+          // Add active class to the selected card
+          if (card.querySelector('h4').textContent.includes(dateKey)) {
+            card.classList.add('date-summary-item-active');
+          }
+        });
 
-          const dateGroupTableBody = document.getElementById('dateGroupTableBody');
-          dateGroupTableBody.innerHTML = '';
+        const dateGroupTableBody = document.getElementById('dateGroupTableBody');
+        dateGroupTableBody.innerHTML = '';
 
-          // Sort by time (newest first)
-          dateGroup.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        // Sort by time (newest first)
+        dateGroup.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-          // Initialize pagination for date group
-          const itemsPerPage = 10;
-          let currentPage = 1;
-          const totalPages = Math.ceil(dateGroup.length / itemsPerPage);
+        // Initialize pagination for date group
+        const itemsPerPage = 10;
+        let currentPage = 1;
+        const totalPages = Math.ceil(dateGroup.length / itemsPerPage);
 
         // Function to display logs for current page
-          function displayLogsForPage(page) {
-            dateGroupTableBody.innerHTML = '';
-            const startIndex = (page - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, dateGroup.length);
+        function displayLogsForPage(page) {
+          dateGroupTableBody.innerHTML = '';
+          const startIndex = (page - 1) * itemsPerPage;
+          const endIndex = Math.min(startIndex + itemsPerPage, dateGroup.length);
 
-            for (let i = startIndex; i < endIndex; i++) {
-              const log = dateGroup[i];
-              const row = document.createElement('tr');
+          for (let i = startIndex; i < endIndex; i++) {
+            const log = dateGroup[i];
+            const row = document.createElement('tr');
 
-              const date = new Date(log.timestamp);
-              const hours = String(date.getHours()).padStart(2, '0');
-              const minutes = String(date.getMinutes()).padStart(2, '0');
-              const seconds = String(date.getSeconds()).padStart(2, '0');
+            const date = new Date(log.timestamp);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
 
-              const ipAddress = log.ipAddress || 'Bilinmiyor';
-              const deviceInfo = formatDeviceInfo(log.deviceInfo);
+            const ipAddress = log.ipAddress || 'Bilinmiyor';
+            const deviceInfo = formatDeviceInfo(log.deviceInfo);
             const screenSize = `${log.deviceInfo.screenWidth || '?'}x${log.deviceInfo.screenHeight || '?'}`;
             const ipDeviceScreen = `${ipAddress}-${deviceInfo}-${screenSize}`;
             const ipColor = window.ipColors[ipDeviceScreen];
 
-              row.innerHTML = `
+            row.innerHTML = `
               <td>${hours}:${minutes}:${seconds}</td>
               <td style="color: ${ipColor}; font-weight: bold; cursor: pointer;" 
                   onclick="filterByIp('${ipAddress}')">${ipAddress}</td>
@@ -625,39 +629,39 @@
               <td>${screenSize}</td>
             `;
 
-              dateGroupTableBody.appendChild(row);
-            }
-
-            // Update pagination info
-            document.getElementById('dateGroupPaginationInfo').textContent =
-              `${startIndex + 1}-${endIndex} / ${dateGroup.length} kayıt gösteriliyor`;
-
-          // Update button states
-            const prevBtn = document.getElementById('prevDatePageBtn');
-            const nextBtn = document.getElementById('nextDatePageBtn');
-
-            if (page === 1) {
-              prevBtn.disabled = true;
-              prevBtn.style.opacity = '0.5';
-              prevBtn.style.cursor = 'not-allowed';
-            } else {
-              prevBtn.disabled = false;
-              prevBtn.style.opacity = '1';
-              prevBtn.style.cursor = 'pointer';
-            }
-
-            if (page === totalPages) {
-              nextBtn.disabled = true;
-              nextBtn.style.opacity = '0.5';
-              nextBtn.style.cursor = 'not-allowed';
-            } else {
-              nextBtn.disabled = false;
-              nextBtn.style.opacity = '1';
-              nextBtn.style.cursor = 'pointer';
-            }
+            dateGroupTableBody.appendChild(row);
           }
 
-          // Display first page
+          // Update pagination info
+          document.getElementById('dateGroupPaginationInfo').textContent =
+            `${startIndex + 1}-${endIndex} / ${dateGroup.length} kayıt gösteriliyor`;
+
+          // Update button states
+          const prevBtn = document.getElementById('prevDatePageBtn');
+          const nextBtn = document.getElementById('nextDatePageBtn');
+
+          if (page === 1) {
+            prevBtn.disabled = true;
+            prevBtn.style.opacity = '0.5';
+            prevBtn.style.cursor = 'not-allowed';
+          } else {
+            prevBtn.disabled = false;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+          }
+
+          if (page === totalPages) {
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '0.5';
+            nextBtn.style.cursor = 'not-allowed';
+          } else {
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+          }
+        }
+
+        // Display first page
         try {
           displayLogsForPage(currentPage);
         } catch (error) {
@@ -666,20 +670,20 @@
         }
 
         // Set up pagination button handlers for date group
-          document.getElementById('prevDatePageBtn').onclick = () => {
-            if (currentPage > 1) {
-              currentPage--;
-              displayLogsForPage(currentPage);
-            }
-          };
+        document.getElementById('prevDatePageBtn').onclick = () => {
+          if (currentPage > 1) {
+            currentPage--;
+            displayLogsForPage(currentPage);
+          }
+        };
 
-          document.getElementById('nextDatePageBtn').onclick = () => {
-            if (currentPage < totalPages) {
-              currentPage++;
-              displayLogsForPage(currentPage);
-            }
-          };
-        }
+        document.getElementById('nextDatePageBtn').onclick = () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            displayLogsForPage(currentPage);
+          }
+        };
+      }
 
       // Helper function to format device info
       function formatDeviceInfo(deviceInfo) {
@@ -741,11 +745,11 @@
       document.getElementById('filterContainer').innerHTML = '';
 
       // Check if we're in date view
-          const isDateGroupVisible = document.getElementById('dateGroupContainer').style.display === 'block';
-          const selectedDateTitle = document.getElementById('selectedDateTitle').textContent;
-          const selectedDate = selectedDateTitle.replace(' Kayıtları', '');
+      const isDateGroupVisible = document.getElementById('dateGroupContainer').style.display === 'block';
+      const selectedDateTitle = document.getElementById('selectedDateTitle').textContent;
+      const selectedDate = selectedDateTitle.replace(' Kayıtları', '');
 
-          // Create filter notification
+      // Create filter notification
       const ipFilterNotification = document.createElement('div');
       ipFilterNotification.id = 'ipFilterNotification';
       ipFilterNotification.innerHTML = `
@@ -754,22 +758,22 @@
       `;
       document.getElementById('filterContainer').appendChild(ipFilterNotification);
 
-          // Add event listener to clear filter button
+      // Add event listener to clear filter button
       document.getElementById('clearIpFilter').addEventListener('click', function (e) {
         e.stopPropagation(); // Prevent the click from bubbling up
         document.getElementById('filterContainer').innerHTML = '';
 
         if (isDateGroupVisible) {
-            // If we were in date view, go back to that date view
-                const dateCards = document.querySelectorAll('.date-summary-item');
-                for (const card of dateCards) {
-                  if (card.querySelector('h4').textContent.includes(selectedDate)) {
-                    // Simulate a click on the date card to show that date's logs
-                    card.click();
-                    break;
-                  }
-                }
-              } else {
+          // If we were in date view, go back to that date view
+          const dateCards = document.querySelectorAll('.date-summary-item');
+          for (const card of dateCards) {
+            if (card.querySelector('h4').textContent.includes(selectedDate)) {
+              // Simulate a click on the date card to show that date's logs
+              card.click();
+              break;
+            }
+          }
+        } else {
           // Instead of manual reload, trigger the refresh button
           refreshAdminLogsButton.click();
         }
@@ -805,10 +809,10 @@
         });
 
         // Hide date group container and show main table
-              document.getElementById('dateGroupContainer').style.display = 'none';
-              document.getElementById('dateGroupPaginationContainer').style.display = 'none';
+        document.getElementById('dateGroupContainer').style.display = 'none';
+        document.getElementById('dateGroupPaginationContainer').style.display = 'none';
         document.querySelector('.logs-table').style.display = 'table';
-              document.getElementById('paginationContainer').style.display = 'flex';
+        document.getElementById('paginationContainer').style.display = 'flex';
 
         // Hide all rows
         document.querySelectorAll('#logsTableBody tr').forEach(row => {
@@ -829,8 +833,8 @@
         document.getElementById('nextPageBtn').disabled = true;
       }
     };
-    </script>
-    <script src="script.js"></script>
+  </script>
+  <script src="script.js"></script>
 </body>
 
 </html>

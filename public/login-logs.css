@@ -6,11 +6,11 @@ body {
 }
 
 .access-denied-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    backdrop-filter: blur(10px);
 }
 
 .access-denied-content {
@@ -24,48 +24,48 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-  }
+}
 
 .access-denied-content h2 {
-  color: #e74c3c;
-  margin-bottom: 30px;
-  font-size: 36px;
-  font-weight: 700;
+    color: #e74c3c;
+    margin-bottom: 30px;
+    font-size: 36px;
+    font-weight: 700;
 }
 
 .access-denied-content p {
-  color: #666;
-  margin-bottom: 40px;
-  font-size: 20px;
-  line-height: 1.6;
-  font-weight: 500;
+    color: #666;
+    margin-bottom: 40px;
+    font-size: 20px;
+    line-height: 1.6;
+    font-weight: 500;
 }
 
 .back-button {
-  display: inline-block;
-  padding: 8px 24px;
-  background-color: #19366f;
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 18px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  border: none;
-  cursor: pointer;
+    display: inline-block;
+    padding: 8px 24px;
+    background-color: #19366f;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: none;
+    cursor: pointer;
 }
 
 .back-button:hover {
-  background-color: #152f62;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  color: white;
-  text-decoration: none;
+    background-color: #152f62;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: white;
+    text-decoration: none;
 }
 
 .back-button:active {
-  transform: translateY(0);
+    transform: translateY(0);
 }
 
 .logs-container {
@@ -83,9 +83,16 @@ body {
     overflow-x: auto;
 }
 
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .logs-table {
     width: 100%;
-    min-width: 760px; /* küçük ekranlarda yatay kaydırma için alt limit */
+    min-width: 550px;
+    /* küçük ekranlarda yatay kaydırma için alt limit */
     border-collapse: collapse;
     margin-top: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
