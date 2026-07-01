@@ -427,7 +427,7 @@ async function loadUserCards() {
             const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
             longestStreakShare = `${userStreak.streak} gün (${start} - ${end})`;
           }
-          const shareMessage = `*Genel okuma durumunuz:*\n\n*Okunan gün:* ${okudumDays},\n*Okunmayan gün:* ${okunmayanGun},\n*Başarı oranı:* %${basariOrani},\n*Mevcut seri:* ${streak} gün,\n*En uzun seri:* ${longestStreakShare},\n*Son okuma:* ${sonOkumaMetni}`;
+          const shareMessage = `*Genel okuma durumunuz:*\n\n*Okunan gün:* ${okudumDays},\n*Okunmayan gün:* ${okunmayanGun},\n*Başarı oranı:* %${basariOrani},\n\n*Mevcut seri:* ${streak} gün,\n*En uzun seri:* ${longestStreakShare},\n*Son okuma:* ${sonOkumaMetni}`;
 
           // Web Share API veya panoya kopyala
           if (navigator.share) {
