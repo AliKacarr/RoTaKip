@@ -1,9 +1,9 @@
 // Farklı kanalların ID'leri
 const CHANNEL_IDS = [
-  'UCa4B618R90dxe7N9OK0LJyQ', // Çatı Katı Elazığ
-  'UCb2NNTeDSPr2sFHrI2AwHTQ', //Hisar Kapısı
-  'UCgC81lrIwMJJvAjyKm1ooow', //Maksat 114
-  'UCN5t14BCdTIQ-116TxJuBMg' //Sözler Köşkü
+    'UCa4B618R90dxe7N9OK0LJyQ', // Çatı Katı Elazığ
+    'UCb2NNTeDSPr2sFHrI2AwHTQ', //Hisar Kapısı
+    'UCgC81lrIwMJJvAjyKm1ooow', //Maksat 114
+    'UCN5t14BCdTIQ-116TxJuBMg' //Sözler Köşkü
 ];
 
 // DOM elementleri
@@ -24,7 +24,7 @@ window.currentVideoData = null;
 function initializeVideos() {
     if (videoInitialized) return;
     videoInitialized = true;
-    
+
     // API anahtarını sunucudan al
     fetch('/api/config')
         .then(response => response.json())
@@ -46,14 +46,14 @@ async function fetchLatestVideosFromChannel(channelId) {
         const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}&key=${API_KEY}`);
         const channelData = await channelResponse.json();
         if (!channelData.items || channelData.items.length === 0) return [];
-        
+
         const uploadsPlaylistId = channelData.items[0].contentDetails.relatedPlaylists.uploads;
-        
+
         // Sadece son 50 videoyu al (tüm sayfaları çekmek yerine)
         const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${uploadsPlaylistId}&key=${API_KEY}`;
         const response = await fetch(url);
         const data = await response.json();
-        
+
         return data.items || [];
     } catch (error) {
         console.error(`Kanal ${channelId} videoları alınırken hata:`, error);
@@ -64,16 +64,16 @@ async function fetchLatestVideosFromChannel(channelId) {
 // Tüm kanallardan son videoları getir (hızlı yükleme)
 async function fetchLatestVideosFromAllChannels() {
     let allVideos = [];
-    
+
     // Tüm kanallardan son 50 videoyu paralel olarak çek
     const channelPromises = CHANNEL_IDS.map(channelId => fetchLatestVideosFromChannel(channelId));
     const channelResults = await Promise.all(channelPromises);
-    
+
     // Tüm videoları birleştir
     channelResults.forEach(videos => {
         allVideos = allVideos.concat(videos);
     });
-    
+
     return allVideos;
 }
 
@@ -131,13 +131,41 @@ function renderVideos(videos) {
                 <span class="play-icon"><i class="fa-solid fa-play"></i></span>
                 <div class="video-title">
                     <div class="title-text">${title}</div>
-                    <div class="view-count"><i class="fa-solid fa-eye"></i> ${formattedViewCount}</div>
+                    <div class="video-bottom-bar">
+                        <svg class="video-share-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                        </svg>
+                        <div class="view-count"><i class="fa-solid fa-eye"></i> ${formattedViewCount}</div>
+                    </div>
                 </div>
             `;
 
             videoCard.addEventListener('click', () => {
                 openVideoModal(videoId);
             });
+
+            // Share icon tıklama işlevi
+            const shareIcon = videoCard.querySelector('.video-share-icon');
+            if (shareIcon) {
+                shareIcon.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Video modalı açma
+                    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+                    const shareText = `${title} - ${videoUrl}`;
+                    if (navigator.share) {
+                        navigator.share({
+                            title: title,
+                            text: shareText
+                        }).catch(err => console.log('Paylaşım iptal edildi:', err));
+                    } else {
+                        navigator.clipboard.writeText(shareText).then(() => {
+                            alert('Paylaşım metni panoya kopyalandı!');
+                        }).catch(err => {
+                            console.error('Kopyalama hatası:', err);
+                            alert('Metin panoya kopyalanamadı.');
+                        });
+                    }
+                });
+            }
 
             fragment.appendChild(videoCard);
         });
@@ -185,10 +213,10 @@ async function showLatestVideos() {
     try {
         const allVideos = await fetchLatestVideosFromAllChannels();
         if (!allVideos || allVideos.length === 0) throw new Error('Video bulunamadı');
-        
+
         // Tarihe göre sırala (en yeni önce)
         allVideos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
-        
+
         // İlk 6 videoyu al
         renderVideos(allVideos.slice(0, 6));
     } catch (error) {
@@ -209,7 +237,7 @@ async function showMostViewedVideos() {
     try {
         const allVideos = await fetchLatestVideosFromAllChannels();
         if (!allVideos || allVideos.length === 0) throw new Error('Video bulunamadı');
-        
+
         const videoIdList = allVideos.map(item => item.snippet.resourceId.videoId);
         let stats = [];
         for (let i = 0; i < videoIdList.length; i += 50) {
@@ -278,7 +306,7 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
     if (typeof logUnauthorizedAccess === 'function') {
         logUnauthorizedAccess('Video listesini yenileme');
     }
-    
+
     // Aktif olan butonu bul
     const activeButton = document.querySelector('.top-bar button.active');
 

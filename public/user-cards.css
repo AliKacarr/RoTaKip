@@ -910,6 +910,19 @@
     }
 }
 
+/* Copy Chip Hover Effects */
+.reading-streak-message:hover .copy-chip,
+.weak-link-message:hover .copy-chip,
+.consecutive-missed-message:hover .copy-chip,
+.league-promotion-message:hover .copy-chip,
+.league-promotion-backlog:hover .copy-chip {
+    transform: scale(1.05);
+}
+
+.copy-chip {
+    transition: all 0.2s ease;
+}
+
 
 @keyframes bounce-missed {
 

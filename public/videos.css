@@ -119,9 +119,12 @@
 }
 
 @keyframes video-loading-line-bounce {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-10px);
     }
@@ -140,14 +143,20 @@
     0% {
         background-position: -200% 0;
     }
+
     100% {
         background-position: 200% 0;
     }
 }
 
 @keyframes video-loading-spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
 }
 
 .thumbnail {
@@ -191,7 +200,7 @@
 .video-title {
     padding: 15px;
     font-weight: bold;
-    min-height: 62px;
+    min-height: 75px;
     overflow: hidden;
     position: relative;
     display: flex;
@@ -213,12 +222,36 @@
     max-height: 2.6em;
 }
 
-.view-count {
-    font-size: 14px;
-    color: #666;
+.video-bottom-bar {
     position: absolute;
     bottom: 10px;
     right: 15px;
+    left: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.video-share-icon {
+    width: 17px;
+    height: 17px;
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.1s ease;
+    pointer-events: auto;
+    color: #666;
+}
+
+.video-share-icon:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.view-count {
+    font-size: 15px;
+    color: #666;
     background-color: #f3efef;
     padding: 3px 8px;
     border-radius: 12px;
@@ -336,9 +369,11 @@ iframe {
     0% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.2);
     }
+
     100% {
         transform: scale(1);
     }
