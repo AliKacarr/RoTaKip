@@ -354,6 +354,9 @@ async function loadUserCards() {
           <div class="user-card-user-name">${user.name}</div>
           <div class="user-league">${league.name}</div>
         </div>
+        <div class="share-icon-wrapper">
+          <img class="share-icon" src="images/share.webp" alt="Paylaş">
+        </div>
         <div class="league-badge-group">
           <div class="league-badge" title="${league.name} Ligi:  ${league.min} - ${league.max - 1} gün arası okuma">
             <img src="images/${league.img}" alt="${league.name}">
@@ -406,6 +409,42 @@ async function loadUserCards() {
           }
         });
       });
+
+      // Paylaşım ikonu click event ekle
+      const shareIconWrapper = card.querySelector('.share-icon-wrapper');
+      if (shareIconWrapper) {
+        shareIconWrapper.addEventListener('click', function () {
+          const okunmayanGun = totalDays - okudumDays;
+          const basariOrani = Math.round((okudumDays / totalDays) * 100);
+          let sonOkumaMetni = '-';
+          if (lastReadDate) {
+            sonOkumaMetni = `${formatDateTurkish(lastReadDate)} (${getRelativeReadText(lastReadDate)})`;
+          }
+          // En uzun seri için raw datayı kullan
+          let longestStreakShare = '-';
+          if (userStreak && userStreak.streak > 0) {
+            const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
+            const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
+            longestStreakShare = `${userStreak.streak} gün (${start} - ${end})`;
+          }
+          const shareMessage = `*Genel okuma durumunuz:*\n\n*Okunan gün:* ${okudumDays},\n*Okunmayan gün:* ${okunmayanGun},\n*Başarı oranı:* %${basariOrani},\n*Mevcut seri:* ${streak} gün,\n*En uzun seri:* ${longestStreakShare},\n*Son okuma:* ${sonOkumaMetni}`;
+
+          // Web Share API veya panoya kopyala
+          if (navigator.share) {
+            navigator.share({
+              title: 'Okuma Durumum',
+              text: shareMessage,
+            }).catch(err => console.log('Paylaşım iptal edildi:', err));
+          } else {
+            navigator.clipboard.writeText(shareMessage).then(() => {
+              alert('Paylaşım metni panoya kopyalandı!');
+            }).catch(err => {
+              console.error('Kopyalama hatası:', err);
+              alert('Metin panoya kopyalanamadı.');
+            });
+          }
+        });
+      }
     });
 
     // Seri sayısına göre sırala (en yüksekten en düşüğe)
