@@ -432,7 +432,7 @@ async function loadUserCards() {
           // Web Share API veya panoya kopyala
           if (navigator.share) {
             navigator.share({
-              title: 'Okuma Durumum',
+              title: 'Kullanıcının Okuma Bilgileri',
               text: shareMessage,
             }).catch(err => console.log('Paylaşım iptal edildi:', err));
           } else {
