@@ -1,34 +1,34 @@
-# 📚 RoTaKip – Okuma Takip Sistemi
+# RoTaKip – Okuma Takip Sistemi
 
-Okuma alışkanlıklarını takip etmek, istatistikleri görmek ve grup motivasyonunu artırmak için geliştirilmiş modern bir platform.
+Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek ve grup motivasyonunu artırmak için geliştirilmiş modern bir uygulaması.
 
 🌐 [https://rotakip.onrender.com/](https://rotakip.onrender.com/)
 
 ---
 
-## ✨ Temel Özellikler
+## Temel Özellikler
 
-### 👥 Grup & Kullanıcı
+### Grup & Kullanıcı
 
 - Grup oluşturma ve katılım (admin onaylı)  
 - Herkese açık / özel grup görünürlüğü, arama ve filtreleme  
 - Admin / üye rol sistemi  
 - Profil ve grup avatarları (Dropbox ile görsel yükleme)  
 
-### 📊 Okuma Takibi
+### Okuma Takibi
 
-- Haftalık tabloda günlük okuma işaretleme (okudum / okumadım)  
+- Haftalık tabloda günlük okuma işaretleme (okudum / okumadım / boş)  
 - Lig sistemi (Bronz → Gümüş → Altın)
 - Okuma serisi takibi  
 - Haftalık ve aylık istatistikler, takvim görünümü  
 
-### 🎯 Motivasyon
+### Motivasyon
 
 - Günün sözü, ayet & hadis, dua paylaşımları  
 - YouTube video entegrasyonu  
 - Lig atlama ve diğer bildirimler (**OneSignal**)  
 
-### 🔒 Güvenlik & Yönetim
+### Güvenlik & Yönetim
 
 - Şifreli giriş (**bcrypt**), rol tabanlı yetkilendirme  
 - Giriş ve erişim logları  
@@ -37,7 +37,7 @@ Okuma alışkanlıklarını takip etmek, istatistikleri görmek ve grup motivasy
 
 ---
 
-## 🛠️ Teknolojiler
+## Teknolojiler
 
 **Backend:** Node.js, Express, MongoDB / Mongoose, Multer, Sharp, node-schedule, Moment.js  
 
@@ -47,7 +47,7 @@ Okuma alışkanlıklarını takip etmek, istatistikleri görmek ve grup motivasy
 
 ---
 
-## 🚀 Kurulum
+## Kurulum
 
 ```bash
 git clone [repo-url]
@@ -60,7 +60,7 @@ Uygulama varsayılan olarak **http://localhost:3000** adresinde açılır (`PORT
 
 ---
 
-## ⚙️ Ortam Değişkenleri (`.env`)
+## Ortam Değişkenleri (`.env`)
 
 Kök dizinde `.env` oluşturup değerleri doldurun:
 
@@ -88,7 +88,7 @@ Dropbox ve OneSignal olmadan temel sayfalar çalışabilir; dosya yükleme ve pu
 
 ---
 
-## 📈 Neler sunar?
+## Neler sunar?
 
 - Okuma alışkanlığını düzenli ve görünür kılar  
 - Grup içi rekabet ve motivasyon sağlar  
@@ -96,13 +96,13 @@ Dropbox ve OneSignal olmadan temel sayfalar çalışabilir; dosya yükleme ve pu
 
 ---
 
-## 📌 Not
+## Not
 
 Bu proje **özel kullanım** için geliştirilmiştir. Ticari kullanım için izin gereklidir.
 
 ---
 
-## 📬 İletişim
+## İletişim
 
 **alikacardev@gmail.com**
 
