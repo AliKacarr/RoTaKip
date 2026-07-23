@@ -1162,19 +1162,17 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
 
     let newImageUrl = null;
 
-    // Yeni resmi işle: Geçici klasöre kaydet -> WebP'ye dönüştür -> Dropbox'a gönder
+    // Yeni resmi işle: WebP'ye dönüştür -> Dropbox'a gönder
     try {
       const originalFileName = req.file.originalname;
       const baseFileName = path.parse(originalFileName).name;
 
-      // 1. Adım: Geçici klasöre kaydet (orijinal format)
-      const tempFileName = `${Date.now()}-${originalFileName}`;
-      const tempPath = path.join(__dirname, 'public', 'uploads', tempFileName);
-      fs.copyFileSync(req.file.path, tempPath);
+      // 1. Adım: Multer tarafından zaten public/groupImages klasörüne kaydedildi
+      const tempPath = req.file.path;
 
       // 2. Adım: WebP formatına dönüştür
       const webpFileName = `${Date.now()}-${baseFileName}.webp`;
-      const webpPath = path.join(__dirname, 'public', 'uploads', webpFileName);
+      const webpPath = path.join(__dirname, 'public', 'groupImages', webpFileName);
       const conversionSuccess = await convertToWebP(tempPath, webpPath);
 
       if (conversionSuccess) {
