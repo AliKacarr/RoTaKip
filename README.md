@@ -6,6 +6,55 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 ---
 
+## Ekran Görüntüleri
+
+### Ana Sayfa
+![Ana Sayfa](public/site_gorselleri/1-%20Ana%20sayfa.png)
+
+### Haftalık Tablo
+![Haftalık Tablo](<public/site_gorselleri/2 - Haftalık Tablo.png>)
+
+### Günlük Görevler
+![Günlük Görevler](<public/site_gorselleri/3 - Günlük görevler.png>)
+
+### Günün Hediyesi
+![Günün Hediyesi](<public/site_gorselleri/4- Günün hediyesi.png>)
+
+### Profil Ekranı
+![Profil Ekranı](<public/site_gorselleri/5- Profil Ekranı.png>)
+
+### Kutlama Mesajları
+![Kutlama Mesajları](<public/site_gorselleri/6 - Kutlama Mesajları.png>)
+
+### Liderlik Tablosu
+![Liderlik Tablosu](<public/site_gorselleri/7 - Liderlik tablosu.png>)
+
+### Aylık Takvim
+![Aylık Takvim](<public/site_gorselleri/8 - Aylık takvim.png>)
+
+### En Uzun Seri Grafiği
+![En Uzun Seri Grafiği](<public/site_gorselleri/9 -En uzun seri  grafiği.png>)
+
+### Okuma Grafiği
+![Okuma Grafiği](<public/site_gorselleri/10 - Okuma graafiği.png>)
+
+### Rahmet Penceresi
+![Rahmet Penceresi](<public/site_gorselleri/11 - Rahmet Penceresi.png>)
+
+### Videolar
+![Videolar](<public/site_gorselleri/12 - Videolar.png>)
+
+### Makaleler
+![Makaleler](<public/site_gorselleri/13 - Makaleler.png>)
+
+### Grup Ayarları
+![Grup Ayarları](<public/site_gorselleri/14- Grup Ayarları.png>)
+
+### Tercihler
+![Tercihler](<public/site_gorselleri/15 - Tercihler.png>)
+
+---
+
 ## Temel Özellikler
 
 ### Grup & Kullanıcı
