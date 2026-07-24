@@ -16,13 +16,13 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 |:--------------:|:-------------:|:-----------------:|
 | <img src="public/site_gorselleri/4-%20G%C3%BCn%C3%BCn%20hediyesi.png" width="250"> | <img src="public/site_gorselleri/5-%20Profil%20Ekran%C4%B1.png" width="250"> | <img src="public/site_gorselleri/6%20-%20Kutlama%20Mesajlar%C4%B1.png" width="250"> |
 
-| Liderlik Tablosu | Aylık Takvim | En Uzun Seri Grafiği |
+| Liderlik Panosu | Aylık Takvim | En Uzun Seri Grafiği |
 |:----------------:|:------------:|:--------------------:|
-| <img src="public/site_gorselleri/7%20-%20Liderlik%20tablosu.png" width="250"> | <img src="public/site_gorselleri/8%20-%20Ayl%C4%B1k%20takvim.png" width="250"> | <img src="public/site_gorselleri/9%20-En%20uzun%20seri%20%20grafi%C4%9Fi.png" width="250"> |
+| <img src="public/site_gorselleri/7%20-%20Liderlik%20panosu.png" width="250"> | <img src="public/site_gorselleri/8%20-%20Ayl%C4%B1k%20takvim.png" width="250"> | <img src="public/site_gorselleri/9%20-En%20uzun%20seri%20%20grafi%C4%9Fi.png" width="250"> |
 
 | Okuma Grafiği | Rahmet Penceresi | Videolar |
 |:-------------:|:----------------:|:--------:|
-| <img src="public/site_gorselleri/10%20-%20Okuma%20graafi%C4%9Fi.png" width="250"> | <img src="public/site_gorselleri/11%20-%20Rahmet%20Penceresi.png" width="250"> | <img src="public/site_gorselleri/12%20-%20Videolar.png" width="250"> |
+| <img src="public/site_gorselleri/10%20-%20Okuma%20grafi%C4%9Fi.png" width="250"> | <img src="public/site_gorselleri/11%20-%20Rahmet%20Penceresi.png" width="250"> | <img src="public/site_gorselleri/12%20-%20Videolar.png" width="250"> |
 
 | Makaleler | Grup Ayarları | Tercihler |
 |:---------:|:-------------:|:---------:|
