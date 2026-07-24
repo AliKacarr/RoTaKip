@@ -6,52 +6,27 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 ---
 
-## Ekran Görüntüleri
+## 📸 Ekran Görüntüleri
 
-### Ana Sayfa
-![Ana Sayfa](public/site_gorselleri/1-%20Ana%20sayfa.png)
+| Ana Sayfa | Haftalık Tablo | Günlük Görevler |
+|:---------:|:--------------:|:---------------:|
+| <img src="public/site_gorselleri/1-%20Ana%20sayfa.png" width="250"> | <img src="public/site_gorselleri/2%20-%20Haftal%C4%B1k%20Tablo.png" width="250"> | <img src="public/site_gorselleri/3%20-%20G%C3%BCnl%C3%BCk%20g%C3%B6revler.png" width="250"> |
 
-### Haftalık Tablo
-![Haftalık Tablo](<public/site_gorselleri/2 - Haftalık Tablo.png>)
+| Günün Hediyesi | Profil Ekranı | Kutlama Mesajları |
+|:--------------:|:-------------:|:-----------------:|
+| <img src="public/site_gorselleri/4-%20G%C3%BCn%C3%BCn%20hediyesi.png" width="250"> | <img src="public/site_gorselleri/5-%20Profil%20Ekran%C4%B1.png" width="250"> | <img src="public/site_gorselleri/6%20-%20Kutlama%20Mesajlar%C4%B1.png" width="250"> |
 
-### Günlük Görevler
-![Günlük Görevler](<public/site_gorselleri/3 - Günlük görevler.png>)
+| Liderlik Tablosu | Aylık Takvim | En Uzun Seri Grafiği |
+|:----------------:|:------------:|:--------------------:|
+| <img src="public/site_gorselleri/7%20-%20Liderlik%20tablosu.png" width="250"> | <img src="public/site_gorselleri/8%20-%20Ayl%C4%B1k%20takvim.png" width="250"> | <img src="public/site_gorselleri/9%20-En%20uzun%20seri%20%20grafi%C4%9Fi.png" width="250"> |
 
-### Günün Hediyesi
-![Günün Hediyesi](<public/site_gorselleri/4- Günün hediyesi.png>)
+| Okuma Grafiği | Rahmet Penceresi | Videolar |
+|:-------------:|:----------------:|:--------:|
+| <img src="public/site_gorselleri/10%20-%20Okuma%20graafi%C4%9Fi.png" width="250"> | <img src="public/site_gorselleri/11%20-%20Rahmet%20Penceresi.png" width="250"> | <img src="public/site_gorselleri/12%20-%20Videolar.png" width="250"> |
 
-### Profil Ekranı
-![Profil Ekranı](<public/site_gorselleri/5- Profil Ekranı.png>)
-
-### Kutlama Mesajları
-![Kutlama Mesajları](<public/site_gorselleri/6 - Kutlama Mesajları.png>)
-
-### Liderlik Tablosu
-![Liderlik Tablosu](<public/site_gorselleri/7 - Liderlik tablosu.png>)
-
-### Aylık Takvim
-![Aylık Takvim](<public/site_gorselleri/8 - Aylık takvim.png>)
-
-### En Uzun Seri Grafiği
-![En Uzun Seri Grafiği](<public/site_gorselleri/9 -En uzun seri  grafiği.png>)
-
-### Okuma Grafiği
-![Okuma Grafiği](<public/site_gorselleri/10 - Okuma graafiği.png>)
-
-### Rahmet Penceresi
-![Rahmet Penceresi](<public/site_gorselleri/11 - Rahmet Penceresi.png>)
-
-### Videolar
-![Videolar](<public/site_gorselleri/12 - Videolar.png>)
-
-### Makaleler
-![Makaleler](<public/site_gorselleri/13 - Makaleler.png>)
-
-### Grup Ayarları
-![Grup Ayarları](<public/site_gorselleri/14- Grup Ayarları.png>)
-
-### Tercihler
-![Tercihler](<public/site_gorselleri/15 - Tercihler.png>)
+| Makaleler | Grup Ayarları | Tercihler |
+|:---------:|:-------------:|:---------:|
+| <img src="public/site_gorselleri/13%20-%20Makaleler.png" width="250"> | <img src="public/site_gorselleri/14-%20Grup%20Ayarlar%C4%B1.png" width="250"> | <img src="public/site_gorselleri/15%20-%20Tercihler.png" width="250"> |
 
 ---
 
