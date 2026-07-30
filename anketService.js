@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const schedule = require('node-schedule');
 const { chromium } = require('playwright');
 
@@ -124,11 +125,17 @@ async function doldurAnket(isHeadless = true) {
         try {
             browser = await chromium.launch(launchOptions);
         } catch (launchErr) {
-            console.log("  [BİLGİ] Varsayılan Playwright chromium bulunamadı, sistem tarayıcısı deneniyor...");
+            console.log("  [BİLGİ] Playwright chromium bulunamadı. Render/Sunucuda otomatik indiriliyor...");
             try {
-                browser = await chromium.launch({ ...launchOptions, channel: 'chrome' });
-            } catch (chromeErr) {
-                browser = await chromium.launch({ ...launchOptions, channel: 'msedge' });
+                execSync('npx playwright install chromium', { stdio: 'inherit' });
+                browser = await chromium.launch(launchOptions);
+            } catch (installErr) {
+                console.log("  [BİLGİ] Sistem tarayıcısı deneniyor...");
+                try {
+                    browser = await chromium.launch({ ...launchOptions, channel: 'chrome' });
+                } catch (chromeErr) {
+                    browser = await chromium.launch({ ...launchOptions, channel: 'msedge' });
+                }
             }
         }
 
