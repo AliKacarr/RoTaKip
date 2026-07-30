@@ -21,6 +21,7 @@ const { Dropbox } = require('dropbox');
 const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
+const { doldurAnket, scheduleAnketJob } = require('./anketService');
 
 // Hash fonksiyonu
 function hashCode(str) {
@@ -3976,6 +3977,21 @@ function scheduleTokenRefresh() {
 
   return tokenJob;
 }
+
+// Otomatik anket doldurma test endpoint'i (Manuel çalıştırmak için)
+app.all('/api/admin/run-anket', async (req, res) => {
+  try {
+    const isHeadless = req.query.headless !== 'false';
+    const result = await doldurAnket(isHeadless);
+    res.json(result);
+  } catch (error) {
+    console.error("Anket manuel çalıştırma hatası:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Anket zamanlayıcısını başlat (Her gün saat 01:00 TSİ)
+scheduleAnketJob();
 
 // ==================== TEST GRUPLARI İÇİN SAHTE OKUMA VERİSİ EKLEYICI ====================
 
