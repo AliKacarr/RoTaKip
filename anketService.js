@@ -3,14 +3,10 @@ const path = require('path');
 const { execSync } = require('child_process');
 const schedule = require('node-schedule');
 const { chromium } = require('playwright');
+const { MongoClient } = require('mongodb');
+require('dotenv').config();
 
-// Log dosyaları dizini: public/form
-const FORM_DIR = path.join(__dirname, 'public', 'form');
-const GONDERIM_LOG = path.join(FORM_DIR, 'gonderim_log.txt');
-const AYNI_GUN_LOG = path.join(FORM_DIR, 'ayni_gun_log.txt');
-const MAX_KAYIT = 5;
-
-const FORM_URL = "https://forms.gle/vb5Yrdk75SBkpZ6a8";
+const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc4Ru7BjsB-sNgdw5-r9hBF-yqXuG7gA6OUJISYVjzlCByyjQ/viewform?usp=header";
 
 const DROPDOWN_VALUES = [
     "Ali Kaçar",   // 1. Ad Soyad
@@ -26,42 +22,57 @@ const DROPDOWN_VALUES = [
 const TEXTAREA_VALUE = "Medresem uygulaması çalışması, podcast dinleme ve youtube video izleme";
 
 /**
- * Gönderim log kaydını gerçekleştirir.
+ * Gönderim log kaydını gerçekleştirir (MongoDB 'anket' veritabanı 'logs' koleksiyonuna).
  */
-function gonderimKaydet() {
-    const simdi = new Date();
-
-    // Türkiye saatine göre YYYY-MM-DD ve YYYY-MM-DD HH:mm:ss formatı
-    const trStr = simdi.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" }); // "YYYY-MM-DD HH:mm:ss"
-    const [bugunStr, saatStr] = trStr.split(" ");
-    const kayitStr = `${bugunStr} ${saatStr}`;
-
-    if (!fs.existsSync(FORM_DIR)) {
-        fs.mkdirSync(FORM_DIR, { recursive: true });
+async function gonderimKaydet() {
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) {
+        console.error("  [HATA] MONGO_URI ortam değişkeni bulunamadı!");
+        return { success: false, error: "MONGO_URI tanımlı değil." };
     }
 
-    let kayitlar = [];
-    if (fs.existsSync(GONDERIM_LOG)) {
-        const content = fs.readFileSync(GONDERIM_LOG, 'utf-8');
-        kayitlar = content.split('\n').map(s => s.trim()).filter(Boolean);
+    const client = new MongoClient(mongoUri);
+
+    try {
+        await client.connect();
+        const db = client.db('anket');
+        const logsCollection = db.collection('logs');
+
+        const simdi = new Date();
+
+        // Türkiye saatine göre YYYY-MM-DD ve YYYY-MM-DD HH:mm:ss formatı
+        const trStr = simdi.toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" }); // "YYYY-MM-DD HH:mm:ss"
+        const [bugunStr, saatStr] = trStr.split(" ");
+        const kayitStr = `${bugunStr} ${saatStr}`;
+
+        const existing = await logsCollection.findOne({ date: bugunStr });
+        const ayniGunVar = !!existing;
+
+        const logDoc = {
+            createdAt: simdi,
+            dateStr: kayitStr,
+            date: bugunStr,
+            time: saatStr,
+            status: ayniGunVar ? 'warning' : 'success',
+            message: ayniGunVar ? 'Bugün için zaten kayıt vardı.' : 'Gönderim başarıyla kaydedildi.',
+            isDuplicate: ayniGunVar
+        };
+
+        await logsCollection.insertOne(logDoc);
+
+        if (ayniGunVar) {
+            console.log(`  [UYARI] Bugün (${bugunStr}) için zaten kayıt var. MongoDB logs koleksiyonuna eklendi.`);
+            return { success: true, warning: true, message: "Bugün için zaten kayıt vardı, MongoDB logs'a eklendi." };
+        }
+
+        console.log(`  [LOG] MongoDB ('anket' db -> 'logs' collection) güncellendi. Tarih: ${kayitStr}`);
+        return { success: true, message: "Gönderim MongoDB'ye başarıyla kaydedildi." };
+    } catch (err) {
+        console.error("  [HATA] MongoDB log kaydı sırasında hata oluştu:", err);
+        return { success: false, error: err.message };
+    } finally {
+        await client.close();
     }
-
-    const ayniGunVar = kayitlar.some(satir => satir.startsWith(bugunStr));
-
-    if (ayniGunVar) {
-        fs.appendFileSync(AYNI_GUN_LOG, kayitStr + '\n', 'utf-8');
-        console.log(`  [UYARI] Bugün (${bugunStr}) için zaten kayıt var. ayni_gun_log.txt güncellendi.`);
-        return { success: true, warning: true, message: "Bugün için zaten kayıt vardı, ayni_gun_log güncellendi." };
-    }
-
-    kayitlar.push(kayitStr);
-    if (kayitlar.length > MAX_KAYIT) {
-        kayitlar.shift();
-    }
-
-    fs.writeFileSync(GONDERIM_LOG, kayitlar.join('\n') + '\n', 'utf-8');
-    console.log(`  [LOG] gonderim_log.txt güncellendi. Toplam kayıt: ${kayitlar.length}`);
-    return { success: true, message: "Gönderim başarıyla kaydedildi." };
 }
 
 /**
@@ -199,14 +210,14 @@ async function doldurAnket(isHeadless = true) {
         console.log("\n" + "=".repeat(60));
         if (sent && basari) {
             console.log("  [BAŞARILI] FORM BAŞARIYLA GÖNDERİLDİ!");
-            const logRes = gonderimKaydet();
+            const logRes = await gonderimKaydet();
             await browser.close();
-            return { success: true, message: "Form başarıyla gönderildi ve loglandı." };
+            return { success: true, message: "Form başarıyla gönderildi ve loglandı.", logResult: logRes };
         } else if (basari) {
             console.log("  [BAŞARILI] Tüm seçimler yapıldı.");
-            const logRes = gonderimKaydet();
+            const logRes = await gonderimKaydet();
             await browser.close();
-            return { success: true, message: "Form seçimleri tamamlandı ve gönderildi." };
+            return { success: true, message: "Form seçimleri tamamlandı ve gönderildi.", logResult: logRes };
         } else {
             console.log("  [UYARI] Bazı seçimler yapılamadı. Log kaydedilmedi.");
             await browser.close();
