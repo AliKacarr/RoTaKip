@@ -1,24 +1,23 @@
-// whatsappService.js
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+// Puppeteer önbellek dizinini proje kök klasörüne yönlendir (.cache/puppeteer)
+const LOCAL_CACHE_DIR = path.resolve(__dirname, '.cache', 'puppeteer');
+if (!process.env.PUPPETEER_CACHE_DIR) {
+  process.env.PUPPETEER_CACHE_DIR = LOCAL_CACHE_DIR;
+}
 
 const { Client, LocalAuth, Poll } = require('whatsapp-web.js');
 const qrcodeTerminal = require('qrcode-terminal');
 const QRCode = require('qrcode');
-const fs = require('fs');
-const path = require('path');
 const schedule = require('node-schedule');
-const { execSync } = require('child_process');
 const { DEFAULT_GROUP_ID, DEFAULT_POLL_OPTIONS, getDailyPollTitle } = require('./whatsapp/pollConfig');
 
 // Session dizini yolu
 const SESSION_PATH = path.resolve(__dirname, 'whatsapp', 'session');
 if (!fs.existsSync(SESSION_PATH)) {
   fs.mkdirSync(SESSION_PATH, { recursive: true });
-}
-
-// Puppeteer önbellek dizinini proje kök klasörüne yönlendir (.cache/puppeteer)
-const LOCAL_CACHE_DIR = path.resolve(__dirname, '.cache', 'puppeteer');
-if (!process.env.PUPPETEER_CACHE_DIR) {
-  process.env.PUPPETEER_CACHE_DIR = LOCAL_CACHE_DIR;
 }
 
 // LocalAuth.logout override (dosya kilitlenmelerini atlamak için)
@@ -39,6 +38,67 @@ const state = {
 };
 
 const AUTH_FILE = path.join(SESSION_PATH, 'session_authenticated.json');
+
+/**
+ * Chrome çalıştırılabilir dosya yolunu (executablePath) otomatik bulur.
+ */
+function getChromeExecutablePath() {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  // 1. puppeteer kütüphanesinden varsayılan yolu almayı dene
+  try {
+    const puppeteer = require('puppeteer');
+    const pathFromPuppeteer = puppeteer.executablePath();
+    if (pathFromPuppeteer && fs.existsSync(pathFromPuppeteer)) {
+      return pathFromPuppeteer;
+    }
+  } catch (e) {}
+
+  // 2. Proje kökündeki .cache/puppeteer klasörünü tara
+  const baseCacheDir = process.env.PUPPETEER_CACHE_DIR || LOCAL_CACHE_DIR;
+  if (fs.existsSync(baseCacheDir)) {
+    const findBinary = (dir) => {
+      try {
+        const files = fs.readdirSync(dir, { withFileTypes: true });
+        for (const file of files) {
+          const fullPath = path.join(dir, file.name);
+          if (file.isDirectory()) {
+            const res = findBinary(fullPath);
+            if (res) return res;
+          } else if (file.isFile()) {
+            if (file.name === 'chrome' || file.name === 'chrome.exe' || file.name === 'google-chrome') {
+              return fullPath;
+            }
+          }
+        }
+      } catch (e) {}
+      return null;
+    };
+    const localBinary = findBinary(baseCacheDir);
+    if (localBinary) {
+      console.log('📌 Proje yerel önbelleğinde (.cache/puppeteer) Chrome bulundu:', localBinary);
+      return localBinary;
+    }
+  }
+
+  // 3. Linux sistem genel tarayıcı yolları
+  const systemPaths = [
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser'
+  ];
+  for (const sysPath of systemPaths) {
+    if (fs.existsSync(sysPath)) {
+      console.log('📌 Sistem seviyesinde Chrome/Chromium bulundu:', sysPath);
+      return sysPath;
+    }
+  }
+
+  return undefined;
+}
 
 /**
  * Önceden tamamlanmış ve doğrulanmış bir WhatsApp oturumu olup olmadığını kontrol eder.
@@ -64,7 +124,22 @@ function initWhatsAppClient(onlyIfSessionExists = false) {
 
   state.status = 'INITIALIZING';
   state.lastError = null;
-  console.log('🚀 WhatsApp istemcisi başlatılıyor...');
+
+  let execPath = getChromeExecutablePath();
+  if (!execPath) {
+    console.log('⚠️ Chrome bulunamadı. Otomatik `npx puppeteer browsers install chrome` çalıştırılıyor...');
+    try {
+      execSync('npx puppeteer browsers install chrome', {
+        env: { ...process.env, PUPPETEER_CACHE_DIR: process.env.PUPPETEER_CACHE_DIR },
+        stdio: 'inherit'
+      });
+      execPath = getChromeExecutablePath();
+    } catch (installErr) {
+      console.error('❌ Otomatik Chrome indirme hatası:', installErr.message);
+    }
+  }
+
+  console.log('🚀 WhatsApp istemcisi başlatılıyor... Target Chrome Executable:', execPath || 'Standart Çözümleme');
 
   const isHeadless = process.env.PUPPETEER_HEADLESS !== 'false'; // Varsayılan sunucuda (Render) true
 
@@ -75,7 +150,7 @@ function initWhatsAppClient(onlyIfSessionExists = false) {
     }),
     puppeteer: {
       headless: isHeadless,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      executablePath: execPath,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',

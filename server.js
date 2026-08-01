@@ -6,6 +6,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
+if (!process.env.PUPPETEER_CACHE_DIR) {
+  process.env.PUPPETEER_CACHE_DIR = path.resolve(__dirname, '.cache', 'puppeteer');
+}
 const fs = require('fs');
 const os = require('os'); // Added OS module
 const moment = require('moment');
