@@ -1,4 +1,5 @@
 .env
 node_modules/
 .wwebjs_cache
+.cache/
 whatsapp/session/

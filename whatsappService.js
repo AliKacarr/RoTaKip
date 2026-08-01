@@ -15,6 +15,12 @@ if (!fs.existsSync(SESSION_PATH)) {
   fs.mkdirSync(SESSION_PATH, { recursive: true });
 }
 
+// Puppeteer önbellek dizinini proje kök klasörüne yönlendir (.cache/puppeteer)
+const LOCAL_CACHE_DIR = path.resolve(__dirname, '.cache', 'puppeteer');
+if (!process.env.PUPPETEER_CACHE_DIR) {
+  process.env.PUPPETEER_CACHE_DIR = LOCAL_CACHE_DIR;
+}
+
 // LocalAuth.logout override (dosya kilitlenmelerini atlamak için)
 const { LocalAuth: _LocalAuth } = require('whatsapp-web.js');
 _LocalAuth.prototype.logout = async function () {
@@ -138,8 +144,36 @@ function initWhatsAppClient(onlyIfSessionExists = false) {
     clientInstance = null;
   });
 
-  clientInstance.initialize().catch(err => {
+  clientInstance.initialize().catch(async err => {
     console.error('❌ WhatsApp başlatma hatası:', err);
+
+    const isChromeNotFoundError = err.message && (
+      err.message.includes('Could not find Chrome') ||
+      err.message.includes('executablePath') ||
+      err.message.includes('Failed to launch the browser process')
+    );
+
+    if (isChromeNotFoundError && !clientInstance._autoInstallAttempted) {
+      console.log('🔄 Chrome tarayıcısı bulunamadı. `npx puppeteer browsers install chrome` otomatik çalıştırılıyor...');
+      try {
+        state.status = 'INITIALIZING';
+        state.lastError = 'Chrome tarayıcısı otomatik indiriliyor, lütfen bekleyin...';
+        execSync('npx puppeteer browsers install chrome', {
+          env: { ...process.env, PUPPETEER_CACHE_DIR: process.env.PUPPETEER_CACHE_DIR },
+          stdio: 'inherit'
+        });
+        console.log('✅ Chrome başarıyla indirildi. WhatsApp istemcisi yeniden başlatılıyor...');
+        clientInstance = null;
+        setTimeout(() => {
+          const newClient = initWhatsAppClient(false);
+          if (newClient) newClient._autoInstallAttempted = true;
+        }, 1000);
+        return;
+      } catch (installErr) {
+        console.error('❌ Otomatik Chrome indirme hatası:', installErr.message);
+      }
+    }
+
     state.status = 'ERROR';
     state.lastError = err.message;
   });
