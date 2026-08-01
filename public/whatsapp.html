@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Anket & QR Yönetimi | RoTaKip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #25d366;
+      --primary-hover: #1ebd59;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .header p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .badge-ready { background: rgba(37, 211, 102, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
+    .badge-waiting { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-initializing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.3); }
+    .badge-error { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+
+    .qr-box {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 16px;
+      display: inline-block;
+      margin: 16px 0;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    .qr-box img {
+      width: 240px;
+      height: 240px;
+      display: block;
+    }
+    .info-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 16px 0;
+      text-align: left;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--text-muted); }
+    .info-value { font-weight: 600; color: var(--text-main); }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #000000;
+    }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      border-top-color: var(--info);
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: none;
+    }
+    .toast-success { background: rgba(37, 211, 102, 0.2); color: #4ade80; }
+    .toast-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💬 WhatsApp Anket & QR Yönetimi</h1>
+      <p>Render (Linux) Oturum & Anket Zamanlayıcı Kontrol Paneli</p>
+    </div>
+
+    <div id="statusBadge" class="badge badge-initializing">
+      ⚡ Durum yükleniyor...
+    </div>
+
+    <div id="contentArea">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-row">
+        <span class="info-label">⏰ Otomatik Zamanlayıcı</span>
+        <span class="info-value">Her gün 09:00 (TSİ)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">📱 Oturum Saklama</span>
+        <span class="info-value">Diskte Saklanıyor</span>
+      </div>
+      <div id="lastSentRow" class="info-row" style="display:none;">
+        <span class="info-label">🗳️ Son Anket</span>
+        <span id="lastSentTime" class="info-value">-</span>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button id="sendPollBtn" class="btn btn-primary" onclick="triggerSendPoll()">
+        🗳️ Anketi Şimdi Gönder
+      </button>
+      <button class="btn btn-secondary" onclick="triggerRestart()">
+        🔄 Yeniden Başlat / QR Yenile
+      </button>
+    </div>
+
+    <div id="toastMsg" class="toast"></div>
+  </div>
+
+  <script>
+    let currentStatus = '';
+
+    async function checkStatus() {
+      try {
+        const res = await fetch('/api/admin/whatsapp/status');
+        const data = await res.json();
+        renderState(data);
+      } catch (err) {
+        console.error('Status fetch error:', err);
+      }
+    }
+
+    function renderState(data) {
+      currentStatus = data.status;
+      const badge = document.getElementById('statusBadge');
+      const content = document.getElementById('contentArea');
+      const sendBtn = document.getElementById('sendPollBtn');
+      const lastSentRow = document.getElementById('lastSentRow');
+      const lastSentTime = document.getElementById('lastSentTime');
+
+      if (data.lastPollSentAt) {
+        lastSentRow.style.display = 'flex';
+        lastSentTime.innerText = new Date(data.lastPollSentAt).toLocaleString('tr-TR');
+      }
+
+      if (data.status === 'READY') {
+        badge.className = 'badge badge-ready';
+        badge.innerHTML = '✅ WhatsApp Bağlı ve Aktif';
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = '1';
+
+        content.innerHTML = `
+          <div style="padding: 10px 0;">
+            <div style="font-size: 48px; margin-bottom: 8px;">✅</div>
+            <h3 style="font-size: 18px;">Oturum Açıldı</h3>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">
+              ${data.userInfo?.pushname ? 'Hoş geldin, <b>' + data.userInfo.pushname + '</b>' : 'Oturum aktif'}
+            </p>
+          </div>
+        `;
+      } else if (data.status === 'WAITING_FOR_QR' && data.qrDataUrl) {
+        badge.className = 'badge badge-waiting';
+        badge.innerHTML = '📲 QR Kod Bekleniyor';
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+
+        content.innerHTML = `
+          <p style="font-size: 14px; color: var(--text-muted);">
+            Lütfen WhatsApp uygulamanızdan <b>Bağlı Cihazlar</b> bölümüne girip bu QR kodunu okutun:
+          </p>
+          <div class="qr-box">
+            <img src="${data.qrDataUrl}" alt="WhatsApp QR Code" />
+          </div>
+        `;
+      } else if (data.status === 'INITIALIZING') {
+        badge.className = 'badge badge-initializing';
+        badge.innerHTML = '🚀 WhatsApp Başlatılıyor...';
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        content.innerHTML = '<div class="spinner"></div><p style="font-size: 13px; color: var(--text-muted);">İstemci hazırlanıyor...</p>';
+      } else {
+        badge.className = 'badge badge-error';
+        badge.innerHTML = '⚠️ Bağlantı Yok (' + (data.status || 'KAPALI') + ')';
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        content.innerHTML = `
+          <p style="font-size: 14px; color: var(--text-muted); margin: 15px 0;">
+            ${data.lastError ? 'Hata: ' + data.lastError : 'Oturum kapalı. Yeniden başlatarak QR üretebilirsiniz.'}
+          </p>
+        `;
+      }
+    }
+
+    async function triggerSendPoll() {
+      const btn = document.getElementById('sendPollBtn');
+      btn.disabled = true;
+      btn.innerHTML = '⌛ Gönderiliyor...';
+
+      try {
+        const res = await fetch('/api/admin/whatsapp/send-poll', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('🗳️ Anket başarıyla gönderildi!', 'success');
+        } else {
+          showToast('❌ Hata: ' + (data.message || data.error), 'error');
+        }
+      } catch (err) {
+        showToast('❌ İletişim hatası oluştu', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🗳️ Anketi Şimdi Gönder';
+        checkStatus();
+      }
+    }
+
+    async function triggerRestart() {
+      if (!confirm('WhatsApp oturumu yeniden başlatılacak. Emin misiniz?')) return;
+      showToast('🔄 Yeniden başlatılıyor...', 'success');
+      try {
+        await fetch('/api/admin/whatsapp/restart', { method: 'POST' });
+        setTimeout(checkStatus, 2000);
+      } catch (err) {
+        showToast('❌ Yeniden başlatma hatası', 'error');
+      }
+    }
+
+    function showToast(msg, type) {
+      const toast = document.getElementById('toastMsg');
+      toast.innerText = msg;
+      toast.className = 'toast toast-' + type;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+
+    // Her 3 saniyede bir durumu güncelle
+    checkStatus();
+    setInterval(checkStatus, 3000);
+  </script>
+</body>
+</html>

@@ -22,6 +22,7 @@ const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
 const { doldurAnket, scheduleAnketJob } = require('./anketService');
+const { initWhatsAppClient, restartWhatsAppClient, sendWhatsAppPoll, scheduleWhatsAppPollJob, getWhatsAppStatus, getWhatsAppGroups } = require('./whatsappService');
 
 // Hash fonksiyonu
 function hashCode(str) {
@@ -3993,6 +3994,60 @@ app.all('/api/admin/run-anket', async (req, res) => {
 // Anket zamanlayıcısını başlat (Her gün saat 01:00 TSİ)
 scheduleAnketJob();
 
+// ==================== WHATSAPP ANKET VE WEB QR YÖNETİMİ ====================
+
+// WhatsApp istemcisini ve her gün 09:00 (TSİ) zamanlayıcısını başlat
+try {
+  initWhatsAppClient(true); // Sadece önceden saklanmış oturum varsa başlatır; yoksa /admin/whatsapp açılınca üretir
+  scheduleWhatsAppPollJob();
+} catch (wpInitErr) {
+  console.error("⚠️ WhatsApp servisi başlatılırken hata:", wpInitErr.message);
+}
+
+// 1. WhatsApp Durum JSON Endpoint'i
+app.get('/api/admin/whatsapp/status', (req, res) => {
+  res.json(getWhatsAppStatus());
+});
+
+// 1b. WhatsApp Kullanıcının Gruplarını Listeleme Endpoint'i
+app.get('/api/admin/whatsapp/groups', async (req, res) => {
+  try {
+    const groups = await getWhatsAppGroups();
+    res.json({ success: true, count: groups.length, groups });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 2. WhatsApp Manuel Anket Gönderme Endpoint'i
+app.all('/api/admin/whatsapp/send-poll', async (req, res) => {
+  try {
+    const groupId = req.query.groupId || req.body?.groupId;
+    const pollTitle = req.query.pollTitle || req.body?.pollTitle;
+    const result = await sendWhatsAppPoll({ groupId, pollTitleCustom: pollTitle });
+    res.json(result);
+  } catch (error) {
+    console.error("WhatsApp manuel anket hatası:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 3. WhatsApp Oturumu Yeniden Başlatma / QR Kod Yenileme Endpoint'i
+app.post('/api/admin/whatsapp/restart', async (req, res) => {
+  try {
+    await restartWhatsAppClient();
+    res.json({ success: true, message: 'WhatsApp istemcisi yeniden başlatılıyor...' });
+  } catch (error) {
+    console.error("WhatsApp restart hatası:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 4. WhatsApp Web QR ve Yönetim Paneli Arayüzü
+app.get('/admin/whatsapp', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'whatsapp.html'));
+});
+
 // ==================== TEST GRUPLARI İÇİN SAHTE OKUMA VERİSİ EKLEYICI ====================
 
 // Test grubu ID'leri
@@ -4047,9 +4102,9 @@ async function seedFakeReadingDataForTestGroups() {
             continue;
           }
 
-          // %85 ihtimalle "okudum", %15 ihtimalle "okumadım"
+          // %90 ihtimalle "okudum", %10 ihtimalle "okumadım"
           const rand = Math.random();
-          const status = rand < 0.85 ? 'okudum' : 'okumadım';
+          const status = rand < 0.90 ? 'okudum' : 'okumadım';
           await readingStatuses.create({
             userId,
             date: yesterday,
