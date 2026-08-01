@@ -3997,12 +3997,12 @@ scheduleAnketJob();
 // ==================== WHATSAPP ANKET VE WEB QR YÖNETİMİ ====================
 
 // WhatsApp istemcisini ve her gün 09:00 (TSİ) zamanlayıcısını başlat
-try {
+/*try {
   initWhatsAppClient(true); // Sadece önceden saklanmış oturum varsa başlatır; yoksa /admin/whatsapp açılınca üretir
   scheduleWhatsAppPollJob();
 } catch (wpInitErr) {
   console.error("⚠️ WhatsApp servisi başlatılırken hata:", wpInitErr.message);
-}
+}*/
 
 // 1. WhatsApp Durum JSON Endpoint'i
 app.get('/api/admin/whatsapp/status', (req, res) => {

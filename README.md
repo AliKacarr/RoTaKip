@@ -1,5 +1,10 @@
 # RoTaKip – Okuma Takip Sistemi
 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-4B0082?logo=render&logoColor=white)](https://rotakip.onrender.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-v18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+
 Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek ve grup motivasyonunu artırmak için geliştirilmiş modern bir uygulaması.
 
 🌐 [https://rotakip.onrender.com/](https://rotakip.onrender.com/)
@@ -98,7 +103,6 @@ BACKUP_DB_NAME=backups
 YOUTUBE_API_KEY=
 
 # Dropbox — yükleme için erişim jetonu; yenileme için uygulama anahtarları
-DROPBOX_ACCESS_TOKEN=
 DROPBOX_APP_KEY=
 DROPBOX_APP_SECRET=
 DROPBOX_REFRESH_TOKEN=
@@ -112,22 +116,19 @@ Dropbox ve OneSignal olmadan temel sayfalar çalışabilir; dosya yükleme ve pu
 
 ---
 
-## Neler sunar?
+## Geliştirici
 
-- Okuma alışkanlığını düzenli ve görünür kılar  
-- Grup içi rekabet ve motivasyon sağlar  
-- İstatistiklerle gelişimi takip ettirir  
+**Ali Kaçar**
+
+[![Instagram](https://img.shields.io/badge/Instagram-E4405F?logo=instagram&logoColor=white)](https://www.instagram.com/alikacar23/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/alikacar23/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white)](https://github.com/AliKacarr)
+[![YouTube](https://img.shields.io/badge/YouTube-FF0000?logo=youtube&logoColor=white)](https://www.youtube.com/@alikacardev)
+
+[alikacardev@gmail.com](mailto:alikacardev@gmail.com)
 
 ---
 
-## Not
+## Lisans
 
-Bu proje **özel kullanım** için geliştirilmiştir. Ticari kullanım için izin gereklidir.
-
----
-
-## İletişim
-
-**alikacardev@gmail.com**
-
-Teknik konular için uygunsa GitHub üzerinden issue açılabilir.
+Bu proje [MIT Lisansı](LICENSE.txt) ile lisanslanmıştır.
