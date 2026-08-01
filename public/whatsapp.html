@@ -32,7 +32,7 @@
     }
     .container {
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       background: var(--card-bg);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -43,7 +43,7 @@
       text-align: center;
     }
     .header {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .header h1 {
       font-size: 24px;
@@ -66,7 +66,7 @@
       border-radius: 20px;
       font-size: 14px;
       font-weight: 600;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .badge-ready { background: rgba(37, 211, 102, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
     .badge-waiting { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
@@ -82,10 +82,46 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     }
     .qr-box img {
-      width: 240px;
-      height: 240px;
+      width: 220px;
+      height: 220px;
       display: block;
     }
+
+    .pairing-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px dashed var(--info);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 16px 0;
+      text-align: center;
+    }
+    .pairing-code {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #60a5fa;
+      margin: 10px 0;
+      background: rgba(59, 130, 246, 0.1);
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    .phone-input-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .phone-input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: rgba(15, 23, 42, 0.8);
+      color: #fff;
+      font-size: 14px;
+    }
+    .phone-input:focus { outline: none; border-color: var(--info); }
+
     .info-card {
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--border-color);
@@ -109,7 +145,7 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin-top: 24px;
+      margin-top: 20px;
     }
     .btn {
       width: 100%;
@@ -125,10 +161,7 @@
       justify-content: center;
       gap: 8px;
     }
-    .btn-primary {
-      background: var(--primary);
-      color: #000000;
-    }
+    .btn-primary { background: var(--primary); color: #000000; }
     .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
     .btn-secondary {
       background: rgba(255, 255, 255, 0.08);
@@ -136,6 +169,8 @@
       border: 1px solid var(--border-color);
     }
     .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+    .btn-info { background: var(--info); color: #fff; }
+    .btn-info:hover { opacity: 0.9; }
 
     .spinner {
       width: 40px;
@@ -163,7 +198,7 @@
   <div class="container">
     <div class="header">
       <h1>💬 WhatsApp Anket & QR Yönetimi</h1>
-      <p>Render (Linux) Oturum & Anket Zamanlayıcı Kontrol Paneli</p>
+      <p>Render (Linux) Baileys Ultra-Hafif Oturum Paneli (25MB RAM)</p>
     </div>
 
     <div id="statusBadge" class="badge badge-initializing">
@@ -176,12 +211,12 @@
 
     <div class="info-card">
       <div class="info-row">
-        <span class="info-label">⏰ Otomatik Zamanlayıcı</span>
-        <span class="info-value">Her gün 09:00 (TSİ)</span>
+        <span class="info-label">⚡ Çalışma Modu</span>
+        <span class="info-value">Baileys Native (25MB RAM)</span>
       </div>
       <div class="info-row">
-        <span class="info-label">📱 Oturum Saklama</span>
-        <span class="info-value">Diskte Saklanıyor</span>
+        <span class="info-label">⏰ Otomatik Zamanlayıcı</span>
+        <span class="info-value">Her gün 09:00 (TSİ)</span>
       </div>
       <div id="lastSentRow" class="info-row" style="display:none;">
         <span class="info-label">🗳️ Son Anket</span>
@@ -193,17 +228,9 @@
       <button id="sendPollBtn" class="btn btn-primary" onclick="triggerSendPoll()">
         🗳️ Anketi Şimdi Gönder
       </button>
-      <button class="btn btn-secondary" onclick="fetchLiveScreenshot()">
-        📷 Sunucu Canlı Tarayıcı Ekranını Göster (Screenshot)
-      </button>
       <button class="btn btn-secondary" onclick="triggerRestart()">
-        🔄 Yeniden Başlat / QR Yenile
+        🔄 Oturumu Sıfırla / Yeniden Başlat
       </button>
-    </div>
-
-    <div id="screenshotBox" style="display:none; margin-top: 16px; text-align: center;">
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">🖥️ Sunucu Üzerindeki Canlı WhatsApp Web Ekranı:</p>
-      <img id="liveScreenshotImg" style="width: 100%; max-width: 480px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.4);" alt="Live Screenshot" />
     </div>
 
     <div id="toastMsg" class="toast"></div>
@@ -214,7 +241,7 @@
 
     async function checkStatus() {
       try {
-        const res = await fetch('/api/admin/whatsapp/status');
+        const res = await fetch('/api/admin/whatsapp/status?autoStart=true');
         const data = await res.json();
         renderState(data);
       } catch (err) {
@@ -252,16 +279,25 @@
         `;
       } else if (data.status === 'WAITING_FOR_QR' && data.qrDataUrl) {
         badge.className = 'badge badge-waiting';
-        badge.innerHTML = '📲 QR Kod Bekleniyor';
+        badge.innerHTML = '📲 QR Veya Kod İle Giriş Bekleniyor';
         sendBtn.disabled = true;
         sendBtn.style.opacity = '0.5';
 
         content.innerHTML = `
-          <p style="font-size: 14px; color: var(--text-muted);">
-            Lütfen WhatsApp uygulamanızdan <b>Bağlı Cihazlar</b> bölümüne girip bu QR kodunu okutun:
+          <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 8px;">
+            <b>Yöntem 1:</b> WhatsApp -> <b>Bağlı Cihazlar</b> -> QR Kod Okutun:
           </p>
           <div class="qr-box">
             <img src="${data.qrDataUrl}" alt="WhatsApp QR Code" />
+          </div>
+
+          <div class="pairing-box">
+            <p style="font-size: 13px; font-weight: 600; color: #fff;"><b>Yöntem 2:</b> Telefon Numarası İle (QR'sız 8-Haneli Kod)</p>
+            <div class="phone-input-group">
+              <input type="text" id="phoneNumInput" class="phone-input" placeholder="905xxxxxxxxx" />
+              <button class="btn btn-info" style="width: auto; padding: 0 16px;" onclick="getPairingCode()">Kod Al</button>
+            </div>
+            <div id="pairingCodeResult" style="display:none;"></div>
           </div>
         `;
       } else if (data.status === 'INITIALIZING') {
@@ -269,7 +305,7 @@
         badge.innerHTML = '🚀 WhatsApp Başlatılıyor...';
         sendBtn.disabled = true;
         sendBtn.style.opacity = '0.5';
-        content.innerHTML = '<div class="spinner"></div><p style="font-size: 13px; color: var(--text-muted);">İstemci hazırlanıyor...</p>';
+        content.innerHTML = '<div class="spinner"></div><p style="font-size: 13px; color: var(--text-muted);">Baileys Engine hazırlanıyor...</p>';
       } else {
         badge.className = 'badge badge-error';
         badge.innerHTML = '⚠️ Bağlantı Yok (' + (data.status || 'KAPALI') + ')';
@@ -277,9 +313,44 @@
         sendBtn.style.opacity = '0.5';
         content.innerHTML = `
           <p style="font-size: 14px; color: var(--text-muted); margin: 15px 0;">
-            ${data.lastError ? 'Hata: ' + data.lastError : 'Oturum kapalı. Yeniden başlatarak QR üretebilirsiniz.'}
+            ${data.lastError ? 'Hata: ' + data.lastError : 'Oturum kapalı. Yeniden başlatarak bağlantı kurabilirsiniz.'}
           </p>
         `;
+      }
+    }
+
+    async function getPairingCode() {
+      const input = document.getElementById('phoneNumInput');
+      const resDiv = document.getElementById('pairingCodeResult');
+      const num = input?.value?.trim();
+
+      if (!num) {
+        showToast('Lütfen telefon numaranızı girin (örn: 905551234567)', 'error');
+        return;
+      }
+
+      showToast('⌛ Eşleşme kodu isteniyor...', 'success');
+      try {
+        const res = await fetch('/api/admin/whatsapp/pairing-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber: num })
+        });
+        const data = await res.json();
+        if (data.success && data.code) {
+          resDiv.style.display = 'block';
+          resDiv.innerHTML = `
+            <div class="pairing-code">${data.code}</div>
+            <p style="font-size: 12px; color: var(--text-muted);">
+              Telefondan <b>WhatsApp -> Bağlı Cihazlar -> Telefon Numarası İle Bağlan</b> kısmına bu 8 haneli kodu girin.
+            </p>
+          `;
+          showToast('✅ Kod üretildi! WhatsApp uygulamasından koda girin.', 'success');
+        } else {
+          showToast('❌ Hata: ' + (data.message || data.error), 'error');
+        }
+      } catch (err) {
+        showToast('❌ İletişim hatası oluştu', 'error');
       }
     }
 
@@ -306,31 +377,13 @@
     }
 
     async function triggerRestart() {
-      if (!confirm('WhatsApp oturumu yeniden başlatılacak. Emin misiniz?')) return;
+      if (!confirm('WhatsApp oturumu sıfırlanıp yeniden başlatılacak. Emin misiniz?')) return;
       showToast('🔄 Yeniden başlatılıyor...', 'success');
       try {
         await fetch('/api/admin/whatsapp/restart', { method: 'POST' });
         setTimeout(checkStatus, 2000);
       } catch (err) {
         showToast('❌ Yeniden başlatma hatası', 'error');
-      }
-    }
-
-    async function fetchLiveScreenshot() {
-      showToast('📷 Canlı tarayıcı görüntüsü alınıyor...', 'success');
-      try {
-        const res = await fetch('/api/admin/whatsapp/screenshot');
-        const data = await res.json();
-        if (data.success && data.screenshotUrl) {
-          const box = document.getElementById('screenshotBox');
-          const img = document.getElementById('liveScreenshotImg');
-          img.src = data.screenshotUrl;
-          box.style.display = 'block';
-        } else {
-          showToast('⚠️ ' + (data.message || 'Ekran görüntüsü çekilemedi'), 'error');
-        }
-      } catch (err) {
-        showToast('❌ Ekran görüntüsü alma hatası', 'error');
       }
     }
 

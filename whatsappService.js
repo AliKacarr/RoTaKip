@@ -1,32 +1,38 @@
+// whatsappService.js - Baileys Ultra Light Engine (No Chrome, 25MB RAM)
+
+const pino = require('pino');
+const QRCode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
-
-// Puppeteer önbellek dizinini proje kök klasörüne yönlendir (.cache/puppeteer)
-const LOCAL_CACHE_DIR = path.resolve(__dirname, '.cache', 'puppeteer');
-if (!process.env.PUPPETEER_CACHE_DIR) {
-  process.env.PUPPETEER_CACHE_DIR = LOCAL_CACHE_DIR;
-}
-
-const { Client, LocalAuth, Poll } = require('whatsapp-web.js');
-const qrcodeTerminal = require('qrcode-terminal');
-const QRCode = require('qrcode');
 const schedule = require('node-schedule');
 const { DEFAULT_GROUP_ID, DEFAULT_POLL_OPTIONS, getDailyPollTitle } = require('./whatsapp/pollConfig');
 
-// Session dizini yolu
-const SESSION_PATH = path.resolve(__dirname, 'whatsapp', 'session');
-if (!fs.existsSync(SESSION_PATH)) {
-  fs.mkdirSync(SESSION_PATH, { recursive: true });
+// Baileys modülü dinamik yükleme (ESM Uyumlu)
+let makeWASocket = null;
+let useMultiFileAuthState = null;
+let DisconnectReason = null;
+let fetchLatestWaWebVersion = null;
+
+async function loadBaileys() {
+  if (!makeWASocket) {
+    const baileys = await import('@whiskeysockets/baileys');
+    makeWASocket = baileys.default || baileys.makeWASocket;
+    useMultiFileAuthState = baileys.useMultiFileAuthState;
+    DisconnectReason = baileys.DisconnectReason;
+    fetchLatestWaWebVersion = baileys.fetchLatestWaWebVersion;
+  }
 }
 
-// LocalAuth.logout override (dosya kilitlenmelerini atlamak için)
-const { LocalAuth: _LocalAuth } = require('whatsapp-web.js');
-_LocalAuth.prototype.logout = async function () {
-  console.log('⚠️ Logout atlandı; session dizini silinmeyecek.');
-};
+// Session ve kimlik doğrulama dizinleri
+const SESSION_BASE = path.resolve(__dirname, 'whatsapp', 'session');
+const BAILEYS_AUTH_PATH = path.join(SESSION_BASE, 'baileys_auth');
+const AUTH_FILE = path.join(SESSION_BASE, 'session_authenticated.json');
 
-let clientInstance = null;
+if (!fs.existsSync(BAILEYS_AUTH_PATH)) {
+  fs.mkdirSync(BAILEYS_AUTH_PATH, { recursive: true });
+}
+
+let sock = null;
 
 // Servis Durumu
 const state = {
@@ -37,69 +43,6 @@ const state = {
   lastError: null
 };
 
-const AUTH_FILE = path.join(SESSION_PATH, 'session_authenticated.json');
-
-/**
- * Chrome çalıştırılabilir dosya yolunu (executablePath) otomatik bulur.
- */
-function getChromeExecutablePath() {
-  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
-    return process.env.PUPPETEER_EXECUTABLE_PATH;
-  }
-
-  // 1. puppeteer kütüphanesinden varsayılan yolu almayı dene
-  try {
-    const puppeteer = require('puppeteer');
-    const pathFromPuppeteer = puppeteer.executablePath();
-    if (pathFromPuppeteer && fs.existsSync(pathFromPuppeteer)) {
-      return pathFromPuppeteer;
-    }
-  } catch (e) {}
-
-  // 2. Proje kökündeki .cache/puppeteer klasörünü tara
-  const baseCacheDir = process.env.PUPPETEER_CACHE_DIR || LOCAL_CACHE_DIR;
-  if (fs.existsSync(baseCacheDir)) {
-    const findBinary = (dir) => {
-      try {
-        const files = fs.readdirSync(dir, { withFileTypes: true });
-        for (const file of files) {
-          const fullPath = path.join(dir, file.name);
-          if (file.isDirectory()) {
-            const res = findBinary(fullPath);
-            if (res) return res;
-          } else if (file.isFile()) {
-            if (file.name === 'chrome' || file.name === 'chrome.exe' || file.name === 'google-chrome') {
-              return fullPath;
-            }
-          }
-        }
-      } catch (e) {}
-      return null;
-    };
-    const localBinary = findBinary(baseCacheDir);
-    if (localBinary) {
-      console.log('📌 Proje yerel önbelleğinde (.cache/puppeteer) Chrome bulundu:', localBinary);
-      return localBinary;
-    }
-  }
-
-  // 3. Linux sistem genel tarayıcı yolları
-  const systemPaths = [
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser'
-  ];
-  for (const sysPath of systemPaths) {
-    if (fs.existsSync(sysPath)) {
-      console.log('📌 Sistem seviyesinde Chrome/Chromium bulundu:', sysPath);
-      return sysPath;
-    }
-  }
-
-  return undefined;
-}
-
 /**
  * Önceden tamamlanmış ve doğrulanmış bir WhatsApp oturumu olup olmadığını kontrol eder.
  */
@@ -108,12 +51,11 @@ function hasExistingSession() {
 }
 
 /**
- * WhatsApp İstemcisini Başlatır
- * @param {boolean} onlyIfSessionExists True verilirse sadece önceden saklanmış oturum varsa başlatır (Talep üzerine QR üretmek için).
+ * WhatsApp İstemcisini Başlatır (Baileys Engine)
  */
-function initWhatsAppClient(onlyIfSessionExists = false) {
-  if (clientInstance && (state.status === 'READY' || state.status === 'WAITING_FOR_QR' || state.status === 'INITIALIZING')) {
-    return clientInstance;
+async function initWhatsAppClient(onlyIfSessionExists = false) {
+  if (sock && (state.status === 'READY' || state.status === 'WAITING_FOR_QR' || state.status === 'INITIALIZING')) {
+    return sock;
   }
 
   if (onlyIfSessionExists && !hasExistingSession()) {
@@ -124,159 +66,114 @@ function initWhatsAppClient(onlyIfSessionExists = false) {
 
   state.status = 'INITIALIZING';
   state.lastError = null;
+  console.log('🚀 WhatsApp Baileys istemcisi başlatılıyor (Süper hafif mod - Chrome gerektirmez)...');
 
-  let execPath = getChromeExecutablePath();
-  if (!execPath) {
-    console.log('⚠️ Chrome bulunamadı. Otomatik `npx puppeteer browsers install chrome` çalıştırılıyor...');
-    try {
-      execSync('npx puppeteer browsers install chrome', {
-        env: { ...process.env, PUPPETEER_CACHE_DIR: process.env.PUPPETEER_CACHE_DIR },
-        stdio: 'inherit'
-      });
-      execPath = getChromeExecutablePath();
-    } catch (installErr) {
-      console.error('❌ Otomatik Chrome indirme hatası:', installErr.message);
-    }
-  }
+  try {
+    await loadBaileys();
 
-  console.log('🚀 WhatsApp istemcisi başlatılıyor... Target Chrome Executable:', execPath || 'Standart Çözümleme');
+    const { state: authState, saveCreds } = await useMultiFileAuthState(BAILEYS_AUTH_PATH);
+    const { version } = await fetchLatestWaWebVersion().catch(() => ({ version: [2, 3000, 1015901307] }));
 
-  const isHeadless = process.env.PUPPETEER_HEADLESS !== 'false'; // Varsayılan sunucuda (Render) true
+    sock = makeWASocket({
+      version,
+      auth: authState,
+      logger: pino({ level: 'silent' }),
+      printQRInTerminal: false,
+      browser: ['RoTaKip', 'Chrome', '1.0.0']
+    });
 
-  clientInstance = new Client({
-    authStrategy: new LocalAuth({
-      dataPath: SESSION_PATH,
-      clientId: 'poll-bot'
-    }),
-    webVersionCache: {
-      type: 'remote',
-      remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1014588847-alpha.html'
-    },
-    puppeteer: {
-      headless: isHeadless,
-      executablePath: execPath,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-blink-features=AutomationControlled',
-        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
-      ]
-    }
-  });
+    sock.ev.on('creds.update', saveCreds);
 
-  // 1) QR Kodu Üretildiğinde
-  clientInstance.on('qr', async qr => {
-    state.status = 'WAITING_FOR_QR';
-    try {
-      state.qrDataUrl = await QRCode.toDataURL(qr, { margin: 2, scale: 8 });
-      console.log('📲 Yeni WhatsApp QR Kod üretildi. Web arayüzünden (/admin/whatsapp) okutabilirsiniz.');
-    } catch (err) {
-      console.error('QR Kod görseli oluşturma hatası:', err);
-    }
-  });
+    sock.ev.on('connection.update', async (update) => {
+      const { connection, lastDisconnect, qr } = update;
 
-  // 2) Oturum Doğrulandığında
-  clientInstance.on('authenticated', () => {
-    console.log('🔐 WhatsApp oturumu doğrulandı!');
-    state.status = 'AUTHENTICATED';
-    state.qrDataUrl = null;
-  });
+      if (qr) {
+        state.status = 'WAITING_FOR_QR';
+        try {
+          state.qrDataUrl = await QRCode.toDataURL(qr, { margin: 2, scale: 8 });
+          console.log('📲 Baileys WhatsApp QR Kod üretildi! /admin/whatsapp adresinden okutabilirsiniz.');
+        } catch (e) {
+          console.error('QR DataURL hatası:', e);
+        }
+      }
 
-  // 3) İstemci Hazır Olduğunda
-  clientInstance.on('ready', async () => {
-    state.status = 'READY';
-    state.qrDataUrl = null;
-    console.log('✅ WhatsApp İstemcisi Hazır!');
+      if (connection === 'close') {
+        const statusCode = lastDisconnect?.error?.output?.statusCode;
+        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+        console.warn(`⚠️ WhatsApp bağlantısı kapandı (Kod: ${statusCode}). Yeniden bağlanılacak mı? ${shouldReconnect}`);
 
-    try {
-      if (clientInstance.info) {
-        const me = clientInstance.info.me;
-        const pushname = clientInstance.info.pushname;
+        state.status = 'DISCONNECTED';
+        state.qrDataUrl = null;
+
+        if (shouldReconnect) {
+          setTimeout(() => {
+            initWhatsAppClient(false);
+          }, 3000);
+        } else {
+          state.status = 'ERROR';
+          state.lastError = 'Oturum sonlandırıldı. Lütfen QR kodu tekrar okutun.';
+        }
+      } else if (connection === 'open') {
+        state.status = 'READY';
+        state.qrDataUrl = null;
         state.userInfo = {
-          id: me?._serialized || me?.user,
-          user: me?.user,
-          pushname: pushname || 'Kullanıcı'
+          id: sock.user?.id || 'Bağlı',
+          pushname: sock.user?.name || sock.user?.notify || 'RoTaKip Bot'
         };
+        console.log('✅ WhatsApp Baileys İstemcisi Hazır! Bağlı Kullanıcı:', state.userInfo.pushname);
+        try {
+          fs.writeFileSync(AUTH_FILE, JSON.stringify(state.userInfo, null, 2), 'utf-8');
+        } catch (e) {}
       }
-      fs.writeFileSync(AUTH_FILE, JSON.stringify(state.userInfo || { authenticated: true }, null, 2), 'utf-8');
-    } catch (e) {
-      console.warn('⚠️ Oturum doğrulama dosyası kaydedilirken hata:', e.message);
-    }
-  });
+    });
 
-  // 4) Hata veya Bağlantı Kopması
-  clientInstance.on('auth_failure', msg => {
-    console.error('❌ WhatsApp Doğrulama Hatası:', msg);
-    state.status = 'ERROR';
-    state.lastError = `Auth Failure: ${msg}`;
-    state.qrDataUrl = null;
-  });
-
-  clientInstance.on('disconnected', reason => {
-    console.warn('⚠️ WhatsApp bağlantısı kesildi:', reason);
-    state.status = 'DISCONNECTED';
-    state.qrDataUrl = null;
-    clientInstance = null;
-  });
-
-  clientInstance.initialize().catch(async err => {
-    console.error('❌ WhatsApp başlatma hatası:', err);
-
-    const isChromeNotFoundError = err.message && (
-      err.message.includes('Could not find Chrome') ||
-      err.message.includes('executablePath') ||
-      err.message.includes('Failed to launch the browser process')
-    );
-
-    if (isChromeNotFoundError && !clientInstance._autoInstallAttempted) {
-      console.log('🔄 Chrome tarayıcısı bulunamadı. `npx puppeteer browsers install chrome` otomatik çalıştırılıyor...');
-      try {
-        state.status = 'INITIALIZING';
-        state.lastError = 'Chrome tarayıcısı otomatik indiriliyor, lütfen bekleyin...';
-        execSync('npx puppeteer browsers install chrome', {
-          env: { ...process.env, PUPPETEER_CACHE_DIR: process.env.PUPPETEER_CACHE_DIR },
-          stdio: 'inherit'
-        });
-        console.log('✅ Chrome başarıyla indirildi. WhatsApp istemcisi yeniden başlatılıyor...');
-        clientInstance = null;
-        setTimeout(() => {
-          const newClient = initWhatsAppClient(false);
-          if (newClient) newClient._autoInstallAttempted = true;
-        }, 1000);
-        return;
-      } catch (installErr) {
-        console.error('❌ Otomatik Chrome indirme hatası:', installErr.message);
-      }
-    }
-
+    return sock;
+  } catch (err) {
+    console.error('❌ Baileys başlatma hatası:', err);
     state.status = 'ERROR';
     state.lastError = err.message;
-  });
-
-  return clientInstance;
+    return null;
+  }
 }
 
 /**
- * Oturumu Yeniden Başlatır (QR Kodu Yenilemek İçin)
+ * 8 Haneli Eşleşme Kodu İster (Telefon Numarası ile QR'sız Giriş)
+ */
+async function requestPairingCode(phoneNumber) {
+  await loadBaileys();
+
+  if (!sock || state.status === 'DISCONNECTED' || state.status === 'ERROR') {
+    await initWhatsAppClient(false);
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  if (!sock) throw new Error('İstemci başlatılamadı.');
+
+  const cleanedNumber = phoneNumber.replace(/\D/g, '');
+  if (!cleanedNumber || cleanedNumber.length < 10) {
+    throw new Error('Geçerli bir telefon numarası girin (örn: 905xxxxxxxxx).');
+  }
+
+  console.log(`📲 Telefon Numarası ile Eşleşme Kodu isteniyor (${cleanedNumber})...`);
+  const code = await sock.requestPairingCode(cleanedNumber);
+  return code;
+}
+
+/**
+ * Oturumu Yeniden Başlatır (Session Sıfırlama)
  */
 async function restartWhatsAppClient() {
-  console.log('🔄 WhatsApp istemcisi yeniden başlatılıyor...');
+  console.log('🔄 WhatsApp Baileys istemcisi sıfırlanıyor...');
   if (fs.existsSync(AUTH_FILE)) {
     try { fs.unlinkSync(AUTH_FILE); } catch (e) {}
   }
-  if (clientInstance) {
+  if (fs.existsSync(BAILEYS_AUTH_PATH)) {
+    try { fs.rmSync(BAILEYS_AUTH_PATH, { recursive: true, force: true }); } catch (e) {}
+  }
+  if (sock) {
     try {
-      await clientInstance.destroy();
-    } catch (e) {
-      console.warn('Destruction uyarısı:', e.message);
-    }
-    clientInstance = null;
+      sock.end(new Error('Manual Restart'));
+    } catch (e) {}
+    sock = null;
   }
   state.status = 'DISCONNECTED';
   state.qrDataUrl = null;
@@ -287,7 +184,7 @@ async function restartWhatsAppClient() {
 }
 
 /**
- * Günlük Anketi Gönderir
+ * Günlük Anketi Gönderir (Baileys Native Poll)
  */
 async function sendWhatsAppPoll(options = {}) {
   const {
@@ -295,26 +192,28 @@ async function sendWhatsAppPoll(options = {}) {
     pollTitleCustom = null
   } = options;
 
-  if (!clientInstance || state.status !== 'READY') {
+  if (!sock || state.status !== 'READY') {
     return {
       success: false,
       status: state.status,
-      message: 'WhatsApp istemcisi bağlı veya hazır değil! Lütfen önce QR kodu okutun.'
+      message: 'WhatsApp istemcisi bağlı veya hazır değil! Lütfen önce QR kodu veya eşleşme kodunu okutun.'
     };
   }
 
   const pollTitle = getDailyPollTitle(pollTitleCustom);
-  const poll = new Poll(
-    pollTitle,
-    DEFAULT_POLL_OPTIONS,
-    false // Tekli seçim
-  );
 
   try {
-    const sent = await clientInstance.sendMessage(groupId, poll);
-    const messageId = sent?.id?._serialized || 'GÖNDERİLDİ';
+    const sent = await sock.sendMessage(groupId, {
+      poll: {
+        name: pollTitle,
+        values: DEFAULT_POLL_OPTIONS,
+        selectableCount: 1
+      }
+    });
+
+    const messageId = sent?.key?.id || 'GÖNDERİLDİ';
     state.lastPollSentAt = new Date().toISOString();
-    console.log(`🗳️ WhatsApp Anketi gönderildi (${pollTitle}) [Grup: ${groupId}] -> MsgId: ${messageId}`);
+    console.log(`🗳️ Baileys WhatsApp Anketi gönderildi (${pollTitle}) [Grup: ${groupId}] -> MsgId: ${messageId}`);
     return {
       success: true,
       messageId,
@@ -335,18 +234,16 @@ async function sendWhatsAppPoll(options = {}) {
  * Kullanıcının Dahil Olduğu WhatsApp Gruplarını Listeler
  */
 async function getWhatsAppGroups() {
-  if (!clientInstance || state.status !== 'READY') {
+  if (!sock || state.status !== 'READY') {
     return [];
   }
   try {
-    const chats = await clientInstance.getChats();
-    return chats
-      .filter(c => c.isGroup)
-      .map(c => ({
-        id: c.id._serialized,
-        name: c.name,
-        unreadCount: c.unreadCount
-      }));
+    const groupsMap = await sock.groupFetchAllParticipating();
+    return Object.values(groupsMap).map(g => ({
+      id: g.id,
+      name: g.subject,
+      unreadCount: 0
+    }));
   } catch (err) {
     console.error('Gruplar çekilirken hata:', err);
     return [];
@@ -372,10 +269,11 @@ function scheduleWhatsAppPollJob() {
 }
 
 /**
- * Servis Durumunu Döndürür (Tarayıcıdan çağrıldığında oturum yoksa QR'ı talep üzerine başlatır)
+ * Servis Durumunu Döndürür
+ * @param {boolean} autoStartIfDisconnected True verilirse oturum yoksa QR üretmeyi başlatır
  */
-function getWhatsAppStatus() {
-  if (state.status === 'DISCONNECTED' && !clientInstance) {
+function getWhatsAppStatus(autoStartIfDisconnected = false) {
+  if (autoStartIfDisconnected && state.status === 'DISCONNECTED' && !sock) {
     initWhatsAppClient(false);
   }
 
@@ -384,34 +282,17 @@ function getWhatsAppStatus() {
     qrDataUrl: state.qrDataUrl,
     userInfo: state.userInfo,
     lastPollSentAt: state.lastPollSentAt,
-    lastError: state.lastError
+    lastError: state.lastError,
+    engine: 'Baileys (Ultra Light - 25MB RAM)'
   };
-}
-
-/**
- * Headless Chrome tarayıcısının o anki canlı ekran görüntüsünü (base64 JPEG) döndürür.
- */
-async function getLiveScreenshot() {
-  if (clientInstance && clientInstance.pupPage) {
-    try {
-      const buffer = await clientInstance.pupPage.screenshot({
-        type: 'jpeg',
-        quality: 65
-      });
-      return `data:image/jpeg;base64,${buffer.toString('base64')}`;
-    } catch (err) {
-      console.warn('⚠️ Ekran görüntüsü alma uyarısı:', err.message);
-    }
-  }
-  return null;
 }
 
 module.exports = {
   initWhatsAppClient,
   restartWhatsAppClient,
+  requestPairingCode,
   sendWhatsAppPoll,
   scheduleWhatsAppPollJob,
   getWhatsAppStatus,
-  getWhatsAppGroups,
-  getLiveScreenshot
+  getWhatsAppGroups
 };

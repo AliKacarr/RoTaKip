@@ -6,9 +6,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
-if (!process.env.PUPPETEER_CACHE_DIR) {
-  process.env.PUPPETEER_CACHE_DIR = path.resolve(__dirname, '.cache', 'puppeteer');
-}
 const fs = require('fs');
 const os = require('os'); // Added OS module
 const moment = require('moment');
@@ -25,7 +22,7 @@ const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
 const { doldurAnket, scheduleAnketJob } = require('./anketService');
-const { initWhatsAppClient, restartWhatsAppClient, sendWhatsAppPoll, scheduleWhatsAppPollJob, getWhatsAppStatus, getWhatsAppGroups, getLiveScreenshot } = require('./whatsappService');
+const { initWhatsAppClient, restartWhatsAppClient, requestPairingCode, sendWhatsAppPoll, scheduleWhatsAppPollJob, getWhatsAppStatus, getWhatsAppGroups } = require('./whatsappService');
 
 // Hash fonksiyonu
 function hashCode(str) {
@@ -4009,7 +4006,8 @@ try {
 
 // 1. WhatsApp Durum JSON Endpoint'i
 app.get('/api/admin/whatsapp/status', (req, res) => {
-  res.json(getWhatsAppStatus());
+  const autoStart = req.query.autoStart === 'true';
+  res.json(getWhatsAppStatus(autoStart));
 });
 
 // 1b. WhatsApp Kullanıcının Gruplarını Listeleme Endpoint'i
@@ -4046,16 +4044,17 @@ app.post('/api/admin/whatsapp/restart', async (req, res) => {
   }
 });
 
-// 3b. WhatsApp Canlı Tarayıcı Ekranı (Screenshot) Endpoint'i
-app.get('/api/admin/whatsapp/screenshot', async (req, res) => {
+// 3b. WhatsApp 8 Haneli Eşleşme Kodu İsteği Endpoint'i
+app.post('/api/admin/whatsapp/pairing-code', async (req, res) => {
   try {
-    const screenshotUrl = await getLiveScreenshot();
-    if (screenshotUrl) {
-      res.json({ success: true, screenshotUrl });
-    } else {
-      res.status(404).json({ success: false, message: 'Canlı tarayıcı ekran görüntüsü şu anda hazır değil veya istemci pasif.' });
+    const { phoneNumber } = req.body;
+    if (!phoneNumber) {
+      return res.status(400).json({ success: false, message: 'Telefon numarası gereklidir (Örn: 905xxxxxxxxx)' });
     }
+    const code = await requestPairingCode(phoneNumber);
+    res.json({ success: true, code });
   } catch (error) {
+    console.error("Pairing code hatası:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
