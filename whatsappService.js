@@ -5,6 +5,7 @@ const qrcodeTerminal = require('qrcode-terminal');
 const QRCode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
+const schedule = require('node-schedule');
 const { execSync } = require('child_process');
 const { DEFAULT_GROUP_ID, DEFAULT_POLL_OPTIONS, getDailyPollTitle } = require('./whatsapp/pollConfig');
 
