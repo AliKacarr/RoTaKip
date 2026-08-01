@@ -25,7 +25,7 @@ const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
 const { doldurAnket, scheduleAnketJob } = require('./anketService');
-const { initWhatsAppClient, restartWhatsAppClient, sendWhatsAppPoll, scheduleWhatsAppPollJob, getWhatsAppStatus, getWhatsAppGroups } = require('./whatsappService');
+const { initWhatsAppClient, restartWhatsAppClient, sendWhatsAppPoll, scheduleWhatsAppPollJob, getWhatsAppStatus, getWhatsAppGroups, getLiveScreenshot } = require('./whatsappService');
 
 // Hash fonksiyonu
 function hashCode(str) {
@@ -4042,6 +4042,20 @@ app.post('/api/admin/whatsapp/restart', async (req, res) => {
     res.json({ success: true, message: 'WhatsApp istemcisi yeniden başlatılıyor...' });
   } catch (error) {
     console.error("WhatsApp restart hatası:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 3b. WhatsApp Canlı Tarayıcı Ekranı (Screenshot) Endpoint'i
+app.get('/api/admin/whatsapp/screenshot', async (req, res) => {
+  try {
+    const screenshotUrl = await getLiveScreenshot();
+    if (screenshotUrl) {
+      res.json({ success: true, screenshotUrl });
+    } else {
+      res.status(404).json({ success: false, message: 'Canlı tarayıcı ekran görüntüsü şu anda hazır değil veya istemci pasif.' });
+    }
+  } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });

@@ -148,6 +148,10 @@ function initWhatsAppClient(onlyIfSessionExists = false) {
       dataPath: SESSION_PATH,
       clientId: 'poll-bot'
     }),
+    webVersionCache: {
+      type: 'remote',
+      remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1014588847-alpha.html'
+    },
     puppeteer: {
       headless: isHeadless,
       executablePath: execPath,
@@ -159,7 +163,9 @@ function initWhatsAppClient(onlyIfSessionExists = false) {
         '--no-first-run',
         '--no-zygote',
         '--single-process',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-blink-features=AutomationControlled',
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
       ]
     }
   });
@@ -382,11 +388,30 @@ function getWhatsAppStatus() {
   };
 }
 
+/**
+ * Headless Chrome tarayıcısının o anki canlı ekran görüntüsünü (base64 JPEG) döndürür.
+ */
+async function getLiveScreenshot() {
+  if (clientInstance && clientInstance.pupPage) {
+    try {
+      const buffer = await clientInstance.pupPage.screenshot({
+        type: 'jpeg',
+        quality: 65
+      });
+      return `data:image/jpeg;base64,${buffer.toString('base64')}`;
+    } catch (err) {
+      console.warn('⚠️ Ekran görüntüsü alma uyarısı:', err.message);
+    }
+  }
+  return null;
+}
+
 module.exports = {
   initWhatsAppClient,
   restartWhatsAppClient,
   sendWhatsAppPoll,
   scheduleWhatsAppPollJob,
   getWhatsAppStatus,
-  getWhatsAppGroups
+  getWhatsAppGroups,
+  getLiveScreenshot
 };

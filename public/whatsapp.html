@@ -193,9 +193,17 @@
       <button id="sendPollBtn" class="btn btn-primary" onclick="triggerSendPoll()">
         🗳️ Anketi Şimdi Gönder
       </button>
+      <button class="btn btn-secondary" onclick="fetchLiveScreenshot()">
+        📷 Sunucu Canlı Tarayıcı Ekranını Göster (Screenshot)
+      </button>
       <button class="btn btn-secondary" onclick="triggerRestart()">
         🔄 Yeniden Başlat / QR Yenile
       </button>
+    </div>
+
+    <div id="screenshotBox" style="display:none; margin-top: 16px; text-align: center;">
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">🖥️ Sunucu Üzerindeki Canlı WhatsApp Web Ekranı:</p>
+      <img id="liveScreenshotImg" style="width: 100%; max-width: 480px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.4);" alt="Live Screenshot" />
     </div>
 
     <div id="toastMsg" class="toast"></div>
@@ -305,6 +313,24 @@
         setTimeout(checkStatus, 2000);
       } catch (err) {
         showToast('❌ Yeniden başlatma hatası', 'error');
+      }
+    }
+
+    async function fetchLiveScreenshot() {
+      showToast('📷 Canlı tarayıcı görüntüsü alınıyor...', 'success');
+      try {
+        const res = await fetch('/api/admin/whatsapp/screenshot');
+        const data = await res.json();
+        if (data.success && data.screenshotUrl) {
+          const box = document.getElementById('screenshotBox');
+          const img = document.getElementById('liveScreenshotImg');
+          img.src = data.screenshotUrl;
+          box.style.display = 'block';
+        } else {
+          showToast('⚠️ ' + (data.message || 'Ekran görüntüsü çekilemedi'), 'error');
+        }
+      } catch (err) {
+        showToast('❌ Ekran görüntüsü alma hatası', 'error');
       }
     }
 
