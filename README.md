@@ -1,13 +1,17 @@
 # RoTaKip – Okuma Takip Sistemi
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-4B0082?logo=render&logoColor=white)](https://rotakip.onrender.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-v18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?logo=express&logoColor=white)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-
 Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek ve grup motivasyonunu artırmak için geliştirilmiş modern bir uygulaması.
 
 🌐 [https://rotakip.onrender.com/](https://rotakip.onrender.com/)
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Online-brightgreen?style=for-the-badge&logo=google-chrome&logoColor=white)](https://rotakip.onrender.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![REST API](https://img.shields.io/badge/REST_API-02569B?style=for-the-badge&logo=fastapi&logoColor=white)](#-api-mimarisi-rest-api)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 
 ---
 
@@ -63,6 +67,16 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 - Giriş ve erişim logları  
 - Zamanlanmış **otomatik yedekleme** (ayrı yedek veritabanı)  
 - Admin paneli, katılma isteklerini yönetme  
+
+---
+
+## API Mimarisi (REST API)
+
+İstemci ve sunucu arasındaki veri iletişimi **REST API** standartlarına uygun uç noktalar (endpoints) üzerinden gerçekleştirilir:
+
+- **Grup & Üye İşlemleri:** `GET /api/groups`, `GET /api/users/:groupId`, `POST /api/add-user/:groupId`, `DELETE /api/delete-group/:groupId` ...
+- **Okuma & Durum Güncelleme:** `POST /api/update-status/:groupId`, `GET /api/user-stats/:groupId/:userId`, `GET /api/reading-stats/:groupId` ...
+- **Yönetim & Loglar:** `POST /api/admin-login`, `GET /api/access-logs`, `GET /api/login-logs` ...
 
 ---
 
