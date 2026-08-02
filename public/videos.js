@@ -1,9 +1,14 @@
 // Farklı kanalların ID'leri
 const CHANNEL_IDS = [
+    'UCb2NNTeDSPr2sFHrI2AwHTQ', // Hisar Kapısı
+    'UCgCEp8q4rx5VvStdu4vER0g', // Gate Of Light
+    'UC1YI4oNhhhU857E-u3_5xxQ', // Крепость души
+    'UC1dhFmKTjDJatKcPwxASg1w', // Seelenfestung
+    'UC4aq5BFwhlA08Qf5adxzhig', // Puerta de La Luz
+    'UCDEnnJ8YkuLCRGuvxdTKODQ', // بوابة النور
     'UCa4B618R90dxe7N9OK0LJyQ', // Çatı Katı Elazığ
-    'UCb2NNTeDSPr2sFHrI2AwHTQ', //Hisar Kapısı
-    'UCgC81lrIwMJJvAjyKm1ooow', //Maksat 114
-    'UCN5t14BCdTIQ-116TxJuBMg' //Sözler Köşkü
+    'UCgC81lrIwMJJvAjyKm1ooow', // Maksat 114
+    'UCN5t14BCdTIQ-116TxJuBMg' // Sözler Köşkü
 ];
 
 // DOM elementleri
