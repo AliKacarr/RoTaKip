@@ -209,26 +209,33 @@ async function handleLoginStreak(user, groupId) {
 // Middleware'ler
 // Gzip sıkıştırma (compression)
 app.use(compression());
-// Statik dosyalar: varsayılan 3 gün cache (canlıda ek env gerekmez).
-// Yerel geliştirme: proje kökündeki .env içine NODE_ENV=development ekleyin → maxAge 0.
-const staticMaxAge = process.env.NODE_ENV === 'development' ? 0 : '3d';
-console.log(staticMaxAge);
-
-function createStaticOptions() {
+// Statik dosyalar önbellek yönetimi:
+// Kod dosyaları (.html, .js, .css, .json) için ETag revalidasyonu (no-cache, must-revalidate)
+// Görsel ve medya dosyaları için performans önbelleği (3 gün)
+function createStaticOptions(isMedia = false) {
   return {
     etag: true,
     lastModified: true,
-    maxAge: staticMaxAge
+    setHeaders: (res, filePath) => {
+      const ext = path.extname(filePath).toLowerCase();
+      if (!isMedia && (ext === '.html' || ext === '.js' || ext === '.css' || ext === '.json')) {
+        // Kod dosyaları: Tarayıcı her girişte sunucudan ETag kontrolü yapsın (değişmediyse 304, değiştiyse 200 döner)
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+      } else {
+        // Görseller ve ortam dosyaları: 3 gün önbellek
+        res.setHeader('Cache-Control', 'public, max-age=259200');
+      }
+    }
   };
 }
 
-app.use(express.static(path.join(__dirname, 'public'), createStaticOptions()));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), createStaticOptions()));
-app.use('/images', express.static(path.join(__dirname, 'public/images'), createStaticOptions()));
-app.use('/groupAvatars', express.static(path.join(__dirname, 'public/groupAvatars'), createStaticOptions()));
-app.use('/groupImages', express.static(path.join(__dirname, 'public/groupImages'), createStaticOptions()));
-app.use('/userAvatars', express.static(path.join(__dirname, 'public/userAvatars'), createStaticOptions()));
-app.use('/quotes', express.static(path.join(__dirname, 'public/quotes'), createStaticOptions()));
+app.use(express.static(path.join(__dirname, 'public'), createStaticOptions(false)));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), createStaticOptions(true)));
+app.use('/images', express.static(path.join(__dirname, 'public/images'), createStaticOptions(true)));
+app.use('/groupAvatars', express.static(path.join(__dirname, 'public/groupAvatars'), createStaticOptions(true)));
+app.use('/groupImages', express.static(path.join(__dirname, 'public/groupImages'), createStaticOptions(true)));
+app.use('/userAvatars', express.static(path.join(__dirname, 'public/userAvatars'), createStaticOptions(true)));
+app.use('/quotes', express.static(path.join(__dirname, 'public/quotes'), createStaticOptions(true)));
 app.use(express.json());
 
 // Ana sayfa route'u
