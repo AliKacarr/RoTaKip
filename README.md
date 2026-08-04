@@ -54,6 +54,7 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 - Lig sistemi (Bronz → Gümüş → Altın)
 - Okuma serisi takibi  
 - Haftalık ve aylık istatistikler, takvim görünümü  
+- Otomatik okuma işaretleme entegrasyonları (WhatsApp)
 
 ### Motivasyon
 

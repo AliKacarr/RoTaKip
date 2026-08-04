@@ -865,6 +865,8 @@ class GroupsPage {
         const groupImageInput = document.getElementById('groupImageInput');
         const adminProfileImageInput = document.getElementById('adminProfileImageInput');
         const visibility = document.getElementById('groupVisibilityInput').value;
+        const autoMarkUnreadInput = document.getElementById('autoMarkUnreadInput');
+        const autoMarkUnread = autoMarkUnreadInput ? autoMarkUnreadInput.value : 'true';
 
         // Karakter limiti kontrolü
         const errors = [];
@@ -916,6 +918,7 @@ class GroupsPage {
         formData.append('adminName', adminName);
         formData.append('adminPassword', adminPassword);
         formData.append('visibility', visibility);
+        formData.append('autoMarkUnread', autoMarkUnread);
         
         // Grup resmi
         if (this.selectedAvatarPath) {

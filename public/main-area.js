@@ -1262,6 +1262,10 @@ async function loadGroupSettings() {
             document.getElementById('groupName').value = group.groupName || '';
             document.getElementById('groupDescription').value = group.description || '';
             document.getElementById('groupVisibility').value = group.visibility || 'public';
+            const autoMarkUnreadSelect = document.getElementById('autoMarkUnreadSelect');
+            if (autoMarkUnreadSelect) {
+                autoMarkUnreadSelect.value = group.autoMarkUnread !== false ? 'true' : 'false';
+            }
 
             // Grup resmini ayarla
             const groupImage = document.getElementById('currentGroupImage');
@@ -1275,8 +1279,9 @@ async function loadGroupSettings() {
                 removeBtn.style.display = 'none';
             }
 
-            // Görünürlük ikonunu güncelle
+            // Görünürlük ve otomatik okumadı ikonlarını güncelle
             updateVisibilityIcon(group.visibility || 'public');
+            updateAutoMarkUnreadIcon(group.autoMarkUnread !== false);
         }
     } catch (error) {
         console.error('Grup ayarları yüklenirken hata:', error);
@@ -1325,6 +1330,30 @@ function updateVisibilityIcon(visibility) {
     } else {
         icon.className = 'fa-solid fa-eye-slash visibility-icon private';
         if (infoSpan) infoSpan.textContent = 'Sadece üyeler grubu görüntüleyebilir';
+    }
+}
+
+// Otomatik okumadı ikonunu ve açıklamasını güncelle
+function updateAutoMarkUnreadIcon(isAutoMark) {
+    const icon = document.getElementById('autoMarkUnreadIcon');
+    const info = document.getElementById('autoMarkUnreadInfo');
+    const infoSpan = info ? info.querySelector('span') : null;
+
+    if (!icon) return;
+
+    const isActive = (isAutoMark === true || isAutoMark === 'true');
+
+    icon.classList.remove('public', 'private');
+    if (info) info.classList.remove('public', 'private');
+
+    if (isActive) {
+        icon.className = 'fa-solid fa-user-clock visibility-icon public';
+        if (info) info.classList.add('public');
+        if (infoSpan) infoSpan.textContent = 'Okumayanlar sabah 06:00\'da işaretlenir.';
+    } else {
+        icon.className = 'fa-solid fa-user-slash visibility-icon private';
+        if (info) info.classList.add('private');
+        if (infoSpan) infoSpan.textContent = 'Okumayanları otomatik işaretleme kapalı.';
     }
 }
 
@@ -1478,6 +1507,8 @@ async function saveGroupSettings() {
     const groupName = document.getElementById('groupName').value.trim();
     const groupDescription = document.getElementById('groupDescription').value.trim();
     const groupVisibility = document.getElementById('groupVisibility').value;
+    const autoMarkUnreadSelect = document.getElementById('autoMarkUnreadSelect');
+    const autoMarkUnread = autoMarkUnreadSelect ? (autoMarkUnreadSelect.value === 'true') : true;
 
     if (!groupName) {
         showErrorMessage('Grup adı boş olamaz!');
@@ -1510,7 +1541,8 @@ async function saveGroupSettings() {
             body: JSON.stringify({
                 groupName,
                 description: groupDescription,
-                visibility: groupVisibility
+                visibility: groupVisibility,
+                autoMarkUnread
             })
         });
 
@@ -1831,6 +1863,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (groupVisibilitySelect) {
         groupVisibilitySelect.addEventListener('change', function () {
             updateVisibilityIcon(this.value);
+        });
+    }
+
+    // Otomatik okumadı seçimi değiştiğinde ikonu güncelle
+    const autoMarkUnreadSelectEl = document.getElementById('autoMarkUnreadSelect');
+    if (autoMarkUnreadSelectEl) {
+        autoMarkUnreadSelectEl.addEventListener('change', function () {
+            updateAutoMarkUnreadIcon(this.value);
         });
     }
 

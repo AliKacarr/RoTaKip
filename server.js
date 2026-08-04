@@ -218,12 +218,14 @@ function createStaticOptions(isMedia = false) {
     lastModified: true,
     setHeaders: (res, filePath) => {
       const ext = path.extname(filePath).toLowerCase();
-      if (!isMedia && (ext === '.html' || ext === '.js' || ext === '.css' || ext === '.json')) {
+      if (!isMedia && (ext === '.html' || ext === '.js' || ext === '.css' || ext === '.json' || ext === '')) {
         // Kod dosyaları: Tarayıcı her girişte sunucudan ETag kontrolü yapsın (değişmediyse 304, değiştiyse 200 döner)
-        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-      } else {
-        // Görseller ve ortam dosyaları: 3 gün önbellek
+        res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+      } else if (ext === '.png' || ext === '.jpg' || ext === '.jpeg' || ext === '.webp' || ext === '.gif' || ext === '.svg' || ext === '.ico' || ext === '.woff' || ext === '.woff2' || ext === '.ttf') {
+        // Görseller ve medya dosyaları için performans önbelleği (3 gün)
         res.setHeader('Cache-Control', 'public, max-age=259200');
+      } else {
+        res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
       }
     }
   };
@@ -238,20 +240,27 @@ app.use('/userAvatars', express.static(path.join(__dirname, 'public/userAvatars'
 app.use('/quotes', express.static(path.join(__dirname, 'public/quotes'), createStaticOptions(true)));
 app.use(express.json());
 
+// HTML yanıtları için strictly revalidate başlığı ekleyen yardımcı fonksiyon
+function sendHtmlFile(res, fileName) {
+  res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+  res.sendFile(path.join(__dirname, 'public', fileName));
+}
+
 // Ana sayfa route'u
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  sendHtmlFile(res, 'index.html');
 });
 
 // Frontend için gerekli ortam değişkenlerini JS olarak servis et
 app.get('/env.js', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
   res.type('application/javascript');
   const appId = process.env.ONESIGNAL_APP_ID || '';
   res.send(`window.ONESIGNAL_APP_ID = ${JSON.stringify(appId)};`);
 });
 
 app.get('/groupid=:groupId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'groups.html'));
+  sendHtmlFile(res, 'groups.html');
 });
 
 // Geriye uyumluluk route'u
@@ -259,7 +268,7 @@ app.get('/:groupId', (req, res) => {
   const groupId = req.params.groupId;
   // Only serve groups.html if it's not an API route or static file
   if (!groupId.startsWith('api') && !groupId.includes('.')) {
-    res.sendFile(path.join(__dirname, 'public', 'groups.html'));
+    sendHtmlFile(res, 'groups.html');
   } else {
     res.status(404).send('Not found');
   }
@@ -267,7 +276,7 @@ app.get('/:groupId', (req, res) => {
 
 // Grup sayfası route'u
 app.get('/:groupId([a-zA-Z0-9_-çğıöşüÇĞIİÖŞÜ]+)', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'groups.html'));
+  sendHtmlFile(res, 'groups.html');
 });
 
 // MongoDB bağlantı seçenekleri
@@ -806,6 +815,7 @@ const UserGroup = mongoose.model('UserGroup', {
   description: String,
   groupImage: { type: String, default: null },
   visibility: { type: String, default: 'public' },
+  autoMarkUnread: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -1036,6 +1046,9 @@ app.post('/api/groups', uploadGroupImage.fields([
       adminProfileImageUrl = "/images/default.png";
     }
 
+    const autoMarkUnreadParam = req.body.autoMarkUnread;
+    const autoMarkUnread = autoMarkUnreadParam !== undefined ? (autoMarkUnreadParam === 'true' || autoMarkUnreadParam === true) : true;
+
     // Yeni grup oluştur
     const newGroup = new UserGroup({
       groupName,
@@ -1043,6 +1056,7 @@ app.post('/api/groups', uploadGroupImage.fields([
       description: description || '',
       groupImage: groupImageUrl,
       visibility: visibility || 'public',
+      autoMarkUnread,
       createdAt: new Date()
     });
 
@@ -1120,7 +1134,7 @@ app.get('/api/groups/:groupId/member-count', async (req, res) => {
 app.post('/api/update-group/:groupId', async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { groupName, description, visibility } = req.body;
+    const { groupName, description, visibility, autoMarkUnread } = req.body;
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -1128,14 +1142,19 @@ app.post('/api/update-group/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
+    const updateFields = {
+      groupName: groupName || group.groupName,
+      description: description || group.description,
+      visibility: visibility || group.visibility
+    };
+    if (autoMarkUnread !== undefined) {
+      updateFields.autoMarkUnread = (autoMarkUnread === 'true' || autoMarkUnread === true);
+    }
+
     // Grup bilgilerini güncelle
     const updatedGroup = await UserGroup.findOneAndUpdate(
       { groupId },
-      {
-        groupName: groupName || group.groupName,
-        description: description || group.description,
-        visibility: visibility || group.visibility
-      },
+      updateFields,
       { new: true }
     );
 
@@ -4133,7 +4152,88 @@ async function seedFakeReadingDataForTestGroups() {
   }
 
   console.log(`🏁 [TestSeeder] Tamamlandı! Eklenen: ${totalInserted}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`);
+
+  // Test grubuna veri attıktan sonra geri kalan tüm gerçek gruplara otomatik işlem yap
+  await processMissingReadingStatusesForRealGroups();
 }
+
+// Gerçek gruplarda düne ait okuma kaydı olmayan aktif kullanıcılara 'okumadım' ekleyen fonksiyon
+async function processMissingReadingStatusesForRealGroups() {
+  console.log('🔄 [AutoUnreadProcessor] Gerçek gruplar için eksik "okumadım" kayıtları işleniyor...');
+
+  const yesterday = moment().utcOffset(3).subtract(1, 'days').format('YYYY-MM-DD');
+  console.log(`📅 [AutoUnreadProcessor] Hedef tarih: ${yesterday}`);
+
+  let totalInserted = 0;
+  let totalSkipped = 0;
+  let totalErrors = 0;
+
+  try {
+    const realGroups = await UserGroup.find({ groupId: { $nin: TEST_GROUP_IDS } }).lean();
+
+    for (const group of realGroups) {
+      // Grup seviyesinde otomatik işaretleme pasifse atla
+      if (group.autoMarkUnread === false) {
+        console.log(`⏸️  [AutoUnreadProcessor] ${group.groupId}: Otomatik okumadım kaydı pasif, atlanıyor.`);
+        continue;
+      }
+
+      try {
+        const { users, readingStatuses } = getGroupCollections(group.groupId);
+        const allUsers = await users.find().lean();
+
+        if (!allUsers || allUsers.length === 0) continue;
+
+        for (const user of allUsers) {
+          try {
+            const userId = user._id.toString();
+
+            // Şart: Bir kişinin en az 1 okuma verisi olmalı
+            const hasAnyReadingStatus = await readingStatuses.exists({ userId });
+            if (!hasAnyReadingStatus) {
+              totalSkipped++;
+              continue;
+            }
+
+            // Dün tarihli bir kaydı var mı?
+            const yesterdayRecord = await readingStatuses.findOne({ userId, date: yesterday }).lean();
+            if (!yesterdayRecord) {
+              await readingStatuses.create({
+                userId,
+                date: yesterday,
+                status: 'okumadım'
+              });
+              totalInserted++;
+            } else {
+              totalSkipped++;
+            }
+          } catch (userErr) {
+            console.error(`❌ [AutoUnreadProcessor] ${group.groupId} kullanıcı hatası (${user._id}):`, userErr.message);
+            totalErrors++;
+          }
+        }
+      } catch (groupErr) {
+        console.error(`❌ [AutoUnreadProcessor] ${group.groupId} grup hatası:`, groupErr.message);
+        totalErrors++;
+      }
+    }
+  } catch (err) {
+    console.error('❌ [AutoUnreadProcessor] Grupları çekme hatası:', err.message);
+  }
+
+  console.log(`🏁 [AutoUnreadProcessor] Tamamlandı! Eklenen: ${totalInserted}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`);
+}
+
+// Otomatik okumadım kaydı ekleme işlemi için manuel admin endpoint'i
+app.all('/api/admin/process-missing-statuses', async (req, res) => {
+  try {
+    await processMissingReadingStatusesForRealGroups();
+    res.json({ success: true, message: 'Gerçek gruplar için eksik okumadım kayıtları işlendi.' });
+  } catch (error) {
+    console.error('Manuel okumadım işleme hatası:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Test grubu sahte veri zamanlayıcısını başlat
 function scheduleTestGroupSeeder() {
