@@ -437,6 +437,163 @@ function editUserName(userId) {     //Kullanıcı adını düzenleme fonksiyonu
     }
 }
 
+// Telefon numarasını temizleme ve düzeltme fonksiyonu (905312967580 formatı)
+function formatPhoneNumber(phoneStr) {
+    if (!phoneStr) return '';
+    let digits = String(phoneStr).replace(/\D/g, '');
+    if (!digits) return '';
+
+    if (digits.startsWith('0090')) {
+        digits = digits.substring(2);
+    } else if (digits.startsWith('0') && digits.length === 11) {
+        digits = '90' + digits.substring(1);
+    } else if (digits.length === 10 && digits.startsWith('5')) {
+        digits = '90' + digits;
+    }
+    return digits;
+}
+
+// WhatsApp Telefon Numaraları Modalı Fonksiyonları
+function updateWaSaveBtnState(input, btn) {
+    if (!input || !btn) return;
+    const currentVal = input.value.trim();
+    const savedVal = input.dataset.savedValue || '';
+
+    btn.classList.remove('is-changed', 'is-saved-has-value', 'is-saved-empty', 'saved-success');
+
+    if (currentVal !== savedVal) {
+        btn.classList.add('is-changed');
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Kaydet';
+    } else if (savedVal !== '') {
+        btn.classList.add('is-saved-has-value');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Kayıtlı';
+    } else {
+        btn.classList.add('is-saved-empty');
+        btn.innerHTML = '<i class="fa-solid fa-plus"></i> Ekle';
+    }
+}
+
+function handleWaPhoneInputChange(input) {
+    const row = input.closest('.wa-user-row');
+    if (!row) return;
+    const btn = row.querySelector('.wa-save-btn');
+    updateWaSaveBtnState(input, btn);
+}
+
+function openWhatsappPhoneModal() {
+    const modal = document.getElementById('whatsappPhoneModal');
+    if (!modal) return;
+    modal.style.display = 'block';
+    loadWhatsappPhoneUsers();
+}
+
+function closeWhatsappPhoneModal() {
+    const modal = document.getElementById('whatsappPhoneModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function loadWhatsappPhoneUsers() {
+    const container = document.getElementById('whatsappPhoneUserList');
+    if (!container) return;
+    container.innerHTML = '<div class="wa-loading"><i class="fa-solid fa-spinner fa-spin"></i> Kullanıcılar yükleniyor...</div>';
+
+    try {
+        const response = await fetch(`/api/users/${window.groupid}`);
+        const data = await response.json();
+        const users = data.users || [];
+
+        if (users.length === 0) {
+            container.innerHTML = '<div class="wa-empty">Grupta henüz üye bulunmamaktadır.</div>';
+            return;
+        }
+
+        container.innerHTML = users.map(user => {
+            const profileImg = user.profileImage || '/images/default.png';
+            const phoneVal = user.phone || '';
+            return `
+                <div class="wa-user-row" data-user-id="${user._id}">
+                    <div class="wa-user-info">
+                        <img src="${profileImg}" alt="${user.name}" class="wa-user-avatar" onerror="this.src='/images/default.png'" />
+                        <span class="wa-user-name">${user.name}</span>
+                    </div>
+                    <div class="wa-phone-input-group">
+                        <input type="text" class="wa-phone-input" data-saved-value="${phoneVal}" placeholder="905..." value="${phoneVal}" oninput="handleWaPhoneInputChange(this)" maxlength="20">
+                        <button type="button" class="wa-save-btn" onclick="saveWaPhone('${user._id}', this)">
+                            <i class="fa-solid fa-check"></i> Kaydet
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Her bir butonun başlangıç durumunu ayarla
+        container.querySelectorAll('.wa-user-row').forEach(row => {
+            const input = row.querySelector('.wa-phone-input');
+            const btn = row.querySelector('.wa-save-btn');
+            updateWaSaveBtnState(input, btn);
+        });
+    } catch (err) {
+        console.error('Telefon listesi yükleme hatası:', err);
+        container.innerHTML = '<div class="wa-error">Kullanıcılar yüklenirken bir hata oluştu.</div>';
+    }
+}
+
+async function saveWaPhone(userId, btnElement) {
+    const row = btnElement.closest('.wa-user-row');
+    if (!row) return;
+
+    const input = row.querySelector('.wa-phone-input');
+    if (!input) return;
+
+    const rawPhone = input.value.trim();
+    const formattedPhone = formatPhoneNumber(rawPhone);
+
+    btnElement.disabled = true;
+    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    try {
+        const response = await fetch(`/api/update-user-phone/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, phone: rawPhone })
+        });
+
+        if (!response.ok) {
+            throw new Error('Telefon numarası kaydedilemedi');
+        }
+
+        const data = await response.json();
+        const finalPhone = data.formattedPhone !== undefined ? data.formattedPhone : formattedPhone;
+
+        input.value = finalPhone;
+        input.dataset.savedValue = finalPhone;
+
+        if (window.globalDataStore && Array.isArray(window.globalDataStore.users)) {
+            const uIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (uIndex !== -1) {
+                window.globalDataStore.users[uIndex].phone = finalPhone;
+            }
+        }
+
+        // Başarılı durum görseli
+        btnElement.classList.remove('is-changed', 'is-saved-has-value', 'is-saved-empty');
+        btnElement.classList.add('saved-success');
+        btnElement.innerHTML = '<i class="fa-solid fa-check-double"></i> Kaydedildi!';
+
+        setTimeout(() => {
+            updateWaSaveBtnState(input, btnElement);
+        }, 1200);
+
+        showSuccessMessage(finalPhone ? `Telefon kaydedildi: ${finalPhone}` : 'Telefon numarası temizlendi');
+    } catch (err) {
+        console.error('Telefon kaydetme hatası:', err);
+        showErrorMessage('Telefon numarası kaydedilirken hata oluştu!');
+        updateWaSaveBtnState(input, btnElement);
+    } finally {
+        btnElement.disabled = false;
+    }
+}
+
 function changeUserImage(userId) {     //Kullanıcı resmi değiştirme fonksiyonu
     // Check if user is authenticated and has admin rights
     if (!LocalStorageManager.isAdmin()) {

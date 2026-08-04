@@ -1452,7 +1452,8 @@ const userSchema = new mongoose.Schema({
   authority: String,
   loginStreak: { type: Number, default: 0 },
   lastLoginDate: { type: String, default: null },
-  lastCongratulatedLeague: { type: String, default: 'Bronz' }
+  lastCongratulatedLeague: { type: String, default: 'Bronz' },
+  phone: { type: String, default: null }
 });
 
 const readingStatusSchema = new mongoose.Schema({
@@ -1782,6 +1783,62 @@ app.post('/api/update-user/:groupId', async (req, res) => {
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ error: 'Kullanıcı güncellenirken hata oluştu' });
+  }
+});
+
+// Telefon numarası temizleme/biçimlendirme yardımcı fonksiyonu (905312967580 formatı)
+function formatPhoneNumber(phoneStr) {
+  if (!phoneStr) return '';
+  let digits = String(phoneStr).replace(/\D/g, '');
+  if (!digits) return '';
+
+  if (digits.startsWith('0090')) {
+    digits = digits.substring(2);
+  } else if (digits.startsWith('0') && digits.length === 11) {
+    digits = '90' + digits.substring(1);
+  } else if (digits.length === 10 && digits.startsWith('5')) {
+    digits = '90' + digits;
+  }
+  return digits;
+}
+
+// Kullanıcı telefon numarası güncelleme endpoint'i
+app.post('/api/update-user-phone/:groupId', async (req, res) => {
+  const { groupId } = req.params;
+  const { userId, phone } = req.body;
+
+  try {
+    if (!userId) {
+      return res.status(400).json({ error: 'userId parametresi gerekli' });
+    }
+
+    const group = await UserGroup.findOne({ groupId }).lean();
+    if (!group) {
+      return res.status(404).json({ error: 'Grup bulunamadı' });
+    }
+
+    const { users } = getGroupCollections(groupId);
+    const formattedPhone = formatPhoneNumber(phone);
+
+    const updatedUser = await users.findByIdAndUpdate(
+      userId,
+      { phone: formattedPhone },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    res.json({
+      success: true,
+      user: updatedUser,
+      formattedPhone: formattedPhone,
+      message: 'Telefon numarası başarıyla güncellendi'
+    });
+  } catch (error) {
+    console.error('Error updating user phone:', error);
+    res.status(500).json({ error: 'Kullanıcı telefon numarası güncellenirken hata oluştu' });
   }
 });
 
@@ -4242,14 +4299,246 @@ app.post('/api/remove-user-profile-image', async (req, res) => {
 });
 
 
+// ============================================================================
+// WHATSAPP ANKET (POLL) VOTE SENKRONİZASYONU
+// ============================================================================
+
+const pollSchema = new mongoose.Schema({
+  pollId: String,
+  createdAt: String,
+  groupId: String,
+  options: [String],
+  title: String
+}, { strict: false });
+
+const pollVoteSchema = new mongoose.Schema({
+  voterJid: String,
+  pollId: String,
+  pushName: String,
+  selectedOptions: [String],
+  updatedAt: String,
+  voterPhone: String
+}, { strict: false });
+
+const Poll = mongoose.model('Poll', pollSchema, 'polls');
+const PollVote = mongoose.model('PollVote', pollVoteSchema, 'poll_votes');
+
+// Anket başlığından (title) tarih çıkarma fonksiyonu (Örn: "4 Ağustos", "04.08.2026", "2026-08-04")
+function extractDateFromPollTitle(title, referenceYear) {
+  if (!title || typeof title !== 'string') return null;
+  const cleanedTitle = title.trim();
+  const year = referenceYear || moment().utcOffset(3).year();
+
+  // Pattern 1: ISO Format "YYYY-MM-DD"
+  const isoMatch = cleanedTitle.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (isoMatch) {
+    const y = isoMatch[1];
+    const m = String(isoMatch[2]).padStart(2, '0');
+    const d = String(isoMatch[3]).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // Pattern 2: Sayısal "DD.MM.YYYY" veya "DD.MM"
+  const numMatch = cleanedTitle.match(/(\d{1,2})[-/.](\d{1,2})(?:[-/.](20\d{2}))?/);
+  if (numMatch) {
+    const d = String(numMatch[1]).padStart(2, '0');
+    const m = String(numMatch[2]).padStart(2, '0');
+    const y = numMatch[3] || String(year);
+    if (parseInt(m, 10) >= 1 && parseInt(m, 10) <= 12 && parseInt(d, 10) >= 1 && parseInt(d, 10) <= 31) {
+      return `${y}-${m}-${d}`;
+    }
+  }
+
+  // Pattern 3: Türkçe Ay İsimli Format ("4 Ağustos", "04 Ağustos 2026")
+  const monthMap = {
+    'ocak': '01', 'subat': '02', 'şubat': '02', 'mart': '03', 'nisan': '04',
+    'mayis': '05', 'mayıs': '05', 'haziran': '06', 'temmuz': '07', 'agustos': '08',
+    'ağustos': '08', 'eylul': '09', 'eylül': '09', 'ekim': '10', 'kasim': '11',
+    'kasım': '11', 'aralik': '12', 'aralık': '12'
+  };
+
+  const trMatch = cleanedTitle.match(/(\d{1,2})\s+([a-zA-ZçğıöşüÇĞİÖŞÜ]+)(?:\s+(20\d{2}))?/i);
+  if (trMatch) {
+    const dayStr = String(trMatch[1]).padStart(2, '0');
+    const monthName = trMatch[2].toLowerCase('tr-TR');
+    const yStr = trMatch[3] || String(year);
+
+    if (monthMap[monthName]) {
+      return `${yStr}-${monthMap[monthName]}-${dayStr}`;
+    }
+  }
+
+  return null;
+}
+
+// Oy değişikliğini okuma durumuna (readingstatuses_<groupId>) senkronize eden fonksiyon
+async function syncPollVoteToReadingStatus(voteDoc, isDelete = false) {
+  try {
+    if (!voteDoc || !voteDoc.pollId) return;
+
+    // Oy veren kullanıcının telefon numarasını temizle (örn: 905010734844)
+    const rawPhone = voteDoc.voterPhone || voteDoc.voterJid || '';
+    const phone = formatPhoneNumber(rawPhone);
+    if (!phone) return;
+
+    // İlgili anketi (poll) bul
+    const poll = await Poll.findOne({ pollId: voteDoc.pollId }).lean();
+    if (!poll) return;
+
+    // Tarih tespiti öncelik sırası:
+    // 1. Anket Başlığı (poll.title) -> Örn: "4 Ağustos" -> "2026-08-04"
+    // 2. Anket Oluşturulma Tarihi (poll.createdAt) -> Örn: "2026-08-04 12:43:07" -> "2026-08-04"
+    // 3. Oy Güncellenme Tarihi (voteDoc.updatedAt) -> Örn: "2026-08-04 12:25:30" -> "2026-08-04"
+    // 4. Bugünün Tarihi
+    let referenceYear = moment().utcOffset(3).year();
+    if (poll && poll.createdAt) {
+      const yearMatch = poll.createdAt.match(/^(\d{4})/);
+      if (yearMatch) referenceYear = parseInt(yearMatch[1], 10);
+    }
+
+    let dateStr = null;
+    if (poll && poll.title) {
+      dateStr = extractDateFromPollTitle(poll.title, referenceYear);
+    }
+
+    if (!dateStr && poll && poll.createdAt) {
+      dateStr = poll.createdAt.split(' ')[0];
+    }
+
+    if (!dateStr && voteDoc && voteDoc.updatedAt) {
+      dateStr = voteDoc.updatedAt.split(' ')[0];
+    }
+
+    if (!dateStr) {
+      dateStr = moment().utcOffset(3).format('YYYY-MM-DD');
+    }
+
+    // Oy verilmiş mi kontrol et (Seçilen opsiyonlar var mı?)
+    const hasVoted = !isDelete && Array.isArray(voteDoc.selectedOptions) && voteDoc.selectedOptions.length > 0;
+
+    // Tüm grupları tara ve bu telefon numarasına sahip kullanıcıyı bul
+    const groups = await UserGroup.find({}).lean();
+
+    for (const group of groups) {
+      const { users, readingStatuses } = getGroupCollections(group.groupId);
+      const user = await users.findOne({ phone }).lean();
+
+      if (user) {
+        const userId = user._id.toString();
+
+        if (hasVoted) {
+          // Kullanıcı oy vermiş -> readingstatuses_<groupId> koleksiyonuna "okudum" kaydı ekle/güncelle
+          await readingStatuses.findOneAndUpdate(
+            { userId, date: dateStr },
+            { userId, date: dateStr, status: 'okudum' },
+            { upsert: true, new: true }
+          );
+          console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${group.groupId})`);
+        } else {
+          // Kullanıcı oyunu geri çekmiş veya oy silinmiş -> okuma bilgisini sil
+          await readingStatuses.findOneAndDelete({ userId, date: dateStr });
+          console.log(`🗑️ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} 'okudum' kaydı silindi. (Grup: ${group.groupId})`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('WhatsApp anket senkronizasyon hatası:', error);
+  }
+}
+
+// poll_votes silinme (delete) durumlarında doküman bilgisine ulaşabilmek için veritabanında gölge/harita koleksiyonu
+const pollVoteMappingSchema = new mongoose.Schema({
+  voteId: { type: String, required: true, unique: true },
+  pollId: String,
+  voterPhone: String,
+  voterJid: String,
+  selectedOptions: [String],
+  updatedAt: String
+}, { timestamps: true });
+
+const PollVoteMapping = mongoose.model('PollVoteMapping', pollVoteMappingSchema, 'poll_vote_mappings');
+
+// Change Stream ile poll_votes koleksiyonunu canlı dinle (MongoDB Replica Set destekler)
+async function watchPollVotesCollection() {
+  try {
+    const changeStream = PollVote.watch([], { fullDocument: 'updateLookup' });
+
+    changeStream.on('change', async (change) => {
+      const docId = change.documentKey && change.documentKey._id ? change.documentKey._id.toString() : null;
+
+      if (change.operationType === 'insert' || change.operationType === 'update' || change.operationType === 'replace') {
+        const fullDoc = change.fullDocument;
+        if (fullDoc && docId) {
+          // Gölge koleksiyonda (poll_vote_mappings) oy bilgisini sakla / güncelle
+          await PollVoteMapping.findOneAndUpdate(
+            { voteId: docId },
+            {
+              voteId: docId,
+              pollId: fullDoc.pollId,
+              voterPhone: fullDoc.voterPhone,
+              voterJid: fullDoc.voterJid,
+              selectedOptions: fullDoc.selectedOptions,
+              updatedAt: fullDoc.updatedAt
+            },
+            { upsert: true, new: true }
+          );
+
+          await syncPollVoteToReadingStatus(fullDoc, false);
+        }
+      } else if (change.operationType === 'delete') {
+        let deletedDoc = change.fullDocumentBeforeChange;
+
+        // Eger MongoDB fullDocumentBeforeChange vermediyse, veritabanındaki gölge koleksiyondan oku
+        if (!deletedDoc && docId) {
+          deletedDoc = await PollVoteMapping.findOne({ voteId: docId }).lean();
+        }
+
+        if (deletedDoc) {
+          await syncPollVoteToReadingStatus(deletedDoc, true);
+          if (docId) {
+            await PollVoteMapping.deleteOne({ voteId: docId });
+          }
+        } else {
+          console.warn('⚠️ Silinen oy dokümanı poll_vote_mappings koleksiyonunda bulunamadı:', docId);
+        }
+      }
+    });
+
+    changeStream.on('error', (err) => {
+      console.warn('ℹ️ PollVote ChangeStream uyarısı (ChangeStream yerine Webhook da kullanılabilir):', err.message);
+    });
+
+    console.log('🔄 WhatsApp PollVote ChangeStream dinleyici başlatıldı (poll_vote_mappings veritabanı gölgesi aktif).');
+  } catch (err) {
+    console.warn('ℹ️ ChangeStream başlatılamadı:', err.message);
+  }
+}
+
+// Webhook endpoint (WhatsApp botu doğrudan HTTP isteği ile bildirmek isterse)
+app.post('/api/webhook/whatsapp-poll-vote', async (req, res) => {
+  try {
+    const { pollVote, isDelete } = req.body;
+    if (!pollVote || !pollVote.pollId) {
+      return res.status(400).json({ error: 'pollVote verisi eksik' });
+    }
+
+    await syncPollVoteToReadingStatus(pollVote, !!isDelete);
+    res.json({ success: true, message: 'Anket oyu başarıyla senkronize edildi' });
+  } catch (error) {
+    console.error('Webhook poll vote hatası:', error);
+    res.status(500).json({ error: 'Senkronizasyon hatası' });
+  }
+});
+
 // Dropbox'ı başlat
 initializeDropbox();
 
 // G. SERVER BAŞLATMA
 // ============================================================================
 
-// Server başlatıldığında otomatik minify çalıştır
+// Server başlatıldığında otomatik minify ve ChangeStream dinleyicisini çalıştır
 generateMinifiedFiles();
+watchPollVotesCollection();
 
 app.listen(port, () => {
   console.log(`Uygulama http://localhost:${port} adresinde çalışıyor`);
