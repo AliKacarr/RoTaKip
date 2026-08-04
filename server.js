@@ -4453,65 +4453,91 @@ const pollVoteMappingSchema = new mongoose.Schema({
   voterPhone: String,
   voterJid: String,
   selectedOptions: [String],
-  updatedAt: String
-}, { timestamps: true });
+  voteUpdatedAt: String
+});
 
 const PollVoteMapping = mongoose.model('PollVoteMapping', pollVoteMappingSchema, 'poll_vote_mappings');
 
-// Change Stream ile poll_votes koleksiyonunu canlı dinle (MongoDB Replica Set destekler)
-async function watchPollVotesCollection() {
+// Akıllı Senkronizasyon Motoru (MongoDB Standalone ve Replica Set uyumlu)
+async function performPollVotesSync() {
+  try {
+    const currentVotes = await PollVote.find({}).lean();
+    const existingMappings = await PollVoteMapping.find({}).lean();
+
+    const currentVoteMap = new Map();
+    currentVotes.forEach(v => {
+      if (v._id) currentVoteMap.set(v._id.toString(), v);
+    });
+
+    const mappingMap = new Map();
+    existingMappings.forEach(m => {
+      if (m.voteId) mappingMap.set(m.voteId, m);
+    });
+
+    // 1. Yeni eklenen veya güncellenen oyları senkronize et
+    for (const [voteId, voteDoc] of currentVoteMap.entries()) {
+      const existingMapping = mappingMap.get(voteId);
+
+      const isNew = !existingMapping;
+      const isChanged = existingMapping && (
+        JSON.stringify(existingMapping.selectedOptions || []) !== JSON.stringify(voteDoc.selectedOptions || []) ||
+        (existingMapping.voteUpdatedAt || '') !== (voteDoc.updatedAt || '')
+      );
+
+      if (isNew || isChanged) {
+        await PollVoteMapping.findOneAndUpdate(
+          { voteId },
+          {
+            voteId,
+            pollId: voteDoc.pollId,
+            voterPhone: voteDoc.voterPhone,
+            voterJid: voteDoc.voterJid,
+            selectedOptions: voteDoc.selectedOptions,
+            voteUpdatedAt: voteDoc.updatedAt || ''
+          },
+          { upsert: true }
+        );
+
+        await syncPollVoteToReadingStatus(voteDoc, false);
+      }
+    }
+
+    // 2. Silinen oyları senkronize et (poll_votes'ta yok ama poll_vote_mappings'te var)
+    for (const [voteId, mappingDoc] of mappingMap.entries()) {
+      if (!currentVoteMap.has(voteId)) {
+        await syncPollVoteToReadingStatus(mappingDoc, true);
+        await PollVoteMapping.deleteOne({ voteId });
+      }
+    }
+  } catch (err) {
+    console.error('PollVotes periyodik senkronizasyon hatası:', err.message);
+  }
+}
+
+// Senkronizasyon servisini başlat
+function startPollVoteSyncEngine() {
+  // İlk taramayı hemen yap
+  performPollVotesSync();
+
+  // Her 10 saniyede bir otomatik tara (Değişiklik yoksa veritabanını yormaz, log yazmaz)
+  setInterval(performPollVotesSync, 10000);
+
+  // MongoDB Replica Set / Atlas ortamlarında Change Stream ile anlık tetikleme
   try {
     const changeStream = PollVote.watch([], { fullDocument: 'updateLookup' });
 
-    changeStream.on('change', async (change) => {
-      const docId = change.documentKey && change.documentKey._id ? change.documentKey._id.toString() : null;
-
-      if (change.operationType === 'insert' || change.operationType === 'update' || change.operationType === 'replace') {
-        const fullDoc = change.fullDocument;
-        if (fullDoc && docId) {
-          // Gölge koleksiyonda (poll_vote_mappings) oy bilgisini sakla / güncelle
-          await PollVoteMapping.findOneAndUpdate(
-            { voteId: docId },
-            {
-              voteId: docId,
-              pollId: fullDoc.pollId,
-              voterPhone: fullDoc.voterPhone,
-              voterJid: fullDoc.voterJid,
-              selectedOptions: fullDoc.selectedOptions,
-              updatedAt: fullDoc.updatedAt
-            },
-            { upsert: true, new: true }
-          );
-
-          await syncPollVoteToReadingStatus(fullDoc, false);
-        }
-      } else if (change.operationType === 'delete') {
-        let deletedDoc = change.fullDocumentBeforeChange;
-
-        // Eger MongoDB fullDocumentBeforeChange vermediyse, veritabanındaki gölge koleksiyondan oku
-        if (!deletedDoc && docId) {
-          deletedDoc = await PollVoteMapping.findOne({ voteId: docId }).lean();
-        }
-
-        if (deletedDoc) {
-          await syncPollVoteToReadingStatus(deletedDoc, true);
-          if (docId) {
-            await PollVoteMapping.deleteOne({ voteId: docId });
-          }
-        } else {
-          console.warn('⚠️ Silinen oy dokümanı poll_vote_mappings koleksiyonunda bulunamadı:', docId);
-        }
-      }
+    changeStream.on('change', () => {
+      performPollVotesSync();
     });
 
-    changeStream.on('error', (err) => {
-      console.warn('ℹ️ PollVote ChangeStream uyarısı (ChangeStream yerine Webhook da kullanılabilir):', err.message);
+    changeStream.on('error', () => {
+      // Standalone MongoDB modunda Change Stream desteklenmez; periyodik tarama devrededir.
     });
-
-    console.log('🔄 WhatsApp PollVote ChangeStream dinleyici başlatıldı (poll_vote_mappings veritabanı gölgesi aktif).');
   } catch (err) {
-    console.warn('ℹ️ ChangeStream başlatılamadı:', err.message);
+    // Change Stream başlatılamadıysa periyodik tarama çalışmaya devam eder
   }
+
+  console.log('🔄 WhatsApp PollVote Senkronizasyon Motoru başlatıldı.');
 }
 
 // Webhook endpoint (WhatsApp botu doğrudan HTTP isteği ile bildirmek isterse)
@@ -4523,6 +4549,7 @@ app.post('/api/webhook/whatsapp-poll-vote', async (req, res) => {
     }
 
     await syncPollVoteToReadingStatus(pollVote, !!isDelete);
+    performPollVotesSync(); // Hemen senkronize et
     res.json({ success: true, message: 'Anket oyu başarıyla senkronize edildi' });
   } catch (error) {
     console.error('Webhook poll vote hatası:', error);
@@ -4536,9 +4563,9 @@ initializeDropbox();
 // G. SERVER BAŞLATMA
 // ============================================================================
 
-// Server başlatıldığında otomatik minify ve ChangeStream dinleyicisini çalıştır
+// Server başlatıldığında otomatik minify ve Senkronizasyon Motorunu çalıştır
 generateMinifiedFiles();
-watchPollVotesCollection();
+startPollVoteSyncEngine();
 
 app.listen(port, () => {
   console.log(`Uygulama http://localhost:${port} adresinde çalışıyor`);
