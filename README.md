@@ -15,6 +15,40 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 ---
 
+## Temel Özellikler
+
+### Grup & Kullanıcı
+
+- Okuma grupları oluşturma ve katılım
+- Herkese açık / özel grup görünürlüğü, arama ve filtreleme  
+- Admin / üye rol sistemi  
+- Profil ve grup avatarları (**Dropbox**)  
+
+### Okuma Takibi
+
+- Haftalık tabloda günlük okuma işaretleme (okudum / okumadım / boş)  
+- Lig sistemi (Bronz → Gümüş → Altın)
+- Okuma serisi takibi  
+- Haftalık ve aylık istatistikler, takvim görünümü  
+- Otomatik okuma işaretleme entegrasyonları (**WhatsApp**)
+
+### Motivasyon
+
+- Günün sözü, ayet & hadis, dua paylaşımları  
+- YouTube video entegrasyonu  
+- Lig atlama ve diğer bildirimler (**OneSignal**)  
+
+### Güvenlik & Yönetim
+
+- Şifreli giriş, rol tabanlı yetkilendirme  
+- Giriş ve erişim logları  
+- Zamanlanmış otomatik yedekleme  
+- Admin paneli, katılma isteklerini yönetme  
+- Canlı destek ve kullanıcı iletişimi (**Tawk.to**)  
+- Site trafiği ve kullanım analizi (**Google Analytics**)  
+
+---
+
 ## 📸 Ekran Görüntüleri
 
 | Ana Sayfa | Haftalık Tablo | Günlük Görevler |
@@ -39,38 +73,6 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 ---
 
-## Temel Özellikler
-
-### Grup & Kullanıcı
-
-- Grup oluşturma ve katılım (admin onaylı)  
-- Herkese açık / özel grup görünürlüğü, arama ve filtreleme  
-- Admin / üye rol sistemi  
-- Profil ve grup avatarları (Dropbox ile görsel yükleme)  
-
-### Okuma Takibi
-
-- Haftalık tabloda günlük okuma işaretleme (okudum / okumadım / boş)  
-- Lig sistemi (Bronz → Gümüş → Altın)
-- Okuma serisi takibi  
-- Haftalık ve aylık istatistikler, takvim görünümü  
-- Otomatik okuma işaretleme entegrasyonları (WhatsApp)
-
-### Motivasyon
-
-- Günün sözü, ayet & hadis, dua paylaşımları  
-- YouTube video entegrasyonu  
-- Lig atlama ve diğer bildirimler (**OneSignal**)  
-
-### Güvenlik & Yönetim
-
-- Şifreli giriş (**bcrypt**), rol tabanlı yetkilendirme  
-- Giriş ve erişim logları  
-- Zamanlanmış **otomatik yedekleme** (ayrı yedek veritabanı)  
-- Admin paneli, katılma isteklerini yönetme  
-
----
-
 ## API Mimarisi (REST API)
 
 İstemci ve sunucu arasındaki veri iletişimi **REST API** standartlarına uygun uç noktalar (endpoints) üzerinden gerçekleştirilir:
@@ -87,7 +89,7 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 **Frontend:** Vanilla JavaScript, CSS3, Font Awesome  
 
-**Entegrasyonlar:** Dropbox, OneSignal, YouTube Data API, Google Analytics, Tawk.to canlı destek 
+**Entegrasyonlar:** Whatsapp; Dropbox, OneSignal, YouTube Data API, Google Analytics, Tawk.to canlı destek 
 
 ---
 

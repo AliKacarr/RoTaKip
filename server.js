@@ -4472,7 +4472,10 @@ function extractDateFromPollTitle(title, referenceYear) {
 }
 
 // Oy değişikliğini okuma durumuna (readingstatuses_<groupId>) senkronize eden fonksiyon
-async function syncPollVoteToReadingStatus(voteDoc, isDelete = false) {
+// selectedOptions dizisine bakarak karar verir:
+//   - selectedOptions.length > 0  → "okudum" ekle
+//   - selectedOptions.length === 0 → "okudum" sil (oy geri çekilmiş)
+async function syncPollVoteToReadingStatus(voteDoc) {
   try {
     if (!voteDoc || !voteDoc.pollId) return;
 
@@ -4513,8 +4516,8 @@ async function syncPollVoteToReadingStatus(voteDoc, isDelete = false) {
       dateStr = moment().utcOffset(3).format('YYYY-MM-DD');
     }
 
-    // Oy verilmiş mi kontrol et (Seçilen opsiyonlar var mı?)
-    const hasVoted = !isDelete && Array.isArray(voteDoc.selectedOptions) && voteDoc.selectedOptions.length > 0;
+    // Oy verilmiş mi kontrol et (selectedOptions dizisi dolu mu?)
+    const hasVoted = Array.isArray(voteDoc.selectedOptions) && voteDoc.selectedOptions.length > 0;
 
     // Tüm grupları tara ve bu telefon numarasına sahip kullanıcıyı bul
     const groups = await UserGroup.find({}).lean();
@@ -4535,7 +4538,7 @@ async function syncPollVoteToReadingStatus(voteDoc, isDelete = false) {
           );
           console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${group.groupId})`);
         } else {
-          // Kullanıcı oyunu geri çekmiş veya oy silinmiş -> okuma bilgisini sil
+          // Kullanıcı oyunu geri çekmiş (selectedOptions boş) -> okuma bilgisini sil
           await readingStatuses.findOneAndDelete({ userId, date: dateStr });
           console.log(`🗑️ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} 'okudum' kaydı silindi. (Grup: ${group.groupId})`);
         }
@@ -4546,67 +4549,25 @@ async function syncPollVoteToReadingStatus(voteDoc, isDelete = false) {
   }
 }
 
-// poll_votes silinme (delete) durumlarında doküman bilgisine ulaşabilmek için veritabanında gölge/harita koleksiyonu
-const pollVoteMappingSchema = new mongoose.Schema({
-  voteId: { type: String, required: true, unique: true },
-  pollId: String,
-  voterPhone: String,
-  voterJid: String,
-  selectedOptions: [String],
-  voteUpdatedAt: String
-});
-
-const PollVoteMapping = mongoose.model('PollVoteMapping', pollVoteMappingSchema, 'poll_vote_mappings');
-
-// Akıllı Senkronizasyon Motoru (MongoDB Standalone ve Replica Set uyumlu)
+// Senkronizasyon Motoru: poll_votes koleksiyonundaki yeni dokümanları işle ve sil
+// WhatsApp her seferinde poll_votes'a doküman ekler. Biz dokümanı okuyup
+// readingstatuses'e yansıttıktan sonra poll_votes'tan sileriz.
 async function performPollVotesSync() {
   try {
-    const currentVotes = await PollVote.find({}).lean();
-    const existingMappings = await PollVoteMapping.find({}).lean();
+    const pendingVotes = await PollVote.find({}).lean();
+    if (pendingVotes.length === 0) return;
 
-    const currentVoteMap = new Map();
-    currentVotes.forEach(v => {
-      if (v._id) currentVoteMap.set(v._id.toString(), v);
-    });
+    for (const voteDoc of pendingVotes) {
+      try {
+        // 1. Oy dokümanını readingstatuses'e senkronize et
+        await syncPollVoteToReadingStatus(voteDoc);
 
-    const mappingMap = new Map();
-    existingMappings.forEach(m => {
-      if (m.voteId) mappingMap.set(m.voteId, m);
-    });
-
-    // 1. Yeni eklenen veya güncellenen oyları senkronize et
-    for (const [voteId, voteDoc] of currentVoteMap.entries()) {
-      const existingMapping = mappingMap.get(voteId);
-
-      const isNew = !existingMapping;
-      const isChanged = existingMapping && (
-        JSON.stringify(existingMapping.selectedOptions || []) !== JSON.stringify(voteDoc.selectedOptions || []) ||
-        (existingMapping.voteUpdatedAt || '') !== (voteDoc.updatedAt || '')
-      );
-
-      if (isNew || isChanged) {
-        await PollVoteMapping.findOneAndUpdate(
-          { voteId },
-          {
-            voteId,
-            pollId: voteDoc.pollId,
-            voterPhone: voteDoc.voterPhone,
-            voterJid: voteDoc.voterJid,
-            selectedOptions: voteDoc.selectedOptions,
-            voteUpdatedAt: voteDoc.updatedAt || ''
-          },
-          { upsert: true }
-        );
-
-        await syncPollVoteToReadingStatus(voteDoc, false);
-      }
-    }
-
-    // 2. Silinen oyları senkronize et (poll_votes'ta yok ama poll_vote_mappings'te var)
-    for (const [voteId, mappingDoc] of mappingMap.entries()) {
-      if (!currentVoteMap.has(voteId)) {
-        await syncPollVoteToReadingStatus(mappingDoc, true);
-        await PollVoteMapping.deleteOne({ voteId });
+        // 2. İşlem tamamlandı, poll_votes'tan dokümanı sil
+        await PollVote.deleteOne({ _id: voteDoc._id });
+        console.log(`🗑️ poll_votes dokümanı işlendi ve silindi: ${voteDoc._id} (pollId: ${voteDoc.pollId}, voter: ${voteDoc.voterPhone || voteDoc.voterJid})`);
+      } catch (voteErr) {
+        console.error(`Poll vote işleme hatası (${voteDoc._id}):`, voteErr.message);
+        // Tek bir doküman hata verirse diğerlerine devam et
       }
     }
   } catch (err) {
@@ -4619,7 +4580,7 @@ function startPollVoteSyncEngine() {
   // İlk taramayı hemen yap
   performPollVotesSync();
 
-  // Her 10 saniyede bir otomatik tara (Değişiklik yoksa veritabanını yormaz, log yazmaz)
+  // Her 10 saniyede bir otomatik tara
   setInterval(performPollVotesSync, 10000);
 
   // MongoDB Replica Set / Atlas ortamlarında Change Stream ile anlık tetikleme
@@ -4643,13 +4604,12 @@ function startPollVoteSyncEngine() {
 // Webhook endpoint (WhatsApp botu doğrudan HTTP isteği ile bildirmek isterse)
 app.post('/api/webhook/whatsapp-poll-vote', async (req, res) => {
   try {
-    const { pollVote, isDelete } = req.body;
+    const { pollVote } = req.body;
     if (!pollVote || !pollVote.pollId) {
       return res.status(400).json({ error: 'pollVote verisi eksik' });
     }
 
-    await syncPollVoteToReadingStatus(pollVote, !!isDelete);
-    performPollVotesSync(); // Hemen senkronize et
+    await syncPollVoteToReadingStatus(pollVote);
     res.json({ success: true, message: 'Anket oyu başarıyla senkronize edildi' });
   } catch (error) {
     console.error('Webhook poll vote hatası:', error);
