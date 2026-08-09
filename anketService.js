@@ -8,15 +8,16 @@ require('dotenv').config();
 
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc4Ru7BjsB-sNgdw5-r9hBF-yqXuG7gA6OUJISYVjzlCByyjQ/viewform?usp=header";
 
+const NAME_VALUE = "Ali Kaçar";
+
 const DROPDOWN_VALUES = [
-    "Ali Kaçar",   // 1. Ad Soyad
-    "Ekip C",      // 2. Hangi Ekiptesin?
-    "5",           // 3. Kaç Vakit Namaz?
-    "5",           // 4. Kaç Sayfa Kuran?
-    "5",           // 5. Kaç Vakit Tesbihat?
-    "5",           // 6. Cevşen Okudun Mu?
-    "1.5",         // 7. Kaç Saat Risale-i Nur?
-    "2",           // 8. Kaç Saat Hizmet?
+    "Ekip C",      // 1. Hangi Ekiptesin?
+    "5",           // 2. Kaç Vakit Namaz?
+    "5",           // 3. Kaç Sayfa Kuran?
+    "5",           // 4. Kaç Vakit Tesbihat?
+    "5",           // 5. Cevşen Okudun Mu?
+    "1.5",         // 6. Kaç Saat Risale-i Nur?
+    "2",           // 7. Kaç Saat Hizmet?
 ];
 
 const TEXTAREA_VALUE = "Medresem uygulaması çalışması, podcast dinleme ve youtube video izleme";
@@ -119,6 +120,16 @@ async function selectDropdown(page, dropdown, value) {
 }
 
 /**
+ * Metin alanı doldurma yardımcı fonksiyonu (hem input hem textarea alanlarını destekler)
+ */
+async function fillTextField(container, value) {
+    const input = container.locator('input[type="text"], textarea, [role="textbox"]').first();
+    await input.scrollIntoViewIfNeeded();
+    await input.click();
+    await input.fill(value);
+}
+
+/**
  * Anket doldurma işlemini yürütür.
  */
 async function doldurAnket(isHeadless = true) {
@@ -159,27 +170,28 @@ async function doldurAnket(isHeadless = true) {
         await page.waitForTimeout(1000);
         console.log("  [OK] Form yüklendi.\n");
 
-        const dropdowns = page.locator("[role='listbox']");
-        const count = await dropdowns.count();
-        console.log(`Bulunan dropdown: ${count} | Doldurulacak: ${DROPDOWN_VALUES.length}\n`);
+        const listItems = page.locator('[role="listitem"]');
+        const totalItems = await listItems.count();
+        console.log(`Formdaki toplam soru kartı sayısı: ${totalItems}`);
+
+        console.log(`\n[2] Soru 1 (Ad Soyad) dolduruluyor: '${NAME_VALUE}'`);
+        await fillTextField(listItems.nth(0), NAME_VALUE);
+        console.log(`  [OK] Ad Soyad girildi.\n`);
 
         let basari = true;
         for (let i = 0; i < DROPDOWN_VALUES.length; i++) {
             const value = DROPDOWN_VALUES[i];
-            console.log(`[${i + 2}] Dropdown #${i + 1} -> '${value}'`);
-            const dropdown = dropdowns.nth(i);
+            console.log(`[${i + 3}] Soru #${i + 2} (Dropdown) -> '${value}'`);
+            const dropdown = listItems.nth(i + 1).locator('[role="listbox"]');
             const ok = await selectDropdown(page, dropdown, value);
             if (!ok) {
                 basari = false;
             }
         }
 
-        console.log(`\n[10] Görev açıklaması yazılıyor...`);
-        const textarea = page.locator("textarea").first();
-        await textarea.scrollIntoViewIfNeeded();
-        await textarea.click();
-        await textarea.fill(TEXTAREA_VALUE);
-        console.log(`  [OK] Metin girildi.`);
+        console.log(`\n[10] Soru 9 (Görev Açıklaması) dolduruluyor...`);
+        await fillTextField(listItems.nth(totalItems - 1), TEXTAREA_VALUE);
+        console.log(`  [OK] Görev açıklaması girildi.`);
 
         console.log(`\n[11] Form gönderiliyor...`);
         await page.waitForTimeout(1000);
@@ -231,7 +243,7 @@ async function doldurAnket(isHeadless = true) {
 }
 
 /**
- * Her gün 01:00 (Türkiye Saati) için zamanlayıcıyı başlatır.
+ * Her gün 22:00 (Türkiye Saati) için zamanlayıcıyı başlatır.
  */
 function scheduleAnketJob() {
     const job = schedule.scheduleJob({ rule: '0 22 * * *', tz: 'Europe/Istanbul' }, async () => {
@@ -244,7 +256,7 @@ function scheduleAnketJob() {
             console.error(`[ZAMANLAYICI] Hata:`, error);
         }
     });
-    console.log("✅ Anket doldurma zamanlayıcısı kuruldu: Her gün saat 01:00 (TSİ)");
+    console.log("✅ Anket doldurma zamanlayıcısı kuruldu: Her gün saat 22:00 (TSİ)");
     return job;
 }
 
@@ -253,3 +265,12 @@ module.exports = {
     gonderimKaydet,
     scheduleAnketJob
 };
+
+if (require.main === module) {
+    (async () => {
+        console.log("Manuel anket doldurma başlatılıyor...");
+        const sonuc = await doldurAnket(false);
+        console.log("Sonuç:", sonuc);
+    })();
+}
+
