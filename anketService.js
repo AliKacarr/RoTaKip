@@ -8,24 +8,25 @@ require('dotenv').config();
 
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc4Ru7BjsB-sNgdw5-r9hBF-yqXuG7gA6OUJISYVjzlCByyjQ/viewform?usp=header";
 
-const NAME_VALUE = "Ali Kaçar";
-
 const DROPDOWN_VALUES = [
-    "Ekip C",      // 1. Hangi Ekiptesin?
-    "5",           // 2. Kaç Vakit Namaz?
-    "5",           // 3. Kaç Sayfa Kuran?
-    "5",           // 4. Kaç Vakit Tesbihat?
-    "5",           // 5. Cevşen Okudun Mu?
-    "1.5",         // 6. Kaç Saat Risale-i Nur?
-    "2",           // 7. Kaç Saat Hizmet?
+    "Ali Kaçar",   // 1. Ad Soyad
+    "Ekip C",      // 2. Hangi Ekiptesin?
+    "5",           // 3. Kaç Vakit Namaz?
+    "5",           // 4. Kaç Sayfa Kuran?
+    "5",           // 5. Kaç Vakit Tesbihat?
+    "5",           // 6. Cevşen Okudun Mu?
+    "1.5",         // 7. Kaç Saat Risale-i Nur?
+    "2",           // 8. Kaç Saat Hizmet?
 ];
 
 const TEXTAREA_VALUE = "Medresem uygulaması çalışması, podcast dinleme ve youtube video izleme";
 
 /**
  * Gönderim log kaydını gerçekleştirir (MongoDB 'anket' veritabanı 'logs' koleksiyonuna).
+ * @param {boolean} isSuccess - Gönderim başarılı mı?
+ * @param {string|null} customMessage - Özel log mesajı
  */
-async function gonderimKaydet() {
+async function gonderimKaydet(isSuccess = true, customMessage = null) {
     const mongoUri = process.env.MONGO_URI;
     if (!mongoUri) {
         console.error("  [HATA] MONGO_URI ortam değişkeni bulunamadı!");
@@ -49,17 +50,28 @@ async function gonderimKaydet() {
         const existing = await logsCollection.findOne({ date: bugunStr });
         const ayniGunVar = !!existing;
 
+        const status = isSuccess ? (ayniGunVar ? 'warning' : 'success') : 'failed';
+        const defaultMsg = isSuccess
+            ? (ayniGunVar ? 'Bugün için zaten kayıt vardı.' : 'Gönderim başarıyla kaydedildi.')
+            : 'Form gönderimi başarısız oldu.';
+
         const logDoc = {
             createdAt: simdi,
             dateStr: kayitStr,
             date: bugunStr,
             time: saatStr,
-            status: ayniGunVar ? 'warning' : 'success',
-            message: ayniGunVar ? 'Bugün için zaten kayıt vardı.' : 'Gönderim başarıyla kaydedildi.',
-            isDuplicate: ayniGunVar
+            status: status,
+            message: customMessage || defaultMsg,
+            isDuplicate: ayniGunVar,
+            success: isSuccess
         };
 
         await logsCollection.insertOne(logDoc);
+
+        if (!isSuccess) {
+            console.log(`  [HATA LOG] MongoDB 'logs' koleksiyonuna başarısızlık kaydı eklendi: ${logDoc.message}`);
+            return { success: false, warning: false, message: logDoc.message };
+        }
 
         if (ayniGunVar) {
             console.log(`  [UYARI] Bugün (${bugunStr}) için zaten kayıt var. MongoDB logs koleksiyonuna eklendi.`);
@@ -120,16 +132,6 @@ async function selectDropdown(page, dropdown, value) {
 }
 
 /**
- * Metin alanı doldurma yardımcı fonksiyonu (hem input hem textarea alanlarını destekler)
- */
-async function fillTextField(container, value) {
-    const input = container.locator('input[type="text"], textarea, [role="textbox"]').first();
-    await input.scrollIntoViewIfNeeded();
-    await input.click();
-    await input.fill(value);
-}
-
-/**
  * Anket doldurma işlemini yürütür.
  */
 async function doldurAnket(isHeadless = true) {
@@ -170,28 +172,27 @@ async function doldurAnket(isHeadless = true) {
         await page.waitForTimeout(1000);
         console.log("  [OK] Form yüklendi.\n");
 
-        const listItems = page.locator('[role="listitem"]');
-        const totalItems = await listItems.count();
-        console.log(`Formdaki toplam soru kartı sayısı: ${totalItems}`);
-
-        console.log(`\n[2] Soru 1 (Ad Soyad) dolduruluyor: '${NAME_VALUE}'`);
-        await fillTextField(listItems.nth(0), NAME_VALUE);
-        console.log(`  [OK] Ad Soyad girildi.\n`);
+        const dropdowns = page.locator("[role='listbox']");
+        const count = await dropdowns.count();
+        console.log(`Bulunan dropdown: ${count} | Doldurulacak: ${DROPDOWN_VALUES.length}\n`);
 
         let basari = true;
         for (let i = 0; i < DROPDOWN_VALUES.length; i++) {
             const value = DROPDOWN_VALUES[i];
-            console.log(`[${i + 3}] Soru #${i + 2} (Dropdown) -> '${value}'`);
-            const dropdown = listItems.nth(i + 1).locator('[role="listbox"]');
+            console.log(`[${i + 2}] Dropdown #${i + 1} -> '${value}'`);
+            const dropdown = dropdowns.nth(i);
             const ok = await selectDropdown(page, dropdown, value);
             if (!ok) {
                 basari = false;
             }
         }
 
-        console.log(`\n[10] Soru 9 (Görev Açıklaması) dolduruluyor...`);
-        await fillTextField(listItems.nth(totalItems - 1), TEXTAREA_VALUE);
-        console.log(`  [OK] Görev açıklaması girildi.`);
+        console.log(`\n[10] Görev açıklaması yazılıyor...`);
+        const textarea = page.locator("textarea").first();
+        await textarea.scrollIntoViewIfNeeded();
+        await textarea.click();
+        await textarea.fill(TEXTAREA_VALUE);
+        console.log(`  [OK] Metin girildi.`);
 
         console.log(`\n[11] Form gönderiliyor...`);
         await page.waitForTimeout(1000);
@@ -222,23 +223,26 @@ async function doldurAnket(isHeadless = true) {
         console.log("\n" + "=".repeat(60));
         if (sent && basari) {
             console.log("  [BAŞARILI] FORM BAŞARIYLA GÖNDERİLDİ!");
-            const logRes = await gonderimKaydet();
+            const logRes = await gonderimKaydet(true, "Form başarıyla gönderildi.");
             await browser.close();
             return { success: true, message: "Form başarıyla gönderildi ve loglandı.", logResult: logRes };
         } else if (basari) {
             console.log("  [BAŞARILI] Tüm seçimler yapıldı.");
-            const logRes = await gonderimKaydet();
+            const logRes = await gonderimKaydet(true, "Form seçimleri tamamlandı ve gönderildi.");
             await browser.close();
             return { success: true, message: "Form seçimleri tamamlandı ve gönderildi.", logResult: logRes };
         } else {
-            console.log("  [UYARI] Bazı seçimler yapılamadı. Log kaydedilmedi.");
+            const HATA_MESAJI = "Bazı seçimler yapılamadı (doldurma adımları başarısız).";
+            console.log(`  [HATA] ${HATA_MESAJI} Log kaydediliyor...`);
+            const logRes = await gonderimKaydet(false, HATA_MESAJI);
             await browser.close();
-            return { success: false, message: "Bazı doldurma adımları başarısız oldu." };
+            return { success: false, message: HATA_MESAJI, logResult: logRes };
         }
     } catch (err) {
         console.error("Anket doldurulurken hata oluştu:", err);
+        const logRes = await gonderimKaydet(false, `Form doldurma hatası: ${err.message}`);
         if (browser) await browser.close();
-        return { success: false, error: err.message };
+        return { success: false, error: err.message, logResult: logRes };
     }
 }
 
@@ -273,4 +277,3 @@ if (require.main === module) {
         console.log("Sonuç:", sonuc);
     })();
 }
-

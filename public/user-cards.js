@@ -701,13 +701,12 @@ async function loadUserCards() {
       "Okumalarımıza düzenli devam edebilmek dileğiyle 🌿",
       "Okuma alışkanlığımızı birlikte güçlendirelim inşaAllah 📖",
       "Küçük adımlar, büyük alışkanlıklar oluşturur. Takipteyiz! 📘",
-      "Bu hatırlatma vesile olsun, kaldığımız yerden devam edelim 🔄",
+      "Bu hatırlatma bir vesile olsun, kaldığımız yerden devam edelim 🔄",
       "Düzenli okumalarla bereketli bir sürece birlikte yürüyelim 🌱",
       "İstikrar güzeldir; eksiklerimizi birlikte tamamlayalım 🤝",
       "Okuyanlara tebrikler, henüz okumayanlara nazik bir davet 😊",
       "İstikrarın güzelliğini hep birlikte yaşayalım 🌟",
-      "Eksik kalanlar için nazik bir hatırlatma olsun bu liste ✉️",
-      "Bugünün okumayanları, yarının ilk okuyanı olabilir 🌅",
+      "Daha okumasını tamamlamayanlar için nazik bir hatırlatma 📖",
       "Okumalarımıza birlikte devam edebilmek duasıyla 🤲",
       "Birlikte ilerlemek, devam etmenin en güzel hali 👣",
       "Okumalarımıza sadakatle devam edelim inşaAllah 🕊️",
@@ -718,39 +717,99 @@ async function loadUserCards() {
       "Güzel alışkanlıklar birlikte inşa edilir 🍃",
       "Okuma yolculuğumuza birlikte güç katalım 🚀",
       "Birlikte tamamlanan okumalarda bereket vardır 🧡",
-      "Düzenli okumalarla kalplerimizi diri tutalım ❤️‍🔥",
+      "Düzenli okumalarla kalplerimizi diri tutalım ❤️🔥",
       "Hatırlatmak bizden, gayret sizden 🙏",
       "Okumaları unutmayalım 🔔",
       "İstikrarlı adımlar en kalıcı olanlardır ⏳",
-      "Bugün de okuma halkamızın bir parçası ol 💫",
+      "Okuma halkamızın bir parçası olmaya ne dersiniz? 💫",
       "Birlikte okumak, yalnız okumaktan daha değerlidir 🤝",
       "Okudukça zihin açılır, gönül ferahlar ☀️",
       "İstikrarlı olan kazanır; bugünü de boş geçmeyelim ⏰",
       "Birlikte okumak, birlikte güçlenmektir 💪",
       "Bugün okumaya vakit ayırmak, kendine bir iyiliktir 💝",
-      "Okuma halkamızda sizde yerinizi alın 🤗",
+      "Okuma halkamızda siz de yerinizi alın 🤗",
       "Bir satır da bugün için, alışkanlık zincirini kırma 🔗",
       "Okumak, gönlü besleyen en güzel alışkanlıktır 🌾",
-      "Okuma yolculuğumuzda mola değil, devam zamanı 🔄"
+      "Okuma yolculuğumuzda mola değil, devam zamanı 🔄",
+      "Zinciri kırmayalım, okumaya devam 🔗",
+      "Az da olsa devamlı okuyalım 💧",
+      "Kaldığımız yerden aynı şevkle devam! 🚀",
+      "Birkaç satır da olsa okuyalım 📖",
+      "Birlikte okuyor, birlikte güzelleşiyoruz 🌱",
+      "Ruhumuza kısa bir okuma molası ☕",
+      "Günün yoğunluğuna kısa bir okuma arası ☕",
+      "Günün bereketini okumayla yakalayalım ☀️",
+      "Okuma saatimiz geldi, sizleri de aramızda görmek isteriz ⏰",
+      "Günü kapatmadan okumalarımızı tamamlayalım ⌛",
+      "Küçük bir gayret, büyük bereket 🌾",
+      "Kitaplar bizi bekler, hadi okumaya 📚",
+      "Gönlümüze iyi gelecek satırlara dönelim 🕊️",
+      "Okuma kervanımız yola devam ediyor 🛤️",
+      "Okumalarımızı tamamlayıp güne huzur katalım 🍂"
     ];
 
-    // Her kullanıcı için ardışık okumama günlerini hesapla
+    // Her kullanıcı için ardışık okumama günlerini hesapla (Bugünden geriye takvim bazlı)
     const consecutiveMissed = [];
+
     users.forEach(user => {
-      // Kullanıcının okuma kayıtlarını tarihe göre yeniye göre sırala
-      const userStats = stats
-        .filter(s => s.userId === user._id && (s.status === 'okudum' || s.status === 'okumadım'))
-        .sort((a, b) => b.date.localeCompare(a.date)); // yeni -> eski
+      const userStatMap = {};
+      const userDates = [];
+      stats
+        .filter(s => s.userId === user._id)
+        .forEach(s => {
+          userStatMap[s.date] = s.status;
+          if (s.date) userDates.push(s.date);
+        });
+
+      // Kullanıcının hiç kayıt verisi yoksa atla
+      if (userDates.length === 0) return;
+
+      userDates.sort();
+      const userEarliestDate = userDates[0]; // Kullanıcının sistemdeki kendi en eski kayıt tarihi
+
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(today.getDate()).padStart(2, '0');
+      const todayKey = `${year}-${month}-${dayStr}`;
+
+      const todayStatus = userStatMap[todayKey];
       let count = 0;
-      for (const stat of userStats) {
-        if (stat.status === 'okumadım') {
-          count++;
-        } else if (stat.status === 'okudum') {
-          break;
-        } else {
+      let d;
+
+      if (todayStatus === 'okudum') {
+        // Bugün okunduysa okumama serisi yok demektir
+        return;
+      } else if (todayStatus === 'okumadım') {
+        // Bugün açıkça okumadım diye işaretlendiyse aramaya bugünden başla
+        d = new Date(today);
+      } else {
+        // Bugün henüz işaretlenmediyse bugünü sayma, aramaya dünden başla
+        d = new Date(today);
+        d.setDate(d.getDate() - 1);
+      }
+
+      while (true) {
+        const currYear = d.getFullYear();
+        const currMonth = String(d.getMonth() + 1).padStart(2, '0');
+        const currDayStr = String(d.getDate()).padStart(2, '0');
+        const dateKey = `${currYear}-${currMonth}-${currDayStr}`;
+
+        // 'okudum' olan güne ulaşıldığında okumama serisi kesilir
+        if (userStatMap[dateKey] === 'okudum') {
           break;
         }
+
+        count++;
+
+        // Kullanıcının kendi en eski kayıt tarihine ulaşıldıysa daha geriye gitme
+        if (userEarliestDate && dateKey <= userEarliestDate) {
+          break;
+        }
+
+        d.setDate(d.getDate() - 1);
       }
+
       if (count > 1) {
         consecutiveMissed.push({ name: user.name, days: count });
       }
