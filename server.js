@@ -4417,7 +4417,8 @@ const pollVoteSchema = new mongoose.Schema({
   pushName: String,
   selectedOptions: [String],
   updatedAt: String,
-  voterPhone: String
+  voterPhone: String,
+  readingGroupId: String
 }, { strict: false });
 
 const Poll = mongoose.model('Poll', pollSchema, 'polls');
@@ -4486,7 +4487,6 @@ async function syncPollVoteToReadingStatus(voteDoc) {
 
     // İlgili anketi (poll) bul
     const poll = await Poll.findOne({ pollId: voteDoc.pollId }).lean();
-    if (!poll) return;
 
     // Tarih tespiti öncelik sırası:
     // 1. Anket Başlığı (poll.title) -> Örn: "4 Ağustos" -> "2026-08-04"
@@ -4519,11 +4519,12 @@ async function syncPollVoteToReadingStatus(voteDoc) {
     // Oy verilmiş mi kontrol et (selectedOptions dizisi dolu mu?)
     const hasVoted = Array.isArray(voteDoc.selectedOptions) && voteDoc.selectedOptions.length > 0;
 
-    // Tüm grupları tara ve bu telefon numarasına sahip kullanıcıyı bul
-    const groups = await UserGroup.find({}).lean();
+    // Hedef okuma grubu tespiti (voteDoc.readingGroupId veya poll.groupId)
+    const targetGroupId = voteDoc.readingGroupId || poll?.groupId;
 
-    for (const group of groups) {
-      const { users, readingStatuses } = getGroupCollections(group.groupId);
+    if (targetGroupId) {
+      // Doğrudan ilgili gruptan işlem yap
+      const { users, readingStatuses } = getGroupCollections(targetGroupId);
       const user = await users.findOne({ phone }).lean();
 
       if (user) {
@@ -4536,11 +4537,37 @@ async function syncPollVoteToReadingStatus(voteDoc) {
             { userId, date: dateStr, status: 'okudum' },
             { upsert: true, new: true }
           );
-          console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${group.groupId})`);
+          console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${targetGroupId})`);
         } else {
           // Kullanıcı oyunu geri çekmiş (selectedOptions boş) -> okuma bilgisini sil
           await readingStatuses.findOneAndDelete({ userId, date: dateStr });
-          console.log(`🗑️ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} 'okudum' kaydı silindi. (Grup: ${group.groupId})`);
+          console.log(`🗑️ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} 'okudum' kaydı silindi. (Grup: ${targetGroupId})`);
+        }
+      } else {
+        console.warn(`⚠️ WhatsApp Anket Senkronizasyonu: ${phone} telefon numaralı kullanıcı '${targetGroupId}' grubunda bulunamadı.`);
+      }
+    } else {
+      // Fallback: readingGroupId bilgisi yoksa veritabanındaki tüm grupları tara
+      const groups = await UserGroup.find({}).lean();
+
+      for (const group of groups) {
+        const { users, readingStatuses } = getGroupCollections(group.groupId);
+        const user = await users.findOne({ phone }).lean();
+
+        if (user) {
+          const userId = user._id.toString();
+
+          if (hasVoted) {
+            await readingStatuses.findOneAndUpdate(
+              { userId, date: dateStr },
+              { userId, date: dateStr, status: 'okudum' },
+              { upsert: true, new: true }
+            );
+            console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${group.groupId})`);
+          } else {
+            await readingStatuses.findOneAndDelete({ userId, date: dateStr });
+            console.log(`🗑️ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} 'okudum' kaydı silindi. (Grup: ${group.groupId})`);
+          }
         }
       }
     }
