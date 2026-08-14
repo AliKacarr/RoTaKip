@@ -2078,6 +2078,8 @@ app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
     ]);
 
     let updated = 0;
+    const pendingDeleteFilter = []; // pending_league_congratulations'tan silinecek kayıtlar
+
     for (const raw of items) {
       const userId = raw && raw.userId != null ? String(raw.userId).trim() : '';
       const leagueName =
@@ -2088,7 +2090,26 @@ app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
         { $set: { lastCongratulatedLeague: leagueName } },
         { new: true }
       ).lean();
-      if (r) updated++;
+      if (r) {
+        updated++;
+        pendingDeleteFilter.push({ userId, groupId, league: leagueName });
+      }
+    }
+
+    // Admin paneli tıkladı → WhatsApp botu henüz göndermemişse kuyruğu temizle
+    // Böylece bot aktif olduğunda çift kutlama gitmiş olmaz.
+    if (pendingDeleteFilter.length > 0) {
+      try {
+        const deleted = await PendingCongrat.deleteMany({
+          $or: pendingDeleteFilter
+        });
+        if (deleted.deletedCount > 0) {
+          console.log(`🧹 Admin lig tebriği: ${deleted.deletedCount} adet pending_league_congratulations kaydı temizlendi. (Grup: ${groupId})`);
+        }
+      } catch (cleanErr) {
+        // Temizleme hatası ana akışı etkilemesin
+        console.error('Pending congratulations temizleme hatası:', cleanErr.message);
+      }
     }
 
     res.json({ success: true, updated });
@@ -4403,6 +4424,121 @@ app.post('/api/remove-user-profile-image', async (req, res) => {
 // WHATSAPP ANKET (POLL) VOTE SENKRONİZASYONU
 // ============================================================================
 
+// --- Lig Sabitleri (frontend user-cards.js ile senkronize) ---
+const LEAGUES = [
+  { name: 'Bronz',     min: 0,   max: 5    },
+  { name: 'Gümüş',    min: 5,   max: 10   },
+  { name: 'Altın',    min: 10,  max: 20   },
+  { name: 'İnci',     min: 20,  max: 40   },
+  { name: 'Safir',    min: 40,  max: 60   },
+  { name: 'Zümrüt',   min: 60,  max: 100  },
+  { name: 'Elmas',    min: 100, max: 150  },
+  { name: 'Yakut',    min: 150, max: 200  },
+  { name: 'Mercan',   min: 200, max: 365  },
+  { name: 'Pırlanta', min: 365, max: 9999 }
+];
+
+/**
+ * Verilen okudum sayısına göre ligin adını ve min değerini döndürür.
+ * @param {number} okudumCount
+ * @returns {{ name: string, min: number, max: number }}
+ */
+function calculateUserLeague(okudumCount) {
+  return LEAGUES.find(l => okudumCount >= l.min && okudumCount < l.max) || LEAGUES[LEAGUES.length - 1];
+}
+
+// --- Lig Atlama Kuyruğu: pending_league_congratulations ---
+const pendingCongratSchema = new mongoose.Schema({
+  userId:        { type: String, required: true },
+  name:          { type: String },
+  phone:         { type: String },
+  groupId:       { type: String, required: true },
+  groupName:     { type: String },
+  league:        { type: String, required: true },
+  leagueMin:     { type: Number },
+  promotionDate: { type: String }, // YYYY-MM-DD formatında lig atlama tarihi
+  createdAt:     { type: Date, default: Date.now },
+  status:        { type: String, default: 'pending' } // 'pending' | 'sent'
+});
+
+// Aynı kullanıcı aynı grup aynı lig için birden fazla kutlama gitmemesi için unique index
+pendingCongratSchema.index({ userId: 1, groupId: 1, league: 1 }, { unique: true });
+// 1 saat (3600 saniye) sonra otomatik sil — koleksiyon şişmesini önler
+pendingCongratSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 });
+
+const PendingCongrat = mongoose.model('PendingCongrat', pendingCongratSchema, 'pending_league_congratulations');
+
+/**
+ * Kullanıcının toplam okudum sayısını hesaplar ve lig atladıysa
+ * pending_league_congratulations koleksiyonuna bir doküman ekler.
+ *
+ * Kutlama panelinin gözükmesindeki mantıkla birebir eşleşir (user-cards.js):
+ *  - Bronz (min=0) ligi başlangıç ligi, kutlanmaz.
+ *  - currentLeague !== lastCongratulatedLeague VE currentLeague rank > lastCongratulated rank ise kutla.
+ *
+ * @param {object} user       - Kullanıcı dokümanı (lean, { _id, name, phone, lastCongratulatedLeague })
+ * @param {string} groupId    - Grubun ID'si
+ * @param {string} groupName  - Grubun adı
+ * @param {string} dateStr    - Okumanın tarihi (YYYY-MM-DD), lig atlama tarihi olarak saklanır
+ */
+async function checkAndQueueLeaguePromotion(user, groupId, groupName, dateStr) {
+  try {
+    const { readingStatuses } = getGroupCollections(groupId);
+    const userId = String(user._id);
+
+    // Kullanıcının toplam okudum sayısını hesapla
+    const okudumCount = await readingStatuses.countDocuments({ userId, status: 'okudum' });
+
+    // Mevcut liği bul
+    const currentLeague = calculateUserLeague(okudumCount);
+
+    // Bronz (min=0) başlangıç ligi — kutlanmaz
+    if (currentLeague.min === 0) return;
+
+    // lastCongratulatedLeague alanını oku (yoksa 'Bronz' varsay)
+    const lastC = (user.lastCongratulatedLeague != null && String(user.lastCongratulatedLeague).trim() !== '')
+      ? String(user.lastCongratulatedLeague).trim()
+      : 'Bronz';
+
+    // Zaten bu lig kutlandıysa çık
+    if (currentLeague.name === lastC) return;
+
+    // Lig sıralaması kontrolü (gerileme durumunda kutlama yapma)
+    const rCur  = LEAGUES.findIndex(l => l.name === currentLeague.name);
+    const rLast = LEAGUES.findIndex(l => l.name === lastC);
+    if (rCur < rLast) return;
+
+    // Lig atlama tarihi: okumanın tarihi
+    const promotionDate = dateStr || moment().utcOffset(3).format('YYYY-MM-DD');
+
+    // Kuyruğa ekle (upsert: aynı userId+groupId+league kombinasyonu varsa güncelle, yoksa ekle)
+    await PendingCongrat.findOneAndUpdate(
+      { userId, groupId, league: currentLeague.name },
+      {
+        $set: {
+          name:          user.name || '',
+          phone:         user.phone || '',
+          groupName:     groupName || groupId,
+          leagueMin:     currentLeague.min,
+          promotionDate,
+          status:        'pending'
+        },
+        $setOnInsert: {
+          createdAt: new Date()
+        }
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log(`🏆 Lig Atlama Kuyruğu: ${user.name} (${user.phone}) → ${currentLeague.name} ligi. (Grup: ${groupId}, Tarih: ${promotionDate})`);
+  } catch (err) {
+    // Unique index ihlali (11000) veya başka bir hata → sessizce geç, okudum akışını etkileme
+    if (err.code !== 11000) {
+      console.error('checkAndQueueLeaguePromotion hatası:', err.message);
+    }
+  }
+}
+
 const pollSchema = new mongoose.Schema({
   pollId: String,
   createdAt: String,
@@ -4538,6 +4674,10 @@ async function syncPollVoteToReadingStatus(voteDoc) {
             { upsert: true, new: true }
           );
           console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${targetGroupId})`);
+
+          // Lig atlama kontrolü: okuma kaydı eklendikten sonra yeni ligi kontrol et
+          const group = await UserGroup.findOne({ groupId: targetGroupId }).lean();
+          await checkAndQueueLeaguePromotion(user, targetGroupId, group?.groupName || targetGroupId, dateStr);
         } else {
           // Kullanıcı oyunu geri çekmiş (selectedOptions boş) -> okuma bilgisini sil
           await readingStatuses.findOneAndDelete({ userId, date: dateStr });
@@ -4564,6 +4704,9 @@ async function syncPollVoteToReadingStatus(voteDoc) {
               { upsert: true, new: true }
             );
             console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${group.groupId})`);
+
+            // Lig atlama kontrolü: okuma kaydı eklendikten sonra yeni ligi kontrol et
+            await checkAndQueueLeaguePromotion(user, group.groupId, group.groupName || group.groupId, dateStr);
           } else {
             await readingStatuses.findOneAndDelete({ userId, date: dateStr });
             console.log(`🗑️ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} 'okudum' kaydı silindi. (Grup: ${group.groupId})`);
