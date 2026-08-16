@@ -4426,15 +4426,15 @@ app.post('/api/remove-user-profile-image', async (req, res) => {
 
 // --- Lig Sabitleri (frontend user-cards.js ile senkronize) ---
 const LEAGUES = [
-  { name: 'Bronz',     min: 0,   max: 5    },
-  { name: 'Gümüş',    min: 5,   max: 10   },
-  { name: 'Altın',    min: 10,  max: 20   },
-  { name: 'İnci',     min: 20,  max: 40   },
-  { name: 'Safir',    min: 40,  max: 60   },
-  { name: 'Zümrüt',   min: 60,  max: 100  },
-  { name: 'Elmas',    min: 100, max: 150  },
-  { name: 'Yakut',    min: 150, max: 200  },
-  { name: 'Mercan',   min: 200, max: 365  },
+  { name: 'Bronz', min: 0, max: 5 },
+  { name: 'Gümüş', min: 5, max: 10 },
+  { name: 'Altın', min: 10, max: 20 },
+  { name: 'İnci', min: 20, max: 40 },
+  { name: 'Safir', min: 40, max: 60 },
+  { name: 'Zümrüt', min: 60, max: 100 },
+  { name: 'Elmas', min: 100, max: 150 },
+  { name: 'Yakut', min: 150, max: 200 },
+  { name: 'Mercan', min: 200, max: 365 },
   { name: 'Pırlanta', min: 365, max: 9999 }
 ];
 
@@ -4449,16 +4449,16 @@ function calculateUserLeague(okudumCount) {
 
 // --- Lig Atlama Kuyruğu: pending_league_congratulations ---
 const pendingCongratSchema = new mongoose.Schema({
-  userId:        { type: String, required: true },
-  name:          { type: String },
-  phone:         { type: String },
-  groupId:       { type: String, required: true },
-  groupName:     { type: String },
-  league:        { type: String, required: true },
-  leagueMin:     { type: Number },
+  userId: { type: String, required: true },
+  name: { type: String },
+  phone: { type: String },
+  groupId: { type: String, required: true },
+  groupName: { type: String },
+  league: { type: String, required: true },
+  leagueMin: { type: Number },
   promotionDate: { type: String }, // YYYY-MM-DD formatında lig atlama tarihi
-  createdAt:     { type: Date, default: Date.now },
-  status:        { type: String, default: 'pending' } // 'pending' | 'sent'
+  createdAt: { type: Date, default: Date.now },
+  status: { type: String, default: 'pending' } // 'pending' | 'sent'
 });
 
 // Aynı kullanıcı aynı grup aynı lig için birden fazla kutlama gitmemesi için unique index
@@ -4504,7 +4504,7 @@ async function checkAndQueueLeaguePromotion(user, groupId, groupName, dateStr) {
     if (currentLeague.name === lastC) return;
 
     // Lig sıralaması kontrolü (gerileme durumunda kutlama yapma)
-    const rCur  = LEAGUES.findIndex(l => l.name === currentLeague.name);
+    const rCur = LEAGUES.findIndex(l => l.name === currentLeague.name);
     const rLast = LEAGUES.findIndex(l => l.name === lastC);
     if (rCur < rLast) return;
 
@@ -4516,12 +4516,12 @@ async function checkAndQueueLeaguePromotion(user, groupId, groupName, dateStr) {
       { userId, groupId, league: currentLeague.name },
       {
         $set: {
-          name:          user.name || '',
-          phone:         user.phone || '',
-          groupName:     groupName || groupId,
-          leagueMin:     currentLeague.min,
+          name: user.name || '',
+          phone: user.phone || '',
+          groupName: groupName || groupId,
+          leagueMin: currentLeague.min,
           promotionDate,
-          status:        'pending'
+          status: 'pending'
         },
         $setOnInsert: {
           createdAt: new Date()
@@ -4554,7 +4554,8 @@ const pollVoteSchema = new mongoose.Schema({
   selectedOptions: [String],
   updatedAt: String,
   voterPhone: String,
-  readingGroupId: String
+  readingGroupId: String,
+  configKey: String
 }, { strict: false });
 
 const Poll = mongoose.model('Poll', pollSchema, 'polls');
