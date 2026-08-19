@@ -22,7 +22,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "dropbox": "^10.34.0",
-    "ejs": "^5.0.2",
+    "ejs": "^6.0.1",
     "express": "^4.22.2",
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
