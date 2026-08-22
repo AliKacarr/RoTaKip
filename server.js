@@ -4877,11 +4877,28 @@ async function syncTextVoteToReadingStatus(voteDoc) {
           dateStr
         );
       } else {
-        await readingStatuses.findOneAndDelete({ userId, date: dateStr });
-        console.log(
-          `🗑️ WhatsApp Mesaj Senkronizasyonu: ${user.name} (${phone || pushName}) - ` +
-          `${dateStr} 'okudum' kaydı silindi. (Grup: ${groupId})`
-        );
+        const today = moment().utcOffset(3).format('YYYY-MM-DD');
+        // selectedOptions [] : bugün → kaydı sil (➖); geçmiş gün → okumadım (✖)
+        if (dateStr < today) {
+          await readingStatuses.findOneAndUpdate(
+            { userId, date: dateStr },
+            {
+              $set: { userId, date: dateStr, status: 'okumadım' },
+              $unset: { amount: 1 }
+            },
+            { upsert: true, returnDocument: 'after' }
+          );
+          console.log(
+            `✖ WhatsApp Mesaj Senkronizasyonu: ${user.name} (${phone || pushName}) - ` +
+            `${dateStr} 'okumadım' olarak ayarlandı. (Grup: ${groupId})`
+          );
+        } else {
+          await readingStatuses.findOneAndDelete({ userId, date: dateStr });
+          console.log(
+            `🗑️ WhatsApp Mesaj Senkronizasyonu: ${user.name} (${phone || pushName}) - ` +
+            `${dateStr} okuma kaydı silindi (➖). (Grup: ${groupId})`
+          );
+        }
       }
     }
 
