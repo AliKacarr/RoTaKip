@@ -74,6 +74,7 @@ async function generateMinifiedFiles() {
   const groupsJsFiles = [
     'script.js',
     'admin-modal.js',
+    'reading-edit-mode.js',
     'tracker-table.js',
     'user-cards.js',
     'daily-gift.js',
@@ -198,7 +199,7 @@ async function handleLoginStreak(user, groupId) {
       loginStreak: newStreak,
       lastLoginDate: today
     },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   // Güncellenmiş user objesini döndür
@@ -805,7 +806,8 @@ const User = mongoose.model('User', {
 const ReadingStatus = mongoose.model('ReadingStatus', {
   userId: String,
   date: String,
-  status: String
+  status: String,
+  amount: { type: Number, required: false }
 });
 
 // Kullanıcı grupları modeli
@@ -1155,7 +1157,7 @@ app.post('/api/update-group/:groupId', async (req, res) => {
     const updatedGroup = await UserGroup.findOneAndUpdate(
       { groupId },
       updateFields,
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.json({ success: true, group: updatedGroup });
@@ -1263,7 +1265,7 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
     const updatedGroup = await UserGroup.findOneAndUpdate(
       { groupId },
       { groupImage: newImageUrl },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.json({ success: true, imageUrl: newImageUrl, group: updatedGroup });
@@ -1295,7 +1297,7 @@ app.post('/api/remove-group-image/:groupId', async (req, res) => {
     const updatedGroup = await UserGroup.findOneAndUpdate(
       { groupId },
       { groupImage: null },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.json({ success: true, group: updatedGroup });
@@ -1361,7 +1363,7 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
     const updatedGroup = await UserGroup.findOneAndUpdate(
       { groupId },
       { groupImage: newImageUrl },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     console.log(`✅ Avatar seçimi: ${newImageUrl} (Dropbox'a yüklenmedi)`);
@@ -1478,7 +1480,8 @@ const userSchema = new mongoose.Schema({
 const readingStatusSchema = new mongoose.Schema({
   userId: String,
   date: String,
-  status: String
+  status: String,
+  amount: { type: Number, required: false }
 });
 
 function getGroupCollections(groupId) {
@@ -1791,7 +1794,7 @@ app.post('/api/update-user/:groupId', async (req, res) => {
     const updatedUser = await users.findByIdAndUpdate(
       userId,
       { name: name.trim() },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedUser) {
@@ -1842,7 +1845,7 @@ app.post('/api/update-user-phone/:groupId', async (req, res) => {
     const updatedUser = await users.findByIdAndUpdate(
       userId,
       { phone: formattedPhone },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedUser) {
@@ -1904,7 +1907,7 @@ app.post('/api/update-user-authority/:groupId', async (req, res) => {
     const updatedUser = await users.findByIdAndUpdate(
       userId,
       { authority: authority },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.json({
@@ -2088,7 +2091,7 @@ app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
       const r = await users.findByIdAndUpdate(
         userId,
         { $set: { lastCongratulatedLeague: leagueName } },
-        { new: true }
+        { returnDocument: 'after' }
       ).lean();
       if (r) {
         updated++;
@@ -2253,7 +2256,7 @@ app.get('/api/longest-streaks/:groupId', async (req, res) => {
 app.post('/api/update-status/:groupId', async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { userId, date, status, requestingUserId, requestingUserAuthority } = req.body;
+    const { userId, date, status, amount, requestingUserId, requestingUserAuthority } = req.body;
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -2280,11 +2283,33 @@ app.post('/api/update-status/:groupId', async (req, res) => {
     const { readingStatuses } = getGroupCollections(groupId);
 
     if (status) {
-      await readingStatuses.findOneAndUpdate(
-        { userId, date },
-        { userId, date, status },
-        { upsert: true }
-      );
+      const amountNum =
+        amount !== undefined && amount !== null && amount !== ''
+          ? Number(amount)
+          : null;
+      if (Number.isFinite(amountNum)) {
+        await readingStatuses.findOneAndUpdate(
+          { userId, date },
+          {
+            $set: {
+              userId,
+              date,
+              status: status || 'okudum',
+              amount: amountNum
+            }
+          },
+          { upsert: true }
+        );
+      } else {
+        await readingStatuses.findOneAndUpdate(
+          { userId, date },
+          {
+            $set: { userId, date, status },
+            $unset: { amount: 1 }
+          },
+          { upsert: true }
+        );
+      }
     } else {
       await readingStatuses.findOneAndDelete({ userId, date });
     }
@@ -4527,7 +4552,7 @@ async function checkAndQueueLeaguePromotion(user, groupId, groupName, dateStr) {
           createdAt: new Date()
         }
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     console.log(`🏆 Lig Atlama Kuyruğu: ${user.name} (${user.phone}) → ${currentLeague.name} ligi. (Grup: ${groupId}, Tarih: ${promotionDate})`);
@@ -4560,6 +4585,20 @@ const pollVoteSchema = new mongoose.Schema({
 
 const Poll = mongoose.model('Poll', pollSchema, 'polls');
 const PollVote = mongoose.model('PollVote', pollVoteSchema, 'poll_votes');
+
+// WhatsApp metin/mesaj oyları (anket dışında gelen okuma bildirimleri)
+const textVoteSchema = new mongoose.Schema({
+  voterJid: String,
+  pushName: String,
+  selectedOptions: [String],
+  updatedAt: String,
+  voterPhone: String,
+  readingGroupId: String,
+  configKey: String,
+  date: String
+}, { strict: false });
+
+const TextVote = mongoose.model('TextVote', textVoteSchema, 'text_votes');
 
 // Anket başlığından (title) tarih çıkarma fonksiyonu (Örn: "4 Ağustos", "04.08.2026", "2026-08-04")
 function extractDateFromPollTitle(title, referenceYear) {
@@ -4607,6 +4646,32 @@ function extractDateFromPollTitle(title, referenceYear) {
   }
 
   return null;
+}
+
+/** selectedOptions[0] → finite sayı; değilse null */
+function parseAmountFromSelectedOptions(selectedOptions) {
+  if (!Array.isArray(selectedOptions) || !selectedOptions.length) return null;
+  const n = Number(String(selectedOptions[0]).trim().replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
+}
+
+/** readingstatuses upsert: status + opsiyonel amount */
+async function upsertReadingStatusWithAmount(readingStatuses, userId, dateStr, selectedOptions) {
+  const amount = parseAmountFromSelectedOptions(selectedOptions);
+  const update = {
+    $set: { userId, date: dateStr, status: 'okudum' }
+  };
+  if (amount != null) {
+    update.$set.amount = amount;
+  } else {
+    update.$unset = { amount: 1 };
+  }
+  await readingStatuses.findOneAndUpdate(
+    { userId, date: dateStr },
+    update,
+    { upsert: true, returnDocument: 'after' }
+  );
+  return amount;
 }
 
 // Oy değişikliğini okuma durumuna (readingstatuses_<groupId>) senkronize eden fonksiyon
@@ -4669,10 +4734,11 @@ async function syncPollVoteToReadingStatus(voteDoc) {
 
         if (hasVoted) {
           // Kullanıcı oy vermiş -> readingstatuses_<groupId> koleksiyonuna "okudum" kaydı ekle/güncelle
-          await readingStatuses.findOneAndUpdate(
-            { userId, date: dateStr },
-            { userId, date: dateStr, status: 'okudum' },
-            { upsert: true, new: true }
+          await upsertReadingStatusWithAmount(
+            readingStatuses,
+            userId,
+            dateStr,
+            voteDoc.selectedOptions
           );
           console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${targetGroupId})`);
 
@@ -4699,10 +4765,11 @@ async function syncPollVoteToReadingStatus(voteDoc) {
           const userId = user._id.toString();
 
           if (hasVoted) {
-            await readingStatuses.findOneAndUpdate(
-              { userId, date: dateStr },
-              { userId, date: dateStr, status: 'okudum' },
-              { upsert: true, new: true }
+            await upsertReadingStatusWithAmount(
+              readingStatuses,
+              userId,
+              dateStr,
+              voteDoc.selectedOptions
             );
             console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${group.groupId})`);
 
@@ -4718,6 +4785,137 @@ async function syncPollVoteToReadingStatus(voteDoc) {
   } catch (error) {
     console.error('WhatsApp anket senkronizasyon hatası:', error);
   }
+}
+
+/** text_votes / poll_votes ortak: telefona göre kullanıcı bul; yoksa pushName ↔ name */
+async function findUserForWhatsAppVote(usersCollection, phone, pushName) {
+  if (phone) {
+    const byPhone = await usersCollection.findOne({ phone }).lean();
+    if (byPhone) return byPhone;
+  }
+  const nameHint = pushName != null ? String(pushName).trim() : '';
+  if (!nameHint) return null;
+  const byName = await usersCollection.findOne({
+    name: { $regex: `^${nameHint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' }
+  }).lean();
+  return byName || null;
+}
+
+function resolveTextVoteDate(voteDoc) {
+  if (voteDoc && voteDoc.date && /^\d{4}-\d{2}-\d{2}$/.test(String(voteDoc.date).trim())) {
+    return String(voteDoc.date).trim();
+  }
+  if (voteDoc && voteDoc.updatedAt) {
+    const part = String(voteDoc.updatedAt).split(' ')[0];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(part)) return part;
+  }
+  return moment().utcOffset(3).format('YYYY-MM-DD');
+}
+
+// text_votes dokümanını readingstatuses_<groupId> ile senkronize et
+async function syncTextVoteToReadingStatus(voteDoc) {
+  try {
+    if (!voteDoc) return;
+
+    const rawPhone = voteDoc.voterPhone || voteDoc.voterJid || '';
+    const phone = formatPhoneNumber(rawPhone);
+    const pushName = voteDoc.pushName || '';
+    const dateStr = resolveTextVoteDate(voteDoc);
+    const hasVoted = Array.isArray(voteDoc.selectedOptions) && voteDoc.selectedOptions.length > 0;
+    const targetGroupId = voteDoc.readingGroupId != null
+      ? String(voteDoc.readingGroupId).trim()
+      : '';
+
+    async function applyToGroup(groupId, groupName) {
+      const { users, readingStatuses } = getGroupCollections(groupId);
+      const user = await findUserForWhatsAppVote(users, phone, pushName);
+
+      if (!user) {
+        console.warn(
+          `⚠️ WhatsApp Mesaj Senkronizasyonu: kullanıcı bulunamadı ` +
+          `(phone: ${phone || '—'}, pushName: ${pushName || '—'}, grup: ${groupId}).`
+        );
+        return;
+      }
+
+      const userId = user._id.toString();
+      if (hasVoted) {
+        await upsertReadingStatusWithAmount(
+          readingStatuses,
+          userId,
+          dateStr,
+          voteDoc.selectedOptions
+        );
+        console.log(
+          `✅ WhatsApp Mesaj Senkronizasyonu: ${user.name} (${phone || pushName}) - ` +
+          `${dateStr} için 'okudum' eklendi. (Grup: ${groupId})`
+        );
+        await checkAndQueueLeaguePromotion(
+          user,
+          groupId,
+          groupName || groupId,
+          dateStr
+        );
+      } else {
+        await readingStatuses.findOneAndDelete({ userId, date: dateStr });
+        console.log(
+          `🗑️ WhatsApp Mesaj Senkronizasyonu: ${user.name} (${phone || pushName}) - ` +
+          `${dateStr} 'okudum' kaydı silindi. (Grup: ${groupId})`
+        );
+      }
+    }
+
+    if (targetGroupId) {
+      const group = await UserGroup.findOne({ groupId: targetGroupId }).lean();
+      await applyToGroup(targetGroupId, group?.groupName);
+    } else {
+      const groups = await UserGroup.find({}).lean();
+      for (const group of groups) {
+        await applyToGroup(group.groupId, group.groupName);
+      }
+    }
+  } catch (error) {
+    console.error('WhatsApp mesaj senkronizasyon hatası:', error);
+  }
+}
+
+async function performTextVotesSync() {
+  try {
+    const pendingVotes = await TextVote.find({}).lean();
+    if (pendingVotes.length === 0) return;
+
+    for (const voteDoc of pendingVotes) {
+      try {
+        await syncTextVoteToReadingStatus(voteDoc);
+        await TextVote.deleteOne({ _id: voteDoc._id });
+        console.log(
+          `🗑️ text_votes dokümanı işlendi ve silindi: ${voteDoc._id} ` +
+          `(date: ${voteDoc.date}, voter: ${voteDoc.voterPhone || voteDoc.voterJid || voteDoc.pushName})`
+        );
+      } catch (voteErr) {
+        console.error(`Text vote işleme hatası (${voteDoc._id}):`, voteErr.message);
+      }
+    }
+  } catch (err) {
+    console.error('TextVotes periyodik senkronizasyon hatası:', err.message);
+  }
+}
+
+function startTextVoteSyncEngine() {
+  performTextVotesSync();
+  setInterval(performTextVotesSync, 10000);
+
+  try {
+    const changeStream = TextVote.watch([], { fullDocument: 'updateLookup' });
+    changeStream.on('change', () => {
+      performTextVotesSync();
+    });
+    changeStream.on('error', () => {});
+  } catch (err) {
+    // Change Stream yoksa periyodik tarama yeterli
+  }
+
+  console.log('🔄 WhatsApp TextVote (mesaj) Senkronizasyon Motoru başlatıldı.');
 }
 
 // Senkronizasyon Motoru: poll_votes koleksiyonundaki yeni dokümanları işle ve sil
@@ -4788,6 +4986,21 @@ app.post('/api/webhook/whatsapp-poll-vote', async (req, res) => {
   }
 });
 
+app.post('/api/webhook/whatsapp-text-vote', async (req, res) => {
+  try {
+    const { textVote } = req.body;
+    if (!textVote) {
+      return res.status(400).json({ error: 'textVote verisi eksik' });
+    }
+
+    await syncTextVoteToReadingStatus(textVote);
+    res.json({ success: true, message: 'Mesaj oyu başarıyla senkronize edildi' });
+  } catch (error) {
+    console.error('Webhook text vote hatası:', error);
+    res.status(500).json({ error: 'Senkronizasyon hatası' });
+  }
+});
+
 // Dropbox'ı başlat
 initializeDropbox();
 
@@ -4797,6 +5010,7 @@ initializeDropbox();
 // Server başlatıldığında otomatik minify ve Senkronizasyon Motorunu çalıştır
 generateMinifiedFiles();
 startPollVoteSyncEngine();
+startTextVoteSyncEngine();
 
 app.listen(port, () => {
   console.log(`Uygulama http://localhost:${port} adresinde çalışıyor`);

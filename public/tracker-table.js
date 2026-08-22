@@ -87,6 +87,9 @@ async function updateUserStatsAreaWithStreak() {
             userStatsArea.classList.add('show');
         }, 50);
     }
+    if (typeof window.showReadingEditModeBar === 'function') {
+        window.showReadingEditModeBar();
+    }
 }
 
 // Kullanıcı istatistik alanını güncelle (sadece okuma sayısı ve lig bilgisi)
@@ -307,9 +310,51 @@ function computeWeekMarkedReadStats(users, statMap, dates) {
 }
 
 function formatWeekReadSuccessText(okudum, marked) {
-    if (!marked) return '%0✔';
+    if (!marked) return '%0';
     const pct = Math.round((okudum / marked) * 100);
-    return `%${pct}✔`;
+    return `%${pct}`;
+}
+
+function parseFiniteAmount(value) {
+    if (value == null || value === '') return null;
+    const n = typeof value === 'number' ? value : Number(String(value).trim().replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+}
+
+function sumUserAmounts(statsArray, userId) {
+    const uid = String(userId);
+    let sum = 0;
+    for (const s of statsArray) {
+        if (String(s.userId) !== uid) continue;
+        const a = parseFiniteAmount(s.amount);
+        if (a != null) sum += a;
+    }
+    return sum;
+}
+
+function formatOkudumCellSymbol(amount) {
+    const a = parseFiniteAmount(amount);
+    return a != null ? `${a} ✔` : '✔';
+}
+
+function cellTextIsOkudum(text) {
+    const t = String(text || '').trim();
+    return (
+        t === '✔' ||
+        t === '…' ||
+        t === '...' ||
+        /\d+\s*✔$/.test(t) ||
+        /\d+\s*(?:\.{3}|…)$/.test(t) ||
+        t.endsWith('✔')
+    );
+}
+
+function cellTextIsOkumadim(text) {
+    return String(text || '').trim() === '✖';
+}
+
+function cellTextIsEmpty(text) {
+    return String(text || '').trim() === '➖';
 }
 
 function computeWeekMarkedReadFromTable() {
@@ -324,10 +369,10 @@ function computeWeekMarkedReadFromTable() {
         cells.forEach(function (cell, index) {
             if (index >= dates.length) return;
             const symbol = (cell.textContent || '').trim();
-            if (symbol === '✔') {
+            if (cellTextIsOkudum(symbol)) {
                 okudum += 1;
                 marked += 1;
-            } else if (symbol === '✖') {
+            } else if (cellTextIsOkumadim(symbol)) {
                 marked += 1;
             }
         });
@@ -362,9 +407,13 @@ async function loadTrackerTable() {
     // stats'in iterable olduğundan emin ol
     const statsArray = Array.isArray(stats) ? stats : [];
     const statMap = {};
+    const amountMap = {};
     for (let s of statsArray) {
         if (!statMap[s.userId]) statMap[s.userId] = {};
+        if (!amountMap[s.userId]) amountMap[s.userId] = {};
         statMap[s.userId][s.date] = s.status;
+        const amt = parseFiniteAmount(s.amount);
+        if (amt != null) amountMap[s.userId][s.date] = amt;
     }
 
     // Kullanıcı okuma sayılarını hesapla ve önbelleğe al
@@ -412,6 +461,7 @@ async function loadTrackerTable() {
         const displayText = isToday ? 'Bugün' : formatDateForHeader(date);
         theadHTML += `<th class="${todayClass}"><span class="date-text">${displayText}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
     }
+    theadHTML += `<th class="col-total-amount">Toplam<br>Okuma</th>`;
     theadHTML += `<th>Okuma<br>Serisi</th></tr>`;
     let statsRowHTML = `<tr class="stats-footer-row"><th class="stats-footer-label" scope="col"><span class="col-user-count">${totalUsers} kişi</span></th>`;
     for (let d of dates) {
@@ -423,11 +473,19 @@ async function loadTrackerTable() {
             + `<span class="col-read">${readCount}✔</span>`
             + `</span></th>`;
     }
+    let grandAmountTotal = 0;
+    for (let user of users) {
+        grandAmountTotal += sumUserAmounts(statsArray, user._id);
+    }
     const weekReadStats = computeWeekMarkedReadStats(users, statMap, dates);
     const weekReadSuccessText = formatWeekReadSuccessText(
         weekReadStats.okudum,
         weekReadStats.marked
     );
+    statsRowHTML += `<th class="stats-footer-cell stats-footer-amount" scope="col" title="Tüm kullanıcıların amount toplamı">`
+        + `<span class="col-counts" id="stats-footer-amount-counts">`
+        + `<span class="col-read" id="tfoot-total-amount">${grandAmountTotal} ✔</span>`
+        + `</span></th>`;
     statsRowHTML += `<th class="stats-footer-cell stats-footer-total" scope="col" title="Haftalık okuma başarı oranı (okundu / işaretli gün)">`
         + `<span class="col-counts" id="stats-footer-total-counts">`
         + `<span class="col-read" id="tfoot-total-read">${weekReadSuccessText}</span>`
@@ -453,8 +511,9 @@ async function loadTrackerTable() {
         row += `<span class="user-item-name">${user.name}</span></td>`;
         for (let date of dates) {
             const status = userStats[date] || '';
+            const dayAmount = (amountMap[user._id] || {})[date];
             let symbol = '➖';
-            if (status === 'okudum') symbol = '✔';
+            if (status === 'okudum') symbol = formatOkudumCellSymbol(dayAmount);
             else if (status === 'okumadım') symbol = '✖';
             let className = '';
 
@@ -483,6 +542,8 @@ async function loadTrackerTable() {
             const onclickAttr = isFutureDate ? '' : `onclick="toggleStatus('${user._id}', '${date}')"`;
             row += `<td class="${className}" ${onclickAttr}>${symbol}</td>`;
         }
+        const userAmountTotal = sumUserAmounts(statsArray, user._id);
+        row += `<td class="col-total-amount" data-user-amount="${user._id}">${userAmountTotal > 0 ? `${userAmountTotal} ✔` : '—'}</td>`;
         const streak = calculateStreak(userStats);
         row += `<td>${streak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${streak}` : '-'}</td>`;
         row += `</tr>`;
@@ -653,6 +714,14 @@ async function toggleStatus(userId, date) {
         return;
     }
 
+    const editMode = typeof window.getReadingEditMode === 'function'
+        ? window.getReadingEditMode()
+        : 'none';
+
+    if (editMode === 'none') {
+        return;
+    }
+
     const userInfo = LocalStorageManager.getCurrentUserInfo();
     if (!userInfo) {
         return;
@@ -667,25 +736,40 @@ async function toggleStatus(userId, date) {
     if (window.checkSessionTimeout && window.checkSessionTimeout()) {
         return; // İşlemi durdur
     }
-    const cell = event.target;
-    const current = cell.innerText;
+    const cell = event.target.closest('td') || event.target;
+
+    if (editMode === 'amount') {
+        if (typeof window.beginAmountCellEdit === 'function') {
+            window.beginAmountCellEdit(userId, date, cell);
+        }
+        return;
+    }
+
+    if (editMode !== 'status') {
+        return;
+    }
+
+    const current = (cell.innerText || '').trim();
     let status;
     let newSymbol;
 
-    // Tüm günler için yeni sıra: ➖ → ✔ → ✖ → ➖
-    if (current === '➖') {
+    // Tüm günler için sıra: boş → okudum → okumadım → boş
+    // amount’lu hücreler "10 ✔" biçiminde olabilir
+    if (cellTextIsEmpty(current)) {
         status = 'okudum';
         newSymbol = '✔';
         // Sadece kendi hücremize tıkladığımızda user stats'e yıldız gönder
         if (userInfo.userId === userId) {
             animateStarToUserStats(cell);
         }
-    } else if (current === '✔') {
+    } else if (cellTextIsOkudum(current)) {
         status = 'okumadım';
         newSymbol = '✖';
-    } else if (current === '✖') {
+    } else if (cellTextIsOkumadim(current)) {
         status = '';
         newSymbol = '➖';
+    } else {
+        return;
     }
 
     // Hücre ikonunu güncelle
@@ -710,10 +794,10 @@ async function toggleStatus(userId, date) {
         const weekStatsMap = {};
         dateCells.forEach((dateCell, index) => {
             const cellDate = dates[index];
-            const cellText = dateCell.innerText;
-            if (cellText === '✔') {
+            const cellText = (dateCell.innerText || '').trim();
+            if (cellTextIsOkudum(cellText)) {
                 weekStatsMap[cellDate] = 'okudum';
-            } else if (cellText === '✖') {
+            } else if (cellTextIsOkumadim(cellText)) {
                 weekStatsMap[cellDate] = 'okumadım';
             }
         });
@@ -761,13 +845,13 @@ async function toggleStatus(userId, date) {
     const currentCount = userReadingCounts.get(userId) || 0;
     let newCount = currentCount;
 
-    if (current === '➖' && status === 'okudum') {
+    if (cellTextIsEmpty(current) && status === 'okudum') {
         // Boş -> Okudum: +1
         newCount = currentCount + 1;
-    } else if (current === '✔' && status === 'okumadım') {
+    } else if (cellTextIsOkudum(current) && status === 'okumadım') {
         // Okudum -> Okumadım: -1
         newCount = Math.max(0, currentCount - 1);
-    } else if (current === '✖' && status === '') {
+    } else if (cellTextIsOkumadim(current) && status === '') {
         // Okumadım -> Boş: değişiklik yok
         newCount = currentCount;
     }
@@ -809,6 +893,8 @@ async function toggleStatus(userId, date) {
         console.error('Global store güncellenemedi:', e);
     }
 
+    // Satır / footer Toplam Okuma (amount manuel tıklamada kalkar)
+    refreshAmountTotalsInTable();
 
     // 1 sn tıklama olmazsa kartlar, istatistikler ve aylık görünümü güncelle (debounce)
     try {
@@ -868,10 +954,10 @@ function updateDateColumnCounts(date, prevSymbol, newStatus) {
         const readEl = countsEl.querySelector('.col-read');
         if (!readEl) return;
 
-        let readCount = parseInt(readEl.textContent) || 0;
+        let readCount = parseInt(readEl.textContent, 10) || 0;
 
-        // Önceki durumu çıkar
-        if (prevSymbol === '✔') readCount = Math.max(0, readCount - 1);
+        // Önceki durumu çıkar (amount’lu "10 ✔" dahil)
+        if (cellTextIsOkudum(prevSymbol)) readCount = Math.max(0, readCount - 1);
 
         // Yeni durumu ekle
         if (newStatus === 'okudum') readCount++;
@@ -889,6 +975,32 @@ function updateDateColumnCounts(date, prevSymbol, newStatus) {
         }
     } catch (e) {
         console.error('Sütun sayaçları güncellenemedi:', e);
+    }
+}
+
+/** Manuel tıklama sonrası Toplam Okuma satır/footer değerlerini store’dan yenile */
+function refreshAmountTotalsInTable() {
+    try {
+        const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
+        const statsArray = Array.isArray(data.stats) ? data.stats : [];
+        const users = Array.isArray(data.users) ? data.users : [];
+
+        let grand = 0;
+        users.forEach(function (user) {
+            const sum = sumUserAmounts(statsArray, user._id);
+            grand += sum;
+            const cell = trackerTable.querySelector(`td.col-total-amount[data-user-amount="${user._id}"]`);
+            if (cell) {
+                cell.textContent = sum > 0 ? `${sum} ✔` : '—';
+            }
+        });
+
+        const footerAmount = document.getElementById('tfoot-total-amount');
+        if (footerAmount) {
+            footerAmount.textContent = `${grand} ✔`;
+        }
+    } catch (e) {
+        console.error('Toplam Okuma güncellenemedi:', e);
     }
 }
 

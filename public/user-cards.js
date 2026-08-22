@@ -1016,6 +1016,10 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
     return;
   }
 
+  if (typeof window.getReadingEditMode === 'function' && window.getReadingEditMode() !== 'status') {
+    return;
+  }
+
   const userInfo = LocalStorageManager.getCurrentUserInfo();
   if (!userInfo) {
     logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme-kullanıcı bulunamadı');

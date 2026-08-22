@@ -144,6 +144,10 @@ async function showAdminIndicator() {
         const mainArea = document.querySelector('.main-area');
         const userStatsArea = document.querySelector('.user-stats-info-area');
         const scrollToMainButton = document.querySelector('.scroll-to-main-button');
+
+        if (typeof window.syncReadingEditModeBarVisibility === 'function') {
+            window.syncReadingEditModeBarVisibility();
+        }
         
         if (adminIndicator) {
             adminIndicator.classList.remove('show');
@@ -168,6 +172,10 @@ async function showAdminIndicator() {
     
     const userInfo = LocalStorageManager.getCurrentUserInfo();
     if (!userInfo) return;
+
+    if (typeof window.syncReadingEditModeBarVisibility === 'function') {
+        window.syncReadingEditModeBarVisibility();
+    }
     
     let scrollToMainButton = document.querySelector('.scroll-to-main-button');
     

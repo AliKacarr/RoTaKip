@@ -742,40 +742,38 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         // UI güncellemelerinden çağrılacak: hem cache’i hem dizi’yi günceller
-        applyLocalUpdate(userId, date, status) {
-          // stats array upsert/delete
+        // Manuel tıklamada amount yalnızca açıkça verilirse yazılır
+        applyLocalUpdate(userId, date, status, amount) {
           const idx = this.stats.findIndex(s => s.userId === userId && s.date === date);
+          const beforeStatus = idx >= 0 ? this.stats[idx].status : undefined;
+          const amountNum =
+            amount !== undefined && amount !== null && amount !== ''
+              ? Number(amount)
+              : null;
+          const hasAmount = Number.isFinite(amountNum);
+
           if (status) {
             const newObj = { userId, date, status };
+            if (hasAmount) newObj.amount = amountNum;
             if (idx >= 0) this.stats[idx] = newObj; else this.stats.push(newObj);
           } else {
             if (idx >= 0) this.stats.splice(idx, 1);
           }
 
-          // statMap
           if (!this.statMap.has(userId)) this.statMap.set(userId, {});
           const userMap = this.statMap.get(userId);
           if (status) userMap[date] = status; else delete userMap[date];
 
-          // okudum sayacı
           const prev = this.userReadingCounts.get(userId) || 0;
           let next = prev;
           if (status === 'okudum') {
-            // Eğer önceki durum okudum değilse artır
-            const before = idx >= 0 ? (this.stats[idx]?.status) : undefined;
-            if (before !== 'okudum') next = prev + 1;
-          } else if (status === 'okumadım' || status === '') {
-            // Okudum’dan başka şeye geçtiyse azalt
-            if (userMap[date] !== 'okudum') {
-              // nothing
-            }
-            // Güvenli yeniden sayım (kenar durumlarından kaçınmak için)
+            if (beforeStatus !== 'okudum') next = prev + 1;
+          } else {
             const map = this.statMap.get(userId) || {};
             next = Object.values(map).filter(v => v === 'okudum').length;
           }
           this.userReadingCounts.set(userId, Math.max(0, next));
 
-          // En uzun serileri yeniden hesapla (hafif veri setleri için yeterli)
           this._buildLongestStreaks();
         }
       }

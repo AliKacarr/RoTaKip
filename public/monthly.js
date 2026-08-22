@@ -321,6 +321,10 @@ function loadMonthlyCalendar() {
             return;
         }
 
+        if (typeof window.getReadingEditMode === 'function' && window.getReadingEditMode() !== 'status') {
+            return;
+        }
+
         const userInfo = LocalStorageManager.getCurrentUserInfo();
         if (!userInfo) {
             logUnauthorizedAccess('Aylık takvim okuma durumu değiştirme');
