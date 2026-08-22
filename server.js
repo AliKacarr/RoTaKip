@@ -264,20 +264,16 @@ app.get('/groupid=:groupId', (req, res) => {
   sendHtmlFile(res, 'groups.html');
 });
 
-// Geriye uyumluluk route'u
+// Grup sayfası / geriye uyumluluk (Express 5: rota içinde regex parantezi yok)
+const GROUP_ID_PATTERN = /^[a-zA-Z0-9_\-çğıöşüÇĞIİÖŞÜ]+$/;
 app.get('/:groupId', (req, res) => {
   const groupId = req.params.groupId;
   // Only serve groups.html if it's not an API route or static file
-  if (!groupId.startsWith('api') && !groupId.includes('.')) {
+  if (GROUP_ID_PATTERN.test(groupId) && !groupId.startsWith('api') && !groupId.includes('.')) {
     sendHtmlFile(res, 'groups.html');
   } else {
     res.status(404).send('Not found');
   }
-});
-
-// Grup sayfası route'u
-app.get('/:groupId([a-zA-Z0-9_-çğıöşüÇĞIİÖŞÜ]+)', (req, res) => {
-  sendHtmlFile(res, 'groups.html');
 });
 
 // MongoDB bağlantı seçenekleri
