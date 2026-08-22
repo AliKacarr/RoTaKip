@@ -1,7 +1,7 @@
 /**
  * Okuma düzenleme modları: none | status | amount
  * Durum: ➖→✔→✖ döngüsü
- * Miktar: tıklanınca hemen okudum (✔); sayı+Enter → "10 ✔"
+ * Miktar: tıklanınca hemen okudum (✔); hücrede sayı input’u (mobil klavye); Tamam/Enter → "10 ✔"
  */
 (function () {
   window.readingEditMode = 'none';
@@ -15,8 +15,8 @@
 
   var HINTS = {
     none: 'Tabloyu düzenlemek için bir mod seçin.',
-    status: 'Durumu değiştirmek için hücreye tıklayın: ➖ → ✔ → ✖',
-    amount: 'Miktar eklemek için hücreye tıklayın, sayıyı yazıp Enter’a basın.'
+    status: 'Okuma durumunuzu değiştirmek için bir hücreye tıklayın: ➖ → ✔ → ✖',
+    amount: 'Sayfa veya dakika okuma miktarınızı eklemek için bir hücreye tıklayın.'
   };
 
   function $(id) {
@@ -27,6 +27,27 @@
     var hint = $('readingEditModeHint');
     if (hint) hint.innerHTML = HINTS[window.readingEditMode] || HINTS.none;
   }
+
+  var promptTimer = null;
+
+  window.promptReadingEditMode = function promptReadingEditMode() {
+    var bar = $('readingEditModeBar');
+    if (!bar || bar.style.display === 'none') return;
+    var segment = bar.querySelector('.reading-edit-mode-segment');
+
+    if (segment) segment.classList.add('needs-choice');
+    try {
+      bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) {
+      /* scroll yok */
+    }
+
+    if (promptTimer) clearTimeout(promptTimer);
+    promptTimer = setTimeout(function () {
+      if (segment) segment.classList.remove('needs-choice');
+      promptTimer = null;
+    }, 2200);
+  };
 
   function updateSegmentButtons() {
     var statusBtn = $('readingEditModeStatus');
@@ -46,17 +67,47 @@
     document.body.setAttribute('data-reading-edit-mode', window.readingEditMode);
   }
 
+  function hideAmountOverlay() {
+    var input = document.getElementById('amountEditInputOverlay');
+    if (input) {
+      input.value = '';
+      input.style.display = 'none';
+    }
+    window.removeEventListener('scroll', repositionAmountOverlay, true);
+    window.removeEventListener('resize', repositionAmountOverlay);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', repositionAmountOverlay);
+      window.visualViewport.removeEventListener('scroll', repositionAmountOverlay);
+    }
+  }
+
+  function repositionAmountOverlay() {
+    if (!amountEditState || !amountEditState.cell || !amountEditState.input) return;
+    var r = amountEditState.cell.getBoundingClientRect();
+    var input = amountEditState.input;
+    input.style.left = r.left + 'px';
+    input.style.top = r.top + 'px';
+    input.style.width = r.width + 'px';
+    input.style.height = r.height + 'px';
+  }
+
   function cancelAmountCellEdit() {
     if (!amountEditState || !amountEditState.cell) {
       amountEditState = null;
+      hideAmountOverlay();
       return;
     }
     var cell = amountEditState.cell;
-    // Tıklamada okudum yazıldı; Escape sadece miktar girişini iptal eder, ✔ kalır
+    var existingAmount = amountEditState.existingAmount;
+    amountEditState = null;
+    hideAmountOverlay();
     cell.classList.remove('amount-editing', 'red', 'empty');
     cell.classList.add('green');
-    cell.textContent = '✔';
-    amountEditState = null;
+    if (existingAmount != null) {
+      refreshAmountCellDisplay(cell, existingAmount);
+    } else {
+      cell.textContent = '✔';
+    }
   }
 
   function setReadingEditMode(mode) {
@@ -70,6 +121,8 @@
     window.readingEditMode = next;
     updateSegmentButtons();
     updateHint();
+    var segment = document.querySelector('.reading-edit-mode-segment');
+    if (segment) segment.classList.remove('needs-choice');
   }
 
   window.setReadingEditMode = setReadingEditMode;
@@ -224,10 +277,104 @@
     }
   }
 
+  function parseAmountFromCellText(text) {
+    var t = String(text || '').trim();
+    var m = t.match(/(\d+(?:[.,]\d+)?)/);
+    if (!m) return null;
+    if (typeof parseFiniteAmount === 'function') {
+      return parseFiniteAmount(m[1]);
+    }
+    var n = Number(String(m[1]).replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function sanitizeAmountDigits(value) {
+    var digits = String(value || '').replace(/\D/g, '').slice(0, 5);
+    if (digits.length > 1 && digits.startsWith('0')) {
+      digits = String(Number(digits));
+    }
+    return digits;
+  }
+
+  var amountOverlayBound = false;
+
+  function getAmountOverlayInput() {
+    var input = document.getElementById('amountEditInputOverlay');
+    if (input) return input;
+    input = document.createElement('input');
+    input.id = 'amountEditInputOverlay';
+    input.type = 'text';
+    input.size = 1;
+    input.setAttribute('inputmode', 'numeric');
+    input.setAttribute('pattern', '[0-9]*');
+    input.setAttribute('maxlength', '5');
+    input.setAttribute('enterkeyhint', 'done');
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('autocorrect', 'off');
+    input.setAttribute('spellcheck', 'false');
+    input.setAttribute('aria-label', 'Okuma miktarı');
+    input.className = 'amount-edit-input';
+    input.placeholder = '...';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    if (!amountOverlayBound) {
+      amountOverlayBound = true;
+      input.addEventListener('input', function () {
+        if (!amountEditState || amountEditState.input !== input) return;
+        var digits = sanitizeAmountDigits(input.value);
+        if (input.value !== digits) input.value = digits;
+        amountEditState.buffer = digits;
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commitAmountCellEdit();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelAmountCellEdit();
+        }
+      });
+      input.addEventListener('blur', function () {
+        if (!amountEditState || amountEditState.input !== input) return;
+        var buf = String(amountEditState.buffer || input.value || '').trim();
+        if (buf) {
+          commitAmountCellEdit();
+        } else {
+          cancelAmountCellEdit();
+        }
+      });
+    }
+    return input;
+  }
+
+  function showAmountOverlay(cell, initialDigits) {
+    var input = getAmountOverlayInput();
+    var start = initialDigits ? String(initialDigits) : '';
+    input.value = start;
+    var r = cell.getBoundingClientRect();
+    input.style.left = r.left + 'px';
+    input.style.top = r.top + 'px';
+    input.style.width = r.width + 'px';
+    input.style.height = r.height + 'px';
+    input.style.display = 'block';
+    if (amountEditState) {
+      amountEditState.input = input;
+      amountEditState.buffer = start;
+    }
+    window.addEventListener('scroll', repositionAmountOverlay, true);
+    window.addEventListener('resize', repositionAmountOverlay);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', repositionAmountOverlay);
+      window.visualViewport.addEventListener('scroll', repositionAmountOverlay);
+    }
+    return input;
+  }
+
   async function commitAmountCellEdit() {
     if (!amountEditState) return;
     var state = amountEditState;
-    var buffer = String(state.buffer || '').trim();
+    var buffer = sanitizeAmountDigits(state.buffer || (state.input && state.input.value) || '');
     if (!buffer) {
       cancelAmountCellEdit();
       return;
@@ -249,6 +396,7 @@
     var date = state.date;
 
     amountEditState = null;
+    hideAmountOverlay();
     cell.classList.remove('amount-editing');
     refreshAmountCellDisplay(cell, amount);
 
@@ -288,51 +436,75 @@
     }
   }
 
-  function updateEditingCellPreview() {
-    if (!amountEditState || !amountEditState.cell) return;
-    var buf = amountEditState.buffer;
-    var cell = amountEditState.cell;
-    cell.classList.add('green');
-    cell.classList.remove('red', 'empty');
-    // Tıklanınca "..."; yazarken "5 ..."; Enter sonrası "10 ✔"
-    cell.textContent = buf.length ? buf + ' ...' : '...';
-  }
-
   window.beginAmountCellEdit = async function beginAmountCellEdit(userId, date, cell) {
     if (!cell) return;
     if (cell.classList.contains('future-date')) return;
 
     if (amountEditState) {
-      if (amountEditState.cell === cell) return;
+      if (amountEditState.cell === cell) {
+        if (amountEditState.input) {
+          amountEditState.input.focus();
+        }
+        return;
+      }
       if (amountEditState.buffer && String(amountEditState.buffer).trim()) {
-        await commitAmountCellEdit();
+        commitAmountCellEdit();
       } else {
         cancelAmountCellEdit();
       }
     }
 
     var prevText = (cell.textContent || '').trim();
+    var alreadyOkudum =
+      typeof cellTextIsOkudum === 'function' ? cellTextIsOkudum(prevText) : false;
+    var existingAmount = parseAmountFromCellText(prevText);
+    var startDigits = existingAmount != null ? String(existingAmount) : '';
+
+    cell.classList.add('green');
+    cell.classList.remove('red', 'empty');
+
     amountEditState = {
       userId: userId,
       date: date,
       cell: cell,
-      buffer: '',
-      prevText: prevText
+      buffer: startDigits,
+      prevText: prevText,
+      existingAmount: existingAmount,
+      alreadyOkudum: alreadyOkudum,
+      input: null
     };
+    var input = showAmountOverlay(cell, startDigits);
+    amountEditState.input = input;
+    // Mobil klavye için focus tıklama jestiyle aynı anda olmalı (await öncesi)
+    input.focus();
+    if (existingAmount != null) {
+      try {
+        input.select();
+      } catch (e) {
+        /* select desteklenmeyebilir */
+      }
+    }
 
-    cell.classList.add('amount-editing', 'green');
-    cell.classList.remove('red', 'empty');
-    cell.textContent = '...';
-
-    await markCellOkudumOnAmountClick(userId, date, cell, prevText);
-    if (amountEditState && amountEditState.cell === cell) {
-      cell.classList.add('amount-editing', 'green');
-      updateEditingCellPreview();
+    if (!alreadyOkudum) {
+      await markCellOkudumOnAmountClick(userId, date, cell, prevText);
+    }
+    if (amountEditState && amountEditState.cell === cell && amountEditState.input) {
+      cell.classList.add('green');
+      repositionAmountOverlay();
+      try {
+        amountEditState.input.focus();
+        if (amountEditState.existingAmount != null) {
+          amountEditState.input.select();
+        }
+      } catch (e) {
+        /* odak kaybı sessiz */
+      }
     }
   };
 
   function onAmountKeydown(e) {
     if (!amountEditState) return;
+    if (amountEditState.input) return;
     if (window.getReadingEditMode() !== 'amount') {
       cancelAmountCellEdit();
       return;
@@ -350,19 +522,16 @@
     }
     if (e.key === 'Backspace') {
       e.preventDefault();
-      amountEditState.buffer = String(amountEditState.buffer || '').slice(0, -1);
-      updateEditingCellPreview();
+      amountEditState.buffer = sanitizeAmountDigits(
+        String(amountEditState.buffer || '').slice(0, -1)
+      );
       return;
     }
     if (/^\d$/.test(e.key)) {
       e.preventDefault();
-      var next = String(amountEditState.buffer || '') + e.key;
-      if (next.length > 5) return;
-      if (next.length > 1 && next.startsWith('0')) {
-        next = String(Number(next));
-      }
-      amountEditState.buffer = next;
-      updateEditingCellPreview();
+      amountEditState.buffer = sanitizeAmountDigits(
+        String(amountEditState.buffer || '') + e.key
+      );
     }
   }
 

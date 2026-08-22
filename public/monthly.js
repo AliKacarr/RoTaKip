@@ -322,6 +322,9 @@ function loadMonthlyCalendar() {
         }
 
         if (typeof window.getReadingEditMode === 'function' && window.getReadingEditMode() !== 'status') {
+            if (window.getReadingEditMode() === 'none' && typeof window.promptReadingEditMode === 'function') {
+                window.promptReadingEditMode();
+            }
             return;
         }
 

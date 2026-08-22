@@ -132,25 +132,37 @@
 .reading-edit-mode-segment {
     display: inline-flex;
     border: 1px solid #b8c7dc;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     background: #eef3fa;
     box-shadow: 0 1px 3px rgba(45, 90, 140, 0.1);
+    transition: box-shadow 0.5s ease;
 }
 
 .reading-edit-mode-btn {
     appearance: none;
     border: none;
     margin: 0;
-    min-width: 108px;
-    padding: 10px 20px;
-    font-size: 16px;
+    min-width: 120px;
+    padding: 12px 24px;
+    font-size: 17px;
     font-weight: 600;
     font-family: inherit;
     color: #2a5a8f;
     background: transparent;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.reading-edit-mode-icon {
+    font-size: 18px;
+    line-height: 1;
+    font-style: normal;
+    font-weight: 400;
 }
 
 .reading-edit-mode-btn + .reading-edit-mode-btn {
@@ -174,22 +186,43 @@
 .reading-edit-mode-hint {
     margin: 0;
     flex: 1 1 200px;
-    font-size: 15px;
+    font-size: 17px;
     color: #5f5f5f;
     line-height: 1.35;
     font-weight: 600;
     color: #2a5a8f;
 }
 
-.table-area[data-reading-edit-mode="status"] #trackerTable td[onclick]:not(.future-date) {
+.table-area[data-reading-edit-mode="status"] #trackerTable td[onclick]:not(.future-date),
+.table-area[data-reading-edit-mode="amount"] #trackerTable td[onclick]:not(.future-date) {
     cursor: pointer;
 }
 
-#trackerTable td.amount-editing {
+.amount-edit-input {
+    position: fixed;
+    z-index: 40;
+    display: none;
+    margin: 0;
+    border: none;
     outline: 2px solid #3a7ebd;
     outline-offset: -2px;
-    box-shadow: inset 0 0 0 2px rgba(58, 126, 189, 0.25);
-    font-weight: 700;
+    background: rgb(76, 217, 100);
+    color: indigo;
+    text-align: center;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.amount-edit-input::placeholder {
+    color: indigo;
+    opacity: 0.65;
+    font-weight: 500;
 }
 
 @media (max-width: 640px) {
@@ -377,12 +410,16 @@
     transition: background-color 0.2s ease;
 }
 
+.reading-edit-mode-segment.needs-choice {
+    box-shadow: 0 0 0 3px rgba(58, 126, 189, 0.45);
+}
+
 #trackerTable td {
     border: 1px solid #c7c7c7;
     padding: 10px;
     text-align: center;
     font-size: 16px;
-    cursor: pointer;
+    cursor: default;
     transition: background-color 0.2s ease;
     user-select: none;
     -webkit-user-select: none;

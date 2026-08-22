@@ -719,6 +719,9 @@ async function toggleStatus(userId, date) {
         : 'none';
 
     if (editMode === 'none') {
+        if (typeof window.promptReadingEditMode === 'function') {
+            window.promptReadingEditMode();
+        }
         return;
     }
 
