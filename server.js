@@ -4562,7 +4562,7 @@ async function checkAndQueueLeaguePromotion(user, groupId, groupName, dateStr) {
 
 const pollSchema = new mongoose.Schema({
   pollId: String,
-  createdAt: String,
+  createdAt: { type: Date },
   groupId: String,
   options: [String],
   title: String
@@ -4644,6 +4644,29 @@ function extractDateFromPollTitle(title, referenceYear) {
   return null;
 }
 
+/** polls.createdAt (Date veya eski string) → TR günü "YYYY-MM-DD" */
+function pollCreatedAtToDateStr(createdAt) {
+  if (!createdAt) return null;
+
+  if (createdAt instanceof Date) {
+    if (Number.isNaN(createdAt.getTime())) return null;
+    return moment(createdAt).utcOffset(3).format('YYYY-MM-DD');
+  }
+
+  const raw = String(createdAt).trim();
+  if (!raw) return null;
+
+  // Eski string biçim: "2026-08-04 12:43:07"
+  const spaceDate = raw.split(' ')[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(spaceDate) && !raw.includes('T')) {
+    return spaceDate;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return moment(parsed).utcOffset(3).format('YYYY-MM-DD');
+}
+
 /** selectedOptions[0] → finite sayı; değilse null */
 function parseAmountFromSelectedOptions(selectedOptions) {
   if (!Array.isArray(selectedOptions) || !selectedOptions.length) return null;
@@ -4688,13 +4711,14 @@ async function syncPollVoteToReadingStatus(voteDoc) {
 
     // Tarih tespiti öncelik sırası:
     // 1. Anket Başlığı (poll.title) -> Örn: "4 Ağustos" -> "2026-08-04"
-    // 2. Anket Oluşturulma Tarihi (poll.createdAt) -> Örn: "2026-08-04 12:43:07" -> "2026-08-04"
+    // 2. Anket Oluşturulma Tarihi (poll.createdAt, Date) -> TR günü "2026-08-04"
     // 3. Oy Güncellenme Tarihi (voteDoc.updatedAt) -> Örn: "2026-08-04 12:25:30" -> "2026-08-04"
     // 4. Bugünün Tarihi
+    const createdAtDateStr = pollCreatedAtToDateStr(poll && poll.createdAt);
     let referenceYear = moment().utcOffset(3).year();
-    if (poll && poll.createdAt) {
-      const yearMatch = poll.createdAt.match(/^(\d{4})/);
-      if (yearMatch) referenceYear = parseInt(yearMatch[1], 10);
+    if (createdAtDateStr) {
+      const yearFromCreatedAt = parseInt(createdAtDateStr.slice(0, 4), 10);
+      if (Number.isFinite(yearFromCreatedAt)) referenceYear = yearFromCreatedAt;
     }
 
     let dateStr = null;
@@ -4702,8 +4726,8 @@ async function syncPollVoteToReadingStatus(voteDoc) {
       dateStr = extractDateFromPollTitle(poll.title, referenceYear);
     }
 
-    if (!dateStr && poll && poll.createdAt) {
-      dateStr = poll.createdAt.split(' ')[0];
+    if (!dateStr && createdAtDateStr) {
+      dateStr = createdAtDateStr;
     }
 
     if (!dateStr && voteDoc && voteDoc.updatedAt) {
