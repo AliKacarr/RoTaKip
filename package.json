@@ -19,7 +19,7 @@
     "body-parser": "^2.2.1",
     "clean-css": "^5.3.3",
     "compression": "^1.8.1",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "dropbox": "^10.34.0",
     "ejs": "^6.0.1",
