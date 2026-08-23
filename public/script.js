@@ -744,7 +744,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         // UI güncellemelerinden çağrılacak: hem cache’i hem dizi’yi günceller
         // Manuel tıklamada amount yalnızca açıkça verilirse yazılır
         applyLocalUpdate(userId, date, status, amount) {
-          const idx = this.stats.findIndex(s => s.userId === userId && s.date === date);
+          const uid = String(userId);
+          const idx = this.stats.findIndex(s => String(s.userId) === uid && s.date === date);
           const beforeStatus = idx >= 0 ? this.stats[idx].status : undefined;
           const amountNum =
             amount !== undefined && amount !== null && amount !== ''

@@ -461,6 +461,9 @@
     if (typeof updateUserStatsArea === 'function') {
       updateUserStatsArea();
     }
+    if (typeof window.schedulePostToggleUiRefresh === 'function') {
+      window.schedulePostToggleUiRefresh();
+    }
   }
 
   window.beginAmountCellEdit = async function beginAmountCellEdit(userId, date, cell) {

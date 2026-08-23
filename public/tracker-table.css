@@ -159,10 +159,10 @@
 }
 
 .reading-edit-mode-icon {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1;
-    font-style: normal;
-    font-weight: 400;
+    width: 1em;
+    text-align: center;
 }
 
 .reading-edit-mode-btn + .reading-edit-mode-btn {

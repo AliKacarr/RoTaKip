@@ -235,6 +235,15 @@ async function loadUserCards() {
       return `${diffDays} gün önce`;
     }
 
+    const monthNamesTr = [
+      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    ];
+    const nowTr = new Date();
+    nowTr.setHours(nowTr.getHours() + 3);
+    const currentMonthKey = nowTr.getFullYear() + '-' + String(nowTr.getMonth() + 1).padStart(2, '0');
+    const currentMonthLabel = monthNamesTr[nowTr.getMonth()];
+
     // Okuma serisi yapanları toplamak için array
     const activeStreaks = [];
 
@@ -244,13 +253,17 @@ async function loadUserCards() {
       const totalDays = userStats.length;
       const okudumDays = okudumStats.length;
       let amountTotal = 0;
+      let amountThisMonth = 0;
       for (let i = 0; i < stats.length; i++) {
         const s = stats[i];
         if (String(s.userId) !== String(user._id)) continue;
         const a = typeof parseFiniteAmount === 'function'
           ? parseFiniteAmount(s.amount)
           : Number(s.amount);
-        if (Number.isFinite(a) && a > 0) amountTotal += a;
+        if (Number.isFinite(a) && a > 0) {
+          amountTotal += a;
+          if (String(s.date || '').slice(0, 7) === currentMonthKey) amountThisMonth += a;
+        }
       }
       const amountSummaryHtml = amountTotal > 0
         ? `<span class="progress-summary progress-summary-amount">
@@ -443,7 +456,18 @@ async function loadUserCards() {
             const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
             longestStreakShare = `${userStreak.streak} gün (${start} - ${end})`;
           }
-          const shareMessage = `*Genel okuma durumunuz:*\n\n*Okunan gün:* ${okudumDays},\n*Okunmayan gün:* ${okunmayanGun},\n*Başarı oranı:* %${basariOrani},\n\n*Mevcut seri:* ${streak} gün,\n*En uzun seri:* ${longestStreakShare},\n*Son okuma:* ${sonOkumaMetni}`;
+          let amountShareBlock = '';
+          if (amountThisMonth > 0 || amountTotal > 0) {
+            const amountLines = [];
+            if (amountThisMonth > 0) {
+              amountLines.push(`*${currentMonthLabel} ayı okuması:* ${amountThisMonth},`);
+            }
+            if (amountTotal > 0) {
+              amountLines.push(`*Toplam okumanız:* ${amountTotal},`);
+            }
+            amountShareBlock = amountLines.join('\n') + '\n\n';
+          }
+          const shareMessage = `*Genel okuma durumunuz:*\n\n${amountShareBlock}*Okunan gün:* ${okudumDays},\n*Okunmayan gün:* ${okunmayanGun},\n*Başarı oranı:* %${basariOrani},\n\n*Mevcut seri:* ${streak} gün,\n*En uzun seri:* ${longestStreakShare},\n*Son okuma:* ${sonOkumaMetni}`;
 
           // Web Share API veya panoya kopyala
           if (navigator.share) {
