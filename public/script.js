@@ -754,7 +754,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
           if (status) {
             const newObj = { userId, date, status };
-            if (hasAmount) newObj.amount = amountNum;
+            if (hasAmount) {
+              newObj.amount = amountNum;
+            } else if (status === 'okudum' && idx >= 0) {
+              const prevAmount = Number(this.stats[idx].amount);
+              if (Number.isFinite(prevAmount)) newObj.amount = prevAmount;
+            }
             if (idx >= 0) this.stats[idx] = newObj; else this.stats.push(newObj);
           } else {
             if (idx >= 0) this.stats.splice(idx, 1);

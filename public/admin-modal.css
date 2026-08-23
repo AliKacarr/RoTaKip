@@ -2571,6 +2571,35 @@
     background: linear-gradient(90deg, #3B82F6, #60A5FA, #3B82F6);
     background-size: 200% 100%;
     animation: userStatsGradientShift 3s ease-in-out infinite;
+    z-index: 2;
+}
+
+.user-stats-content .confetti-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('images/confeti.webp');
+    background-size: auto;
+    background-repeat: repeat;
+    background-position: center;
+    z-index: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.user-stats-content .confetti-overlay.show {
+    animation: confetti-show 3s ease-in-out forwards;
+}
+
+.user-stats-content > .user-stats-left,
+.user-stats-content > .user-stats-center,
+.user-stats-content > .user-stats-right {
+    position: relative;
+    z-index: 1;
 }
 
 /* Sol Kısım: Giriş Serisi */

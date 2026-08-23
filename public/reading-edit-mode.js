@@ -260,6 +260,18 @@
       refreshAmountTotalsInTable();
     }
 
+    if (!alreadyOkudum) {
+      if (userInfo.userId === userId && typeof animateStarToUserStats === 'function') {
+        animateStarToUserStats(cell);
+      }
+      if (typeof updateUserStatsArea === 'function') {
+        updateUserStatsArea();
+      }
+      if (typeof window.schedulePostToggleUiRefresh === 'function') {
+        window.schedulePostToggleUiRefresh();
+      }
+    }
+
     try {
       await fetch('/api/update-status/' + window.groupid, {
         method: 'POST',

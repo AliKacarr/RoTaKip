@@ -110,10 +110,55 @@ function updateUserStatsArea() {
     updateLeagueProgress(totalReading);
 }
 
+let lastUserStatsLeagueMin = null;
+let userStatsConfettiObserver = null;
+
+function triggerUserStatsConfetti() {
+    const panel = document.querySelector('.user-stats-content');
+    if (!panel) return;
+
+    let overlay = panel.querySelector('.confetti-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'confetti-overlay';
+        panel.insertBefore(overlay, panel.firstChild);
+    }
+
+    overlay.classList.remove('show');
+    panel.classList.remove('confetti-triggered');
+    void overlay.offsetWidth;
+
+    if (userStatsConfettiObserver) {
+        userStatsConfettiObserver.disconnect();
+        userStatsConfettiObserver = null;
+    }
+
+    const play = function () {
+        if (panel.classList.contains('confetti-triggered')) return;
+        panel.classList.add('confetti-triggered');
+        overlay.classList.add('show');
+    };
+
+    userStatsConfettiObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                play();
+                if (userStatsConfettiObserver) {
+                    userStatsConfettiObserver.disconnect();
+                    userStatsConfettiObserver = null;
+                }
+            }
+        });
+    }, { threshold: 0.5 });
+    userStatsConfettiObserver.observe(panel);
+}
+
 // Lig progress bilgilerini güncelle
 function updateLeagueProgress(totalReading) {
     // Mevcut ligi bul
     const currentLeague = LEAGUES.find(league => totalReading >= league.min && totalReading < league.max) || LEAGUES[LEAGUES.length - 1];
+    const promoted = lastUserStatsLeagueMin != null && currentLeague.min > lastUserStatsLeagueMin;
+    lastUserStatsLeagueMin = currentLeague.min;
 
     // Sonraki ligi bul
     const currentIndex = LEAGUES.indexOf(currentLeague);
@@ -159,6 +204,10 @@ function updateLeagueProgress(totalReading) {
         setTimeout(() => {
             progressFill.style.width = `${percentage}%`;
         }, 100); // Kısa bir gecikme ile animasyon başlat
+    }
+
+    if (promoted) {
+        triggerUserStatsConfetti();
     }
 }
 
@@ -257,6 +306,37 @@ function getWeekDates(offset = 0) {
     return dates;
 }
 
+function getWeekSeasonKey(dates) {
+    if (!dates || !dates.length) {
+        const n = new Date();
+        return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');
+    }
+    const lastDate = String(dates[dates.length - 1]);
+    const ym = lastDate.slice(0, 7);
+    if (/^\d{4}-\d{2}$/.test(ym)) return ym;
+    const n = new Date();
+    return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');
+}
+
+function getWeekSeasonLabel(dates) {
+    const months = [
+        'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    ];
+    const seasonMonth = parseInt(getWeekSeasonKey(dates).slice(5, 7), 10);
+    if (!(seasonMonth >= 1 && seasonMonth <= 12)) {
+        return `${months[new Date().getMonth()]} Sezonu`;
+    }
+    return `${months[seasonMonth - 1]} Sezonu`;
+}
+
+function isMonthBoundaryColumn(dates, index) {
+    if (!dates || index < 1) return false;
+    const prev = String(dates[index - 1] || '').slice(0, 7);
+    const cur = String(dates[index] || '').slice(0, 7);
+    return prev !== cur && /^\d{4}-\d{2}$/.test(prev) && /^\d{4}-\d{2}$/.test(cur);
+}
+
 // Yükleme overlay'i kaldırıldı
 
 function formatDateRange(dates) {
@@ -321,15 +401,22 @@ function parseFiniteAmount(value) {
     return Number.isFinite(n) ? n : null;
 }
 
-function sumUserAmounts(statsArray, userId) {
+function sumUserAmounts(statsArray, userId, seasonKey) {
     const uid = String(userId);
     let sum = 0;
     for (const s of statsArray) {
         if (String(s.userId) !== uid) continue;
+        if (seasonKey && String(s.date || '').slice(0, 7) !== seasonKey) continue;
         const a = parseFiniteAmount(s.amount);
         if (a != null) sum += a;
     }
     return sum;
+}
+
+function formatUserItemMeta(leagueName, amountSum) {
+    const name = leagueName || '';
+    if (!(amountSum > 0)) return name;
+    return `${name} · ${amountSum} ✔`;
 }
 
 function formatOkudumCellSymbol(amount) {
@@ -448,41 +535,52 @@ async function loadTrackerTable() {
     }
 
     const totalUsers = users.length;
-    let theadHTML = `<tr><th>Kullanıcılar</th>`;
+    const seasonKey = getWeekSeasonKey(dates);
+    const seasonLabel = getWeekSeasonLabel(dates);
+    const seasonParts = seasonLabel.split(' ');
+    const seasonHtml = seasonParts.length >= 2
+        ? `<span class="col-season-month">${seasonParts[0]}</span><br><span class="col-season-suffix">${seasonParts.slice(1).join(' ')}</span>`
+        : seasonLabel;
+    let theadHTML = `<tr><th class="col-season">${seasonHtml}</th>`;
     const today = new Date();
     // UTC+3 saat dilimi ekle (Türkiye saati)
     today.setHours(today.getHours() + 3);
     const todayString = today.toISOString().split('T')[0];
-    for (let d of dates) {
+    for (let i = 0; i < dates.length; i++) {
+        const d = dates[i];
         const date = new Date(d);
         const dayOfWeek = getDayOfWeekInTurkish(date);
         const isToday = d === todayString;
-        const todayClass = isToday ? 'today-column' : '';
+        const classNames = [];
+        if (isToday) classNames.push('today-column');
+        if (isMonthBoundaryColumn(dates, i)) classNames.push('month-start');
         const displayText = isToday ? 'Bugün' : formatDateForHeader(date);
-        theadHTML += `<th class="${todayClass}"><span class="date-text">${displayText}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
+        theadHTML += `<th class="${classNames.join(' ')}"><span class="date-text">${displayText}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
     }
     theadHTML += `<th class="col-total-amount">Toplam<br>Okuma</th>`;
     theadHTML += `<th>Okuma<br>Serisi</th></tr>`;
     let statsRowHTML = `<tr class="stats-footer-row"><th class="stats-footer-label" scope="col"><span class="col-user-count">${totalUsers} kişi</span></th>`;
-    for (let d of dates) {
+    for (let i = 0; i < dates.length; i++) {
+        const d = dates[i];
         const { readCount } = dateCounts[d];
         const isToday = d === todayString;
         const todayClass = isToday ? ' today-column' : '';
-        statsRowHTML += `<th class="stats-footer-cell${todayClass}" scope="col">`
+        const monthStartClass = isMonthBoundaryColumn(dates, i) ? ' month-start' : '';
+        statsRowHTML += `<th class="stats-footer-cell${todayClass}${monthStartClass}" scope="col">`
             + `<span class="col-counts" data-date="${d}">`
             + `<span class="col-read">${readCount}✔</span>`
             + `</span></th>`;
     }
     let grandAmountTotal = 0;
     for (let user of users) {
-        grandAmountTotal += sumUserAmounts(statsArray, user._id);
+        grandAmountTotal += sumUserAmounts(statsArray, user._id, seasonKey);
     }
     const weekReadStats = computeWeekMarkedReadStats(users, statMap, dates);
     const weekReadSuccessText = formatWeekReadSuccessText(
         weekReadStats.okudum,
         weekReadStats.marked
     );
-    statsRowHTML += `<th class="stats-footer-cell stats-footer-amount" scope="col" title="Tüm kullanıcıların amount toplamı">`
+    statsRowHTML += `<th class="stats-footer-cell stats-footer-amount" scope="col" title="Bu sezondaki tüm kullanıcıların okuma toplamı">`
         + `<span class="col-counts" id="stats-footer-amount-counts">`
         + `<span class="col-read" id="tfoot-total-amount">${grandAmountTotal} ✔</span>`
         + `</span></th>`;
@@ -505,11 +603,15 @@ async function loadTrackerTable() {
         const isCurrentUser = currentUserInfo && currentUserInfo.userId === user._id;
         const currentUserClass = isCurrentUser ? ' current-user-row' : '';
 
+        const userSeasonAmount = sumUserAmounts(statsArray, user._id, seasonKey);
+        const userAllTimeAmount = sumUserAmounts(statsArray, user._id);
         let row = `<tr class="user-row${currentUserClass}"><td class="user-item" data-user-id="${user._id}" style="background: ${league.bg};">`;
         const profileImage = user.profileImage || '/images/default.png';
         row += `<img src="${profileImage}" alt="${user.name}" class="tracker-profile-image tracker-profile-image-loading" onload="this.classList.remove('tracker-profile-image-loading')" onerror="this.classList.remove('tracker-profile-image-loading'); this.src='/images/default.png'" />`;
-        row += `<span class="user-item-name">${user.name}</span></td>`;
-        for (let date of dates) {
+        row += `<span class="user-item-text"><span class="user-item-name">${user.name}</span>`;
+        row += `<span class="user-item-meta" data-user-meta="${user._id}" data-amount="${userAllTimeAmount}">${formatUserItemMeta(league.name, userAllTimeAmount)}</span></span></td>`;
+        for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
+            const date = dates[dateIndex];
             const status = userStats[date] || '';
             const dayAmount = (amountMap[user._id] || {})[date];
             let symbol = '➖';
@@ -539,11 +641,13 @@ async function loadTrackerTable() {
             if (date === todayString) {
                 className += ' today-column';
             }
+            if (isMonthBoundaryColumn(dates, dateIndex)) {
+                className += ' month-start';
+            }
             const onclickAttr = isFutureDate ? '' : `onclick="toggleStatus('${user._id}', '${date}')"`;
             row += `<td class="${className}" ${onclickAttr}>${symbol}</td>`;
         }
-        const userAmountTotal = sumUserAmounts(statsArray, user._id);
-        row += `<td class="col-total-amount" data-user-amount="${user._id}">${userAmountTotal > 0 ? `${userAmountTotal} ✔` : '—'}</td>`;
+        row += `<td class="col-total-amount" data-user-amount="${user._id}">${userSeasonAmount > 0 ? `${userSeasonAmount} ✔` : '—'}</td>`;
         const streak = calculateStreak(userStats);
         row += `<td>${streak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${streak}` : '-'}</td>`;
         row += `</tr>`;
@@ -707,6 +811,37 @@ function calculateStreak(userStats) {
     }
     return streak;
 }
+
+function schedulePostToggleUiRefresh() {
+    try {
+        if (postToggleUpdateTimer) {
+            clearTimeout(postToggleUpdateTimer);
+        }
+        postToggleUpdateTimer = setTimeout(function () {
+            try {
+                updateAllUserBackgroundColors();
+
+                if (typeof window.loadUserCards === 'function') {
+                    window.loadUserCards();
+                }
+                if (typeof window.loadReadingStats === 'function') {
+                    window.loadReadingStats();
+                }
+                if (typeof window.renderLongestSeries === 'function') {
+                    window.renderLongestSeries();
+                }
+                if (typeof window.loadMonthlyCalendar === 'function') {
+                    window.loadMonthlyCalendar();
+                }
+            } catch (err) {
+                console.error('Gecikmeli güncelleme hatası:', err);
+            }
+        }, 1000);
+    } catch (err) {
+        console.error('Debounce ayarlanamadı:', err);
+    }
+}
+window.schedulePostToggleUiRefresh = schedulePostToggleUiRefresh;
 
 async function toggleStatus(userId, date) {
     if (!LocalStorageManager.isUserLoggedIn()) {
@@ -899,35 +1034,7 @@ async function toggleStatus(userId, date) {
     // Satır / footer Toplam Okuma (amount manuel tıklamada kalkar)
     refreshAmountTotalsInTable();
 
-    // 1 sn tıklama olmazsa kartlar, istatistikler ve aylık görünümü güncelle (debounce)
-    try {
-        if (postToggleUpdateTimer) {
-            clearTimeout(postToggleUpdateTimer);
-        }
-        postToggleUpdateTimer = setTimeout(async () => {
-            try {
-                // Tüm kullanıcıların background rengini güncelle
-                updateAllUserBackgroundColors();
-
-                if (typeof window.loadUserCards === 'function') {
-                    window.loadUserCards();
-                }
-                if (typeof window.loadReadingStats === 'function') {
-                    window.loadReadingStats();
-                }
-                if (typeof window.renderLongestSeries === 'function') {
-                    window.renderLongestSeries();
-                }
-                if (typeof window.loadMonthlyCalendar === 'function') {
-                    window.loadMonthlyCalendar();
-                }
-            } catch (err) {
-                console.error('Gecikmeli güncelleme hatası:', err);
-            }
-        }, 1000);
-    } catch (err) {
-        console.error('Debounce ayarlanamadı:', err);
-    }
+    schedulePostToggleUiRefresh();
 
     // Veri tabanı güncellemesini hemen yap
     await fetch(`/api/update-status/${window.groupid}`, {
@@ -987,14 +1094,23 @@ function refreshAmountTotalsInTable() {
         const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
         const statsArray = Array.isArray(data.stats) ? data.stats : [];
         const users = Array.isArray(data.users) ? data.users : [];
+        const seasonKey = getWeekSeasonKey(getWeekDates(weekOffset || 0));
 
         let grand = 0;
         users.forEach(function (user) {
-            const sum = sumUserAmounts(statsArray, user._id);
-            grand += sum;
+            const seasonSum = sumUserAmounts(statsArray, user._id, seasonKey);
+            const allTimeSum = sumUserAmounts(statsArray, user._id);
+            grand += seasonSum;
             const cell = trackerTable.querySelector(`td.col-total-amount[data-user-amount="${user._id}"]`);
             if (cell) {
-                cell.textContent = sum > 0 ? `${sum} ✔` : '—';
+                cell.textContent = seasonSum > 0 ? `${seasonSum} ✔` : '—';
+            }
+            const okudumDays = userReadingCounts.get(user._id) || 0;
+            const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
+            const meta = trackerTable.querySelector(`.user-item-meta[data-user-meta="${user._id}"]`);
+            if (meta) {
+                meta.textContent = formatUserItemMeta(league.name, allTimeSum);
+                meta.setAttribute('data-amount', String(allTimeSum || 0));
             }
         });
 
@@ -1018,6 +1134,11 @@ function updateAllUserBackgroundColors() {
             const userItem = document.querySelector(`[data-user-id="${userId}"]`);
             if (userItem) {
                 userItem.style.background = league.bg;
+                const meta = userItem.querySelector('.user-item-meta');
+                if (meta) {
+                    const amountSum = Number(meta.getAttribute('data-amount')) || 0;
+                    meta.textContent = formatUserItemMeta(league.name, amountSum);
+                }
             }
         });
     } catch (error) {
@@ -1042,6 +1163,11 @@ async function updateUserBackgroundColor(userId) {
         const userItem = document.querySelector(`[data-user-id="${userId}"]`);
         if (userItem) {
             userItem.style.background = league.bg;
+            const meta = userItem.querySelector('.user-item-meta');
+            if (meta) {
+                const amountSum = Number(meta.getAttribute('data-amount')) || 0;
+                meta.textContent = formatUserItemMeta(league.name, amountSum);
+            }
         }
     } catch (error) {
         console.error('Kullanıcı background rengi güncellenemedi:', error);

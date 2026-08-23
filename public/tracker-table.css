@@ -131,7 +131,7 @@
 
 .reading-edit-mode-segment {
     display: inline-flex;
-    border: 1px solid #b8c7dc;
+    border: 2px solid #b8c7dc;
     border-radius: 12px;
     overflow: hidden;
     background: #eef3fa;
@@ -166,7 +166,7 @@
 }
 
 .reading-edit-mode-btn + .reading-edit-mode-btn {
-    border-left: 1px solid #b8c7dc;
+    border-left: 2px solid #b8c7dc;
 }
 
 .reading-edit-mode-btn:hover {
@@ -411,7 +411,7 @@
 }
 
 .reading-edit-mode-segment.needs-choice {
-    box-shadow: 0 0 0 3px rgba(58, 126, 189, 0.45);
+    box-shadow: 0 0 0 2px rgba(58, 126, 189, 0.45);
 }
 
 #trackerTable td {
@@ -433,6 +433,7 @@
     border: 1px solid #f1f1f1;
     min-width: 0;
     width: 170px;
+    text-align: left;
 }
 
 #trackerTable th:first-child {
@@ -440,6 +441,23 @@
     color: #333;
     font-size: 17px;
     width: 170px;
+}
+
+#trackerTable thead > tr:first-child th.col-season {
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+#trackerTable thead > tr:first-child th.col-season .col-season-month {
+    font-size: 17px;
+    font-weight: 600;
+    color: #333;
+}
+
+#trackerTable thead > tr:first-child th.col-season .col-season-suffix {
+    font-size: 16px;
+    font-weight: 500;
+    color: #222;
 }
 
 .date-text {
@@ -474,14 +492,39 @@
     align-items: center;
     flex-grow: 1;
     min-width: 0;
+    gap: 8px;
+}
+
+.user-item-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    min-width: 0;
+    line-height: 1.2;
+}
+
+.user-item .tracker-profile-image {
+    flex-shrink: 0;
+    margin-right: 0;
 }
 
 .user-item-name {
-    display: inline-block;
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    vertical-align: middle;
+    max-width: 100%;
+}
+
+.user-item-meta {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .week-navigation {
@@ -666,6 +709,16 @@
 
 .red.today-column {
     background-color: rgb(255, 100, 60);
+}
+
+/* Hafta içinde ay geçişi: yeni ayın ilk sütununun solu */
+#trackerTable .month-start {
+    border-left: 2px solid #7a8288;
+}
+
+#trackerTable thead > tr:first-child th.month-start,
+#trackerTable thead .stats-footer-row th.month-start {
+    border-left: 2px solid #7a8288;
 }
 
 /* Tablo animasyonu */

@@ -4133,6 +4133,25 @@ const TEST_GROUP_IDS = [
   'hisar-kapisi-cekirdek-kadro'
 ];
 
+function typicalTestAmountForUser(userId) {
+  let h = 0;
+  const s = String(userId);
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h |= 0;
+  }
+  const bases = [10, 15, 20, 30, 50, 80];
+  return bases[Math.abs(h) % bases.length];
+}
+
+function jitterTestAmount(base) {
+  const r = Math.random();
+  if (r < 0.55) return base;
+  if (r < 0.75) return Math.max(5, base - 5);
+  if (r < 0.92) return base + 10;
+  return base + 20;
+}
+
 async function seedFakeReadingDataForTestGroups() {
   console.log('🤖 [TestSeeder] Sahte okuma verisi ekleme başladı...');
 
@@ -4174,11 +4193,15 @@ async function seedFakeReadingDataForTestGroups() {
           // %90 ihtimalle "okudum", %10 ihtimalle "okumadım"
           const rand = Math.random();
           const status = rand < 0.90 ? 'okudum' : 'okumadım';
-          await readingStatuses.create({
+          const doc = {
             userId,
             date: yesterday,
             status
-          });
+          };
+          if (status === 'okudum') {
+            doc.amount = jitterTestAmount(typicalTestAmountForUser(userId));
+          }
+          await readingStatuses.create(doc);
           totalInserted++;
         } catch (userErr) {
           console.error(`❌ [TestSeeder] ${groupId} kullanıcı hatası (${user._id}):`, userErr.message);
