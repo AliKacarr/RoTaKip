@@ -647,7 +647,7 @@ async function loadTrackerTable() {
             const onclickAttr = isFutureDate ? '' : `onclick="toggleStatus('${user._id}', '${date}')"`;
             row += `<td class="${className}" ${onclickAttr}>${symbol}</td>`;
         }
-        row += `<td class="col-total-amount" data-user-amount="${user._id}">${userSeasonAmount > 0 ? `${userSeasonAmount} ✔` : '—'}</td>`;
+        row += `<td class="col-total-amount" data-user-amount="${user._id}">${userSeasonAmount > 0 ? `${userSeasonAmount} ✔` : '-'}</td>`;
         const streak = calculateStreak(userStats);
         row += `<td>${streak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${streak}` : '-'}</td>`;
         row += `</tr>`;
@@ -1103,7 +1103,7 @@ function refreshAmountTotalsInTable() {
             grand += seasonSum;
             const cell = trackerTable.querySelector(`td.col-total-amount[data-user-amount="${user._id}"]`);
             if (cell) {
-                cell.textContent = seasonSum > 0 ? `${seasonSum} ✔` : '—';
+                cell.textContent = seasonSum > 0 ? `${seasonSum} ✔` : '-';
             }
             const okudumDays = userReadingCounts.get(user._id) || 0;
             const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
@@ -1174,6 +1174,36 @@ async function updateUserBackgroundColor(userId) {
     }
 }
 
+function spawnPlusFloat(target, delta) {
+    if (!target) return;
+    const n = Number(delta);
+    if (!(Number.isFinite(n) && n > 0)) return;
+
+    const rect = target.getBoundingClientRect();
+    const floatEl = document.createElement('div');
+    floatEl.className = 'okudum-float-plus';
+    floatEl.textContent = '+' + n;
+    floatEl.style.left = (rect.left + rect.width / 2) + 'px';
+    floatEl.style.top = (rect.top + rect.height / 2) + 'px';
+    document.body.appendChild(floatEl);
+    const removeFloat = function () {
+        if (floatEl.parentNode) floatEl.parentNode.removeChild(floatEl);
+    };
+    floatEl.addEventListener('animationend', removeFloat);
+    setTimeout(removeFloat, 1000);
+}
+
+function celebrateOkudumCell(cell, options) {
+    if (!cell) return;
+    const amountDelta = Number((options || {}).amountDelta);
+    if (!(Number.isFinite(amountDelta) && amountDelta > 0)) return;
+
+    const row = cell.closest('tr');
+    const target = (row && row.querySelector('td.col-total-amount')) || cell;
+    spawnPlusFloat(target, amountDelta);
+}
+window.celebrateOkudumCell = celebrateOkudumCell;
+
 // User stats reading icon'a yıldız animasyonu
 function animateStarToUserStats(clickedCell) {
     // Tıklanan hücrenin pozisyonunu al
@@ -1217,9 +1247,11 @@ function animateStarToUserStats(clickedCell) {
         document.body.removeChild(flyingStar);
     }, 850);
 }
+window.animateStarToUserStats = animateStarToUserStats;
 
-// Seri artış animasyonu fonksiyonu
 function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell) {
+    spawnPlusFloat(streakElement, (Number(newStreak) || 0) - (Number(oldStreak) || 0));
+
     // Tıklanan hücrenin pozisyonunu al
     const clickedRect = clickedCell.getBoundingClientRect();
 
@@ -1262,8 +1294,7 @@ function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell)
     }, 850);
 
 }
-
-// refresh butonu kaldırıldı
+window.animateStreakIncrease = animateStreakIncrease;
 
 function getDayOfWeekInTurkish(date) {
     const days = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cts'];

@@ -365,6 +365,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
     margin: 10px 22px 0 30px;
 }
 
@@ -381,6 +383,18 @@
 .progress-summary-total-count {
     font-size: 1.3em;
     color: rgb(240, 127, 22);
+}
+
+.user-card .progress-summary-row .progress-summary-amount .progress-summary-amount-count {
+    font-size: 23px;
+    color: #208a3c;
+    font-weight: bold;
+}
+
+.user-card .progress-summary-row .progress-summary-amount .progress-summary-amount-mark {
+    font-size: 1.2em;
+    color: #208a3c;
+    font-weight: 700;
 }
 
 .user-card .progress-summary-row .progress-summary .summary-label {

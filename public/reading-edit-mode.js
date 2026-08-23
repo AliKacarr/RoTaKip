@@ -197,11 +197,20 @@
     try {
       var rowEl = cell && cell.closest('tr');
       if (!rowEl || typeof calculateStreakFromCache !== 'function') return;
-      var newStreak = calculateStreakFromCache(userId);
       var lastTd = rowEl.querySelector('td:last-child');
       if (!lastTd) return;
+      var oldStreakText = lastTd.textContent || lastTd.innerText;
+      var oldStreak = oldStreakText === '-' ? 0 : parseInt(oldStreakText.replace('⭐', '').trim(), 10) || 0;
+      var newStreak = calculateStreakFromCache(userId);
       lastTd.innerHTML =
         newStreak > 0 ? '<span class="weekly-fire-emoji">⭐</span> ' + newStreak : '-';
+      if (
+        newStreak > oldStreak &&
+        newStreak > 0 &&
+        typeof window.animateStreakIncrease === 'function'
+      ) {
+        window.animateStreakIncrease(lastTd, oldStreak, newStreak, cell);
+      }
     } catch (e) {
       console.error('Seri güncellenemedi:', e);
     }
@@ -261,8 +270,8 @@
     }
 
     if (!alreadyOkudum) {
-      if (userInfo.userId === userId && typeof animateStarToUserStats === 'function') {
-        animateStarToUserStats(cell);
+      if (userInfo.userId === userId && typeof window.animateStarToUserStats === 'function') {
+        window.animateStarToUserStats(cell);
       }
       if (typeof updateUserStatsArea === 'function') {
         updateUserStatsArea();
@@ -406,6 +415,7 @@
     var cell = state.cell;
     var userId = state.userId;
     var date = state.date;
+    var existingAmount = state.existingAmount;
 
     amountEditState = null;
     hideAmountOverlay();
@@ -422,6 +432,11 @@
 
     if (typeof refreshAmountTotalsInTable === 'function') {
       refreshAmountTotalsInTable();
+    }
+
+    var amountDelta = existingAmount != null ? amount - existingAmount : amount;
+    if (amountDelta > 0 && typeof window.celebrateOkudumCell === 'function') {
+      window.celebrateOkudumCell(cell, { amountDelta: amountDelta });
     }
 
     recountDayAndWeekFooters(date);

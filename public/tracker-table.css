@@ -291,6 +291,35 @@
     white-space: nowrap;
 }
 
+.okudum-float-plus {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 22px;
+    line-height: 1;
+    color: #0d7a32;
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9), 0 0 10px rgba(76, 217, 100, 0.55);
+    animation: okudum-float-up 0.85s ease-out forwards;
+}
+
+@keyframes okudum-float-up {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -30%) scale(0.65);
+    }
+    16% {
+        opacity: 1;
+        transform: translate(-50%, -80%) scale(1.12);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -165%) scale(0.95);
+    }
+}
+
 .tracker-profile-image {
     width: 45px;
     height: 45px;
@@ -772,7 +801,7 @@
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    background: linear-gradient(135deg, #3498db 0, #2980b9 100%);
     z-index: 1;
 }
 

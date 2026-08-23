@@ -243,6 +243,21 @@ async function loadUserCards() {
       const okudumStats = userStats.filter(s => s.status === 'okudum');
       const totalDays = userStats.length;
       const okudumDays = okudumStats.length;
+      let amountTotal = 0;
+      for (let i = 0; i < stats.length; i++) {
+        const s = stats[i];
+        if (String(s.userId) !== String(user._id)) continue;
+        const a = typeof parseFiniteAmount === 'function'
+          ? parseFiniteAmount(s.amount)
+          : Number(s.amount);
+        if (Number.isFinite(a) && a > 0) amountTotal += a;
+      }
+      const amountSummaryHtml = amountTotal > 0
+        ? `<span class="progress-summary progress-summary-amount">
+          <span class="summary-count"><span class="progress-summary-amount-count">${amountTotal}</span><span class="progress-summary-amount-mark">✔</span></span>
+          <span class="summary-label"> Toplam okuma</span>
+        </span>`
+        : '';
       const lastReadDate = okudumStats.length > 0
         ? okudumStats.reduce((latest, stat) => (stat.date > latest ? stat.date : latest), okudumStats[0].date)
         : '';
@@ -387,6 +402,7 @@ async function loadUserCards() {
           <span class="summary-count"><span class="progress-summary-okudum-count">${okudumDays}</span><span class="progress-summary-total-count">/${totalDays}</span></span>
           <span class="summary-label"> Gün okuma</span>
         </span>
+        ${amountSummaryHtml}
       </div>
       <div class="progress-bar-container">
         <div class="progress-bar-bg">
