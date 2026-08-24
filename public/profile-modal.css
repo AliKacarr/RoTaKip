@@ -603,6 +603,12 @@ to {
   overflow-y: auto;
 }
 
+@media (max-width: 1023px) {
+  .profile-avatar-modal-content {
+    scale: 1.3;
+  }
+}
+
 .profile-avatar-modal-header {
   background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
   color: white;

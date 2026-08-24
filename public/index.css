@@ -1395,6 +1395,12 @@ body {
     animation: modalSlideIn 0.3s ease-out;
 }
 
+@media (max-width: 1023px) {
+    .ready-images-modal-content {
+        scale: 1.3;
+    }
+}
+
 .ready-images-modal-content .modal-header {
     display: flex;
     align-items: center;

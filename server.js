@@ -817,14 +817,39 @@ const UserGroup = mongoose.model('UserGroup', {
   createdAt: { type: Date, default: Date.now }
 });
 
-// Davet modeli
-const Invite = mongoose.model('Invite', {
+// Davet modeli — expiresAt dolunca MongoDB TTL ile silinir (expireAfterSeconds: 0)
+const inviteSchema = new mongoose.Schema({
   inviteTokenHash: String,
   userId: String,
   groupId: String,
   createdAt: { type: Date, default: Date.now },
   expiresAt: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) } // 7 gün sonra
 });
+inviteSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+const Invite = mongoose.model('Invite', inviteSchema);
+
+async function ensureInviteTtlIndex() {
+  try {
+    await Invite.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  } catch (err) {
+    if (err.code !== 85 && err.code !== 86 && !/already exists/i.test(err.message)) {
+      console.error('invites TTL index hatası:', err.message);
+      return;
+    }
+    try {
+      await Invite.collection.dropIndex('expiresAt_1');
+      await Invite.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    } catch (retryErr) {
+      console.error('invites TTL index hatası:', retryErr.message);
+    }
+  }
+}
+
+if (mongoose.connection.readyState === 1) {
+  ensureInviteTtlIndex();
+} else {
+  mongoose.connection.once('connected', ensureInviteTtlIndex);
+}
 
 // MongoDB index'lerini oluşturma fonksiyonu
 async function createIndexesForGroup(groupId) {
@@ -3105,7 +3130,8 @@ const duaSchema = new mongoose.Schema({
 
 const Dua = mongoose.model('Dua', duaSchema, 'dualar');
 
-// Gruba katılma isteği modeli
+// Gruba katılma isteği modeli — 30 gün sonra TTL ile silinir
+const JOIN_REQUEST_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const joinRequestSchema = new mongoose.Schema({
   groupId: String,
   userName: String,
@@ -3113,10 +3139,45 @@ const joinRequestSchema = new mongoose.Schema({
   password: String,
   profileImage: String,
   status: { type: String, default: 'pending' }, // pending, accepted, rejected
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  expiresAt: { type: Date, default: () => new Date(Date.now() + JOIN_REQUEST_TTL_MS) }
 });
+joinRequestSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const JoinRequest = mongoose.model('JoinRequest', joinRequestSchema, 'jointogroups');
+
+async function ensureJoinRequestTtlIndex() {
+  try {
+    await JoinRequest.collection.updateMany(
+      { $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }] },
+      [{ $set: { expiresAt: { $add: [{ $ifNull: ['$createdAt', '$$NOW'] }, JOIN_REQUEST_TTL_MS] } } }]
+    );
+  } catch (backfillErr) {
+    console.warn('jointogroups expiresAt doldurma:', backfillErr.message);
+  }
+
+  try {
+    await JoinRequest.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  } catch (err) {
+    if (err.code !== 85 && err.code !== 86 && !/already exists/i.test(err.message)) {
+      console.error('jointogroups TTL index hatası:', err.message);
+      return;
+    }
+    try {
+      await JoinRequest.collection.dropIndex('expiresAt_1');
+      await JoinRequest.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+      console.log('jointogroups TTL index yeniden oluşturuldu');
+    } catch (retryErr) {
+      console.error('jointogroups TTL index hatası:', retryErr.message);
+    }
+  }
+}
+
+if (mongoose.connection.readyState === 1) {
+  ensureJoinRequestTtlIndex();
+} else {
+  mongoose.connection.once('connected', ensureJoinRequestTtlIndex);
+}
 
 
 // Söz resimleri endpoint'i

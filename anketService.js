@@ -19,7 +19,7 @@ const DROPDOWN_VALUES = [
     "2",           // 8. Kaç Saat Hizmet?
 ];
 
-const TEXTAREA_VALUE = "Medresem uygulaması çalışması, podcast dinleme ve youtube video izleme";
+const TEXTAREA_VALUE = "Medresem uygulaması çalışması ve youtube video izleme";
 
 /**
  * Gönderim log kaydını gerçekleştirir (MongoDB 'anket' veritabanı 'logs' koleksiyonuna).

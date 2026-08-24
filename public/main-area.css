@@ -1043,6 +1043,12 @@ input[type="file"] {
     animation: modalSlideIn 0.3s ease-out;
 }
 
+@media (max-width: 1023px) {
+    .ready-images-modal-content {
+        scale: 1.3;
+    }
+}
+
 @keyframes modalSlideIn {
     from {
         opacity: 0;
