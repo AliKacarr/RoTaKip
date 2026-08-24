@@ -38,7 +38,7 @@ async function postLastCongratulatedLeagues(items) {
   }
 }
 
-async function loadUserCards() {
+window.loadUserCards = async function loadUserCards() {
   console.log('🔍 User Cards Loading...');
   const container = document.querySelector('.user-cards-container');
   if (!container) return;

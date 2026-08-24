@@ -14,7 +14,7 @@ const util = require('util');
 const execPromise = util.promisify(exec);
 const CleanCSS = require('clean-css');
 const { minify } = require('terser');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const schedule = require('node-schedule');
 const https = require('https');
 const { Dropbox } = require('dropbox');
@@ -821,6 +821,7 @@ const UserGroup = mongoose.model('UserGroup', {
 const inviteSchema = new mongoose.Schema({
   inviteTokenHash: String,
   userId: String,
+  userName: String,
   groupId: String,
   createdAt: { type: Date, default: Date.now },
   expiresAt: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) } // 7 gün sonra
@@ -2375,6 +2376,7 @@ app.post('/api/create-invite/:groupId', async (req, res) => {
     const invite = new Invite({
       inviteTokenHash,
       userId,
+      userName: user.name || '',
       groupId
     });
 
@@ -4758,6 +4760,26 @@ function parseAmountFromSelectedOptions(selectedOptions) {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Log için: miktar varsa sayı, yoksa 'okudum' */
+function waSyncAmountLabel(selectedOptions) {
+  const amount = parseAmountFromSelectedOptions(selectedOptions);
+  return amount != null ? String(amount) : 'okudum';
+}
+
+/** Log için: ad tarih miktar grup */
+function waVoteDetail(voteDoc) {
+  const name = voteDoc.pushName || '';
+  const dateStr = (voteDoc.date && /^\d{4}-\d{2}-\d{2}$/.test(String(voteDoc.date).trim()))
+    ? String(voteDoc.date).trim()
+    : (voteDoc.updatedAt ? String(voteDoc.updatedAt).split(' ')[0] : '');
+  const amount = parseAmountFromSelectedOptions(voteDoc.selectedOptions);
+  const amountLabel = amount != null
+    ? String(amount)
+    : (Array.isArray(voteDoc.selectedOptions) && voteDoc.selectedOptions.length ? 'okudum' : '');
+  const group = voteDoc.readingGroupId || '';
+  return [name, dateStr, amountLabel, group].filter(Boolean).join(' ');
+}
+
 /** readingstatuses upsert: status + opsiyonel amount */
 async function upsertReadingStatusWithAmount(readingStatuses, userId, dateStr, selectedOptions) {
   const amount = parseAmountFromSelectedOptions(selectedOptions);
@@ -4844,7 +4866,7 @@ async function syncPollVoteToReadingStatus(voteDoc) {
             dateStr,
             voteDoc.selectedOptions
           );
-          console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${targetGroupId})`);
+          console.log(`✅ WA anket: ${user.name} ${dateStr} ${waSyncAmountLabel(voteDoc.selectedOptions)} ${targetGroupId}`);
 
           // Lig atlama kontrolü: okuma kaydı eklendikten sonra yeni ligi kontrol et
           const group = await UserGroup.findOne({ groupId: targetGroupId }).lean();
@@ -4852,10 +4874,10 @@ async function syncPollVoteToReadingStatus(voteDoc) {
         } else {
           // Kullanıcı oyunu geri çekmiş (selectedOptions boş) -> okuma bilgisini sil
           await readingStatuses.findOneAndDelete({ userId, date: dateStr });
-          console.log(`🗑️ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} 'okudum' kaydı silindi. (Grup: ${targetGroupId})`);
+          console.log(`🗑️ WA anket: ${user.name} ${dateStr} silindi ${targetGroupId}`);
         }
       } else {
-        console.warn(`⚠️ WhatsApp Anket Senkronizasyonu: ${phone} telefon numaralı kullanıcı '${targetGroupId}' grubunda bulunamadı.`);
+        console.warn(`⚠️ WA anket: ${phone} bulunamadı ${targetGroupId}`);
       }
     } else {
       // Fallback: readingGroupId bilgisi yoksa veritabanındaki tüm grupları tara
@@ -4875,13 +4897,13 @@ async function syncPollVoteToReadingStatus(voteDoc) {
               dateStr,
               voteDoc.selectedOptions
             );
-            console.log(`✅ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} için 'okudum' eklendi. (Grup: ${group.groupId})`);
+            console.log(`✅ WA anket: ${user.name} ${dateStr} ${waSyncAmountLabel(voteDoc.selectedOptions)} ${group.groupId}`);
 
             // Lig atlama kontrolü: okuma kaydı eklendikten sonra yeni ligi kontrol et
             await checkAndQueueLeaguePromotion(user, group.groupId, group.groupName || group.groupId, dateStr);
           } else {
             await readingStatuses.findOneAndDelete({ userId, date: dateStr });
-            console.log(`🗑️ WhatsApp Anket Senkronizasyonu: ${user.name} (${phone}) - ${dateStr} 'okudum' kaydı silindi. (Grup: ${group.groupId})`);
+            console.log(`🗑️ WA anket: ${user.name} ${dateStr} silindi ${group.groupId}`);
           }
         }
       }
@@ -4935,10 +4957,7 @@ async function syncTextVoteToReadingStatus(voteDoc) {
       const user = await findUserForWhatsAppVote(users, phone, pushName);
 
       if (!user) {
-        console.warn(
-          `⚠️ WhatsApp Mesaj Senkronizasyonu: kullanıcı bulunamadı ` +
-          `(phone: ${phone || '—'}, pushName: ${pushName || '—'}, grup: ${groupId}).`
-        );
+        console.warn(`⚠️ WA mesaj: kullanıcı yok ${phone || pushName || '—'} ${groupId}`);
         return;
       }
 
@@ -4950,10 +4969,7 @@ async function syncTextVoteToReadingStatus(voteDoc) {
           dateStr,
           voteDoc.selectedOptions
         );
-        console.log(
-          `✅ WhatsApp Mesaj Senkronizasyonu: ${user.name} (${phone || pushName}) - ` +
-          `${dateStr} için 'okudum' eklendi. (Grup: ${groupId})`
-        );
+        console.log(`✅ WA mesaj: ${user.name} ${dateStr} ${waSyncAmountLabel(voteDoc.selectedOptions)} ${groupId}`);
         await checkAndQueueLeaguePromotion(
           user,
           groupId,
@@ -4972,16 +4988,10 @@ async function syncTextVoteToReadingStatus(voteDoc) {
             },
             { upsert: true, returnDocument: 'after' }
           );
-          console.log(
-            `✖ WhatsApp Mesaj Senkronizasyonu: ${user.name} (${phone || pushName}) - ` +
-            `${dateStr} 'okumadım' olarak ayarlandı. (Grup: ${groupId})`
-          );
+          console.log(`✖ WA mesaj: ${user.name} ${dateStr} okumadım ${groupId}`);
         } else {
           await readingStatuses.findOneAndDelete({ userId, date: dateStr });
-          console.log(
-            `🗑️ WhatsApp Mesaj Senkronizasyonu: ${user.name} (${phone || pushName}) - ` +
-            `${dateStr} okuma kaydı silindi (➖). (Grup: ${groupId})`
-          );
+          console.log(`🗑️ WA mesaj: ${user.name} ${dateStr} silindi ${groupId}`);
         }
       }
     }
@@ -5009,10 +5019,7 @@ async function performTextVotesSync() {
       try {
         await syncTextVoteToReadingStatus(voteDoc);
         await TextVote.deleteOne({ _id: voteDoc._id });
-        console.log(
-          `🗑️ text_votes dokümanı işlendi ve silindi: ${voteDoc._id} ` +
-          `(date: ${voteDoc.date}, voter: ${voteDoc.voterPhone || voteDoc.voterJid || voteDoc.pushName})`
-        );
+        console.log(`🗑️: ${waVoteDetail(voteDoc)}`);
       } catch (voteErr) {
         console.error(`Text vote işleme hatası (${voteDoc._id}):`, voteErr.message);
       }
@@ -5054,7 +5061,7 @@ async function performPollVotesSync() {
 
         // 2. İşlem tamamlandı, poll_votes'tan dokümanı sil
         await PollVote.deleteOne({ _id: voteDoc._id });
-        console.log(`🗑️ poll_votes dokümanı işlendi ve silindi: ${voteDoc._id} (pollId: ${voteDoc.pollId}, voter: ${voteDoc.voterPhone || voteDoc.voterJid})`);
+        console.log(`🗑️ poll_votes işlendi, kuyruktan silindi: ${waVoteDetail(voteDoc)}`);
       } catch (voteErr) {
         console.error(`Poll vote işleme hatası (${voteDoc._id}):`, voteErr.message);
         // Tek bir doküman hata verirse diğerlerine devam et

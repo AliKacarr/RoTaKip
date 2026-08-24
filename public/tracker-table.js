@@ -1,6 +1,7 @@
 const trackerTable = document.getElementById('trackerTable');
 const tableArea = document.querySelector('.table-area');
 const newUserForm = document.getElementById('newUserForm');
+window.newUserForm = newUserForm;
 const prevWeekBtn = document.getElementById('prevWeek');
 const nextWeekBtn = document.getElementById('nextWeek');
 const prevWeekTodayBtn = document.getElementById('prevWeekToday');
@@ -519,10 +520,6 @@ async function loadTrackerTable() {
         }
         userStatsCache.set(user._id, cacheData);
     }
-    const streakMap = {};
-    for (let user of users) {
-        streakMap[user._id] = findConsecutiveStreaks(statMap[user._id] || {});
-    }
     // Her tarih için okuyan sayısını hesapla
     const dateCounts = {};
     for (let d of dates) {
@@ -594,7 +591,6 @@ async function loadTrackerTable() {
     let tbodyHTML = '';
     for (let user of users) {
         const userStats = statMap[user._id] || {};
-        const userStreaks = streakMap[user._id] || {};
         // Lig ve arka planı belirle (önbellekten al)
         const okudumDays = userReadingCounts.get(user._id) || 0;
         const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
@@ -710,41 +706,6 @@ async function loadTrackerTable() {
     tableArea.style.display = 'block';
 }
 
-function findConsecutiveStreaks(userStats) {
-    const dates = Object.keys(userStats).sort();
-    if (dates.length === 0) return {};
-    const streakMap = {};
-    let currentStreak = 0;
-    let streakDates = [];
-    for (let i = 0; i < dates.length; i++) {
-        const currentDate = dates[i];
-        if (userStats[currentDate] === 'okumadım') {
-            currentStreak++;
-            streakDates.push(currentDate);
-            if (i === dates.length - 1 ||
-                userStats[dates[i + 1]] !== 'okumadım' ||
-                !areDatesConsecutive(currentDate, dates[i + 1])) {
-                for (let date of streakDates) {
-                    streakMap[date] = currentStreak;
-                }
-                currentStreak = 0;
-                streakDates = [];
-            }
-        }
-    }
-    return streakMap;
-}
-
-function areDatesConsecutive(date1, date2) {
-    const d1 = new Date(date1);
-    const d2 = new Date(date2);
-    d1.setHours(0, 0, 0, 0);
-    d2.setHours(0, 0, 0, 0);
-    const diffTime = d2 - d1;
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    return diffDays === 1;
-}
-
 prevWeekBtn.addEventListener('click', () => {
     weekOffset--;
     window.weekOffset = weekOffset; // Global güncelle
@@ -843,7 +804,7 @@ function schedulePostToggleUiRefresh() {
 }
 window.schedulePostToggleUiRefresh = schedulePostToggleUiRefresh;
 
-async function toggleStatus(userId, date) {
+window.toggleStatus = async function toggleStatus(userId, date) {
     if (!LocalStorageManager.isUserLoggedIn()) {
         logUnauthorizedAccess('Haftalık tabloya tıklama');
         return;
@@ -928,27 +889,6 @@ async function toggleStatus(userId, date) {
 
         // Cache'den güncel verileri al
         const userStatsMap = getUserStatsFromCache(userId);
-
-        const weekStatsMap = {};
-        dateCells.forEach((dateCell, index) => {
-            const cellDate = dates[index];
-            const cellText = (dateCell.innerText || '').trim();
-            if (cellTextIsOkudum(cellText)) {
-                weekStatsMap[cellDate] = 'okudum';
-            } else if (cellTextIsOkumadim(cellText)) {
-                weekStatsMap[cellDate] = 'okumadım';
-            }
-        });
-
-        // Yeni değişikliği de ekle
-        if (status) {
-            weekStatsMap[date] = status;
-        } else {
-            delete weekStatsMap[date];
-        }
-
-        // Seri hesaplamalarını yap 
-        const streakMap = findConsecutiveStreaks(weekStatsMap);
 
         // Her hücrenin rengini güncelle
         dateCells.forEach((dateCell, index) => {
@@ -1147,7 +1087,7 @@ function updateAllUserBackgroundColors() {
 }
 
 // Kullanıcının background rengini güncelle (eski fonksiyon - geriye uyumluluk için)
-async function updateUserBackgroundColor(userId) {
+window.updateUserBackgroundColor = async function updateUserBackgroundColor(userId) {
     try {
         // Kullanıcının güncel istatistiklerini al
         const response = await fetch(`/api/user-stats/${window.groupid}/${userId}`);

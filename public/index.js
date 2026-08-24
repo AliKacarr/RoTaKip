@@ -59,7 +59,7 @@ class LocalStorageManager {
 
     static hasJoinRequest(groupId) {
         const joinRequests = this.getJoinRequests();
-        return joinRequests.hasOwnProperty(groupId);
+        return Object.hasOwn(joinRequests, groupId);
     }
 
     static getJoinRequestId(groupId) {
@@ -461,10 +461,10 @@ class GroupsPage {
         const joinRequests = LocalStorageManager.getJoinRequests();
         
         return groups.sort((a, b) => {
-            const aInUserGroups = userGroups.hasOwnProperty(a.groupId);
-            const bInUserGroups = userGroups.hasOwnProperty(b.groupId);
-            const aInJoinRequests = joinRequests.hasOwnProperty(a.groupId);
-            const bInJoinRequests = joinRequests.hasOwnProperty(b.groupId);
+            const aInUserGroups = Object.hasOwn(userGroups, a.groupId);
+            const bInUserGroups = Object.hasOwn(userGroups, b.groupId);
+            const aInJoinRequests = Object.hasOwn(joinRequests, a.groupId);
+            const bInJoinRequests = Object.hasOwn(joinRequests, b.groupId);
             
             // 1. Öncelik: Yetki sahibi olduğumuz gruplar
             if (aInUserGroups && !bInUserGroups) return -1;
@@ -969,7 +969,7 @@ class GroupsPage {
         let isUserGroup = false;
         if (userGroups) {
             const groupsData = JSON.parse(userGroups);
-            isUserGroup = groupsData.hasOwnProperty(group.groupId);
+            isUserGroup = Object.hasOwn(groupsData, group.groupId);
         }
         
         const isPrivate = group.visibility === 'private' && !isUserGroup;

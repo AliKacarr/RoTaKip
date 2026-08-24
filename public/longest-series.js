@@ -1,4 +1,4 @@
-function renderLongestSeries() {
+window.renderLongestSeries = function renderLongestSeries() {
     console.log('🔍 Longest Series Loading...');
     try {
         const data = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
@@ -17,9 +17,7 @@ function renderLongestSeries() {
             shareBtn.addEventListener('click', shareLongestSeriesChart);
             // En iyi (yüksek streak) üstte olacak şekilde sırala
             const sortedData = (data || []).slice().sort((a, b) => b.streak - a.streak);
-            // Barlar ters: en iyi = en kısa
-            const maxStreak = sortedData.length > 0 ? Math.max(...sortedData.map(u => u.streak)) : 1;
-            const minStreak = sortedData.length > 0 ? Math.min(...sortedData.map(u => u.streak)) : 0;
+            // Barlar ters: en iyi = en kısa (order 0 → minBarWidth)
             const minBarWidth = 220; // px
             const maxBarWidth = 600; // px
 
