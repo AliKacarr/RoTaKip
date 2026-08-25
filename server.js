@@ -21,7 +21,7 @@ const { Dropbox } = require('dropbox');
 const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
-const { doldurAnket, scheduleAnketJob } = require('./anketService');
+const { doldurAnket, scheduleAnketJob } = require('./anket/anketService');
 
 // Hash fonksiyonu
 function hashCode(str) {

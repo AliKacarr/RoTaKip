@@ -50,36 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Intersection Observer'ı oluştur
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                // Inline style'ları kaldır ve visible sınıfını ekle
-                entry.target.style.opacity = '';
-                entry.target.style.transform = '';
-                entry.target.classList.add('visible');
-            } else {
-                // Element görünür alandan çıktığında visible sınıfını kaldır ve tekrar gizle
-                entry.target.classList.remove('visible');
-                entry.target.style.opacity = '0';
-                entry.target.style.transform = 'translateY(30px)';
-            }
-        });
-    }, {
-        threshold: 0.1, // Elementin %10'u görünür olduğunda tetikle
-        rootMargin: '50px' // Element ekranın 50px yakınına geldiğinde tetikle
-    });
-
-    // Tüm alıntı bölümlerini gözlemle
-    document.querySelectorAll('.quote-section, .quote-section-image').forEach(section => {
-        observer.observe(section);
-    });
-
-    // Sayfa yüklendiğinde tüm quote-section'ları manuel olarak gizle
-    document.querySelectorAll('.quote-section, .quote-section-image').forEach(section => {
-        section.style.opacity = '0';
-        section.style.transform = 'translateY(30px)';
-    });
+    // Kayarak gelme animasyonu script.js → initScrollFadeInElements
     
     // Mevcut içerikleri görünür yap
     document.querySelectorAll('.quote-text').forEach(element => {

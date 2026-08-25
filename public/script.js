@@ -201,15 +201,6 @@ window.getInviteParams = function getInviteParams() {
 // Global grup ID değişkeni
 window.groupid = getGroupIdFromUrl();
 
-// Admin elementlerini gizleme fonksiyonu
-function hideAdminElements() {
-  const adminIndicator = document.querySelector('.admin-indicator');
-  if (adminIndicator) {
-    adminIndicator.classList.add('hidden');
-    adminIndicator.classList.remove('show');
-  }
-}
-
 // YENİ YETKİ KONTROLÜ SİSTEMİ
 // Sayfa yüklendiğinde 5 çerezi sil, groups dizisinden kontrol et, varsa yeniden oluştur
 async function initializeAuthSystem() {
@@ -439,11 +430,6 @@ async function validateGroup() {
     window.location.href = '/';
     return false;
   }
-}
-
-// Eski isAuthenticated fonksiyonunu yeni sisteme göre güncelle
-function isAuthenticated() {
-  return LocalStorageManager.isUserLoggedIn();
 }
 
 // Profil butonunu dinamik hale getirme fonksiyonu
@@ -955,7 +941,6 @@ window.logActionForAudit = function logActionForAudit(action, options = {}) {
 
 // Sayfa ziyaretleri kontrolü
 async function logPageVisit() {
-  const currentPath = window.location.pathname;
   const groupId = getGroupIdFromUrl();
   const userName = localStorage.getItem('userName');
 
@@ -1023,54 +1008,76 @@ async function logPageVisit() {
   }
 }
 
-// Kullanıcı adı doğrulama
-async function verifyUserUsername() {
-  const userInfo = LocalStorageManager.getCurrentUserInfo();
-  
-  if (!userInfo) {
-    return false;
+// Kayarak gelme animasyonu (IntersectionObserver)
+const scrollFadeInObserved = new WeakSet();
+
+function attachScrollFadeInObserver(target) {
+  if (!target || scrollFadeInObserved.has(target)) return;
+  scrollFadeInObserved.add(target);
+
+  target.classList.add('scroll-fade-in');
+
+  if (!('IntersectionObserver' in window)) {
+    target.classList.add('visible');
+    return;
   }
 
-  const { groupId, userId, userAuthority, userName } = userInfo;
-
-  try {
-    if (userAuthority === 'admin') {
-      const response = await fetch('/api/verify-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: userName, groupId: groupId })
-      });
-
-      const data = await response.json();
-      if (!data.valid) {
-        LocalStorageManager.logoutUser();
-        hideAdminElements();
-        const mainArea = document.querySelector('.main-area');
-        if (mainArea) mainArea.style.display = 'none';
-        return false;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      } else {
+        entry.target.classList.remove('visible');
       }
-    } else if (userAuthority === 'member') {
-      const response = await fetch(`/api/group/${groupId}`);
-      if (!response.ok) {
-        LocalStorageManager.logoutUser();
-        hideAdminElements();
-        return false;
-      }
-    }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '50px'
+  });
 
-    return true;
-  } catch (error) {
-    console.error('User verification error:', error);
-    return false;
-  }
+  observer.observe(target);
 }
+
+window.observeScrollFadeIn = function observeScrollFadeInSelector(selector) {
+  if (typeof selector === 'string') {
+    document.querySelectorAll(selector).forEach(attachScrollFadeInObserver);
+    return;
+  }
+  if (selector instanceof Element) {
+    attachScrollFadeInObserver(selector);
+  }
+};
+
+window.initScrollFadeInElements = function initScrollFadeInElements() {
+  [
+    '#articlesContainer',
+    '.group-settings',
+    '.bottom-section',
+    '#longestSeriesChart',
+    '.monthly-calendar-share-container',
+    '.chart-container',
+    '.quote-section',
+    '.quote-section-image',
+    '.video-card:not(.loading-card)'
+  ].forEach(window.observeScrollFadeIn);
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.scroll-fade-in:not(.visible)').forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        el.classList.add('visible');
+      }
+    });
+  });
+};
+
+document.addEventListener('DOMContentLoaded', window.initScrollFadeInElements);
 
 // Yukarı Çık Butonu Fonksiyonalitesi
 document.addEventListener('DOMContentLoaded', function() {
   const scrollToTopBtn = document.getElementById('scrollToTopBtn');
   
   if (scrollToTopBtn) {
-    let lastScrollPosition = 0;
     let scrollTimeout = null;
     
     // Sayfa kaydırma olayını dinle (throttled)
@@ -1180,7 +1187,6 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
         
-        lastScrollPosition = scrollPosition;
         scrollTimeout = null;
       }, 500);
     });

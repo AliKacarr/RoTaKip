@@ -128,9 +128,7 @@ function renderVideos(videos) {
             }
 
             const videoCard = document.createElement('div');
-            videoCard.className = 'video-card';
-            videoCard.style.opacity = '0';
-            videoCard.style.transform = 'translateY(30px)';
+            videoCard.className = 'video-card scroll-fade-in';
             videoCard.innerHTML = `
                 <img src="${thumbnail}" alt="${title}" class="thumbnail">
                 <span class="play-icon"><i class="fa-solid fa-play"></i></span>
@@ -177,28 +175,11 @@ function renderVideos(videos) {
 
         videosContainer.appendChild(fragment);
 
-        // Intersection Observer'ı oluştur
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                } else {
-                    // Element görünür alandan çıktığında animasyonu sıfırla
-                    entry.target.style.opacity = '0';
-                    entry.target.style.transform = 'translateY(30px)';
-                }
+        if (typeof window.observeScrollFadeIn === 'function') {
+            document.querySelectorAll('.video-card:not(.loading-card)').forEach(card => {
+                window.observeScrollFadeIn(card);
             });
-        }, {
-            threshold: 0.1, // Kartın %10'u görünür olduğunda tetikle
-            rootMargin: '50px' // Kartlar ekranın 50px yakınına geldiğinde tetikle
-        });
-
-        // Tüm video kartlarını gözlemle
-        document.querySelectorAll('.video-card').forEach(card => {
-            observer.observe(card);
-        });
+        }
 
     }).catch(error => {
         console.error("Video detayları alınırken hata oluştu:", error);

@@ -43,19 +43,17 @@ window.loadUserCards = async function loadUserCards() {
   const container = document.querySelector('.user-cards-container');
   if (!container) return;
 
-  // Intersection Observer'ı oluştur
-  const observer = new IntersectionObserver((entries) => {
+  const cardScrollObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('card-fade-in');
       } else {
-        // Element görünür alandan çıktığında animasyonu sıfırla
         entry.target.classList.remove('card-fade-in');
       }
     });
   }, {
-    threshold: 0.2, // Kart görünür olduğunda tetikle
-    rootMargin: '100px' // Kartlar ekranın 50px yakınına geldiğinde tetikle
+    threshold: 0.2,
+    rootMargin: '100px'
   });
 
   try {
@@ -313,7 +311,6 @@ window.loadUserCards = async function loadUserCards() {
       const section = document.querySelector('.user-cards-section');
       if (section) {
         section.style.display = 'block';
-        // Section animasyonunu tetikle
         setTimeout(() => {
           section.classList.add('visible');
         }, 50);
@@ -323,7 +320,6 @@ window.loadUserCards = async function loadUserCards() {
       let leagueInfoBar = document.querySelector('.league-info-bar');
       if (leagueInfoBar) {
         leagueInfoBar.style.display = 'flex';
-        // League info bar animasyonunu tetikle
         setTimeout(() => {
           leagueInfoBar.classList.add('visible');
         }, 100);
@@ -333,7 +329,6 @@ window.loadUserCards = async function loadUserCards() {
       const userCardsHeader = document.querySelector('.user-cards-header');
       if (userCardsHeader) {
         userCardsHeader.style.display = 'block';
-        // User cards header animasyonunu tetikle
         setTimeout(() => {
           userCardsHeader.classList.add('visible');
         }, 150);
@@ -353,10 +348,8 @@ window.loadUserCards = async function loadUserCards() {
           card.classList.add('current-user-card');
         }
 
-        // Observer'ı başlat
-        observer.observe(card);
+        cardScrollObserver.observe(card);
       } else {
-        // Kart zaten varsa, güncellenince de efekti tekrar uygula
         card.classList.remove('card-fade-in');
 
         // Giriş yapılan kullanıcı için özel class ekle
@@ -366,7 +359,7 @@ window.loadUserCards = async function loadUserCards() {
           card.classList.remove('current-user-card');
         }
 
-        observer.observe(card);
+        cardScrollObserver.observe(card);
       }
 
       // Kullanıcılar sıralandıktan sonra kartların DOM sırasını da güncelle.

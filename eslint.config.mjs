@@ -30,10 +30,21 @@ export default defineConfig([
     }
   },
   {
-    files: ['*.js'],
+    files: ['**/*.js'],
+    ignores: ['public/**'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: globals.node
+    }
+  },
+  {
+    files: ['anket/**/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+        document: 'readonly'
+      }
     }
   },
   {

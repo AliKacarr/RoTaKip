@@ -106,19 +106,6 @@
     min-height: 250px;
     box-sizing: border-box;
     margin-top: 0;
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.quote-section.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.quote-section.hidden {
-    opacity: 0;
-    transform: translateY(30px);
 }
 
 .quote-section-image {
@@ -136,19 +123,6 @@
     border-radius: 18px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
     overflow: hidden;
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.quote-section-image.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.quote-section-image.hidden {
-    opacity: 0;
-    transform: translateY(30px);
 }
 
 #quoteImage {

@@ -215,6 +215,10 @@ async function showAdminIndicator() {
     const mainArea = document.querySelector('.main-area');
     if (mainArea && userInfo.userAuthority === 'admin') {
         mainArea.style.display = 'flex';
+
+        if (typeof window.initScrollFadeInElements === 'function') {
+            window.initScrollFadeInElements();
+        }
         
         // Admin girişi yapıldığında user list'i yükle
         if (typeof renderUserList === 'function') {

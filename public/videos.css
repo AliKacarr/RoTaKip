@@ -34,8 +34,6 @@
 }
 
 .video-card {
-    opacity: 0;
-    transform: translateY(20px);
     background-color: #fffbfb;
     border-radius: 8px;
     overflow: hidden;

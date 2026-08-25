@@ -1,8 +1,9 @@
+const path = require('path');
 const { execSync } = require('child_process');
 const schedule = require('node-schedule');
 const { chromium } = require('playwright');
 const { MongoClient } = require('mongodb');
-require('dotenv').config({ quiet: true });
+require('dotenv').config({ path: path.join(__dirname, '../.env'), quiet: true });
 
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc4Ru7BjsB-sNgdw5-r9hBF-yqXuG7gA6OUJISYVjzlCByyjQ/viewform?usp=header";
 
