@@ -37,7 +37,7 @@
 
     if (segment) segment.classList.add('needs-choice');
     try {
-      bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       /* scroll yok */
     }

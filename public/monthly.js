@@ -225,6 +225,62 @@ function loadMonthlyCalendar() {
     }
 
     // Helper function to render calendar with data
+    function parseMonthlyAmount(value) {
+        if (value == null || value === '') return null;
+        if (typeof parseFiniteAmount === 'function') return parseFiniteAmount(value);
+        const n = typeof value === 'number' ? value : Number(String(value).trim().replace(',', '.'));
+        return Number.isFinite(n) ? n : null;
+    }
+
+    function fillMonthlyCell(cell, day, status, amount, dateStr) {
+        cell.innerHTML = '';
+        cell.className = '';
+        cell.style.cssText = '';
+
+        const dayEl = document.createElement('span');
+        dayEl.className = 'monthly-day-number';
+        dayEl.textContent = String(day);
+        cell.appendChild(dayEl);
+
+        if (status === 'okudum') {
+            cell.classList.add('read');
+            const amountNum = parseMonthlyAmount(amount);
+            if (amountNum != null) {
+                const amountEl = document.createElement('div');
+                amountEl.className = 'monthly-reading-amount';
+                amountEl.innerHTML =
+                    `<span class="monthly-reading-amount-count">${amountNum}</span>` +
+                    `<span class="monthly-reading-amount-mark">✔</span>`;
+                cell.appendChild(amountEl);
+                cell.classList.add('has-amount');
+            } else {
+                const statusIndicator = document.createElement('div');
+                statusIndicator.className = 'monthly-reading-status';
+                statusIndicator.textContent = '✔';
+                cell.appendChild(statusIndicator);
+            }
+        } else if (status === 'okumadım') {
+            cell.classList.add('not-read');
+            const statusIndicator = document.createElement('div');
+            statusIndicator.className = 'monthly-reading-status';
+            statusIndicator.textContent = '✘';
+            cell.appendChild(statusIndicator);
+        } else {
+            const statusIndicator = document.createElement('div');
+            statusIndicator.className = 'monthly-reading-status';
+            // Bugünden sonraki boş günler: • (tıklama zaten toggle içinde engelli)
+            if (dateStr) {
+                const today = new Date();
+                today.setHours(today.getHours() + 3);
+                const todayString = today.toISOString().split('T')[0];
+                statusIndicator.textContent = dateStr > todayString ? '•' : '➖';
+            } else {
+                statusIndicator.textContent = '➖';
+            }
+            cell.appendChild(statusIndicator);
+        }
+    }
+
     function renderCalendarWithData(rows, firstDay, daysInMonth, daysInPrevMonth, todayDate, todayMonth, todayYear, stats) {
         let date = 1;
         for (let i = 0; i < rows; i++) {
@@ -238,21 +294,26 @@ function loadMonthlyCalendar() {
                 if (i === 0 && j < firstDay) {
                     // Previous month days
                     const prevMonthDay = daysInPrevMonth - firstDay + j + 1;
-                    cell.textContent = prevMonthDay;
+                    const dayEl = document.createElement('span');
+                    dayEl.className = 'monthly-day-number';
+                    dayEl.textContent = String(prevMonthDay);
+                    cell.appendChild(dayEl);
                     cell.classList.add('other-month');
-                    cell.style.backgroundColor = '#f0f0f0'; // Açık gri arka plan
-                    cell.style.color = '#999'; // Soluk metin rengi
+                    cell.style.backgroundColor = '#f0f0f0';
+                    cell.style.color = '#999';
                 } else if (date > daysInMonth) {
                     // Next month days
                     const nextMonthDay = date - daysInMonth;
-                    cell.textContent = nextMonthDay;
+                    const dayEl = document.createElement('span');
+                    dayEl.className = 'monthly-day-number';
+                    dayEl.textContent = String(nextMonthDay);
+                    cell.appendChild(dayEl);
                     cell.classList.add('other-month');
-                    cell.style.backgroundColor = '#f0f0f0'; // Açık gri arka plan
-                    cell.style.color = '#999'; // Soluk metin rengi
+                    cell.style.backgroundColor = '#f0f0f0';
+                    cell.style.color = '#999';
                     date++;
                 } else {
                     // Current month days
-                    cell.textContent = date;
                     const currentDate = date;
 
                     // Check if it's today
@@ -264,46 +325,22 @@ function loadMonthlyCalendar() {
                     const dateStr = formatDateForTable(currentDate, currentMonth, currentYear);
                     const dayStat = stats.find(s => s.date === dateStr);
 
-                    // Rest of the code remains the same
                     if (dayStat) {
-                        // Apply appropriate styling based on status
-                        if (dayStat.status === 'okudum') {
-                            cell.classList.add('read');
-                            const statusIndicator = document.createElement('div');
-                            statusIndicator.className = 'monthly-reading-status';
-                            statusIndicator.textContent = '✔️';
-                            cell.style.backgroundColor = '#d4edda';
-                            cell.style.color = '#155724';
-                            cell.style.fontWeight = 'bold';
-                            cell.appendChild(statusIndicator);
-                        } else if (dayStat.status === 'okumadım') {
-                            cell.classList.add('not-read');
-                            const statusIndicator = document.createElement('div');
-                            statusIndicator.className = 'monthly-reading-status';
-                            statusIndicator.textContent = '❌';
-                            cell.style.backgroundColor = '#f8d7da';
-                            cell.style.color = '#721c24';
-                            cell.appendChild(statusIndicator);
-                        } else {
-                            cell.classList.add('not-applicable');
-                            const statusIndicator = document.createElement('div');
-                            statusIndicator.className = 'monthly-reading-status';
-                            statusIndicator.textContent = '➖';
-                            cell.style.backgroundColor = '#e2e3e5';
-                            cell.style.color = '#383d41';
-                            cell.appendChild(statusIndicator);
+                        fillMonthlyCell(cell, currentDate, dayStat.status, dayStat.amount, dateStr);
+                        // Bugün sınıfını fillMonthlyCell sıfırladığı için yeniden ekle
+                        if (currentDate === todayDate && currentMonth === todayMonth && currentYear === todayYear) {
+                            cell.classList.add('today');
                         }
-
-                        // Add click event to toggle reading status
-                        cell.addEventListener('click', function () {
-                            toggleUserReadingStatus(selectedUser, currentDate, currentMonth, currentYear, this);
-                        });
                     } else {
-                        // No status yet, add click event to set status
-                        cell.addEventListener('click', function () {
-                            toggleUserReadingStatus(selectedUser, currentDate, currentMonth, currentYear, this);
-                        });
+                        fillMonthlyCell(cell, currentDate, '', null, dateStr);
+                        if (currentDate === todayDate && currentMonth === todayMonth && currentYear === todayYear) {
+                            cell.classList.add('today');
+                        }
                     }
+
+                    cell.addEventListener('click', function () {
+                        toggleUserReadingStatus(selectedUser, currentDate, currentMonth, currentYear, this);
+                    });
 
                     date++;
                 }
@@ -460,40 +497,17 @@ function loadMonthlyCalendar() {
 
     // Aylık takvim hücresini güncelleme yardımcı fonksiyonu
     function updateMonthlyCellStatus(cell, newStatus) {
-        // Gün numarasını koru
-        const dayNumber = cell.textContent.match(/\d+/);
-        const day = dayNumber ? dayNumber[0] : cell.textContent.trim();
+        const dayEl = cell.querySelector('.monthly-day-number');
+        const dayNumber = dayEl
+            ? dayEl.textContent
+            : ((cell.textContent.match(/\d+/) || [''])[0]);
+        const existingAmountEl = cell.querySelector('.monthly-reading-amount-count');
+        const existingAmount = existingAmountEl ? existingAmountEl.textContent : null;
+        const keepAmount = newStatus === 'okudum' ? existingAmount : null;
+        const wasToday = cell.classList.contains('today');
 
-        // Hücreyi tamamen temizle
-        cell.innerHTML = '';
-        cell.className = '';
-        cell.style.cssText = '';
-
-        // Sadece gün numarasını ekle
-        cell.textContent = day;
-
-        // Yeni duruma göre görünümü güncelle
-        if (newStatus === 'okudum') {
-            cell.classList.add('read');
-            const statusIndicator = document.createElement('div');
-            statusIndicator.className = 'monthly-reading-status';
-            statusIndicator.textContent = '✔️';
-            cell.style.backgroundColor = '#d4edda';
-            cell.style.color = '#155724';
-            cell.style.fontWeight = 'bold';
-            cell.appendChild(statusIndicator);
-        } else if (newStatus === 'okumadım') {
-            cell.classList.add('not-read');
-            const statusIndicator = document.createElement('div');
-            statusIndicator.className = 'monthly-reading-status';
-            statusIndicator.textContent = '❌';
-            cell.style.backgroundColor = '#f8d7da';
-            cell.style.color = '#721c24';
-            cell.appendChild(statusIndicator);
-        } else {
-            // Boş durum - sınıf ekleme, sadece gün numarası kalır
-            // Hücre zaten temizlenmiş ve sadece gün numarası var
-        }
+        fillMonthlyCell(cell, dayNumber, newStatus, keepAmount);
+        if (wasToday) cell.classList.add('today');
     }
 
 

@@ -13,8 +13,8 @@ window.showStreakNotification = function showStreakNotification(name, streak) {
         <img src="/images/fire.webp" alt="Fire" style="width: 100%; height: 100%; object-fit: contain;">
       </div>
       <div>
-        <div style="font-weight: bold;">Hoş geldin ${name}!</div>
-        <div style="font-size: 19px;">Giriş serin ${streak} oldu.</div>
+        <div style="font-weight: bold; font-size: 23px;">Hoş geldin ${name}!</div>
+        <div style="font-size: 23px;">Giriş serin ${streak} oldu.</div>
       </div>
     </div>
   `;

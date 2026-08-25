@@ -363,9 +363,10 @@
 
 .user-card .progress-summary-row {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 8px;
+    gap: 5px;
     flex-wrap: wrap;
     margin: 10px 22px 0 30px;
 }
@@ -415,7 +416,7 @@
     font-size: 1.08em;
     color: #222;
     margin-top: 5px;
-    margin-left: 22px;
+    margin-left: 27px;
     margin-right: 22px;
     display: flex;
     align-items: center;
@@ -426,7 +427,7 @@
     font-size: 1.08em;
     color: #222;
     margin-top: 10px;
-    margin-left: 22px;
+    margin-left: 27px;
     margin-right: 22px;
     display: flex;
     align-items: center;

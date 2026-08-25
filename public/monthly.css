@@ -65,6 +65,7 @@
 .monthly-calendar td {
   width: 14.28%;
   height: 79px;
+  background-color: aliceblue;
   text-align: center;
   vertical-align: middle;
   border: 2px solid #ccc;
@@ -84,9 +85,9 @@
 .monthly-calendar td.read {
   box-shadow: 0 0 8px rgb(159 159 183 / 50%);
   background-color: #d4e8ed !important;
-  color: #155724 !important;
+  color: #1f7a38 !important;
   font-weight: bold;
-  height: 80px;
+  height: 90px;
   border: 2px solid #4c7baf !important;
   transition: all 0.3s ease;
 }
@@ -122,21 +123,67 @@
   transform: scale(1.05);
 }
 
+.monthly-day-number {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  z-index: 1;
+  color: #222;
+}
+
+.monthly-calendar td.read .monthly-day-number {
+  color: #155724;
+}
+
+.monthly-calendar td.not-read .monthly-day-number {
+  color: #721c24;
+}
+
+.monthly-calendar td.not-applicable .monthly-day-number {
+  color: #383d41;
+}
+
+.monthly-calendar td.other-month .monthly-day-number {
+  color: #999;
+}
+
 .monthly-reading-status {
-  font-size: 24px;
+  color: #1f7a38;
+  font-size: 22px;
   margin-top: 2px;
-  margin-bottom: 1px;
   display: block;
   text-align: center;
+  line-height: 1.1;
+}
+
+.monthly-reading-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 2px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.monthly-reading-amount-count {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f7a38;
+  letter-spacing: -0.02em;
+}
+
+.monthly-reading-amount-mark {
+  font-size: 22px;
+  font-weight: 700;
+  color: #208a3c;
 }
 
 .monthly-calendar td::before {
-  content: attr(data-day);
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  font-size: 12px;
-  color: #777;
+  content: none;
 }
 
 .calendar-loading {

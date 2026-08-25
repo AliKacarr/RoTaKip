@@ -411,11 +411,11 @@ window.loadUserCards = async function loadUserCards() {
       </div>
       <div class="divider"></div>
       <div class="progress-summary-row">
-        <span class="progress-summary">
+        ${amountSummaryHtml}
+        <span class="progress-summary progress-summary-days">
           <span class="summary-count"><span class="progress-summary-okudum-count">${okudumDays}</span><span class="progress-summary-total-count">/${totalDays}</span></span>
           <span class="summary-label"> Gün okuma</span>
         </span>
-        ${amountSummaryHtml}
       </div>
       <div class="progress-bar-container">
         <div class="progress-bar-bg">

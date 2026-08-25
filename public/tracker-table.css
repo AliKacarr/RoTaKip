@@ -443,6 +443,10 @@
     box-shadow: 0 0 0 2px rgba(58, 126, 189, 0.45);
 }
 
+.reading-edit-mode-segment.needs-choice + .reading-edit-mode-hint {
+    text-decoration: underline;
+}
+
 #trackerTable td {
     border: 1px solid #c7c7c7;
     padding: 10px;
@@ -548,7 +552,7 @@
 
 .user-item-meta {
     display: block;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     color: rgba(0, 0, 0, 0.8);
     white-space: nowrap;
