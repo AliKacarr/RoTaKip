@@ -70,7 +70,7 @@ window.loadUserCards = async function loadUserCards() {
         entry.target.classList.add('visible');
         observer.unobserve(entry.target);
       });
-    }, { threshold: 0.2, rootMargin: '0px' });
+    }, { threshold: 0.1, rootMargin: '0px' });
     obs.observe(el);
   }
 
