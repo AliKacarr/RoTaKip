@@ -5043,7 +5043,7 @@ function startTextVoteSyncEngine() {
     // Change Stream yoksa periyodik tarama yeterli
   }
 
-  console.log('🔄 WhatsApp TextVote (mesaj) Senkronizasyon Motoru başlatıldı.');
+  console.log('🔄 WhatsApp TextVote Senkronizasyon Motoru başlatıldı.');
 }
 
 // Senkronizasyon Motoru: poll_votes koleksiyonundaki yeni dokümanları işle ve sil

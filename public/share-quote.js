@@ -63,13 +63,13 @@ document.addEventListener('DOMContentLoaded', function () {
             html2canvas(tempContainer, {
                 backgroundColor: null,
                 useCORS: true,
-                scale: 2,
+                scale: Math.max(3, window.devicePixelRatio || 1),
                 willReadFrequently: true
             }).then(function (canvas) {
                 // Geçici kapsayıcıyı kaldır
                 document.body.removeChild(tempContainer);
 
-                lastCanvasDataUrl = canvas.toDataURL('image/webp');
+                lastCanvasDataUrl = canvas.toDataURL('image/png');
                 resolve(canvas);
             }).catch(function (error) {
                 if (tempContainer.parentNode) document.body.removeChild(tempContainer);
@@ -83,10 +83,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function shareImage(canvas) {
         canvas.toBlob(function (blob) {
             // Dosya adı oluştur
-            const fileName = 'bir-soz.webp';
+            const fileName = 'bir-soz.png';
 
             // Blob'dan dosya oluştur
-            const file = new File([blob], fileName, { type: 'image/webp' });
+            const file = new File([blob], fileName, { type: 'image/png' });
 
             // Paylaşım verilerini hazırla
             const shareData = {
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.error('Paylaşım hatası:', error);
                     showSharePanel();
                 });
-        });
+        }, 'image/png');
     }
 
     // Paylaşım panelini göster
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const a = document.createElement('a');
             a.href = dataUrl;
-            a.download = 'bir-soz.webp';
+            a.download = 'bir-soz.png';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Eğer sadece görsel paylaşımı için panel açıldıysa bu fonksiyon çalışmasın
         if (this.dataset.imageShare === "true") return;
         createImage().then((canvas) => {
-            const dataUrl = canvas.toDataURL('image/webp');
+            const dataUrl = canvas.toDataURL('image/png');
             downloadImage(dataUrl);
         }).catch(error => {
             console.error('Resim oluşturma hatası:', error);

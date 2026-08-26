@@ -131,10 +131,11 @@ async function shareContainerAsImage(config) {
             return;
         }
 
-        // html2canvas ile container'ı resme çevir
+        // html2canvas ile container'ı resme çevir 
+        const renderScale = Math.max(3, window.devicePixelRatio || 1);
         const canvas = await html2canvas(tempContainer, {
             backgroundColor: '#ffffff',
-            scale: 2,
+            scale: renderScale,
             logging: false,
             useCORS: true,
             allowTaint: false
@@ -158,12 +159,14 @@ async function shareContainerAsImage(config) {
         }
 
         // Resmi daha büyük bir beyaz canvas'ın ortasına yerleştir (padding için)
-        const paddingPx = 20;
+        const paddingPx = Math.round(10 * renderScale);
         const finalCanvas = document.createElement('canvas');
         finalCanvas.width = canvas.width + (paddingPx * 2);
         finalCanvas.height = canvas.height + (paddingPx * 2);
         
         const ctx = finalCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = 'high';
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
         ctx.drawImage(canvas, paddingPx, paddingPx);
@@ -174,7 +177,7 @@ async function shareContainerAsImage(config) {
                 finalCanvas.toBlob((blob) => {
                     if (blob) resolve(blob);
                     else reject(new Error('Blob oluşturulamadı'));
-                }, 'image/png', 0.95);
+                }, 'image/png');
             });
             
             // İptal kontrolü
