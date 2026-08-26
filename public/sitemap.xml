@@ -2,7 +2,21 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://rotakip.onrender.com/</loc>
-    <lastmod>2025-10-07</lastmod>
-    <priority>1.0</priority>
+    <lastmod>2026-08-27</lastmod>
+  </url>
+
+  <url>
+    <loc>https://rotakip.onrender.com/politikalar/hakkimizda.html</loc>
+    <lastmod>2026-08-27</lastmod>
+  </url>
+
+  <url>
+    <loc>https://rotakip.onrender.com/politikalar/gizlilik-politikasi.html</loc>
+    <lastmod>2026-08-27</lastmod>
+  </url>
+
+  <url>
+    <loc>https://rotakip.onrender.com/politikalar/cerez-politikasi.html</loc>
+    <lastmod>2026-08-27</lastmod>
   </url>
 </urlset>
