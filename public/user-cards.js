@@ -56,6 +56,24 @@ window.loadUserCards = async function loadUserCards() {
     rootMargin: '100px'
   });
 
+  /** Sayfada gerçekten görünene kadar .visible ekleme (erken setTimeout yok) */
+  function observeRevealOnce(el) {
+    if (!el || el.classList.contains('visible') || el.dataset.revealObserved === '1') return;
+    el.dataset.revealObserved = '1';
+    if (!('IntersectionObserver' in window)) {
+      el.classList.add('visible');
+      return;
+    }
+    const obs = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.2, rootMargin: '0px' });
+    obs.observe(el);
+  }
+
   try {
     // Global store'dan tüm kullanıcı ve okuma verilerini çek
     const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
@@ -320,9 +338,7 @@ window.loadUserCards = async function loadUserCards() {
       let leagueInfoBar = document.querySelector('.league-info-bar');
       if (leagueInfoBar) {
         leagueInfoBar.style.display = 'flex';
-        setTimeout(() => {
-          leagueInfoBar.classList.add('visible');
-        }, 100);
+        observeRevealOnce(leagueInfoBar);
       }
 
       // User cards header'ı da göster

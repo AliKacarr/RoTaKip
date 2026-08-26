@@ -22,6 +22,7 @@ const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
 const { doldurAnket, scheduleAnketJob } = require('./anket/anketService');
+const { syncErpReadings, scheduleErpReadingsSync } = require('./anket/erpReadingsSync');
 
 // Hash fonksiyonu
 function hashCode(str) {
@@ -1108,7 +1109,8 @@ app.post('/api/groups', uploadGroupImage.fields([
     const defaultReadingStatus = new readingStatuses({
       userId: defaultUser._id.toString(),
       date: todayStr,
-      status: "okudum"
+      status: "okudum",
+      amount: 10
     });
     await defaultReadingStatus.save();
 
@@ -4180,6 +4182,28 @@ app.all('/api/admin/run-anket', async (req, res) => {
 
 // Anket zamanlayıcısını başlat (Her gün saat 01:00 TSİ)
 scheduleAnketJob();
+
+// ERP Sheets → okudum senkronu (00–19: 30 dk, 20–23: 15 dk; dün+bugün)
+scheduleErpReadingsSync(() => mongoose.connection.db);
+
+// Manuel ERP okuma senkronu
+app.all('/api/admin/sync-erp-readings', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1 || !mongoose.connection.db) {
+      return res.status(503).json({ success: false, error: 'Veritabanı bağlantısı yok' });
+    }
+    const dryRun = req.query.dryRun === '1' || req.body?.dryRun === true;
+    const result = await syncErpReadings({
+      db: mongoose.connection.db,
+      dryRun,
+      includeYesterday: true
+    });
+    res.json(result);
+  } catch (error) {
+    console.error('ERP okuma senkronu hatası:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // ==================== TEST GRUPLARI İÇİN SAHTE OKUMA VERİSİ EKLEYICI ====================
 

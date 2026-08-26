@@ -214,7 +214,7 @@ window.renderLongestSeries = function renderLongestSeries() {
                             obs.disconnect(); // Bir kere tetiklensin
                         }
                     });
-                }, { threshold: 0.3 });
+                }, { threshold: 0.2 });
 
                 observer.observe(chart);
             } else {
