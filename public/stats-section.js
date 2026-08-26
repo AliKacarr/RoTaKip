@@ -52,7 +52,7 @@ function setupReadingStatsVisibilityObserver(chartContainer) {
                 }
             }
         });
-    }, { threshold: 0.1 });
+    }, { threshold: 0.3 });
 
     readingStatsVisibilityObserver.observe(chartContainer);
 }

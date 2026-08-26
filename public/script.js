@@ -1031,8 +1031,8 @@ function attachScrollFadeInObserver(target) {
       }
     });
   }, {
-    threshold: 0.1,
-    rootMargin: '50px'
+    threshold: 0.2,
+    rootMargin: '0px'
   });
 
   observer.observe(target);
