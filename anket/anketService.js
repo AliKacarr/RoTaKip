@@ -14,8 +14,8 @@ const DROPDOWN_VALUES = [
     "5",           // 4. Kaç Sayfa Kuran?
     "5",           // 5. Kaç Vakit Tesbihat?
     "5",           // 6. Cevşen Okudun Mu?
-    "1.5",         // 7. Kaç Saat Risale-i Nur?
-    "2",           // 8. Kaç Saat Hizmet?
+    "1",         // 7. Kaç Saat Risale-i Nur?
+    "1.5",           // 8. Kaç Saat Hizmet?
 ];
 
 const TEXTAREA_VALUE = "Medresem uygulaması çalışması ve youtube video izleme";

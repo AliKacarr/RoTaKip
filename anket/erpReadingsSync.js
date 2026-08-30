@@ -251,15 +251,8 @@ async function syncErpReadings(options = {}) {
   const allowedDates = new Set([today]);
   if (includeYesterday) allowedDates.add(yesterday);
 
-  const dateLabel = includeYesterday ? `${yesterday} + ${today}` : today;
-  console.log(`📥 [ErpReadingsSync] Başlıyor | günler: ${dateLabel} | DRY_RUN=${dryRun}`);
-
   const rows = await fetchSheetRows();
   const parsed = buildEntriesByNameKey(rows, allowedDates);
-  console.log(
-    `📥 [ErpReadingsSync] Sheet: ${rows.length} satır | pencerede: ${parsed.inWindow} | ` +
-      `geçerli risale>0: ${parsed.validPositive} | geçersiz: ${parsed.invalidRisale} | unique: ${parsed.uniqueUserDate}`
-  );
 
   const { db, close } = await resolveDb(options.db);
   try {
@@ -267,11 +260,6 @@ async function syncErpReadings(options = {}) {
     for (const groupId of groupIds) {
       const s = await importGroup(db, groupId, parsed.byNameKey, dryRun);
       summaries.push(s);
-      console.log(
-        `📥 [ErpReadingsSync] ${groupId}: eşleşen ${s.matchedUsers}/${s.users}, ` +
-          `doküman ${s.docs}` +
-          (dryRun ? ' (dry-run)' : `, yeni upsert ${s.upserted}`)
-      );
     }
     return {
       success: true,
@@ -288,10 +276,7 @@ async function syncErpReadings(options = {}) {
 }
 
 async function runScheduledSync(getDb) {
-  if (syncRunning) {
-    console.log('⏸️  [ErpReadingsSync] Önceki çalışma sürüyor, atlandı');
-    return;
-  }
+  if (syncRunning) return;
   syncRunning = true;
   try {
     let db;
@@ -300,7 +285,7 @@ async function runScheduledSync(getDb) {
     }
     await syncErpReadings({ db, includeYesterday: true });
   } catch (err) {
-    console.error('❌ [ErpReadingsSync] Hata:', err.message || err);
+    console.error('[ErpReadingsSync]', err.message || err);
   } finally {
     syncRunning = false;
   }
@@ -316,10 +301,6 @@ function scheduleErpReadingsSync(getDb) {
 
   const dayJob = schedule.scheduleJob({ rule: '0,30 0-19 * * *', tz: 'Europe/Istanbul' }, run);
   const nightJob = schedule.scheduleJob({ rule: '*/15 20-23 * * *', tz: 'Europe/Istanbul' }, run);
-
-  console.log(
-    '📅 [ErpReadingsSync] Zamanlayıcı: 00–19 her 30 dk, 20–23 her 15 dk (Europe/Istanbul); dün+bugün'
-  );
 
   return { dayJob, nightJob };
 }
