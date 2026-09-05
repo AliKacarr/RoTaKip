@@ -440,7 +440,7 @@
 }
 
 .reading-edit-mode-segment.needs-choice {
-    box-shadow: 0 0 0 2px rgba(58, 126, 189, 0.45);
+    box-shadow: 0 0 0 2px rgba(10, 52, 110, 0.7);
 }
 
 .reading-edit-mode-segment.needs-choice + .reading-edit-mode-hint {

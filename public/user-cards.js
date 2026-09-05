@@ -56,21 +56,22 @@ window.loadUserCards = async function loadUserCards() {
     rootMargin: '100px'
   });
 
-  /** Sayfada gerçekten görünene kadar .visible ekleme (erken setTimeout yok) */
-  function observeRevealOnce(el) {
-    if (!el || el.classList.contains('visible') || el.dataset.revealObserved === '1') return;
+  function observeRevealToggle(el) {
+    if (!el || el.dataset.revealObserved === '1') return;
     el.dataset.revealObserved = '1';
     if (!('IntersectionObserver' in window)) {
       el.classList.add('visible');
       return;
     }
-    const obs = new IntersectionObserver((entries, observer) => {
+    const obs = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        } else {
+          entry.target.classList.remove('visible');
+        }
       });
-    }, { threshold: 0.1, rootMargin: '0px' });
+    }, { threshold: 0.2, rootMargin: '0px' });
     obs.observe(el);
   }
 
@@ -313,7 +314,7 @@ window.loadUserCards = async function loadUserCards() {
 
       // En uzun seri
       const userStreak = (streaks || []).find(s => (s.userId === user._id || s._id === user._id));
-      let longestStreakText = '';
+      let longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span>-`;
       if (userStreak && userStreak.streak > 0) {
         const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
         const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
@@ -338,7 +339,7 @@ window.loadUserCards = async function loadUserCards() {
       let leagueInfoBar = document.querySelector('.league-info-bar');
       if (leagueInfoBar) {
         leagueInfoBar.style.display = 'flex';
-        observeRevealOnce(leagueInfoBar);
+        observeRevealToggle(leagueInfoBar);
       }
 
       // User cards header'ı da göster

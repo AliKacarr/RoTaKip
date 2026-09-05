@@ -123,6 +123,29 @@
   transform: scale(1.05);
 }
 
+/* Bugünün hücresi — kalın kenar (inset shadow html2canvas'te dolgu gibi bozuluyor) */
+.monthly-calendar td.today {
+  border: 3px solid #5b9bd5 !important;
+  z-index: 2;
+}
+
+.monthly-calendar td.today .monthly-day-number {
+  color: #1a5f9a;
+  font-weight: 800;
+}
+
+.monthly-calendar td.today.read {
+  border: 3px solid #3478b4 !important;
+}
+
+.monthly-calendar td.today.not-read {
+  border: 3px solid #c0392b !important;
+}
+
+.monthly-calendar td.today.not-applicable {
+  border: 3px solid #5a646e !important;
+}
+
 .monthly-day-number {
   position: absolute;
   top: 5px;
