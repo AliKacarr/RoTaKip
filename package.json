@@ -16,7 +16,7 @@
     "docker:dev": "docker build -t reading-tracker . && docker run --rm -p 3001:3000 --env-file .env reading-tracker"
   },
   "dependencies": {
-    "axios": "^1.15.2",
+    "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.1",
     "clean-css": "^5.3.3",
