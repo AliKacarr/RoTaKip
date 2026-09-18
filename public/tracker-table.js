@@ -391,9 +391,9 @@ function computeWeekMarkedReadStats(users, statMap, dates) {
 }
 
 function formatWeekReadSuccessText(okudum, marked) {
-    if (!marked) return '%0 ✔';
+    if (!marked) return '%0✔';
     const pct = Math.round((okudum / marked) * 100);
-    return `%${pct} ✔`;
+    return `%${pct}✔`;
 }
 
 function parseFiniteAmount(value) {

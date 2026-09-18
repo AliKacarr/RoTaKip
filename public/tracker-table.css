@@ -278,7 +278,6 @@
     font-weight: 600;
     color: #208a3c;
     white-space: nowrap;
-    line-height: 1.25;
 }
 
 #trackerTable thead > tr:first-child th.col-total-amount .col-season-month {
