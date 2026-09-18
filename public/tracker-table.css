@@ -10,24 +10,19 @@
     letter-spacing: .3px;
 }
 
-/* thead altı istatistik satırı sayaçları — okudum sayısı */
-.col-counts {
+/* thead istatistik satırı sayaçları */
+#trackerTable thead .stats-footer-row .col-counts {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1;
-}
-
-#trackerTable thead .stats-footer-row .col-counts {
     font-size: 14px;
     font-weight: 600;
+    line-height: 1;
 }
 
 /* Okudum (✔) */
 .col-read {
-    color: #2a9d49;
+    color: #208a3c;
     padding: 2px 6px;
     min-width: 24px;
     text-align: center;
@@ -76,7 +71,7 @@
 }
 
 #trackerTable thead .stats-footer-row .col-read {
-    color: #2a9d49;
+    color: #208a3c;
     background: transparent;
     font-weight: 600;
     font-size: 17px;
@@ -96,6 +91,7 @@
 #trackerTable thead .stats-footer-row th.stats-footer-label .col-read {
     color: #208a3c;
     font-size: 18px;
+    font-weight: 700;
 }
 
 #trackerTable thead .stats-footer-row th.stats-footer-total #tfoot-total-streak {
@@ -282,14 +278,10 @@
 
 #trackerTable thead > tr:first-child th.col-total-amount .col-season-month {
     font-size: 17px;
-    font-weight: 600;
-    color: #208a3c;
 }
 
 #trackerTable thead > tr:first-child th.col-total-amount .col-season-suffix {
     font-size: 16px;
-    font-weight: 500;
-    color: #208a3c;
 }
 
 #trackerTable td.col-total-amount {
@@ -306,6 +298,7 @@
 #trackerTable thead .stats-footer-row th.stats-footer-amount .col-read {
     color: #208a3c;
     font-size: 18px;
+    font-weight: 700;
     white-space: nowrap;
 }
 
