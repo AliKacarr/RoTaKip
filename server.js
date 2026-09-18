@@ -4217,7 +4217,7 @@ const TEST_GROUP_IDS = [
   'bozok-universitesi',
   'firat-genclik',
   'yozgat-gobelleri',
-  'hisar-kapisi-cekirdek-kadro'
+  'kece-kulahlilar'
 ];
 
 function typicalTestAmountForUser(userId) {

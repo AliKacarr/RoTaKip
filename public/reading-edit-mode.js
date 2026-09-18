@@ -211,6 +211,9 @@
       ) {
         window.animateStreakIncrease(lastTd, oldStreak, newStreak, cell);
       }
+      if (typeof window.refreshStreakTotalInTable === 'function') {
+        window.refreshStreakTotalInTable();
+      }
     } catch (e) {
       console.error('Seri güncellenemedi:', e);
     }

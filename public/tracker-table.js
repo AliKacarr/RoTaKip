@@ -326,9 +326,9 @@ function getWeekSeasonLabel(dates) {
     ];
     const seasonMonth = parseInt(getWeekSeasonKey(dates).slice(5, 7), 10);
     if (!(seasonMonth >= 1 && seasonMonth <= 12)) {
-        return `${months[new Date().getMonth()]} Sezonu`;
+        return `${months[new Date().getMonth()]} Okuması`;
     }
-    return `${months[seasonMonth - 1]} Sezonu`;
+    return `${months[seasonMonth - 1]} Okuması`;
 }
 
 function isMonthBoundaryColumn(dates, index) {
@@ -391,9 +391,9 @@ function computeWeekMarkedReadStats(users, statMap, dates) {
 }
 
 function formatWeekReadSuccessText(okudum, marked) {
-    if (!marked) return '%0';
+    if (!marked) return '%0 ✔';
     const pct = Math.round((okudum / marked) * 100);
-    return `%${pct}`;
+    return `%${pct} ✔`;
 }
 
 function parseFiniteAmount(value) {
@@ -538,7 +538,7 @@ async function loadTrackerTable() {
     const seasonHtml = seasonParts.length >= 2
         ? `<span class="col-season-month">${seasonParts[0]}</span><br><span class="col-season-suffix">${seasonParts.slice(1).join(' ')}</span>`
         : seasonLabel;
-    let theadHTML = `<tr><th class="col-season">${seasonHtml}</th>`;
+    let theadHTML = `<tr><th><span class="col-user-count">${totalUsers} Kişi</span></th>`;
     const today = new Date();
     // UTC+3 saat dilimi ekle (Türkiye saati)
     today.setHours(today.getHours() + 3);
@@ -554,9 +554,17 @@ async function loadTrackerTable() {
         const displayText = isToday ? 'Bugün' : formatDateForHeader(date);
         theadHTML += `<th class="${classNames.join(' ')}"><span class="date-text">${displayText}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
     }
-    theadHTML += `<th class="col-total-amount">Toplam<br>Okuma</th>`;
+    theadHTML += `<th class="col-total-amount col-season">${seasonHtml}</th>`;
     theadHTML += `<th>Okuma<br>Serisi</th></tr>`;
-    let statsRowHTML = `<tr class="stats-footer-row"><th class="stats-footer-label" scope="col"><span class="col-user-count">${totalUsers} kişi</span></th>`;
+    const weekReadStats = computeWeekMarkedReadStats(users, statMap, dates);
+    const weekReadSuccessText = formatWeekReadSuccessText(
+        weekReadStats.okudum,
+        weekReadStats.marked
+    );
+    let statsRowHTML = `<tr class="stats-footer-row"><th class="stats-footer-label" scope="col" title="Haftalık okuma başarı oranı (okundu / işaretli gün)">`
+        + `<span class="col-counts" id="stats-footer-total-counts">`
+        + `<span class="col-read" id="tfoot-total-read">${weekReadSuccessText}</span>`
+        + `</span></th>`;
     for (let i = 0; i < dates.length; i++) {
         const d = dates[i];
         const { readCount } = dateCounts[d];
@@ -569,21 +577,21 @@ async function loadTrackerTable() {
             + `</span></th>`;
     }
     let grandAmountTotal = 0;
+    let grandStreakTotal = 0;
     for (let user of users) {
         grandAmountTotal += sumUserAmounts(statsArray, user._id, seasonKey);
+        grandStreakTotal += calculateStreak(statMap[user._id] || {});
     }
-    const weekReadStats = computeWeekMarkedReadStats(users, statMap, dates);
-    const weekReadSuccessText = formatWeekReadSuccessText(
-        weekReadStats.okudum,
-        weekReadStats.marked
-    );
     statsRowHTML += `<th class="stats-footer-cell stats-footer-amount" scope="col" title="Bu sezondaki tüm kullanıcıların okuma toplamı">`
         + `<span class="col-counts" id="stats-footer-amount-counts">`
         + `<span class="col-read" id="tfoot-total-amount">${grandAmountTotal} ✔</span>`
         + `</span></th>`;
-    statsRowHTML += `<th class="stats-footer-cell stats-footer-total" scope="col" title="Haftalık okuma başarı oranı (okundu / işaretli gün)">`
-        + `<span class="col-counts" id="stats-footer-total-counts">`
-        + `<span class="col-read" id="tfoot-total-read">${weekReadSuccessText}</span>`
+    const streakTotalHtml = grandStreakTotal > 0
+        ? `<span class="weekly-fire-emoji">⭐</span> ${grandStreakTotal}`
+        : '-';
+    statsRowHTML += `<th class="stats-footer-cell stats-footer-total" scope="col" title="Tüm kullanıcıların okuma serisi toplamı">`
+        + `<span class="col-counts" id="stats-footer-streak-counts">`
+        + `<span id="tfoot-total-streak">${streakTotalHtml}</span>`
         + `</span></th></tr>`;
     const oldTfoot = trackerTable.querySelector('tfoot');
     if (oldTfoot) oldTfoot.remove();
@@ -953,6 +961,8 @@ window.toggleStatus = async function toggleStatus(userId, date) {
                 if (newStreak > oldStreak && newStreak > 0) {
                     animateStreakIncrease(lastTd, oldStreak, newStreak, cell);
                 }
+
+                refreshStreakTotalInTable();
             }
         }
     } catch (e) {
@@ -1060,6 +1070,27 @@ function refreshAmountTotalsInTable() {
         }
     } catch (e) {
         console.error('Toplam Okuma güncellenemedi:', e);
+    }
+}
+
+/** Okuma serisi sütunu toplamını istatistik satırında yenile */
+function refreshStreakTotalInTable() {
+    try {
+        const footerStreak = document.getElementById('tfoot-total-streak');
+        if (!footerStreak || !trackerTable) return;
+        let total = 0;
+        trackerTable.querySelectorAll('tbody tr.user-row').forEach(function (row) {
+            const lastTd = row.querySelector('td:last-child');
+            if (!lastTd) return;
+            const text = (lastTd.textContent || '').trim();
+            if (!text || text === '-') return;
+            total += parseInt(text.replace('⭐', '').trim(), 10) || 0;
+        });
+        footerStreak.innerHTML = total > 0
+            ? `<span class="weekly-fire-emoji">⭐</span> ${total}`
+            : '-';
+    } catch (e) {
+        console.error('Okuma serisi toplamı güncellenemedi:', e);
     }
 }
 
@@ -1235,6 +1266,7 @@ function animateStreakIncrease(streakElement, oldStreak, newStreak, clickedCell)
 
 }
 window.animateStreakIncrease = animateStreakIncrease;
+window.refreshStreakTotalInTable = refreshStreakTotalInTable;
 
 function getDayOfWeekInTurkish(date) {
     const days = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cts'];
