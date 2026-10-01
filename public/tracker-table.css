@@ -699,7 +699,7 @@
 /* Fire emoji animation */
 .weekly-fire-emoji {
     display: inline-block;
-    animation: weekly-fire-emoji-flame 4s infinite;
+    animation: weekly-fire-emoji-flame 3s infinite;
     transform-origin: bottom center;
     text-shadow: 0 0 1px #ff5555, 0 0 1px #ff4500;
     position: relative;

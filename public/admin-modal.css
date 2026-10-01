@@ -2764,10 +2764,18 @@
 }
 
 .user-stats-reading-icon {
-    font-size: 33px;
-    text-shadow: 0 0 1px #f55,0 0 1px #ff4500;
+    width: 45px;
+    height: 45px;
+    flex: 0 0 45px;
     filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
-    animation: userStatsReadingPulse 4s ease-in-out infinite;
+    animation: userStatsReadingPulse 3s ease-in-out infinite;
+}
+
+.user-stats-reading-icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .user-stats-reading-info {
