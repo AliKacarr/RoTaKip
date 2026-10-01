@@ -50,6 +50,83 @@
     margin: 25px 0 20px 0;
 }
 
+.leaderboard-sort-bar {
+    width: 97%;
+    max-width: 1200px;
+    box-sizing: border-box;
+    margin: 0 auto 18px auto;
+    padding: 10px 12px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    color: #34495e;
+}
+
+.leaderboard-sort-buttons {
+    display: flex;
+    flex: 1 1 620px;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.leaderboard-sort-button {
+    appearance: none;
+    background: #ffffff;
+    border: 2px solid #d0d0d0;
+    padding: 10px 15px;
+    border-radius: 8px;
+    color: #444444;
+    font: inherit;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.leaderboard-sort-button:hover {
+    background: #f5f8ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: #2b67c4;
+    border-color: #2b67c4;
+}
+
+.leaderboard-sort-button.is-active {
+    background: #e6efff;
+    color: #2b67c4;
+    box-shadow: 0 3px 6px rgba(43, 103, 196, 0.2);
+    border-color: #2b67c4;
+}
+
+.leaderboard-sort-button i {
+    margin-right: 8px;
+    color: #2b67c4;
+    font-size: 18px;
+}
+
+@media screen and (max-width: 640px) {
+    .leaderboard-sort-bar {
+        padding-inline: 5px;
+        gap: 10px;
+    }
+
+    .leaderboard-sort-buttons {
+        flex-basis: 100%;
+        gap: 10px;
+    }
+
+    .leaderboard-sort-button {
+        font-size: 15px;
+        padding: 9px 12px;
+    }
+}
+
 @media screen and (max-width: 1024px) {
     .user-cards-container {
         column-gap: 30px;

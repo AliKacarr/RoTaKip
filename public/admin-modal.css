@@ -2616,9 +2616,17 @@
 }
 
 .user-stats-streak-icon {
-    font-size: 32px;
+    width: 35px;
+    height: 35px;
     filter: drop-shadow(0 2px 4px rgba(255, 69, 0, 0.4));
     animation: userStatsStreakPulse 4s ease-in-out infinite;
+}
+
+.user-stats-streak-icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .user-stats-streak-info {

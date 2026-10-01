@@ -510,7 +510,9 @@
         <!-- Sol Kısım: Giriş Serisi -->
         <div class="user-stats-left">
           <div class="user-stats-streak">
-            <div class="user-stats-streak-icon">🔥</div>
+            <div class="user-stats-streak-icon">
+              <img src="/images/fire.webp" alt="Ateş">
+            </div>
             <div class="user-stats-streak-info">
               <div class="user-stats-streak-number" id="userLoginStreak">0</div>
               <div class="user-stats-streak-label">Günlük Giriş Serisi</div>
@@ -554,7 +556,7 @@
             <div class="user-stats-reading-icon">⭐</div>
             <div class="user-stats-reading-info">
               <div class="user-stats-reading-number" id="userTotalReading"></div>
-              <div class="user-stats-reading-label">Toplam Okuma</div>
+              <div class="user-stats-reading-label">Toplam Okunan Gün</div>
             </div>
           </div>
         </div>
@@ -817,6 +819,19 @@
           <img src="images/info.webp" alt="info"
             style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;">
           Toplam okuma gününüz arttıkça daha yüksek liglere yükselirsiniz
+        </div>
+      </div>
+
+      <div class="leaderboard-sort-bar" style="display: none;" aria-label="Liderlik panosu sıralaması">
+        <div class="leaderboard-sort-buttons" role="group" aria-label="Sıralama seçeneği">
+          <button type="button" class="leaderboard-sort-button is-active" data-sort="league" aria-pressed="true"><i class="fa-solid fa-trophy"></i> En yüksek lig</button>
+          <button type="button" class="leaderboard-sort-button" data-sort="promotion" aria-pressed="false"><i class="fa-solid fa-arrow-trend-up"></i> Yeni lige en yakın</button>
+          <button type="button" class="leaderboard-sort-button" data-sort="total" aria-pressed="false"><i class="fa-solid fa-book-open"></i> Toplam okuma</button>
+          <button type="button" class="leaderboard-sort-button" data-sort="month" aria-pressed="false"><i class="fa-regular fa-calendar"></i> <span class="leaderboard-current-month-label">Aylık okuma</span></button>
+          <button type="button" class="leaderboard-sort-button" data-sort="streak" aria-pressed="false"><i class="fa-solid fa-fire"></i> Okuma serisi</button>
+          <button type="button" class="leaderboard-sort-button" data-sort="percentage" aria-pressed="false"><i class="fa-solid fa-percent"></i> Okuma yüzdesi</button>
+          <button type="button" class="leaderboard-sort-button" data-sort="longest" aria-pressed="false"><i class="fa-solid fa-bolt"></i> En uzun seri</button>
+          <button type="button" class="leaderboard-sort-button" data-sort="name" aria-pressed="false"><i class="fa-solid fa-arrow-down-a-z"></i> İsim A-Z</button>
         </div>
       </div>
 

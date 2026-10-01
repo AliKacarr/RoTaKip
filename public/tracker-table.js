@@ -490,7 +490,14 @@ async function loadTrackerTable() {
         nextWeekTodayBtn.style.display = 'none';
     }
     const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
-    const { users, stats } = data;
+    const { users: rawUsers = [], stats } = data;
+    const turkishNameCollator = new Intl.Collator('tr-TR', {
+        sensitivity: 'base',
+        numeric: true
+    });
+    const users = [...rawUsers].sort((user1, user2) =>
+        turkishNameCollator.compare(user1.name || '', user2.name || '')
+    );
 
     // stats'in iterable olduğundan emin ol
     const statsArray = Array.isArray(stats) ? stats : [];

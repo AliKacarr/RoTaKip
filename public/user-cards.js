@@ -80,20 +80,140 @@ window.loadUserCards = async function loadUserCards() {
     const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
     const { users = [], stats = [] } = allData;
     const streaks = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
+    const monthNamesTr = [
+      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    ];
+    const nowTr = new Date();
+    nowTr.setHours(nowTr.getHours() + 3);
+    const currentMonthKey = nowTr.getFullYear() + '-' + String(nowTr.getMonth() + 1).padStart(2, '0');
+    const currentMonthLabel = monthNamesTr[nowTr.getMonth()];
 
     // Giriş yapılan kullanıcı bilgisi
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
     const isAdminUser = isGroupAdminSession();
 
-    // Kullanıcıları lig sıralamasına göre düzenle (en yüksek ligden en düşüğe)
-    users.sort((user1, user2) => {
-      const user1Stats = stats.filter(s => s.userId === user1._id && s.status === 'okudum');
-      const user2Stats = stats.filter(s => s.userId === user2._id && s.status === 'okudum');
-      const user1OkudumCount = user1Stats.length;
-      const user2OkudumCount = user2Stats.length;
+    const sortBar = document.querySelector('.leaderboard-sort-bar');
+    const sortButtons = sortBar ? Array.from(sortBar.querySelectorAll('.leaderboard-sort-button')) : [];
+    const validSortModes = ['league', 'promotion', 'total', 'month', 'streak', 'percentage', 'longest', 'name'];
+    const groupSortKey = `leaderboardSort:${window.groupid || 'default'}`;
+    let sortMode = localStorage.getItem(groupSortKey) || 'league';
+    if (!validSortModes.includes(sortMode)) sortMode = 'league';
+    const monthSortLabel = sortBar ? sortBar.querySelector('.leaderboard-current-month-label') : null;
+    if (monthSortLabel) monthSortLabel.textContent = `${currentMonthLabel} okuması`;
 
-      // En yüksek ligden en düşüğe sırala
-      return user2OkudumCount - user1OkudumCount;
+    function applySortControlState(mode) {
+      sortButtons.forEach(button => {
+        const isActive = button.dataset.sort === mode;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+    }
+
+    function selectSortMode(mode) {
+      if (!validSortModes.includes(mode) || localStorage.getItem(groupSortKey) === mode) return;
+      localStorage.setItem(groupSortKey, mode);
+      applySortControlState(mode);
+      window.loadUserCards();
+    }
+
+    applySortControlState(sortMode);
+    if (sortBar && sortBar.dataset.sortBound !== '1') {
+      sortBar.dataset.sortBound = '1';
+      sortButtons.forEach(button => {
+        button.addEventListener('click', () => selectSortMode(button.dataset.sort));
+      });
+    }
+
+    const readDayCounts = new Map();
+    const totalReadAmounts = new Map();
+    const monthlyReadAmounts = new Map();
+    const readingStatsByUser = new Map();
+    stats.forEach(stat => {
+      const userId = String(stat.userId);
+      if (stat.status === 'okudum' || stat.status === 'okumadım') {
+        if (!readingStatsByUser.has(userId)) readingStatsByUser.set(userId, []);
+        readingStatsByUser.get(userId).push(stat);
+      }
+      if (stat.status === 'okudum') {
+        readDayCounts.set(userId, (readDayCounts.get(userId) || 0) + 1);
+      }
+      const amount = typeof parseFiniteAmount === 'function'
+        ? parseFiniteAmount(stat.amount)
+        : Number(stat.amount);
+      if (Number.isFinite(amount) && amount > 0) {
+        totalReadAmounts.set(userId, (totalReadAmounts.get(userId) || 0) + amount);
+        if (String(stat.date || '').slice(0, 7) === currentMonthKey) {
+          monthlyReadAmounts.set(userId, (monthlyReadAmounts.get(userId) || 0) + amount);
+        }
+      }
+    });
+    const getReadDayCount = user => readDayCounts.get(String(user._id)) || 0;
+    const getTotalReadAmount = user => totalReadAmounts.get(String(user._id)) || 0;
+    const getMonthlyReadAmount = user => monthlyReadAmounts.get(String(user._id)) || 0;
+    const getReadPercentage = user => {
+      const userStats = readingStatsByUser.get(String(user._id)) || [];
+      return userStats.length > 0 ? getReadDayCount(user) / userStats.length : 0;
+    };
+    const longestStreaksByUser = new Map();
+    (streaks || []).forEach(item => {
+      const userId = item.userId || item._id;
+      if (userId != null) longestStreaksByUser.set(String(userId), Number(item.streak) || 0);
+    });
+    const getLongestStreak = user => longestStreaksByUser.get(String(user._id)) || 0;
+    const currentStreaks = new Map();
+    const getCurrentStreak = user => {
+      const userId = String(user._id);
+      if (!currentStreaks.has(userId)) {
+        currentStreaks.set(userId, calculateStreakForUser(readingStatsByUser.get(userId) || []));
+      }
+      return currentStreaks.get(userId);
+    };
+    const nextLeagueLimits = [5, 10, 20, 40, 60, 100, 150, 200, 365];
+    const daysUntilNextLeague = user => {
+      const count = getReadDayCount(user);
+      const nextLimit = nextLeagueLimits.find(limit => count < limit);
+      return nextLimit == null ? Number.POSITIVE_INFINITY : nextLimit - count;
+    };
+    const turkishCollator = new Intl.Collator('tr-TR', { sensitivity: 'base' });
+    const compareByName = (a, b) => turkishCollator.compare(a.name || '', b.name || '');
+
+    // Global store dizisini değiştirmeden yalnızca kartların gösterim sırasını oluştur.
+    const orderedUsers = [...users].sort((user1, user2) => {
+      if (sortMode === 'name') {
+        return compareByName(user1, user2) || getReadDayCount(user2) - getReadDayCount(user1);
+      }
+      if (sortMode === 'promotion') {
+        return daysUntilNextLeague(user1) - daysUntilNextLeague(user2)
+          || getReadDayCount(user2) - getReadDayCount(user1)
+          || compareByName(user1, user2);
+      }
+      if (sortMode === 'total') {
+        return getTotalReadAmount(user2) - getTotalReadAmount(user1)
+          || getReadDayCount(user2) - getReadDayCount(user1)
+          || compareByName(user1, user2);
+      }
+      if (sortMode === 'month') {
+        return getMonthlyReadAmount(user2) - getMonthlyReadAmount(user1)
+          || getTotalReadAmount(user2) - getTotalReadAmount(user1)
+          || compareByName(user1, user2);
+      }
+      if (sortMode === 'streak') {
+        return getCurrentStreak(user2) - getCurrentStreak(user1)
+          || getReadDayCount(user2) - getReadDayCount(user1)
+          || compareByName(user1, user2);
+      }
+      if (sortMode === 'percentage') {
+        return getReadPercentage(user2) - getReadPercentage(user1)
+          || getReadDayCount(user2) - getReadDayCount(user1)
+          || compareByName(user1, user2);
+      }
+      if (sortMode === 'longest') {
+        return getLongestStreak(user2) - getLongestStreak(user1)
+          || getReadDayCount(user2) - getReadDayCount(user1)
+          || compareByName(user1, user2);
+      }
+      return getReadDayCount(user2) - getReadDayCount(user1) || compareByName(user1, user2);
     });
 
     // Mevcut kartları bir Map olarak tut
@@ -103,7 +223,7 @@ window.loadUserCards = async function loadUserCards() {
     });
 
     // Güncel kullanıcı ID'lerini tut
-    const currentUserIds = (users || []).map(u => u._id);
+    const currentUserIds = orderedUsers.map(u => u._id);
 
     // Artık olmayan kullanıcıların kartlarını kaldır
     existingCards.forEach((card, userId) => {
@@ -252,19 +372,10 @@ window.loadUserCards = async function loadUserCards() {
       return `${diffDays} gün önce`;
     }
 
-    const monthNamesTr = [
-      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-    ];
-    const nowTr = new Date();
-    nowTr.setHours(nowTr.getHours() + 3);
-    const currentMonthKey = nowTr.getFullYear() + '-' + String(nowTr.getMonth() + 1).padStart(2, '0');
-    const currentMonthLabel = monthNamesTr[nowTr.getMonth()];
-
     // Okuma serisi yapanları toplamak için array
     const activeStreaks = [];
 
-    users.forEach(user => {
+    orderedUsers.forEach(user => {
       const userStats = stats.filter(s => s.userId === user._id && (s.status === 'okudum' || s.status === 'okumadım'));
       const okudumStats = userStats.filter(s => s.status === 'okudum');
       const totalDays = userStats.length;
@@ -341,6 +452,8 @@ window.loadUserCards = async function loadUserCards() {
         leagueInfoBar.style.display = 'flex';
         observeRevealToggle(leagueInfoBar);
       }
+
+      if (sortBar) sortBar.style.display = 'flex';
 
       // User cards header'ı da göster
       const userCardsHeader = document.querySelector('.user-cards-header');

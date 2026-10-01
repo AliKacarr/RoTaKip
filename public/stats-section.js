@@ -80,13 +80,21 @@ window.loadReadingStats = async function loadReadingStats() {
         }
 
         // summary zaten okudum/okumadım içeriyor
-        const enhancedUserStats = summary.map(item => ({
-            userId: item.userId,
-            name: item.name,
-            profileImage: item.profileImage,
-            okudum: item.okudum,
-            okumadim: item.okumadim
-        }));
+        const turkishNameCollator = new Intl.Collator('tr-TR', {
+            sensitivity: 'base',
+            numeric: true
+        });
+        const enhancedUserStats = summary
+            .map(item => ({
+                userId: item.userId,
+                name: item.name,
+                profileImage: item.profileImage,
+                okudum: item.okudum,
+                okumadim: item.okumadim
+            }))
+            .sort((user1, user2) =>
+                turkishNameCollator.compare(user1.name || '', user2.name || '')
+            );
 
         // Giriş yapılan kullanıcı bilgisini al
         const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
