@@ -453,7 +453,10 @@ window.loadUserCards = async function loadUserCards() {
         observeRevealToggle(leagueInfoBar);
       }
 
-      if (sortBar) sortBar.style.display = 'flex';
+      if (sortBar) {
+        sortBar.style.display = 'flex';
+        observeRevealToggle(sortBar);
+      }
 
       // User cards header'ı da göster
       const userCardsHeader = document.querySelector('.user-cards-header');
