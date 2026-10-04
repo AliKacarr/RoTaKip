@@ -181,12 +181,15 @@
             readCount++;
           }
         });
-        countsEl.textContent = readCount + '✔';
+        countsEl.setAttribute('aria-label', readCount + ' okundu');
+        countsEl.innerHTML = readCount + '<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i>';
       }
       var totalReadEl = document.getElementById('tfoot-total-read');
       if (totalReadEl && typeof computeWeekMarkedReadFromTable === 'function') {
         var weekStats = computeWeekMarkedReadFromTable();
-        totalReadEl.textContent = formatWeekReadSuccessText(weekStats.okudum, weekStats.marked);
+        var weekReadSuccessText = formatWeekReadSuccessText(weekStats.okudum, weekStats.marked);
+        totalReadEl.setAttribute('aria-label', weekReadSuccessText + ' okundu');
+        totalReadEl.innerHTML = weekReadSuccessText + '<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i>';
       }
     } catch (e) {
       console.error('Footer sayaç güncellenemedi:', e);

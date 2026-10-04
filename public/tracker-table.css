@@ -33,7 +33,7 @@
 #trackerTable thead .stats-footer-row th.stats-footer-label {
     background-color: #f7f7f7;
     color: #333;
-    border: 1px solid #c7c7c7;
+    border: 2px solid #c7c7c7;
     padding: 22px 10px;
     text-align: center;
     font-weight: 600;
@@ -44,7 +44,7 @@
 #trackerTable thead .stats-footer-row th.stats-footer-cell {
     background-color: #f0f0f0;
     color: #888;
-    border: 1px solid #c7c7c7;
+    border: 2px solid #c7c7c7;
     padding: 20px 10px;
     text-align: center;
     font-weight: 600;
@@ -63,7 +63,7 @@
 /* Okuma serisi toplamı — satırdaki ⭐ hücreleriyle aynı tasarım */
 #trackerTable thead .stats-footer-row th.stats-footer-total {
     background-color: #f0f0f0;
-    border: 1px solid #c7c7c7;
+    border: 2px solid #c7c7c7;
     color: #ff1717;
     font-size: 21px;
     font-weight: bold;
@@ -75,6 +75,10 @@
     background: transparent;
     font-weight: 600;
     font-size: 17px;
+}
+
+#trackerTable thead .stats-footer-row .stats-footer-check-icon {
+    margin-left: 3px;
 }
 
 #trackerTable thead .stats-footer-row th.stats-footer-cell.today-column .col-read {
@@ -447,7 +451,7 @@
     background-color: #f0f0f0;
     font-weight: 600;
     color: #888;
-    border: 1px solid #c7c7c7;
+    border: 2px solid #c7c7c7;
     padding: 10px;
     text-align: center;
     font-size: 14px;
@@ -464,7 +468,7 @@
 }
 
 #trackerTable td {
-    border: 1px solid #c7c7c7;
+    border: 2px solid #c7c7c7;
     padding: 10px;
     text-align: center;
     font-size: 16px;
@@ -479,7 +483,7 @@
 #trackerTable td:first-child {
     font-size: 18px;
     font-weight: 500;
-    border: 1px solid #f1f1f1;
+    border: 2px solid #f1f1f1;
     min-width: 0;
     width: 170px;
     text-align: left;
@@ -745,12 +749,12 @@
 
 /* Hafta içinde ay geçişi: yeni ayın ilk sütununun solu */
 #trackerTable .month-start {
-    border-left: 2px solid #7a8288;
+    border-left: 3px solid #7a8288;
 }
 
 #trackerTable thead > tr:first-child th.month-start,
 #trackerTable thead .stats-footer-row th.month-start {
-    border-left: 2px solid #7a8288;
+    border-left: 3px solid #7a8288;
 }
 
 /* Tablo animasyonu */

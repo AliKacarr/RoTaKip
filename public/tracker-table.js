@@ -391,9 +391,9 @@ function computeWeekMarkedReadStats(users, statMap, dates) {
 }
 
 function formatWeekReadSuccessText(okudum, marked) {
-    if (!marked) return '%0✔';
+    if (!marked) return '%0';
     const pct = Math.round((okudum / marked) * 100);
-    return `%${pct}✔`;
+    return `%${pct}`;
 }
 
 function parseFiniteAmount(value) {
@@ -570,7 +570,7 @@ async function loadTrackerTable() {
     );
     let statsRowHTML = `<tr class="stats-footer-row"><th class="stats-footer-label" scope="col" title="Haftalık okuma başarı oranı (okundu / işaretli gün)">`
         + `<span class="col-counts" id="stats-footer-total-counts">`
-        + `<span class="col-read" id="tfoot-total-read">${weekReadSuccessText}</span>`
+        + `<span class="col-read" id="tfoot-total-read" aria-label="${weekReadSuccessText} okundu">${weekReadSuccessText}<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i></span>`
         + `</span></th>`;
     for (let i = 0; i < dates.length; i++) {
         const d = dates[i];
@@ -580,7 +580,7 @@ async function loadTrackerTable() {
         const monthStartClass = isMonthBoundaryColumn(dates, i) ? ' month-start' : '';
         statsRowHTML += `<th class="stats-footer-cell${todayClass}${monthStartClass}" scope="col">`
             + `<span class="col-counts" data-date="${d}">`
-            + `<span class="col-read">${readCount}✔</span>`
+            + `<span class="col-read" aria-label="${readCount} okundu">${readCount}<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i></span>`
             + `</span></th>`;
     }
     let grandAmountTotal = 0;
@@ -1029,16 +1029,19 @@ function updateDateColumnCounts(date, prevSymbol, newStatus) {
         // Yeni durumu ekle
         if (newStatus === 'okudum') readCount++;
 
-        readEl.textContent = readCount + '✔';
+        readEl.setAttribute('aria-label', `${readCount} okundu`);
+        readEl.innerHTML = `${readCount}<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i>`;
 
         // Haftalık okuma başarı oranını güncelle (okundu / işaretli gün)
         const totalReadEl = document.getElementById('tfoot-total-read');
         if (totalReadEl) {
             const weekStats = computeWeekMarkedReadFromTable();
-            totalReadEl.textContent = formatWeekReadSuccessText(
+            const weekReadSuccessText = formatWeekReadSuccessText(
                 weekStats.okudum,
                 weekStats.marked
             );
+            totalReadEl.setAttribute('aria-label', `${weekReadSuccessText} okundu`);
+            totalReadEl.innerHTML = `${weekReadSuccessText}<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i>`;
         }
     } catch (e) {
         console.error('Sütun sayaçları güncellenemedi:', e);
