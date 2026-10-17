@@ -709,6 +709,9 @@
 
     <div id="readingEditModeBar" class="reading-edit-mode-bar">
       <div class="reading-edit-mode-segment" role="group" aria-label="Okuma düzenleme modu">
+        <button type="button" id="readingEditModeDefault" class="reading-edit-mode-btn is-active" aria-pressed="true">
+          <i class="fa-solid fa-arrows-left-right reading-edit-mode-icon" aria-hidden="true"></i> Gezinme
+        </button>
         <button type="button" id="readingEditModeStatus" class="reading-edit-mode-btn" aria-pressed="false">
           <i class="fa-solid fa-bolt reading-edit-mode-icon" aria-hidden="true"></i> Durum
         </button>
@@ -716,14 +719,46 @@
           <i class="fa-solid fa-pen reading-edit-mode-icon" aria-hidden="true"></i> Miktar
         </button>
       </div>
-      <p class="reading-edit-mode-hint" id="readingEditModeHint">Tabloyu düzenlemek için bir mod seçin.</p>
+      <p class="reading-edit-mode-hint" id="readingEditModeHint">Tabloyu incelemek için sağa veya sola kaydırın.</p>
     </div>
 
-    <div class="table-area" style="display: none;">
-      <table id="trackerTable">
-        <thead></thead>
-        <tbody></tbody>
-      </table>
+    <div class="tracker-table-shell" style="display: none;">
+      <div class="tracker-table-layout">
+        <div id="timelineScrollHint" class="timeline-scroll-hint" aria-hidden="true">
+          <span class="timeline-scroll-edge timeline-scroll-edge-left">
+            <span class="timeline-swipe-motion">
+              <img class="timeline-swipe-image timeline-swipe-arrow-image" src="images/hand-arrow.png" alt="" draggable="false">
+              <img class="timeline-swipe-image timeline-swipe-hand-image" src="images/hand.png" alt="" draggable="false">
+            </span>
+            <span class="timeline-swipe-label">Sola kaydır</span>
+          </span>
+          <span class="timeline-scroll-edge timeline-scroll-edge-right">
+            <span class="timeline-swipe-motion">
+              <img class="timeline-swipe-image timeline-swipe-arrow-image" src="images/hand-arrow.png" alt="" draggable="false">
+              <img class="timeline-swipe-image timeline-swipe-hand-image" src="images/hand.png" alt="" draggable="false">
+            </span>
+            <span class="timeline-swipe-label">Sağa kaydır</span>
+          </span>
+        </div>
+        <div class="tracker-users-area">
+          <table id="trackerUsersTable" aria-label="Kullanıcılar">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="table-area">
+          <table id="trackerTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="tracker-summary-area">
+          <table id="trackerSummaryTable" aria-label="Okuma özetleri">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
 
       <!-- Week navigation controls -->
       <div class="week-navigation" style="display: none;">
@@ -1458,23 +1493,10 @@
       </div>
     </div>
     <!-- Add this after the user list section, before the closing container div -->
-    <div class="settings-section">
+        <div class="settings-section onesignal-settings-section" hidden>
       <h3 id="ayarlar"><i class="fa-classic fa-solid fa-sliders fa-fw"
           style="font-size: 1.2em !important; padding-left:2px; padding-right: 8px;"></i>Tercihler</h3>
-      <div class="setting-item">
-        <label for="firstDaySelect">Tablonun İlk Günü:</label>
-        <select id="firstDaySelect" class="day-select">
-          <option value="default" selected>Varsayılan</option>
-          <option value="1">Pazartesi</option>
-          <option value="2">Salı</option>
-          <option value="3">Çarşamba</option>
-          <option value="4">Perşembe</option>
-          <option value="5">Cuma</option>
-          <option value="6">Cumartesi</option>
-          <option value="0">Pazar</option>
-        </select>
-      </div>
-      <div class='onesignal-customlink-container'></div>
+          <div class="onesignal-customlink-container"></div>
     </div>
     <!-- Footer başlangıcı -->
     <footer class="site-footer">

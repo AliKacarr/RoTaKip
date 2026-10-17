@@ -60,7 +60,8 @@ async function shareContainerAsImage(config) {
         shareTitle,
         shareText,
         onRestore,
-        prepareImages = null // Opsiyonel: resimleri hazırlamak için fonksiyon
+        prepareImages = null, // Opsiyonel: resimleri hazırlamak için fonksiyon
+        prepareClone = null // Opsiyonel: html2canvas kopyasını yakalamadan önce düzenlemek için
     } = config;
     
     const modalConfig = getShareModalConfig(modalId);
@@ -138,7 +139,10 @@ async function shareContainerAsImage(config) {
             scale: renderScale,
             logging: false,
             useCORS: true,
-            allowTaint: false
+            allowTaint: false,
+            onclone: (clonedDocument) => {
+                if (prepareClone) prepareClone(clonedDocument);
+            }
         });
 
         // Container'ı geri yerine koy

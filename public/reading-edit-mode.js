@@ -1,22 +1,23 @@
 /**
- * Okuma düzenleme modları: none | status | amount
+ * Okuma düzenleme modları: default | status | amount
+ * Gezinme: tablo kaydırılabilir; hücre tıklamaları veri değiştirmez
  * Durum: ➖→✔→✖ döngüsü
  * Miktar: tıklanınca hemen okudum (✔); hücrede sayı input’u (mobil klavye); Tamam/Enter → "10 ✔"
  */
 (function () {
-  window.readingEditMode = 'none';
+  window.readingEditMode = 'default';
 
   window.getReadingEditMode = function getReadingEditMode() {
-    return window.readingEditMode || 'none';
+    return window.readingEditMode || 'default';
   };
 
   var amountEditState = null;
   // { userId, date, cell, buffer, prevText }
 
   var HINTS = {
-    none: 'Tabloyu düzenlemek için bir mod seçin.',
-    status: 'Okuma durumunuzu değiştirmek için bir hücreye tıklayın: ➖ → ✔ → ✖',
-    amount: 'Sayfa veya dakika okuma miktarınızı eklemek için bir hücreye tıklayın.'
+    default: 'Tabloyu incelemek için sağa veya sola kaydırın.',
+    status: 'Okuma durumunuzu değiştirmek için bir hücreye tıklayın.',
+    amount: 'Okuma miktarınızı eklemek için bir hücreye tıklayın.'
   };
 
   function $(id) {
@@ -25,33 +26,17 @@
 
   function updateHint() {
     var hint = $('readingEditModeHint');
-    if (hint) hint.innerHTML = HINTS[window.readingEditMode] || HINTS.none;
+    if (hint) hint.innerHTML = HINTS[window.readingEditMode] || HINTS.default;
   }
 
-  var promptTimer = null;
-
-  window.promptReadingEditMode = function promptReadingEditMode() {
-    var bar = $('readingEditModeBar');
-    if (!bar || bar.style.display === 'none') return;
-    var segment = bar.querySelector('.reading-edit-mode-segment');
-
-    if (segment) segment.classList.add('needs-choice');
-    try {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (e) {
-      /* scroll yok */
-    }
-
-    if (promptTimer) clearTimeout(promptTimer);
-    promptTimer = setTimeout(function () {
-      if (segment) segment.classList.remove('needs-choice');
-      promptTimer = null;
-    }, 2200);
-  };
-
   function updateSegmentButtons() {
+    var defaultBtn = $('readingEditModeDefault');
     var statusBtn = $('readingEditModeStatus');
     var amountBtn = $('readingEditModeAmount');
+    if (defaultBtn) {
+      defaultBtn.classList.toggle('is-active', window.readingEditMode === 'default');
+      defaultBtn.setAttribute('aria-pressed', window.readingEditMode === 'default' ? 'true' : 'false');
+    }
     if (statusBtn) {
       statusBtn.classList.toggle('is-active', window.readingEditMode === 'status');
       statusBtn.setAttribute('aria-pressed', window.readingEditMode === 'status' ? 'true' : 'false');
@@ -111,18 +96,13 @@
   }
 
   function setReadingEditMode(mode) {
-    var next = mode === 'status' || mode === 'amount' ? mode : 'none';
-    if (window.readingEditMode === next) {
-      next = 'none';
-    }
+    var next = mode === 'status' || mode === 'amount' || mode === 'default' ? mode : 'default';
     if (window.readingEditMode === 'amount' && next !== 'amount') {
       cancelAmountCellEdit();
     }
     window.readingEditMode = next;
     updateSegmentButtons();
     updateHint();
-    var segment = document.querySelector('.reading-edit-mode-segment');
-    if (segment) segment.classList.remove('needs-choice');
   }
 
   window.setReadingEditMode = setReadingEditMode;
@@ -141,7 +121,7 @@
   window.hideReadingEditModeBar = function hideReadingEditModeBar() {
     var bar = $('readingEditModeBar');
     cancelAmountCellEdit();
-    window.readingEditMode = 'none';
+    window.readingEditMode = 'default';
     updateSegmentButtons();
     updateHint();
     if (!bar) return;
@@ -173,11 +153,9 @@
       var countsEl = statsRow.querySelector('.col-counts[data-date="' + date + '"] .col-read');
       if (countsEl) {
         var readCount = 0;
-        var dates = typeof getWeekDates === 'function' ? getWeekDates(window.weekOffset || 0) : [];
-        var idx = dates.indexOf(date);
         document.querySelectorAll('#trackerTable tbody tr.user-row').forEach(function (row) {
-          var cells = row.querySelectorAll('td[onclick*="toggleStatus"]');
-          if (idx >= 0 && cells[idx] && cellTextIsOkudum(cells[idx].textContent)) {
+          var dayCell = row.querySelector('td.day-column[data-date="' + date + '"]');
+          if (dayCell && cellTextIsOkudum(dayCell.textContent)) {
             readCount++;
           }
         });
@@ -198,9 +176,11 @@
 
   function refreshRowStreak(userId, cell) {
     try {
-      var rowEl = cell && cell.closest('tr');
-      if (!rowEl || typeof calculateStreakFromCache !== 'function') return;
-      var lastTd = rowEl.querySelector('td:last-child');
+      if (!cell || typeof calculateStreakFromCache !== 'function') return;
+      var lastTd =
+        typeof window.getTrackerSummaryStreakCell === 'function'
+          ? window.getTrackerSummaryStreakCell(userId)
+          : null;
       if (!lastTd) return;
       var oldStreakText = lastTd.textContent || lastTd.innerText;
       var oldStreak = oldStreakText === '-' ? 0 : parseInt(oldStreakText.replace('⭐', '').trim(), 10) || 0;
@@ -572,8 +552,14 @@
   }
 
   function initReadingEditModeBar() {
+    var defaultBtn = $('readingEditModeDefault');
     var statusBtn = $('readingEditModeStatus');
     var amountBtn = $('readingEditModeAmount');
+    if (defaultBtn) {
+      defaultBtn.addEventListener('click', function () {
+        setReadingEditMode('default');
+      });
+    }
     if (statusBtn) {
       statusBtn.addEventListener('click', function () {
         setReadingEditMode('status');

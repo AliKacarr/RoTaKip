@@ -1,5 +1,9 @@
 const trackerTable = document.getElementById('trackerTable');
 const tableArea = document.querySelector('.table-area');
+const trackerTableShell = document.querySelector('.tracker-table-shell');
+const trackerTableLayout = document.querySelector('.tracker-table-layout');
+const trackerUsersTable = document.getElementById('trackerUsersTable');
+const trackerSummaryTable = document.getElementById('trackerSummaryTable');
 const newUserForm = document.getElementById('newUserForm');
 window.newUserForm = newUserForm;
 const prevWeekBtn = document.getElementById('prevWeek');
@@ -7,11 +11,196 @@ const nextWeekBtn = document.getElementById('nextWeek');
 const prevWeekTodayBtn = document.getElementById('prevWeekToday');
 const nextWeekTodayBtn = document.getElementById('nextWeekToday');
 const currentWeekDisplay = document.getElementById('currentWeekDisplay');
+const timelineScrollHint = document.getElementById('timelineScrollHint');
 let weekOffset = 0;
 // Global erişim için window'a ekle
 window.weekOffset = weekOffset;
 let isFirstLoad = true;
 let postToggleUpdateTimer = null;
+
+// Haftalık tablo artık, sınırlı sayıda hücreyi yeniden kullanan yatay bir
+// zaman şeridi olarak çalışır. Böylece kullanıcı geçmişe/geleceğe doğru
+// kaydırabilirken DOM kontrolsüz biçimde büyümez.
+const TIMELINE_WINDOW_DAYS = 42;
+const TIMELINE_SHIFT_DAYS = 14;
+const TIMELINE_INITIAL_PAST_DAYS = 27;
+let timelineStartDate = null;
+let timelineEndDate = null;
+let timelineReferenceDate = null;
+let timelineScrollTimer = null;
+let timelineIsShifting = false;
+let timelineIsSharing = false;
+let timelineHasPositioned = false;
+let timelineScrollBound = false;
+let timelineDragStartX = 0;
+let timelineDragStartScrollLeft = 0;
+let timelineIsDragging = false;
+let timelineSuppressClick = false;
+let timelineLastUsers = [];
+let timelineLastStats = [];
+let timelineLastStatMap = {};
+let timelineLastAmountMap = {};
+let timelineDisplayedSeasonKey = null;
+let trackerRowSyncFrame = null;
+let trackerRowResizeBound = false;
+let timelineScrollHintShowTimer = null;
+let timelineScrollHintHideTimer = null;
+let timelineScrollHintScheduled = false;
+let timelineScrollHintDismissed = false;
+let timelineScrollHintInteractionBound = false;
+
+// Takvim haftası tercihi yerine bugünle biten kayan yedi günlük dönem kullanılır.
+window.firstDayOfWeek = 'default';
+localStorage.setItem('firstDayOfWeek', 'default');
+
+function toLocalDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function fromDateKey(dateKey) {
+    const parts = String(dateKey).split('-').map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0);
+}
+
+function addDaysToKey(dateKey, amount) {
+    const date = fromDateKey(dateKey);
+    date.setDate(date.getDate() + amount);
+    return toLocalDateKey(date);
+}
+
+function getTodayDateKey() {
+    return toLocalDateKey(new Date());
+}
+
+function getSevenDaysEndingAt(dateKey) {
+    const dates = [];
+    for (let i = 6; i >= 0; i--) dates.push(addDaysToKey(dateKey, -i));
+    return dates;
+}
+
+function initializeTimelineWindow() {
+    if (timelineStartDate && timelineEndDate) return;
+    const todayKey = getTodayDateKey();
+    timelineReferenceDate = todayKey;
+    timelineStartDate = addDaysToKey(todayKey, -TIMELINE_INITIAL_PAST_DAYS);
+    timelineEndDate = addDaysToKey(timelineStartDate, TIMELINE_WINDOW_DAYS - 1);
+}
+
+function getTimelineDates() {
+    initializeTimelineWindow();
+    const dates = [];
+    let cursor = timelineStartDate;
+    while (cursor <= timelineEndDate && dates.length < TIMELINE_WINDOW_DAYS) {
+        dates.push(cursor);
+        cursor = addDaysToKey(cursor, 1);
+    }
+    return dates;
+}
+
+function setTimelineTodayButtonVisibility(referenceDate) {
+    const todayKey = getTodayDateKey();
+    const states = [
+        [prevWeekTodayBtn, referenceDate > todayKey],
+        [nextWeekTodayBtn, referenceDate < todayKey]
+    ];
+
+    states.forEach(function ([button, visible]) {
+        if (!button) return;
+        button.classList.toggle('is-visible', visible);
+        button.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        button.tabIndex = visible ? 0 : -1;
+    });
+}
+
+function getTimelineScrollHintSessionKey() {
+    const groupKey = window.groupid || window.location.pathname || 'default';
+    return `timeline-scroll-hint-v23-shown:${groupKey}`;
+}
+
+function hasShownTimelineScrollHint() {
+    try {
+        return sessionStorage.getItem(getTimelineScrollHintSessionKey()) === '1';
+    } catch (_) {
+        return false;
+    }
+}
+
+function markTimelineScrollHintAsShown() {
+    try {
+        sessionStorage.setItem(getTimelineScrollHintSessionKey(), '1');
+    } catch (_) {
+        // sessionStorage kullanılamıyorsa yönlendirme yine çalışmaya devam eder.
+    }
+}
+
+function hideTimelineScrollHint() {
+    clearTimeout(timelineScrollHintShowTimer);
+    clearTimeout(timelineScrollHintHideTimer);
+    timelineScrollHintShowTimer = null;
+    timelineScrollHintHideTimer = null;
+    timelineScrollHintScheduled = false;
+    if (timelineScrollHint) timelineScrollHint.classList.remove('is-visible');
+}
+
+function dismissTimelineScrollHint() {
+    if (!timelineScrollHintScheduled && !timelineScrollHint?.classList.contains('is-visible')) return;
+    timelineScrollHintDismissed = true;
+    markTimelineScrollHintAsShown();
+    hideTimelineScrollHint();
+}
+
+function positionTimelineScrollHint() {
+    if (!timelineScrollHint || !trackerTableLayout || !trackerTable || !tableArea) return;
+    const firstUserRow = trackerTable.querySelector('tbody tr.user-row');
+    if (!firstUserRow) return;
+    const leftEdge = timelineScrollHint.querySelector('.timeline-scroll-edge-left');
+    const rightEdge = timelineScrollHint.querySelector('.timeline-scroll-edge-right');
+    if (!leftEdge || !rightEdge) return;
+    const layoutRect = trackerTableLayout.getBoundingClientRect();
+    const tableAreaRect = tableArea.getBoundingClientRect();
+    const rowRect = firstUserRow.getBoundingClientRect();
+    const edgeHeight = Math.max(leftEdge.offsetHeight, rightEdge.offsetHeight);
+    const leftWidth = leftEdge.offsetWidth;
+    const rightWidth = rightEdge.offsetWidth;
+    const horizontalInset = Math.max(leftWidth, rightWidth) * 1;
+    const centeredTop = rowRect.top - layoutRect.top + ((rowRect.height - edgeHeight) / 2) + 45;
+    const leftPosition = tableAreaRect.left - layoutRect.left - (leftWidth / 2) + horizontalInset;
+    const rightPosition = tableAreaRect.right - layoutRect.left - (rightWidth / 2) - horizontalInset;
+    timelineScrollHint.style.setProperty('--timeline-scroll-hint-top', `${Math.max(0, centeredTop)}px`);
+    timelineScrollHint.style.setProperty('--timeline-scroll-hint-left', `${leftPosition}px`);
+    timelineScrollHint.style.setProperty('--timeline-scroll-hint-right', `${rightPosition}px`);
+}
+
+function bindTimelineScrollHintInteraction() {
+    if (!tableArea || timelineScrollHintInteractionBound) return;
+    timelineScrollHintInteractionBound = true;
+    tableArea.addEventListener('pointerdown', dismissTimelineScrollHint, { passive: true });
+    tableArea.addEventListener('wheel', dismissTimelineScrollHint, { passive: true });
+    tableArea.addEventListener('scroll', function () {
+        if (timelineScrollHint?.classList.contains('is-visible')) dismissTimelineScrollHint();
+    }, { passive: true });
+    window.addEventListener('resize', function () {
+        if (timelineScrollHint?.classList.contains('is-visible')) positionTimelineScrollHint();
+    }, { passive: true });
+}
+
+function scheduleTimelineScrollHint() {
+    if (!timelineScrollHint || timelineScrollHintScheduled || timelineScrollHintDismissed || hasShownTimelineScrollHint()) return;
+    bindTimelineScrollHintInteraction();
+    timelineScrollHintScheduled = true;
+    timelineScrollHintShowTimer = setTimeout(function () {
+        timelineScrollHintShowTimer = null;
+        timelineScrollHintScheduled = false;
+        if (timelineScrollHintDismissed) return;
+        positionTimelineScrollHint();
+        markTimelineScrollHintAsShown();
+        timelineScrollHint.classList.add('is-visible');
+        timelineScrollHintHideTimer = setTimeout(hideTimelineScrollHint, 4200);
+    }, 1000);
+}
 
 // Session kontrolü için değişkenler
 let lastSessionCheckTime = 0;
@@ -240,6 +429,10 @@ function updateUserStatsCache(userId, date, status) {
     }
 
     cache.lastUpdated = Date.now();
+
+    if (!timelineLastStatMap[userId]) timelineLastStatMap[userId] = {};
+    if (status) timelineLastStatMap[userId][date] = status;
+    else delete timelineLastStatMap[userId][date];
 }
 
 function getUserStatsFromCache(userId) {
@@ -271,41 +464,6 @@ const LEAGUES = [
     { min: 200, max: 365, name: 'Mercan', img: 'mercan.webp', bg: 'linear-gradient(90deg, #ff6f63 60%, #ffafb7 100%)' },
     { min: 365, max: 1001, name: 'Pırlanta', img: 'pirlanta.webp', bg: 'linear-gradient(90deg, #ffbf00 60%, #ffe789 100%)' }
 ];
-
-function getWeekDates(offset = 0) {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-
-    let actualFirstDay;
-    if (firstDayOfWeek === 'default') {
-        // Varsayılan: Bugünden sonraki gün haftanın ilk günü olsun
-        // JavaScript'te 0=Pazar, 1=Pazartesi... bizim sistemde 0=Pazar, 1=Pazartesi...
-        actualFirstDay = (dayOfWeek + 1) % 7;
-    } else {
-        // Özel gün seçildiğinde direkt kullan (0=Pazar, 1=Pazartesi, 2=Salı...)
-        actualFirstDay = firstDayOfWeek;
-    }
-
-    let daysToFirstDay;
-    if (dayOfWeek >= actualFirstDay) {
-        daysToFirstDay = dayOfWeek - actualFirstDay;
-    } else {
-        daysToFirstDay = 7 - (actualFirstDay - dayOfWeek);
-    }
-    const currentWeekStart = new Date(today);
-    currentWeekStart.setDate(today.getDate() - daysToFirstDay);
-    currentWeekStart.setDate(currentWeekStart.getDate() + (offset * 7));
-    const dates = [];
-    for (let i = 0; i < 7; i++) {
-        const d = new Date(currentWeekStart);
-        d.setDate(currentWeekStart.getDate() + i);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        dates.push(`${year}-${month}-${day}`);
-    }
-    return dates;
-}
 
 function getWeekSeasonKey(dates) {
     if (!dates || !dates.length) {
@@ -446,16 +604,16 @@ function cellTextIsEmpty(text) {
 }
 
 function computeWeekMarkedReadFromTable() {
-    const dates = getWeekDates(weekOffset);
+    const dates = getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey());
     const tbody = trackerTable && trackerTable.querySelector('tbody');
     if (!tbody) return { okudum: 0, marked: 0 };
 
     let okudum = 0;
     let marked = 0;
     tbody.querySelectorAll('tr.user-row').forEach(function (row) {
-        const cells = row.querySelectorAll('td[onclick*="toggleStatus"]');
-        cells.forEach(function (cell, index) {
-            if (index >= dates.length) return;
+        const cells = row.querySelectorAll('td.day-column[data-date]');
+        cells.forEach(function (cell) {
+            if (!dates.includes(cell.dataset.date)) return;
             const symbol = (cell.textContent || '').trim();
             if (cellTextIsOkudum(symbol)) {
                 okudum += 1;
@@ -468,27 +626,20 @@ function computeWeekMarkedReadFromTable() {
     return { okudum, marked };
 }
 
-async function loadTrackerTable() {
+async function loadTrackerTable(options = {}) {
     console.log('🔍 Tracker Table Loading...');
 
-    // Tablo yüklenirken kaydırma çubuğunu gizle
+    // Yatay zaman şeridi doğal dokunma/fare kaydırmasını kullanır.
     if (tableArea) {
-        tableArea.style.overflowX = 'hidden';
-        tableArea.style.overflowY = 'hidden';
+        tableArea.style.overflowX = 'auto';
+        tableArea.style.overflowY = 'visible';
     }
 
-    const dates = getWeekDates(weekOffset);
-    currentWeekDisplay.textContent = formatDateRange(dates);
-    if (weekOffset < 0) {
-        prevWeekTodayBtn.style.display = 'none';
-        nextWeekTodayBtn.style.display = 'flex';
-    } else if (weekOffset > 0) {
-        prevWeekTodayBtn.style.display = 'flex';
-        nextWeekTodayBtn.style.display = 'none';
-    } else {
-        prevWeekTodayBtn.style.display = 'none';
-        nextWeekTodayBtn.style.display = 'none';
-    }
+    initializeTimelineWindow();
+    const dates = getTimelineDates();
+    const analysisDates = getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey());
+    currentWeekDisplay.textContent = formatDateRange(analysisDates);
+    setTimelineTodayButtonVisibility(timelineReferenceDate || getTodayDateKey());
     const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
     const { users: rawUsers = [], stats } = data;
     const turkishNameCollator = new Intl.Collator('tr-TR', {
@@ -510,6 +661,10 @@ async function loadTrackerTable() {
         const amt = parseFiniteAmount(s.amount);
         if (amt != null) amountMap[s.userId][s.date] = amt;
     }
+    timelineLastUsers = users;
+    timelineLastStats = statsArray;
+    timelineLastStatMap = statMap;
+    timelineLastAmountMap = amountMap;
 
     // Kullanıcı okuma sayılarını hesapla ve önbelleğe al
     userReadingCounts.clear();
@@ -539,17 +694,16 @@ async function loadTrackerTable() {
     }
 
     const totalUsers = users.length;
-    const seasonKey = getWeekSeasonKey(dates);
-    const seasonLabel = getWeekSeasonLabel(dates);
+    const seasonKey = getWeekSeasonKey(analysisDates);
+    timelineDisplayedSeasonKey = seasonKey;
+    const seasonLabel = getWeekSeasonLabel(analysisDates);
     const seasonParts = seasonLabel.split(' ');
     const seasonHtml = seasonParts.length >= 2
         ? `<span class="col-season-month">${seasonParts[0]}</span><br><span class="col-season-suffix">${seasonParts.slice(1).join(' ')}</span>`
         : seasonLabel;
-    let theadHTML = `<tr><th><span class="col-user-count">${totalUsers} Kişi</span></th>`;
-    const today = new Date();
-    // UTC+3 saat dilimi ekle (Türkiye saati)
-    today.setHours(today.getHours() + 3);
-    const todayString = today.toISOString().split('T')[0];
+    const usersHeadHTML = `<tr><th><span class="col-user-count">${totalUsers} Kişi</span></th></tr>`;
+    let theadHTML = `<tr>`;
+    const todayString = getTodayDateKey();
     for (let i = 0; i < dates.length; i++) {
         const d = dates[i];
         const date = new Date(d);
@@ -559,44 +713,48 @@ async function loadTrackerTable() {
         if (isToday) classNames.push('today-column');
         if (isMonthBoundaryColumn(dates, i)) classNames.push('month-start');
         const displayText = isToday ? 'Bugün' : formatDateForHeader(date);
-        theadHTML += `<th class="${classNames.join(' ')}"><span class="date-text">${displayText}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
+        theadHTML += `<th class="day-column ${classNames.join(' ')}" data-date="${d}"><span class="date-text">${displayText}</span><br><span class="day-of-week">${dayOfWeek}</span></th>`;
     }
-    theadHTML += `<th class="col-total-amount col-season">${seasonHtml}</th>`;
-    theadHTML += `<th>Okuma<br>Serisi</th></tr>`;
-    const weekReadStats = computeWeekMarkedReadStats(users, statMap, dates);
+    theadHTML += `</tr>`;
+    const weekReadStats = computeWeekMarkedReadStats(users, statMap, analysisDates);
     const weekReadSuccessText = formatWeekReadSuccessText(
         weekReadStats.okudum,
         weekReadStats.marked
     );
-    let statsRowHTML = `<tr class="stats-footer-row"><th class="stats-footer-label" scope="col" title="Haftalık okuma başarı oranı (okundu / işaretli gün)">`
+    const usersStatsHeadHTML = `<tr class="stats-footer-row"><th class="stats-footer-label" scope="col" title="Haftalık okuma başarı oranı (okundu / işaretli gün)">`
         + `<span class="col-counts" id="stats-footer-total-counts">`
         + `<span class="col-read" id="tfoot-total-read" aria-label="${weekReadSuccessText} okundu">${weekReadSuccessText}<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i></span>`
-        + `</span></th>`;
+        + `</span></th></tr>`;
+    let statsRowHTML = `<tr class="stats-footer-row">`;
     for (let i = 0; i < dates.length; i++) {
         const d = dates[i];
         const { readCount } = dateCounts[d];
         const isToday = d === todayString;
         const todayClass = isToday ? ' today-column' : '';
         const monthStartClass = isMonthBoundaryColumn(dates, i) ? ' month-start' : '';
-        statsRowHTML += `<th class="stats-footer-cell${todayClass}${monthStartClass}" scope="col">`
+        statsRowHTML += `<th class="day-column stats-footer-cell${todayClass}${monthStartClass}" data-date="${d}" scope="col">`
             + `<span class="col-counts" data-date="${d}">`
             + `<span class="col-read" aria-label="${readCount} okundu">${readCount}<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i></span>`
             + `</span></th>`;
     }
+    statsRowHTML += `</tr>`;
     let grandAmountTotal = 0;
     let grandStreakTotal = 0;
     for (let user of users) {
         grandAmountTotal += sumUserAmounts(statsArray, user._id, seasonKey);
         grandStreakTotal += calculateStreak(statMap[user._id] || {});
     }
-    statsRowHTML += `<th class="stats-footer-cell stats-footer-amount" scope="col" title="Bu sezondaki tüm kullanıcıların okuma toplamı">`
+    let summaryHeadHTML = `<tr><th class="col-total-amount col-season">${seasonHtml}</th>`
+        + `<th class="col-streak-heading">Okuma<br>Serisi</th></tr>`;
+    summaryHeadHTML += `<tr class="stats-footer-row">`
+        + `<th class="stats-footer-cell stats-footer-amount" scope="col" title="Bu sezondaki tüm kullanıcıların okuma toplamı">`
         + `<span class="col-counts" id="stats-footer-amount-counts">`
         + `<span class="col-read" id="tfoot-total-amount">${grandAmountTotal} ✔</span>`
         + `</span></th>`;
     const streakTotalHtml = grandStreakTotal > 0
         ? `<span class="weekly-fire-emoji">⭐</span> ${grandStreakTotal}`
-        : '-';
-    statsRowHTML += `<th class="stats-footer-cell stats-footer-total" scope="col" title="Tüm kullanıcıların okuma serisi toplamı">`
+        : `<span class="weekly-fire-emoji">⭐</span> 0`;
+    summaryHeadHTML += `<th class="stats-footer-cell stats-footer-total" scope="col" title="Tüm kullanıcıların okuma serisi toplamı">`
         + `<span class="col-counts" id="stats-footer-streak-counts">`
         + `<span id="tfoot-total-streak">${streakTotalHtml}</span>`
         + `</span></th></tr>`;
@@ -604,6 +762,8 @@ async function loadTrackerTable() {
     if (oldTfoot) oldTfoot.remove();
     trackerTable.querySelector('thead').innerHTML = theadHTML + statsRowHTML;
     let tbodyHTML = '';
+    let usersBodyHTML = '';
+    let summaryBodyHTML = '';
     for (let user of users) {
         const userStats = statMap[user._id] || {};
         // Lig ve arka planı belirle (önbellekten al)
@@ -616,11 +776,13 @@ async function loadTrackerTable() {
 
         const userSeasonAmount = sumUserAmounts(statsArray, user._id, seasonKey);
         const userAllTimeAmount = sumUserAmounts(statsArray, user._id);
-        let row = `<tr class="user-row${currentUserClass}"><td class="user-item" data-user-id="${user._id}" style="background: ${league.bg};">`;
+        let userRow = `<tr class="user-row${currentUserClass}" data-user-id="${user._id}"><td class="user-item" data-user-id="${user._id}" style="background: ${league.bg};"><div class="user-item-content">`;
         const profileImage = user.profileImage || '/images/default.png';
-        row += `<img src="${profileImage}" alt="${user.name}" class="tracker-profile-image tracker-profile-image-loading" onload="this.classList.remove('tracker-profile-image-loading')" onerror="this.classList.remove('tracker-profile-image-loading'); this.src='/images/default.png'" />`;
-        row += `<span class="user-item-text"><span class="user-item-name">${user.name}</span>`;
-        row += `<span class="user-item-meta" data-user-meta="${user._id}" data-amount="${userAllTimeAmount}">${formatUserItemMeta(league.name, userAllTimeAmount)}</span></span></td>`;
+        userRow += `<img src="${profileImage}" alt="${user.name}" class="tracker-profile-image tracker-profile-image-loading" onload="this.classList.remove('tracker-profile-image-loading')" onerror="this.classList.remove('tracker-profile-image-loading'); this.src='/images/default.png'" />`;
+        userRow += `<span class="user-item-text"><span class="user-item-name">${user.name}</span>`;
+        userRow += `<span class="user-item-meta" data-user-meta="${user._id}" data-amount="${userAllTimeAmount}">${formatUserItemMeta(league.name, userAllTimeAmount)}</span></span></div></td></tr>`;
+        usersBodyHTML += userRow;
+        let row = `<tr class="user-row${currentUserClass}" data-user-id="${user._id}">`;
         for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
             const date = dates[dateIndex];
             const status = userStats[date] || '';
@@ -631,10 +793,7 @@ async function loadTrackerTable() {
             let className = '';
 
             // Bugünden sonraki tarihler için • ikonu ve disabled sınıfı
-            const currentDate = new Date();
-            // UTC+3 saat dilimi ekle (Türkiye saati)
-            currentDate.setHours(currentDate.getHours() + 3);
-            const todayString = currentDate.toISOString().split('T')[0];
+            const todayString = getTodayDateKey();
             const isFutureDate = date > todayString;
 
             if (isFutureDate) {
@@ -655,19 +814,29 @@ async function loadTrackerTable() {
             if (isMonthBoundaryColumn(dates, dateIndex)) {
                 className += ' month-start';
             }
-            const onclickAttr = isFutureDate ? '' : `onclick="toggleStatus('${user._id}', '${date}')"`;
-            row += `<td class="${className}" ${onclickAttr}>${symbol}</td>`;
+            const onclickAttr = isFutureDate ? '' : `onclick="toggleStatus('${user._id}', '${date}', this)"`;
+            row += `<td class="day-column ${className}" data-date="${date}" ${onclickAttr}>${symbol}</td>`;
         }
-        row += `<td class="col-total-amount" data-user-amount="${user._id}">${userSeasonAmount > 0 ? `${userSeasonAmount} ✔` : '-'}</td>`;
         const streak = calculateStreak(userStats);
-        row += `<td>${streak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${streak}` : '-'}</td>`;
         row += `</tr>`;
         tbodyHTML += row;
+        summaryBodyHTML += `<tr class="summary-user-row${currentUserClass}" data-user-id="${user._id}">`
+            + `<td class="col-total-amount" data-user-amount="${user._id}" title="${userSeasonAmount > 0 ? `${userSeasonAmount} ✔` : '-'}">`
+            + `${userSeasonAmount > 0 ? `${userSeasonAmount} ✔` : '-'}</td>`
+            + `<td class="col-streak" data-user-streak="${user._id}">`
+            + `${streak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${streak}` : '-'}</td></tr>`;
     }
     trackerTable.querySelector('tbody').innerHTML = tbodyHTML;
+    trackerUsersTable.querySelector('thead').innerHTML = usersHeadHTML + usersStatsHeadHTML;
+    trackerUsersTable.querySelector('tbody').innerHTML = usersBodyHTML;
+    trackerSummaryTable.querySelector('thead').innerHTML = summaryHeadHTML;
+    trackerSummaryTable.querySelector('tbody').innerHTML = summaryBodyHTML;
+    trackerUsersTable.querySelectorAll('.tracker-profile-image').forEach(function (image) {
+        if (!image.complete) image.addEventListener('load', scheduleTrackerSummaryRowSync, { once: true });
+    });
 
     // Kullanıcıya tıklanınca ilgili kartı göster ve scroll et
-    trackerTable.querySelectorAll('.user-item').forEach(item => {
+    trackerUsersTable.querySelectorAll('.user-item').forEach(item => {
         item.addEventListener('click', function () {
             const userId = this.getAttribute('data-user-id');
             // Kartlar görünür değilse önce göster
@@ -697,14 +866,10 @@ async function loadTrackerTable() {
             weekNav.classList.add('visible');
         }, 50);
     }
-    // Tüm tablo elementlerini gizle
-    trackerTable.classList.remove('visible');
-    trackerTable.querySelector('tbody').classList.remove('tracker-table-visible');
+    trackerTableLayout.classList.remove('is-visible');
 
     setTimeout(() => {
-        // Tüm tablo elementlerini aynı anda göster
-        trackerTable.classList.add('visible');
-        trackerTable.querySelector('tbody').classList.add('tracker-table-visible');
+        trackerTableLayout.classList.add('is-visible');
 
         // Sadece ilk yüklemede sayfanın en üstüne kaydır
         if (isFirstLoad) {
@@ -714,39 +879,469 @@ async function loadTrackerTable() {
     }, 20);
 
     // Kullanıcı istatistik alanını güncelle (giriş serisi hesaplaması ile)
-    updateUserStatsAreaWithStreak().catch(error => {
-        console.error('Kullanıcı istatistik alanı güncellenemedi:', error);
+    if (!options.timelineRefresh) {
+        updateUserStatsAreaWithStreak().catch(error => {
+            console.error('Kullanıcı istatistik alanı güncellenemedi:', error);
+        });
+    }
+
+    if (trackerTableShell) {
+        trackerTableShell.style.display = 'block';
+        trackerTableShell.classList.add('is-visible');
+    }
+
+    setupTrackerSummaryRowSync();
+    setupTimelineScrolling();
+    requestAnimationFrame(function () {
+        if (!timelineHasPositioned) {
+            scrollTimelineDateIntoRightEdge(timelineReferenceDate || getTodayDateKey(), false);
+            timelineHasPositioned = true;
+        }
+        scheduleTimelineScrollHint();
+    });
+}
+
+function getTimelinePinnedRightWidth() {
+    return 0;
+}
+
+function syncTrackerSummaryRowHeights() {
+    trackerRowSyncFrame = null;
+    if (!trackerUsersTable || !trackerTable || !trackerSummaryTable) return;
+    syncTrackerSummaryColumnWidths();
+    const userRows = Array.from(trackerUsersTable.querySelectorAll('thead tr, tbody tr.user-row'));
+    const mainRows = Array.from(trackerTable.querySelectorAll('thead tr, tbody tr.user-row'));
+    const summaryRows = Array.from(trackerSummaryTable.querySelectorAll('thead tr, tbody tr.summary-user-row'));
+    if (userRows.length !== mainRows.length || mainRows.length !== summaryRows.length) return;
+
+    userRows.forEach(function (row) { row.style.height = ''; });
+    mainRows.forEach(function (row) { row.style.height = ''; });
+    summaryRows.forEach(function (row) { row.style.height = ''; });
+    mainRows.forEach(function (row, index) {
+        const height = Math.max(
+            userRows[index].getBoundingClientRect().height,
+            row.getBoundingClientRect().height,
+            summaryRows[index].getBoundingClientRect().height
+        );
+        const value = `${Math.ceil(height * 100) / 100}px`;
+        userRows[index].style.height = value;
+        row.style.height = value;
+        summaryRows[index].style.height = value;
+    });
+}
+
+function measureTrackerSummaryColumn(selector, minWidth) {
+    let width = minWidth;
+    trackerSummaryTable.querySelectorAll(selector).forEach(function (cell) {
+        const style = window.getComputedStyle(cell);
+        const horizontalPadding = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+        const horizontalBorders = (parseFloat(style.borderLeftWidth) || 0) + (parseFloat(style.borderRightWidth) || 0);
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const contentWidth = range.getBoundingClientRect().width;
+        width = Math.max(width, Math.ceil(contentWidth + horizontalPadding + horizontalBorders + 12));
+    });
+    return width;
+}
+
+function syncTrackerSummaryColumnWidths() {
+    if (!trackerTableLayout || !trackerSummaryTable) return;
+    const summaryArea = trackerSummaryTable.closest('.tracker-summary-area');
+    if (!summaryArea) return;
+
+    const amountMin = 112;
+    const streakMin = 88;
+    const amountWidth = Math.max(
+        amountMin,
+        Math.ceil(measureTrackerSummaryColumn('.col-total-amount, .stats-footer-amount', amountMin))
+    );
+    const streakWidth = Math.max(
+        streakMin,
+        Math.ceil(measureTrackerSummaryColumn('.col-streak, .col-streak-heading, .stats-footer-total', streakMin))
+    );
+    const totalWidth = amountWidth + streakWidth;
+    trackerSummaryTable.style.setProperty('--summary-amount-width', `${amountWidth}px`);
+    trackerSummaryTable.style.setProperty('--summary-streak-width', `${streakWidth}px`);
+    trackerSummaryTable.style.width = `${totalWidth}px`;
+    summaryArea.style.width = `${totalWidth}px`;
+}
+
+function scheduleTrackerSummaryRowSync() {
+    if (trackerRowSyncFrame != null) return;
+    trackerRowSyncFrame = requestAnimationFrame(syncTrackerSummaryRowHeights);
+}
+
+function setupTrackerSummaryRowSync() {
+    scheduleTrackerSummaryRowSync();
+    if (trackerRowResizeBound) return;
+    trackerRowResizeBound = true;
+    window.addEventListener('resize', scheduleTrackerSummaryRowSync, { passive: true });
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(scheduleTrackerSummaryRowSync);
+    }
+}
+
+function scrollTimelineDateIntoRightEdge(dateKey, smooth) {
+    const cell = trackerTable && trackerTable.querySelector(`thead tr:first-child th.day-column[data-date="${dateKey}"]`);
+    if (!cell || !tableArea) return false;
+    const availableRight = tableArea.clientWidth - getTimelinePinnedRightWidth();
+    const targetLeft = Math.max(0, cell.offsetLeft + cell.offsetWidth - availableRight);
+    tableArea.scrollTo({ left: targetLeft, behavior: smooth ? 'smooth' : 'auto' });
+    return true;
+}
+
+function getTimelineRightmostVisibleDate() {
+    if (!tableArea || !trackerTable) return timelineReferenceDate || getTodayDateKey();
+    const areaRect = tableArea.getBoundingClientRect();
+    const rightLimit = areaRect.right - getTimelinePinnedRightWidth();
+    const leftLimit = areaRect.left;
+    let result = null;
+    trackerTable.querySelectorAll('thead tr:first-child th.day-column[data-date]').forEach(function (cell) {
+        const rect = cell.getBoundingClientRect();
+        const center = rect.left + rect.width / 2;
+        if (center >= leftLimit && center <= rightLimit + 1) result = cell.dataset.date;
+    });
+    return result || timelineReferenceDate || getTodayDateKey();
+}
+
+function buildSeasonHeaderHtml(dates) {
+    const label = getWeekSeasonLabel(dates);
+    const parts = label.split(' ');
+    return parts.length >= 2
+        ? `<span class="col-season-month">${parts[0]}</span><br><span class="col-season-suffix">${parts.slice(1).join(' ')}</span>`
+        : label;
+}
+
+function getTrackerSummaryRow(userId) {
+    if (!trackerSummaryTable) return null;
+    const targetId = String(userId);
+    return Array.from(trackerSummaryTable.querySelectorAll('tbody tr.summary-user-row'))
+        .find(function (row) { return row.dataset.userId === targetId; }) || null;
+}
+
+function getTrackerSummaryStreakCell(userId) {
+    const row = getTrackerSummaryRow(userId);
+    return row ? row.querySelector('td.col-streak') : null;
+}
+window.getTrackerSummaryStreakCell = getTrackerSummaryStreakCell;
+
+function updateTimelineSummaries(referenceDate) {
+    if (!referenceDate) return;
+    timelineReferenceDate = referenceDate;
+    const analysisDates = getSevenDaysEndingAt(referenceDate);
+    currentWeekDisplay.textContent = formatDateRange(analysisDates);
+    setTimelineTodayButtonVisibility(referenceDate);
+
+    const weekStats = computeWeekMarkedReadStats(timelineLastUsers, timelineLastStatMap, analysisDates);
+    const successText = formatWeekReadSuccessText(weekStats.okudum, weekStats.marked);
+    const successElement = document.getElementById('tfoot-total-read');
+    if (successElement) {
+        successElement.innerHTML = `${successText}<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i>`;
+        successElement.setAttribute('aria-label', `${successText} okundu`);
+    }
+
+    const seasonKey = getWeekSeasonKey(analysisDates);
+    if (seasonKey !== timelineDisplayedSeasonKey) {
+        timelineDisplayedSeasonKey = seasonKey;
+        const seasonHeader = trackerSummaryTable.querySelector('thead tr:first-child th.col-season');
+        if (seasonHeader) seasonHeader.innerHTML = buildSeasonHeaderHtml(analysisDates);
+
+        let grandAmount = 0;
+        timelineLastUsers.forEach(function (user) {
+            const amount = sumUserAmounts(timelineLastStats, user._id, seasonKey);
+            grandAmount += amount;
+            const cell = trackerSummaryTable.querySelector(`td.col-total-amount[data-user-amount="${user._id}"]`);
+            if (cell) cell.textContent = amount > 0 ? `${amount} ✔` : '-';
+        });
+        const grandAmountElement = document.getElementById('tfoot-total-amount');
+        if (grandAmountElement) grandAmountElement.textContent = `${grandAmount} ✔`;
+        scheduleTrackerSummaryRowSync();
+    }
+}
+
+function isTimelineMonthStart(dateKey) {
+    return String(dateKey).slice(0, 7) !== String(addDaysToKey(dateKey, -1)).slice(0, 7);
+}
+
+function getTimelineDayClasses(dateKey) {
+    const classes = ['day-column'];
+    if (dateKey === getTodayDateKey()) classes.push('today-column');
+    if (isTimelineMonthStart(dateKey)) classes.push('month-start');
+    return classes;
+}
+
+function createTimelineHeaderDayCell(dateKey) {
+    const cell = document.createElement('th');
+    cell.className = getTimelineDayClasses(dateKey).join(' ');
+    cell.dataset.date = dateKey;
+    const date = fromDateKey(dateKey);
+    const displayText = dateKey === getTodayDateKey() ? 'Bugün' : formatDateForHeader(date);
+    cell.innerHTML = `<span class="date-text">${displayText}</span><br><span class="day-of-week">${getDayOfWeekInTurkish(date)}</span>`;
+    return cell;
+}
+
+function createTimelineStatsDayCell(dateKey) {
+    const cell = document.createElement('th');
+    cell.className = getTimelineDayClasses(dateKey).concat('stats-footer-cell').join(' ');
+    cell.dataset.date = dateKey;
+    cell.scope = 'col';
+    let readCount = 0;
+    timelineLastUsers.forEach(function (user) {
+        if ((timelineLastStatMap[user._id] || {})[dateKey] === 'okudum') readCount++;
+    });
+    cell.innerHTML = `<span class="col-counts" data-date="${dateKey}">`
+        + `<span class="col-read" aria-label="${readCount} okundu">${readCount}`
+        + `<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i></span></span>`;
+    return cell;
+}
+
+function createTimelineBodyDayCell(userId, dateKey) {
+    const cell = document.createElement('td');
+    const status = (timelineLastStatMap[userId] || {})[dateKey] || '';
+    const amount = (timelineLastAmountMap[userId] || {})[dateKey];
+    const isFutureDate = dateKey > getTodayDateKey();
+    const classes = getTimelineDayClasses(dateKey);
+    let symbol = '➖';
+
+    if (isFutureDate) {
+        symbol = '•';
+        classes.push('future-date');
+    } else if (status === 'okudum') {
+        symbol = formatOkudumCellSymbol(amount);
+        classes.push('green');
+    } else if (status === 'okumadım') {
+        symbol = '✖';
+        classes.push('red');
+    } else {
+        classes.push('empty');
+    }
+
+    cell.className = classes.join(' ');
+    cell.dataset.date = dateKey;
+    cell.textContent = symbol;
+    if (!isFutureDate) cell.setAttribute('onclick', `toggleStatus('${userId}', '${dateKey}', this)`);
+    return cell;
+}
+
+function insertTimelineDayCells(row, dates, createCell, atStart) {
+    const fragment = document.createDocumentFragment();
+    dates.forEach(function (dateKey) { fragment.appendChild(createCell(dateKey)); });
+    if (atStart) {
+        const firstDayCell = row.querySelector('.day-column');
+        row.insertBefore(fragment, firstDayCell || row.firstChild);
+    } else {
+        row.appendChild(fragment);
+    }
+}
+
+function removeTimelineDayCells(row, fromStart, count) {
+    const cells = Array.from(row.querySelectorAll('.day-column'));
+    const targets = fromStart ? cells.slice(0, count) : cells.slice(-count);
+    targets.forEach(function (cell) { cell.remove(); });
+}
+
+function syncTimelineCachesFromStore() {
+    if (!window.globalDataStore) return;
+    const data = window.globalDataStore.getAllData();
+    const stats = Array.isArray(data.stats) ? data.stats : [];
+    const statMap = {};
+    const amountMap = {};
+    stats.forEach(function (item) {
+        if (!statMap[item.userId]) statMap[item.userId] = {};
+        if (!amountMap[item.userId]) amountMap[item.userId] = {};
+        statMap[item.userId][item.date] = item.status;
+        const amount = parseFiniteAmount(item.amount);
+        if (amount != null) amountMap[item.userId][item.date] = amount;
+    });
+    timelineLastStats = stats;
+    timelineLastStatMap = statMap;
+    timelineLastAmountMap = amountMap;
+}
+
+function recycleTimelineDayColumns(direction) {
+    syncTimelineCachesFromStore();
+    const newDates = [];
+    if (direction < 0) {
+        const newStart = addDaysToKey(timelineStartDate, -TIMELINE_SHIFT_DAYS);
+        for (let i = 0; i < TIMELINE_SHIFT_DAYS; i++) newDates.push(addDaysToKey(newStart, i));
+        timelineStartDate = newStart;
+        timelineEndDate = addDaysToKey(timelineEndDate, -TIMELINE_SHIFT_DAYS);
+    } else {
+        const firstNewDate = addDaysToKey(timelineEndDate, 1);
+        for (let i = 0; i < TIMELINE_SHIFT_DAYS; i++) newDates.push(addDaysToKey(firstNewDate, i));
+        timelineStartDate = addDaysToKey(timelineStartDate, TIMELINE_SHIFT_DAYS);
+        timelineEndDate = addDaysToKey(timelineEndDate, TIMELINE_SHIFT_DAYS);
+    }
+
+    const headerRows = trackerTable.querySelectorAll('thead tr');
+    const topHeaderRow = headerRows[0];
+    const statsHeaderRow = headerRows[1];
+    const atStart = direction < 0;
+    insertTimelineDayCells(topHeaderRow, newDates, createTimelineHeaderDayCell, atStart);
+    insertTimelineDayCells(statsHeaderRow, newDates, createTimelineStatsDayCell, atStart);
+
+    trackerTable.querySelectorAll('tbody tr.user-row').forEach(function (row) {
+        const userId = row.dataset.userId;
+        if (!userId) return;
+        insertTimelineDayCells(
+            row,
+            newDates,
+            function (dateKey) { return createTimelineBodyDayCell(userId, dateKey); },
+            atStart
+        );
     });
 
-    tableArea.style.display = 'block';
+    removeTimelineDayCells(topHeaderRow, direction > 0, TIMELINE_SHIFT_DAYS);
+    removeTimelineDayCells(statsHeaderRow, direction > 0, TIMELINE_SHIFT_DAYS);
+    trackerTable.querySelectorAll('tbody tr.user-row').forEach(function (row) {
+        removeTimelineDayCells(row, direction > 0, TIMELINE_SHIFT_DAYS);
+    });
+    scheduleTrackerSummaryRowSync();
+}
+
+function replaceTimelineDayColumns() {
+    syncTimelineCachesFromStore();
+    const dates = getTimelineDates();
+    const headerRows = trackerTable.querySelectorAll('thead tr');
+    const topHeaderRow = headerRows[0];
+    const statsHeaderRow = headerRows[1];
+
+    removeTimelineDayCells(topHeaderRow, true, Number.MAX_SAFE_INTEGER);
+    removeTimelineDayCells(statsHeaderRow, true, Number.MAX_SAFE_INTEGER);
+    insertTimelineDayCells(topHeaderRow, dates, createTimelineHeaderDayCell, false);
+    insertTimelineDayCells(statsHeaderRow, dates, createTimelineStatsDayCell, false);
+
+    trackerTable.querySelectorAll('tbody tr.user-row').forEach(function (row) {
+        const userId = row.dataset.userId;
+        removeTimelineDayCells(row, true, Number.MAX_SAFE_INTEGER);
+        if (!userId) return;
+        insertTimelineDayCells(
+            row,
+            dates,
+            function (dateKey) { return createTimelineBodyDayCell(userId, dateKey); },
+            false
+        );
+    });
+    scheduleTrackerSummaryRowSync();
+}
+
+function shiftTimelineWindow(direction) {
+    if (timelineIsShifting || !direction) return;
+    timelineIsShifting = true;
+    const anchorDate = getTimelineRightmostVisibleDate();
+    const anchorBefore = trackerTable.querySelector(`thead tr:first-child th.day-column[data-date="${anchorDate}"]`);
+    const anchorLeft = anchorBefore ? anchorBefore.getBoundingClientRect().left : null;
+
+    recycleTimelineDayColumns(direction);
+
+    requestAnimationFrame(function () {
+        const anchorAfter = trackerTable.querySelector(`thead tr:first-child th.day-column[data-date="${anchorDate}"]`);
+        if (anchorAfter && anchorLeft != null) {
+            tableArea.scrollLeft += anchorAfter.getBoundingClientRect().left - anchorLeft;
+        }
+        updateTimelineSummaries(anchorDate);
+        timelineIsShifting = false;
+    });
+}
+
+function setupTimelineScrolling() {
+    if (!tableArea || timelineScrollBound) return;
+    timelineScrollBound = true;
+    tableArea.addEventListener('scroll', function () {
+        if (timelineIsShifting || timelineIsSharing) return;
+        clearTimeout(timelineScrollTimer);
+        timelineScrollTimer = setTimeout(function () {
+            if (timelineIsShifting || timelineIsSharing) return;
+            const referenceDate = getTimelineRightmostVisibleDate();
+            updateTimelineSummaries(referenceDate);
+
+            const maxScroll = Math.max(0, tableArea.scrollWidth - tableArea.clientWidth);
+            const sampleCell = trackerTable.querySelector('th.day-column');
+            const threshold = Math.max(100, (sampleCell ? sampleCell.offsetWidth : 60) * 2);
+            if (tableArea.scrollLeft < threshold) {
+                shiftTimelineWindow(-1);
+            } else if (maxScroll - tableArea.scrollLeft < threshold) {
+                shiftTimelineWindow(1);
+            }
+        }, 120);
+    }, { passive: true });
+
+    tableArea.addEventListener('pointerdown', function (event) {
+        if (event.pointerType !== 'mouse' || event.button !== 0 || !event.target.closest('.day-column')) return;
+        timelineDragStartX = event.clientX;
+        timelineDragStartScrollLeft = tableArea.scrollLeft;
+        timelineIsDragging = true;
+        timelineSuppressClick = false;
+    });
+    tableArea.addEventListener('pointermove', function (event) {
+        if (!timelineIsDragging) return;
+        const distance = event.clientX - timelineDragStartX;
+        if (!timelineSuppressClick && Math.abs(distance) > 6) {
+            timelineSuppressClick = true;
+            tableArea.classList.add('is-dragging');
+            tableArea.setPointerCapture(event.pointerId);
+        }
+        if (!timelineSuppressClick) return;
+        tableArea.scrollLeft = timelineDragStartScrollLeft - distance;
+    });
+    function finishTimelineDrag(event) {
+        if (!timelineIsDragging) return;
+        timelineIsDragging = false;
+        tableArea.classList.remove('is-dragging');
+        if (tableArea.hasPointerCapture(event.pointerId)) tableArea.releasePointerCapture(event.pointerId);
+        setTimeout(function () { timelineSuppressClick = false; }, 0);
+    }
+    window.addEventListener('pointerup', finishTimelineDrag);
+    window.addEventListener('pointercancel', finishTimelineDrag);
+    tableArea.addEventListener('click', function (event) {
+        if (!timelineSuppressClick) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }, true);
+}
+
+async function jumpTimelineByDays(dayAmount) {
+    const currentReference = timelineReferenceDate || getTodayDateKey();
+    const targetDate = addDaysToKey(currentReference, dayAmount);
+    if (targetDate < timelineStartDate || targetDate > timelineEndDate) {
+        timelineStartDate = addDaysToKey(targetDate, -TIMELINE_INITIAL_PAST_DAYS);
+        timelineEndDate = addDaysToKey(timelineStartDate, TIMELINE_WINDOW_DAYS - 1);
+        replaceTimelineDayColumns();
+    }
+    timelineReferenceDate = targetDate;
+    updateTimelineSummaries(targetDate);
+    scrollTimelineDateIntoRightEdge(targetDate, true);
 }
 
 prevWeekBtn.addEventListener('click', () => {
-    weekOffset--;
-    window.weekOffset = weekOffset; // Global güncelle
-    loadTrackerTable();
-    loadUserCards();
+    jumpTimelineByDays(-7);
 });
 
 nextWeekBtn.addEventListener('click', () => {
-    weekOffset++;
-    window.weekOffset = weekOffset; // Global güncelle
-    loadTrackerTable();
-    loadUserCards();
+    jumpTimelineByDays(7);
 });
 
 prevWeekTodayBtn.addEventListener('click', () => {
     weekOffset = 0;
-    window.weekOffset = weekOffset; // Global güncelle
-    loadTrackerTable();
-    loadUserCards();
+    window.weekOffset = weekOffset;
+    jumpTimelineByDays(
+        Math.round((fromDateKey(getTodayDateKey()) - fromDateKey(timelineReferenceDate || getTodayDateKey())) / 86400000)
+    );
 });
 
 nextWeekTodayBtn.addEventListener('click', () => {
     weekOffset = 0;
-    window.weekOffset = weekOffset; // Global güncelle
-    loadTrackerTable();
-    loadUserCards();
+    window.weekOffset = weekOffset;
+    jumpTimelineByDays(
+        Math.round((fromDateKey(getTodayDateKey()) - fromDateKey(timelineReferenceDate || getTodayDateKey())) / 86400000)
+    );
+});
+
+currentWeekDisplay.addEventListener('click', () => {
+    jumpTimelineByDays(
+        Math.round((fromDateKey(getTodayDateKey()) - fromDateKey(timelineReferenceDate || getTodayDateKey())) / 86400000)
+    );
 });
 
 function calculateStreak(userStats) {
@@ -819,20 +1414,17 @@ function schedulePostToggleUiRefresh() {
 }
 window.schedulePostToggleUiRefresh = schedulePostToggleUiRefresh;
 
-window.toggleStatus = async function toggleStatus(userId, date) {
-    if (!LocalStorageManager.isUserLoggedIn()) {
-        logUnauthorizedAccess('Haftalık tabloya tıklama');
+window.toggleStatus = async function toggleStatus(userId, date, clickedCell) {
+    const editMode = typeof window.getReadingEditMode === 'function'
+        ? window.getReadingEditMode()
+        : 'default';
+
+    if (editMode === 'default') {
         return;
     }
 
-    const editMode = typeof window.getReadingEditMode === 'function'
-        ? window.getReadingEditMode()
-        : 'none';
-
-    if (editMode === 'none') {
-        if (typeof window.promptReadingEditMode === 'function') {
-            window.promptReadingEditMode();
-        }
+    if (!LocalStorageManager.isUserLoggedIn()) {
+        logUnauthorizedAccess('Haftalık tabloya tıklama');
         return;
     }
 
@@ -850,7 +1442,9 @@ window.toggleStatus = async function toggleStatus(userId, date) {
     if (window.checkSessionTimeout && window.checkSessionTimeout()) {
         return; // İşlemi durdur
     }
-    const cell = event.target.closest('td') || event.target;
+    const fallbackTarget = window.event && window.event.target;
+    const cell = clickedCell || (fallbackTarget && (fallbackTarget.closest('td') || fallbackTarget));
+    if (!cell) return;
 
     if (editMode === 'amount') {
         if (typeof window.beginAmountCellEdit === 'function') {
@@ -900,14 +1494,12 @@ window.toggleStatus = async function toggleStatus(userId, date) {
 
     if (rowEl) {
         const dateCells = rowEl.querySelectorAll('td[onclick*="toggleStatus"]');
-        const dates = getWeekDates(weekOffset);
-
         // Cache'den güncel verileri al
         const userStatsMap = getUserStatsFromCache(userId);
 
         // Her hücrenin rengini güncelle
-        dateCells.forEach((dateCell, index) => {
-            const cellDate = dates[index];
+        dateCells.forEach((dateCell) => {
+            const cellDate = dateCell.dataset.date;
             const cellStatus = userStatsMap[cellDate];
 
             // Eski sınıfları temizle
@@ -955,7 +1547,7 @@ window.toggleStatus = async function toggleStatus(userId, date) {
         if (rowEl) {
             // Cache'den güncel seriyi hesapla
             const newStreak = calculateStreakFromCache(userId);
-            const lastTd = rowEl.querySelector('td:last-child');
+            const lastTd = getTrackerSummaryStreakCell(userId);
             if (lastTd) {
                 // Eski seri sayısını al
                 const oldStreakText = lastTd.textContent || lastTd.innerText;
@@ -1054,20 +1646,20 @@ function refreshAmountTotalsInTable() {
         const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
         const statsArray = Array.isArray(data.stats) ? data.stats : [];
         const users = Array.isArray(data.users) ? data.users : [];
-        const seasonKey = getWeekSeasonKey(getWeekDates(weekOffset || 0));
+        const seasonKey = getWeekSeasonKey(getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey()));
 
         let grand = 0;
         users.forEach(function (user) {
             const seasonSum = sumUserAmounts(statsArray, user._id, seasonKey);
             const allTimeSum = sumUserAmounts(statsArray, user._id);
             grand += seasonSum;
-            const cell = trackerTable.querySelector(`td.col-total-amount[data-user-amount="${user._id}"]`);
+            const cell = trackerSummaryTable.querySelector(`td.col-total-amount[data-user-amount="${user._id}"]`);
             if (cell) {
                 cell.textContent = seasonSum > 0 ? `${seasonSum} ✔` : '-';
             }
             const okudumDays = userReadingCounts.get(user._id) || 0;
             const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
-            const meta = trackerTable.querySelector(`.user-item-meta[data-user-meta="${user._id}"]`);
+            const meta = trackerUsersTable.querySelector(`.user-item-meta[data-user-meta="${user._id}"]`);
             if (meta) {
                 meta.textContent = formatUserItemMeta(league.name, allTimeSum);
                 meta.setAttribute('data-amount', String(allTimeSum || 0));
@@ -1078,6 +1670,7 @@ function refreshAmountTotalsInTable() {
         if (footerAmount) {
             footerAmount.textContent = `${grand} ✔`;
         }
+        scheduleTrackerSummaryRowSync();
     } catch (e) {
         console.error('Toplam Okuma güncellenemedi:', e);
     }
@@ -1087,10 +1680,10 @@ function refreshAmountTotalsInTable() {
 function refreshStreakTotalInTable() {
     try {
         const footerStreak = document.getElementById('tfoot-total-streak');
-        if (!footerStreak || !trackerTable) return;
+        if (!footerStreak || !trackerSummaryTable) return;
         let total = 0;
-        trackerTable.querySelectorAll('tbody tr.user-row').forEach(function (row) {
-            const lastTd = row.querySelector('td:last-child');
+        trackerSummaryTable.querySelectorAll('tbody tr.summary-user-row').forEach(function (row) {
+            const lastTd = row.querySelector('td.col-streak');
             if (!lastTd) return;
             const text = (lastTd.textContent || '').trim();
             if (!text || text === '-') return;
@@ -1098,7 +1691,8 @@ function refreshStreakTotalInTable() {
         });
         footerStreak.innerHTML = total > 0
             ? `<span class="weekly-fire-emoji">⭐</span> ${total}`
-            : '-';
+            : `<span class="weekly-fire-emoji">⭐</span> 0`;
+        scheduleTrackerSummaryRowSync();
     } catch (e) {
         console.error('Okuma serisi toplamı güncellenemedi:', e);
     }
@@ -1112,7 +1706,7 @@ function updateAllUserBackgroundColors() {
             const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
 
             // Kullanıcının user-item elementini bul ve background rengini güncelle
-            const userItem = document.querySelector(`[data-user-id="${userId}"]`);
+            const userItem = trackerUsersTable.querySelector(`.user-item[data-user-id="${userId}"]`);
             if (userItem) {
                 userItem.style.background = league.bg;
                 const meta = userItem.querySelector('.user-item-meta');
@@ -1141,7 +1735,7 @@ window.updateUserBackgroundColor = async function updateUserBackgroundColor(user
         const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
 
         // Kullanıcının user-item elementini bul ve background rengini güncelle
-        const userItem = document.querySelector(`[data-user-id="${userId}"]`);
+        const userItem = trackerUsersTable.querySelector(`.user-item[data-user-id="${userId}"]`);
         if (userItem) {
             userItem.style.background = league.bg;
             const meta = userItem.querySelector('.user-item-meta');
@@ -1180,7 +1774,8 @@ function celebrateOkudumCell(cell, options) {
     if (!(Number.isFinite(amountDelta) && amountDelta > 0)) return;
 
     const row = cell.closest('tr');
-    const target = (row && row.querySelector('td.col-total-amount')) || cell;
+    const summaryRow = row ? getTrackerSummaryRow(row.dataset.userId) : null;
+    const target = (summaryRow && summaryRow.querySelector('td.col-total-amount')) || cell;
     spawnPlusFloat(target, amountDelta);
 }
 window.celebrateOkudumCell = celebrateOkudumCell;
@@ -1283,14 +1878,32 @@ function getDayOfWeekInTurkish(date) {
     return days[date.getDay()];
 }
 
+function removeCurrentUserHighlightFromShareClone(clonedLayout) {
+    if (!clonedLayout) return;
+    clonedLayout.querySelectorAll('.current-user-row').forEach(function (row) {
+        row.querySelectorAll('html2canvaspseudoelement').forEach(function (pseudoElement) {
+            pseudoElement.remove();
+        });
+        row.classList.remove('current-user-row');
+    });
+}
 
 // Tabloyu resme çevirip modal'da göster
 async function shareTrackerTable() {
-    const weekText = currentWeekDisplay ? currentWeekDisplay.textContent.trim() : 'tablo';
+    const shareDates = getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey());
+    const weekText = formatDateRange(shareDates);
+    const selectedDates = new Set(shareDates);
+    const scrollLeftBeforeShare = tableArea ? tableArea.scrollLeft : 0;
+    const referenceDateBeforeShare = timelineReferenceDate;
+
+    timelineIsSharing = true;
+    clearTimeout(timelineScrollTimer);
+    timelineScrollTimer = null;
+    trackerTableLayout.classList.add('is-share-capture');
 
     // Dropbox resimlerini default.png olarak değiştir
     const prepareImages = async () => {
-        const profileImages = trackerTable.querySelectorAll('.tracker-profile-image');
+        const profileImages = trackerUsersTable.querySelectorAll('.tracker-profile-image');
         const imageUpdates = [];
 
         profileImages.forEach(img => {
@@ -1319,20 +1932,43 @@ async function shareTrackerTable() {
         }));
     };
 
-    await window.shareContainerAsImage({
-        container: trackerTable,
-        modalId: 'tableShareModal',
-        titleText: weekText,
-        fileNamePrefix: 'okuma-tablosu',
-        shareTitle: 'Okuma Tablosu',
-        shareText: `${weekText} haftası okuma tablosu`,
-        onRestore: () => {
-            if (typeof loadTrackerTable === 'function') {
-                loadTrackerTable();
+    try {
+        await window.shareContainerAsImage({
+            container: trackerTableLayout,
+            modalId: 'tableShareModal',
+            titleText: weekText,
+            fileNamePrefix: 'okuma-tablosu',
+            shareTitle: 'Okuma Tablosu',
+            shareText: `${weekText} haftası okuma tablosu`,
+            onRestore: () => {
+                if (typeof loadTrackerTable === 'function') {
+                    loadTrackerTable();
+                }
+            },
+            prepareImages: prepareImages,
+            prepareClone: (clonedDocument) => {
+                const clonedLayout = clonedDocument.querySelector('.tracker-table-layout');
+                if (!clonedLayout) return;
+                clonedLayout.querySelectorAll('#trackerTable .day-column[data-date]').forEach(function (cell) {
+                    if (!selectedDates.has(cell.dataset.date)) cell.remove();
+                });
+                removeCurrentUserHighlightFromShareClone(clonedLayout);
+                const clonedTableArea = clonedLayout.querySelector('.table-area');
+                if (clonedTableArea) clonedTableArea.scrollLeft = 0;
             }
-        },
-        prepareImages: prepareImages
-    });
+        });
+    } finally {
+        trackerTableLayout.classList.remove('is-share-capture');
+        // Paylaşım yardımcısı tabloyu bir sonraki karede eski DOM konumuna taşır.
+        // Ondan sonraki karede kullanıcının kaydırma konumunu ve açık haftasını geri yükle.
+        requestAnimationFrame(function () {
+            if (referenceDateBeforeShare) updateTimelineSummaries(referenceDateBeforeShare);
+            if (tableArea) tableArea.scrollLeft = scrollLeftBeforeShare;
+            requestAnimationFrame(function () {
+                timelineIsSharing = false;
+            });
+        });
+    }
 }
 
 

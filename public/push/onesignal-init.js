@@ -2,7 +2,32 @@
 if (!window.OneSignalInitialized) {
     window.OneSignalInitialized = true;
   
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
+function initializeOneSignalSettingsVisibility() {
+    const container = document.querySelector('.onesignal-customlink-container');
+    const settingsSection = container?.closest('.onesignal-settings-section');
+
+    if (!container || !settingsSection) return;
+
+    const updateVisibility = () => {
+        const hasContent = container.childElementCount > 0 || container.textContent.trim().length > 0;
+        settingsSection.hidden = !hasContent;
+    };
+
+    updateVisibility();
+    new MutationObserver(updateVisibility).observe(container, {
+        childList: true,
+        subtree: true,
+        characterData: true
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeOneSignalSettingsVisibility, { once: true });
+} else {
+    initializeOneSignalSettingsVisibility();
+}
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function (OneSignal) {
       try {
         // env.js ile gelen app id'yi kullan
@@ -49,4 +74,3 @@ if (!window.OneSignalInitialized) {
       }
     });
   }
-  

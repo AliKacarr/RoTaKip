@@ -353,15 +353,15 @@ function loadMonthlyCalendar() {
     }
 
     function toggleUserReadingStatus(userName, day, month, year, clickedCell) {
-        if (!LocalStorageManager.isUserLoggedIn()) {
-            logUnauthorizedAccess('Aylık takvim okuma durumu değiştirme');
+        const editMode = typeof window.getReadingEditMode === 'function'
+            ? window.getReadingEditMode()
+            : 'default';
+        if (editMode !== 'status') {
             return;
         }
 
-        if (typeof window.getReadingEditMode === 'function' && window.getReadingEditMode() !== 'status') {
-            if (window.getReadingEditMode() === 'none' && typeof window.promptReadingEditMode === 'function') {
-                window.promptReadingEditMode();
-            }
+        if (!LocalStorageManager.isUserLoggedIn()) {
+            logUnauthorizedAccess('Aylık takvim okuma durumu değiştirme');
             return;
         }
 

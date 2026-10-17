@@ -260,43 +260,38 @@ window.loadUserCards = async function loadUserCards() {
       "Pırlanta": "linear-gradient(90deg, #ffbf00 60%, #ffe789 100%)"
     };
 
-    // Haftanın günleri
-    function getDaysOrderedByFirstDay(firstDayOfWeek) {
-      // 1: Pazartesi, 2: Salı, ..., 6: Cumartesi, 0: Pazar
-      const allDays = [
-        { key: 'P', label: 'Pazar' },      // 0
-        { key: 'P', label: 'Pazartesi' },  // 1
-        { key: 'S', label: 'Salı' },       // 2
-        { key: 'Ç', label: 'Çarşamba' },   // 3
-        { key: 'P', label: 'Perşembe' },    // 4
-        { key: 'C', label: 'Cuma' },       // 5
-        { key: 'C', label: 'Cumartesi' }   // 6
+    // Kartlar haftalık tablonun konumundan bağımsız olarak daima bugün dahil
+    // son yedi takvim gününü gösterir.
+    function getLastSevenDays() {
+      const dayNames = [
+        { key: 'P', label: 'Pazar' },
+        { key: 'P', label: 'Pazartesi' },
+        { key: 'S', label: 'Salı' },
+        { key: 'Ç', label: 'Çarşamba' },
+        { key: 'P', label: 'Perşembe' },
+        { key: 'C', label: 'Cuma' },
+        { key: 'C', label: 'Cumartesi' }
       ];
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
 
-      let actualFirstDay;
-      if (firstDayOfWeek === 'default') {
-        // Varsayılan: Bugünden sonraki gün haftanın ilk günü olsun
-        const today = new Date();
-        // Yarını hesapla
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const dayOfWeek = tomorrow.getDay();
-        // JavaScript'te 0=Pazar, 1=Pazartesi... ama bizim sistemde 1=Pazartesi
-        // Bu yüzden dönüşüm yapmamız gerekiyor
-        const jsToOurSystem = (dayOfWeek + 6) % 7; // Pazar(0)->6, Pazartesi(1)->0, Salı(2)->1...
-        actualFirstDay = (jsToOurSystem + 1) % 7;
-      } else {
-        actualFirstDay = firstDayOfWeek;
+      const days = [];
+      for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - daysAgo);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        days.push({
+          ...dayNames[date.getDay()],
+          date: `${year}-${month}-${day}`
+        });
       }
-
-      const ordered = [];
-      for (let i = 0; i < 7; i++) {
-        ordered.push(allDays[(actualFirstDay + i) % 7]);
-      }
-      return ordered;
+      return days;
     }
 
-    const weekDates = typeof getWeekDates === 'function' ? getWeekDates(weekOffset || 0) : [];
+    const recentDays = getLastSevenDays();
+    const weekDates = recentDays.map(day => day.date);
 
     /** Bugünden geriye ardışık "okudum" gün sayısı (kart ve lig tebriği için ortak) */
     function calculateStreakForUser(stats) {
@@ -520,10 +515,10 @@ window.loadUserCards = async function loadUserCards() {
       </div>
       <div class="weekly-status-row">
         <div class="weekly-status-days">
-          ${getDaysOrderedByFirstDay(firstDayOfWeek).map((day, i) => `
+          ${recentDays.map((day, i) => `
             <div class="weekly-status-day-group"
               data-user-id="${user._id}"
-              data-date="${weekDates[i]}"
+              data-date="${day.date}"
             >
               <div class="day-label">${day.key}</div>
               <div class="day-circle ${weekStatus[i]}" title="${day.label}"></div>
@@ -1177,15 +1172,15 @@ window.loadUserCards = async function loadUserCards() {
 // Kullanıcı kartlarında okuma durumunu değiştiren fonksiyon
 toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElement) {
 
-  if (!LocalStorageManager.isUserLoggedIn()) {
-    logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme');
+  const editMode = typeof window.getReadingEditMode === 'function'
+    ? window.getReadingEditMode()
+    : 'default';
+  if (editMode !== 'status') {
     return;
   }
 
-  if (typeof window.getReadingEditMode === 'function' && window.getReadingEditMode() !== 'status') {
-    if (window.getReadingEditMode() === 'none' && typeof window.promptReadingEditMode === 'function') {
-      window.promptReadingEditMode();
-    }
+  if (!LocalStorageManager.isUserLoggedIn()) {
+    logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme');
     return;
   }
 

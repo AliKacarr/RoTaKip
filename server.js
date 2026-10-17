@@ -619,9 +619,10 @@ async function uploadToDropbox(fileBuffer, fileName, folder) {
       }
     });
 
-    // URL'yi parse et ve dl parametresini 1 yap
+    // Dropbox paylasim linklerini indirme yerine dogrudan goruntu olarak sun.
     const url = new URL(shareResponse.result.url);
-    url.searchParams.set('dl', '1');
+    url.searchParams.delete('dl');
+    url.searchParams.set('raw', '1');
     return url.toString();
   } catch (error) {
     console.error('Dropbox upload hatası:', error);

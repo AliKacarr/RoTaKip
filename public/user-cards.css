@@ -1,6 +1,6 @@
 /* User Cards Section */
 .user-cards-section {
-    margin: 25px 0 30px 0;
+    margin: 0 0 30px 0;
     opacity: 0;
     transform: translateY(20px);
     transition: opacity 0.6s ease-out, transform 0.6s ease-out;

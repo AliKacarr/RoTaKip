@@ -30,7 +30,7 @@
 }
 
 /* İstatistik satırı — ilk thead satırı (başlık) ile aynı gri palet ve çerçeve */
-#trackerTable thead .stats-footer-row th.stats-footer-label {
+#trackerUsersTable thead .stats-footer-row th.stats-footer-label {
     background-color: #f7f7f7;
     color: #333;
     border: 2px solid #c7c7c7;
@@ -39,6 +39,7 @@
     font-weight: 600;
     font-size: 17px;
     vertical-align: middle;
+    line-height: 1;
 }
 
 #trackerTable thead .stats-footer-row th.stats-footer-cell {
@@ -54,22 +55,6 @@
     vertical-align: middle;
 }
 
-#trackerTable thead .stats-footer-row th.stats-footer-cell.today-column {
-    background-color: #ebf3fa;
-    border-color: #c7c7c7;
-    box-shadow: inset 0 0 0 2px rgba(91, 155, 213, 0.5);
-}
-
-/* Okuma serisi toplamı — satırdaki ⭐ hücreleriyle aynı tasarım */
-#trackerTable thead .stats-footer-row th.stats-footer-total {
-    background-color: #f0f0f0;
-    border: 2px solid #c7c7c7;
-    color: #ff1717;
-    font-size: 21px;
-    font-weight: bold;
-    white-space: nowrap;
-}
-
 #trackerTable thead .stats-footer-row .col-read {
     color: #208a3c;
     background: transparent;
@@ -77,7 +62,8 @@
     font-size: 17px;
 }
 
-#trackerTable thead .stats-footer-row .stats-footer-check-icon {
+#trackerTable thead .stats-footer-row .stats-footer-check-icon,
+#trackerUsersTable thead .stats-footer-row .stats-footer-check-icon {
     margin-left: 3px;
 }
 
@@ -87,31 +73,212 @@
     font-weight: 600;
 }
 
-#trackerTable thead > tr:first-child .col-user-count {
+#trackerUsersTable thead > tr:first-child .col-user-count {
     font-size: 17px;
     padding: 4px 0;
 }
 
-#trackerTable thead .stats-footer-row th.stats-footer-label .col-read {
+#trackerUsersTable thead .stats-footer-row th.stats-footer-label .col-read {
     color: #208a3c;
     font-size: 18px;
     font-weight: 700;
 }
 
-#trackerTable thead .stats-footer-row th.stats-footer-total #tfoot-total-streak {
-    color: #ff1717;
-    font-size: 21px;
-    font-weight: bold;
+.tracker-table-shell {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 16px 16px 0 16px;
+}
+
+.tracker-table-layout {
+    display: grid;
+    grid-template-columns: 194px minmax(52px, 1fr) auto;
+    align-items: start;
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.tracker-table-layout.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.timeline-scroll-hint {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.timeline-scroll-edge {
+    position: absolute;
+    top: var(--timeline-scroll-hint-top, 128px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 74px;
+    height: 82px;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+.timeline-scroll-edge-left {
+    left: var(--timeline-scroll-hint-left, 202px);
+}
+
+.timeline-scroll-edge-right {
+    left: var(--timeline-scroll-hint-right, calc(100% - 256px));
+}
+
+.timeline-swipe-motion {
+    position: relative;
+    display: block;
+    width: 74px;
+    height: 82px;
+}
+
+.timeline-swipe-image {
+    position: absolute;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.timeline-swipe-arrow-image {
+    top: -10px;
+    width: 90%;
+    transform: translateX(10px) rotate(10deg);
+    transform-origin: center;
+}
+
+.timeline-swipe-hand-image {
+    top: 15%;
+    transform-origin: 46% 99%;
+    transform: rotate(10deg);
+    will-change: transform;
+}
+
+.timeline-swipe-label {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 74px;
+    padding: 3px 7px;
+    border: 1px solid rgba(33, 58, 92, 0.16);
+    border-radius: 999px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.58);
+    color: #213a5c;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.1px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(20, 40, 70, 0.12);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.92);
     white-space: nowrap;
 }
 
+.timeline-scroll-edge-left .timeline-swipe-motion {
+    transform: scaleX(-1);
+}
+
+.timeline-scroll-hint.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+}
+
+.timeline-scroll-hint.is-visible .timeline-swipe-hand-image {
+    animation: timeline-hand-wave 4.0s 0.2s linear 1 both;
+}
+
+.tracker-table-layout.is-share-capture .timeline-scroll-hint {
+    display: none !important;
+}
+
+@keyframes timeline-hand-wave {
+    0%, 33%, 66% {
+        transform: rotate(-14deg);
+        animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    27%, 60%, 93%, 100% { transform: rotate(10deg); }
+    27.01%, 60.01% { transform: rotate(-14deg); }
+}
+
+@media (max-width: 640px) {
+    .timeline-scroll-edge {
+        width: 68px;
+        height: 76px;
+    }
+
+    .timeline-swipe-motion {
+        width: 68px;
+        height: 76px;
+    }
+
+    .timeline-swipe-label {
+        top: 74px;
+        min-width: 68px;
+        font-size: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .timeline-scroll-hint,
+    .timeline-scroll-edge,
+    .timeline-swipe-hand-image {
+        animation: none !important;
+        transition: none !important;
+    }
+}
 
 .table-area {
     flex: 3;
     overflow-x: auto;
-    padding: 16px;
-    margin-bottom: 20px;
+    overflow-y: visible;
+    padding-inline: 0;
+    margin-bottom: 0;
     position: relative;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+    cursor: grab;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    isolation: isolate;
+}
+
+.table-area::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.table-area.is-dragging {
+    cursor: grabbing;
+}
+
+.table-area.is-dragging * {
+    cursor: grabbing !important;
 }
 
 /* Okuma düzenleme modları (Durum / Miktar) — user-stats ile aynı giriş efekti */
@@ -256,7 +423,7 @@
 
 /* Week loading overlay styles removed */
 
-#trackerTable td:last-child {
+#trackerSummaryTable td.col-streak {
     font-size: 21px;
     color: #ff1717;
     font-weight: bold;
@@ -266,29 +433,29 @@
 }
 
 /* Okuma serisi sütun başlığı (yalnızca ilk thead satırı; istatistik satırını hariç tut) */
-#trackerTable thead > tr:first-child th:last-child {
+#trackerSummaryTable thead > tr:first-child th.col-streak-heading {
     font-size: 16px;
     font-weight: 600;
     color: red;
 }
 
 /* Ay okuması sütunu (Okuma Serisi'nin solu) */
-#trackerTable thead > tr:first-child th.col-total-amount {
+#trackerSummaryTable thead > tr:first-child th.col-total-amount {
     font-size: 15px;
     font-weight: 600;
     color: #208a3c;
     white-space: nowrap;
 }
 
-#trackerTable thead > tr:first-child th.col-total-amount .col-season-month {
+#trackerSummaryTable thead > tr:first-child th.col-total-amount .col-season-month {
     font-size: 17px;
 }
 
-#trackerTable thead > tr:first-child th.col-total-amount .col-season-suffix {
+#trackerSummaryTable thead > tr:first-child th.col-total-amount .col-season-suffix {
     font-size: 16px;
 }
 
-#trackerTable td.col-total-amount {
+#trackerSummaryTable td.col-total-amount {
     font-size: 20px;
     font-weight: 700;
     color: #208a3c;
@@ -299,7 +466,7 @@
     min-width: 72px;
 }
 
-#trackerTable thead .stats-footer-row th.stats-footer-amount .col-read {
+#trackerSummaryTable thead .stats-footer-row th.stats-footer-amount .col-read {
     color: #208a3c;
     font-size: 18px;
     font-weight: 700;
@@ -409,41 +576,76 @@
     color: darkred;
 }
 
-.green:hover {
-    background-color: rgb(56, 197, 80) !important;
+/* Dokunmatik tarayıcılar :hover durumunu dokunuştan sonra yapışık
+   tutabildiği için renk değişimlerini yalnızca gerçek hover cihazlarında uygula. */
+@media (hover: hover) and (pointer: fine) {
+    .green:hover {
+        background-color: rgb(56, 197, 80) !important;
+    }
+
+    .pink:hover {
+        background-color: rgb(255, 200, 70) !important;
+    }
+
+    .lila:hover {
+        background-color: rgb(255, 150, 40) !important;
+    }
+
+    .red:hover {
+        background-color: #ff451a !important;
+    }
 }
 
-.pink:hover {
-    background-color: rgb(255, 200, 70) !important;
-}
+/* Bazı mobil tarayıcılar dokunmayı :hover olarak da işaretleyebiliyor.
+   Dokunmatik bir işaretçi varsa hücrenin gerçek durum rengini koru. */
+@media (any-pointer: coarse) {
+    #trackerTable td.green:hover {
+        background-color: rgb(76, 217, 100) !important;
+    }
 
-.lila:hover {
-    background-color: rgb(255, 150, 40) !important;
-}
+    #trackerTable td.pink:hover {
+        background-color: rgb(255, 220, 90) !important;
+    }
 
-.red:hover {
-    background-color: #ff451a !important;
+    #trackerTable td.lila:hover {
+        background-color: rgb(255, 170, 60) !important;
+    }
+
+    #trackerTable td.red:hover {
+        background-color: rgb(255, 100, 60) !important;
+    }
 }
 
 /* Gelecek tarihler için devre dışı görünüm */
 .future-date {
     background-color: #f8f9fa !important;
     color: #6c757d !important;
-}
-
-.future-date:hover {
-    background-color: #f1f1f1 !important;
-    transform: none !important;
-    box-shadow: none !important;
+    border: 2px solid #d0d0d0 !important;
 }
 
 /* Boş hücreler için stil */
 .empty {
+    border: 2px solid #d0d0d0 !important;
     background-color: #f8f9fa;
 }
 
-.empty:hover {
-    background-color: #e9ecef;
+@media (hover: hover) and (pointer: fine) {
+    .future-date:hover {
+        background-color: #f1f1f1 !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .empty:hover {
+        background-color: #e9ecef;
+    }
+}
+
+@media (any-pointer: coarse) {
+    #trackerTable td.future-date:hover,
+    #trackerTable td.empty:hover {
+        background-color: #f8f9fa !important;
+    }
 }
 
 
@@ -459,16 +661,8 @@
     transition: background-color 0.2s ease;
 }
 
-.reading-edit-mode-segment.needs-choice {
-    box-shadow: 0 0 0 2px rgba(10, 52, 110, 0.7);
-}
-
-.reading-edit-mode-segment.needs-choice + .reading-edit-mode-hint {
-    text-decoration: underline;
-}
-
 #trackerTable td {
-    border: 2px solid #c7c7c7;
+    border: 2px solid #f0f0f0;
     padding: 10px;
     text-align: center;
     font-size: 16px;
@@ -480,20 +674,134 @@
     -ms-user-select: none;
 }
 
-#trackerTable td:first-child {
+#trackerTable tbody tr:last-child td {
+    border-bottom-color: #c7c7c7;
+}
+
+.tracker-users-area {
+    position: relative;
+    z-index: 8;
+    width: 194px;
+    overflow: hidden;
+    background: #fff;
+}
+
+#trackerUsersTable {
+    width: 194px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#trackerUsersTable th,
+#trackerUsersTable td {
+    box-sizing: border-box;
+    width: 194px;
+    min-width: 194px;
+    max-width: 194px;
+    padding: 10px;
+    border: 2px solid #c7c7c7;
+}
+
+#trackerUsersTable td {
     font-size: 18px;
     font-weight: 500;
-    border: 2px solid #f1f1f1;
-    min-width: 0;
-    width: 170px;
+    border-color: #f0f0f0 #c7c7c7;
     text-align: left;
 }
 
-#trackerTable th:first-child {
+#trackerUsersTable tbody tr:first-child td {
+    border-top-color: #c7c7c7;
+}
+
+#trackerUsersTable tbody tr:last-child td {
+    border-bottom-color: #c7c7c7;
+}
+
+#trackerUsersTable th {
     background-color: #f7f7f7;
     color: #333;
     font-size: 17px;
-    width: 170px;
+    box-shadow: inset -2px 0 0 #c7c7c7;
+}
+
+#trackerTable .day-column {
+    width: 80px;
+    box-sizing: border-box;
+    scroll-snap-align: end;
+    touch-action: pan-x pan-y;
+    /* Mobil tarayıcının dokunulan hücre üzerinde kaydırmaya kadar
+       tutabildiği yarı saydam vurgu katmanını gösterme. */
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tracker-summary-area {
+    position: relative;
+    z-index: 8;
+    width: 200px;
+    max-width: none;
+    overflow: visible;
+    background: #fff;
+}
+
+#trackerSummaryTable {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 200px;
+    max-width: 100%;
+}
+
+#trackerSummaryTable th,
+#trackerSummaryTable td {
+    box-sizing: border-box;
+    border: 2px solid #c7c7c7;
+    padding: 10px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    user-select: none;
+    vertical-align: middle;
+}
+
+#trackerSummaryTable th {
+    background-color: #f0f0f0;
+    color: #888;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#trackerSummaryTable .col-total-amount {
+    min-width: 112px;
+    width: var(--summary-amount-width, 112px);
+    max-width: none;
+}
+
+#trackerSummaryTable .col-streak,
+#trackerSummaryTable .col-streak-heading,
+#trackerSummaryTable .stats-footer-total {
+    min-width: 88px;
+    width: var(--summary-streak-width, 88px);
+    max-width: none;
+}
+
+#trackerSummaryTable .stats-footer-row th {
+    padding: 20px 10px;
+    background-color: #f0f0f0;
+}
+
+#trackerSummaryTable .stats-footer-row .col-counts {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+#trackerSummaryTable .stats-footer-row th.stats-footer-total,
+#trackerSummaryTable .stats-footer-row th.stats-footer-total #tfoot-total-streak {
+    color: #ff1717;
+    font-size: 21px;
+    font-weight: bold;
+    white-space: nowrap;
 }
 
 .date-text {
@@ -524,9 +832,13 @@
 
 
 .user-item {
+    vertical-align: middle;
+}
+
+.user-item-content {
     display: flex;
     align-items: center;
-    flex-grow: 1;
+    width: 100%;
     min-width: 0;
     gap: 8px;
 }
@@ -566,6 +878,8 @@
 .week-navigation {
     display: flex;
     justify-content: space-between;
+    min-height: 91px;
+    box-sizing: border-box;
     margin-top: 25px;
     margin-inline: 3px;
     opacity: 0;
@@ -582,7 +896,7 @@
 .nav-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 0;
 }
 
 .week-nav-button {
@@ -616,6 +930,25 @@
     font-weight: bold;
     color: white;
     border: 1px solid #408fd9;
+    box-sizing: border-box;
+    height: 43px;
+    max-height: 43px;
+    margin-top: 5px;
+    padding: 10px 15px;
+    opacity: 0;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.2s ease,
+        visibility 0s linear 0.2s;
+}
+
+.today-button.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s;
 }
 
 .today-button:hover {
@@ -726,6 +1059,7 @@
 .today-column {
     background-color: #EBF3FA;
     position: relative;
+    border:2px solid #c7c7c7;
     box-shadow: inset 0 0 0 2px rgba(91, 155, 213, 0.5);
 }
 
@@ -759,49 +1093,70 @@
 
 /* Tablo animasyonu */
 #trackerTable {
-    opacity: 0;
     border-collapse: collapse;
-    width: 100%;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    width: max-content;
+    min-width: 100%;
 }
 
-#trackerTable.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
+@media (max-width: 640px) {
+    .tracker-table-shell {
+        width: 100vw;
+        max-width: 100vw;
+        margin-left: calc(50% - 50vw);
+        padding-inline: 16px;
+    }
 
-#trackerTable thead {
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-}
+    .table-area {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+    }
 
-#trackerTable.visible thead {
-    opacity: 1;
-    transform: translateY(0);
-}
+    #trackerTable .day-column {
+        min-width: 52px;
+        width: 52px;
+        max-width: 52px;
+    }
 
-#trackerTable tbody {
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-}
+    .tracker-summary-area {
+        width: 200px;
+        max-width: none;
+    }
 
-#trackerTable tbody.tracker-table-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
+    #trackerSummaryTable {
+        width: 200px;
+    }
 
+    #trackerSummaryTable .col-total-amount {
+        min-width: 112px;
+    }
+
+    #trackerSummaryTable .col-streak,
+    #trackerSummaryTable .col-streak-heading,
+    #trackerSummaryTable .stats-footer-total {
+        min-width: 88px;
+    }
+}
 
 /* Giriş yapılan kullanıcının satırı için özel stil */
-.user-row.current-user-row {
-    border: 3px solid #28a745;
-    box-shadow: 0 0 0 1px #28a745, 0 4px 12px rgba(40, 167, 69, 0.3);
+.user-row.current-user-row,
+.summary-user-row.current-user-row {
+    border:3px solid #28a745;
+}
+
+.summary-user-row.current-user-row{
+    border-left:none;
+}
+
+#trackerUsersTable .user-row.current-user-row {
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+#trackerUsersTable .user-row.current-user-row .user-item {
     position: relative;
 }
 
-.user-row.current-user-row::before {
+#trackerUsersTable .user-row.current-user-row .user-item::before {
     content: '';
     position: absolute;
     top: 0;
@@ -812,9 +1167,14 @@
     z-index: 1;
 }
 
-.user-row.current-user-row td {
-    border-color: #28a745;
-    border-width: 2px;
+/* html2canvas pseudo öğeyi onclone'dan önce gerçek bir elemana dönüştürür.
+   Paylaşım yakalamasında mavi mevcut-kullanıcı şeridini baştan devre dışı bırak. */
+.tracker-table-layout.is-share-capture #trackerUsersTable .user-row.current-user-row .user-item::before {
+    content: none !important;
+    display: none !important;
+}
+
+#trackerTable .user-row.current-user-row td {
     position: relative;
 }
 
