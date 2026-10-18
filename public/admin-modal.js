@@ -142,7 +142,6 @@ async function showAdminIndicator() {
         // Çıkış yapmış kullanıcı için tüm elementleri gizle
         const adminIndicator = document.querySelector('.admin-indicator');
         const mainArea = document.querySelector('.main-area');
-        const userStatsArea = document.querySelector('.user-stats-info-area');
         const scrollToMainButton = document.querySelector('.scroll-to-main-button');
 
         if (typeof window.syncReadingEditModeBarVisibility === 'function') {
@@ -154,14 +153,6 @@ async function showAdminIndicator() {
             adminIndicator.classList.add('hidden');
         }
         if (mainArea) mainArea.style.display = 'none';
-        if (userStatsArea) {
-            userStatsArea.classList.remove('show');
-            userStatsArea.classList.add('collapsed');
-            setTimeout(() => {
-                userStatsArea.style.display = 'none';
-                userStatsArea.classList.remove('collapsed'); // Animasyon bittikten sonra class'ı temizle
-            }, 800); // Animasyon süresi kadar bekle
-        }
         if (scrollToMainButton) {
             scrollToMainButton.classList.remove('show');
             scrollToMainButton.classList.add('hidden');

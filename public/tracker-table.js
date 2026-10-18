@@ -117,7 +117,7 @@ function setTimelineTodayButtonVisibility(referenceDate) {
 
 function getTimelineScrollHintSessionKey() {
     const groupKey = window.groupid || window.location.pathname || 'default';
-    return `timeline-scroll-hint-v23-shown:${groupKey}`;
+    return `timeline-scroll-hint-shown:${groupKey}`;
 }
 
 function hasShownTimelineScrollHint() {
@@ -154,24 +154,26 @@ function dismissTimelineScrollHint() {
 
 function positionTimelineScrollHint() {
     if (!timelineScrollHint || !trackerTableLayout || !trackerTable || !tableArea) return;
-    const firstUserRow = trackerTable.querySelector('tbody tr.user-row');
-    if (!firstUserRow) return;
-    const leftEdge = timelineScrollHint.querySelector('.timeline-scroll-edge-left');
-    const rightEdge = timelineScrollHint.querySelector('.timeline-scroll-edge-right');
-    if (!leftEdge || !rightEdge) return;
+    const swipeGuide = timelineScrollHint.querySelector('.timeline-swipe-guide');
+    const swipeArrow = timelineScrollHint.querySelector('.timeline-swipe-arrow');
+    if (!swipeGuide || !swipeArrow) return;
     const layoutRect = trackerTableLayout.getBoundingClientRect();
     const tableAreaRect = tableArea.getBoundingClientRect();
-    const rowRect = firstUserRow.getBoundingClientRect();
-    const edgeHeight = Math.max(leftEdge.offsetHeight, rightEdge.offsetHeight);
-    const leftWidth = leftEdge.offsetWidth;
-    const rightWidth = rightEdge.offsetWidth;
-    const horizontalInset = Math.max(leftWidth, rightWidth) * 1;
-    const centeredTop = rowRect.top - layoutRect.top + ((rowRect.height - edgeHeight) / 2) + 45;
-    const leftPosition = tableAreaRect.left - layoutRect.left - (leftWidth / 2) + horizontalInset;
-    const rightPosition = tableAreaRect.right - layoutRect.left - (rightWidth / 2) - horizontalInset;
+    const tableRect = trackerTable.getBoundingClientRect();
+    const readingRows = Array.from(trackerTable.querySelectorAll('tbody tr.user-row'));
+    const firstReadingRowRect = readingRows[0]?.getBoundingClientRect();
+    const lastReadingRowRect = readingRows[readingRows.length - 1]?.getBoundingClientRect();
+    const readingRowsCenter = firstReadingRowRect && lastReadingRowRect
+        ? ((firstReadingRowRect.top + lastReadingRowRect.bottom) / 2) - layoutRect.top
+        : tableRect.top - layoutRect.top + (tableRect.height / 2);
+    const guideRect = swipeGuide.getBoundingClientRect();
+    const arrowRect = swipeArrow.getBoundingClientRect();
+    const arrowOffsetFromGuideCenter = (arrowRect.top + (arrowRect.height / 2))
+        - (guideRect.top + (guideRect.height / 2));
+    const centeredTop = readingRowsCenter - arrowOffsetFromGuideCenter;
+    const centeredLeft = tableAreaRect.left - layoutRect.left + (tableAreaRect.width / 2);
     timelineScrollHint.style.setProperty('--timeline-scroll-hint-top', `${Math.max(0, centeredTop)}px`);
-    timelineScrollHint.style.setProperty('--timeline-scroll-hint-left', `${leftPosition}px`);
-    timelineScrollHint.style.setProperty('--timeline-scroll-hint-right', `${rightPosition}px`);
+    timelineScrollHint.style.setProperty('--timeline-scroll-hint-left', `${centeredLeft}px`);
 }
 
 function bindTimelineScrollHintInteraction() {
@@ -198,8 +200,8 @@ function scheduleTimelineScrollHint() {
         positionTimelineScrollHint();
         markTimelineScrollHintAsShown();
         timelineScrollHint.classList.add('is-visible');
-        timelineScrollHintHideTimer = setTimeout(hideTimelineScrollHint, 4200);
-    }, 1000);
+        timelineScrollHintHideTimer = setTimeout(hideTimelineScrollHint, 4100);
+    }, 1200);
 }
 
 // Session kontrolü için değişkenler
@@ -269,16 +271,8 @@ async function updateUserStatsAreaWithStreak() {
     updateLeagueProgress(totalReading);
 
     // Tüm veriler yüklendikten sonra modülü animasyonlu olarak görünür yap
-    const userStatsArea = document.querySelector('.user-stats-info-area');
-    if (userStatsArea) {
-        userStatsArea.style.display = 'flex';
-        // Kısa bir gecikme ile animasyon başlat
-        setTimeout(() => {
-            userStatsArea.classList.add('show');
-        }, 50);
-    }
-    if (typeof window.showReadingEditModeBar === 'function') {
-        window.showReadingEditModeBar();
+    if (typeof window.showAuthenticatedUserAreas === 'function') {
+        window.showAuthenticatedUserAreas();
     }
 }
 
@@ -499,9 +493,9 @@ function isMonthBoundaryColumn(dates, index) {
 // Yükleme overlay'i kaldırıldı
 
 function formatDateRange(dates) {
-    if (!dates || dates.length < 7) return '';
-    const startDate = new Date(dates[0]);
-    const endDate = new Date(dates[6]);
+    if (!dates || dates.length === 0) return '';
+    const startDate = fromDateKey(dates[0]);
+    const endDate = fromDateKey(dates[dates.length - 1]);
     const months = [
         'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
         'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
@@ -510,6 +504,9 @@ function formatDateRange(dates) {
     const endDay = endDate.getDate();
     const startMonth = months[startDate.getMonth()];
     const endMonth = months[endDate.getMonth()];
+    if (dates.length === 1) {
+        return `${startDay} ${startMonth}`;
+    }
     if (startMonth === endMonth) {
         return `${startDay} - ${endDay} ${startMonth}`;
     } else {
@@ -897,6 +894,7 @@ async function loadTrackerTable(options = {}) {
             scrollTimelineDateIntoRightEdge(timelineReferenceDate || getTodayDateKey(), false);
             timelineHasPositioned = true;
         }
+        updateCurrentWeekDisplayFromViewport(timelineReferenceDate || getTodayDateKey());
         scheduleTimelineScrollHint();
     });
 }
@@ -990,18 +988,38 @@ function scrollTimelineDateIntoRightEdge(dateKey, smooth) {
     return true;
 }
 
-function getTimelineRightmostVisibleDate() {
-    if (!tableArea || !trackerTable) return timelineReferenceDate || getTodayDateKey();
+function getTimelineVisibleDates() {
+    if (!tableArea || !trackerTable) return [];
     const areaRect = tableArea.getBoundingClientRect();
     const rightLimit = areaRect.right - getTimelinePinnedRightWidth();
     const leftLimit = areaRect.left;
-    let result = null;
+    const visibleDates = [];
+    let bestCandidate = null;
+    let bestVisibleWidth = 0;
     trackerTable.querySelectorAll('thead tr:first-child th.day-column[data-date]').forEach(function (cell) {
         const rect = cell.getBoundingClientRect();
-        const center = rect.left + rect.width / 2;
-        if (center >= leftLimit && center <= rightLimit + 1) result = cell.dataset.date;
+        const visibleWidth = Math.max(0, Math.min(rect.right, rightLimit) - Math.max(rect.left, leftLimit));
+        if (visibleWidth > bestVisibleWidth) {
+            bestVisibleWidth = visibleWidth;
+            bestCandidate = cell.dataset.date;
+        }
+        if (visibleWidth >= rect.width / 2) visibleDates.push(cell.dataset.date);
     });
-    return result || timelineReferenceDate || getTodayDateKey();
+    return visibleDates.length > 0 ? visibleDates : (bestCandidate ? [bestCandidate] : []);
+}
+
+function getTimelineRightmostVisibleDate() {
+    const visibleDates = getTimelineVisibleDates();
+    return visibleDates[visibleDates.length - 1] || timelineReferenceDate || getTodayDateKey();
+}
+
+function updateCurrentWeekDisplayFromViewport(fallbackReferenceDate) {
+    if (!currentWeekDisplay) return;
+    const visibleDates = getTimelineVisibleDates();
+    const displayDates = visibleDates.length > 0
+        ? visibleDates
+        : getSevenDaysEndingAt(fallbackReferenceDate || timelineReferenceDate || getTodayDateKey());
+    currentWeekDisplay.textContent = formatDateRange(displayDates);
 }
 
 function buildSeasonHeaderHtml(dates) {
@@ -1029,7 +1047,7 @@ function updateTimelineSummaries(referenceDate) {
     if (!referenceDate) return;
     timelineReferenceDate = referenceDate;
     const analysisDates = getSevenDaysEndingAt(referenceDate);
-    currentWeekDisplay.textContent = formatDateRange(analysisDates);
+    updateCurrentWeekDisplayFromViewport(referenceDate);
     setTimelineTodayButtonVisibility(referenceDate);
 
     const weekStats = computeWeekMarkedReadStats(timelineLastUsers, timelineLastStatMap, analysisDates);
@@ -1299,6 +1317,12 @@ function setupTimelineScrolling() {
         event.stopPropagation();
         event.stopImmediatePropagation();
     }, true);
+
+    window.addEventListener('resize', function () {
+        requestAnimationFrame(function () {
+            updateCurrentWeekDisplayFromViewport(timelineReferenceDate || getTodayDateKey());
+        });
+    }, { passive: true });
 }
 
 async function jumpTimelineByDays(dayAmount) {
