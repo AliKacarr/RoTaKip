@@ -201,7 +201,7 @@ function scheduleTimelineScrollHint() {
         markTimelineScrollHintAsShown();
         timelineScrollHint.classList.add('is-visible');
         timelineScrollHintHideTimer = setTimeout(hideTimelineScrollHint, 4100);
-    }, 1200);
+    }, 1500);
 }
 
 // Session kontrolü için değişkenler
