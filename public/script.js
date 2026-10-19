@@ -89,10 +89,24 @@ class LocalStorageManager {
     const userId = this.getCurrentUserId();
     if (!userId) return null;
 
+    // `groups` eşlemesi kalıcıdır; tek başına aktif oturum anlamına gelmez.
+    // Sayfa açılışındaki yeniden doğrulama tamamlanana kadar yarım oturum
+    // bilgisiyle navigasyon butonlarının farklı zamanlarda görünmesini önle.
+    const activeGroupId = localStorage.getItem('groupid');
+    const activeUserId = localStorage.getItem('userid');
+    const userAuthority = localStorage.getItem('userAuthority');
+    if (
+      activeGroupId !== groupid ||
+      activeUserId !== userId ||
+      !['admin', 'member'].includes(userAuthority)
+    ) {
+      return null;
+    }
+
     return {
       groupId: groupid,
       userId: userId,
-      userAuthority: localStorage.getItem('userAuthority'),
+      userAuthority,
       userName: localStorage.getItem('userName'),
       groupName: localStorage.getItem('groupName'),
       name: localStorage.getItem('name')

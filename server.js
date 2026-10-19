@@ -792,20 +792,32 @@ async function deleteFromDropbox(fileName, folder) {
   }
 }
 
+async function listAllDropboxFolderEntries(folderPath) {
+  let response = await dbx.filesListFolder({ path: folderPath });
+  const entries = [...response.result.entries];
+
+  while (response.result.has_more) {
+    response = await dbx.filesListFolderContinue({ cursor: response.result.cursor });
+    entries.push(...response.result.entries);
+  }
+
+  return entries;
+}
+
 // URL'den Dropbox dosyasını sil
 async function deleteFromDropboxByUrl(fileUrl) {
   try {
     // URL'den dosya adını ayıkla
     const url = new URL(fileUrl);
     const pathParts = url.pathname.split('/');
-    const fileName = pathParts[pathParts.length - 1]; // Son parça dosya adı
+    const fileName = decodeURIComponent(pathParts[pathParts.length - 1]); // Son parça dosya adı
 
 
     // userImages klasöründeki tüm dosyaları listele
-    const listResponse = await dbx.filesListFolder({ path: '/userImages' });
+    const entries = await listAllDropboxFolderEntries('/userImages');
 
     // Dosya adını Dropbox'taki gerçek adıyla eşleştir
-    const exactFile = listResponse.result.entries.find(f => {
+    const exactFile = entries.find(f => {
       // Önce tam eşleşme dene
       if (f.name === fileName) return true;
 
@@ -816,7 +828,7 @@ async function deleteFromDropboxByUrl(fileUrl) {
     });
 
     if (!exactFile) {
-      console.log(`❌ Dosya bulunamadı: ${fileName}`);
+      console.log(`ℹ️ Dropbox kullanıcı resmi zaten yok: ${fileName}`);
       return;
     }
 
@@ -826,7 +838,14 @@ async function deleteFromDropboxByUrl(fileUrl) {
     // Dropbox'tan sil
     await dbx.filesDeleteV2({ path: filePath });
   } catch (error) {
-    console.error('Hata detayı:', error.error);
+    // Dosya bulunamadıysa silme işlemi idempotent olarak başarılı kabul edilir
+    if (error.status === 409) {
+      console.log(`ℹ️ Dropbox kullanıcı resmi zaten yok: ${fileUrl}`);
+      return;
+    }
+
+    console.error('Dropbox kullanıcı resmi silme hatası:', error);
+    throw error;
   }
 }
 
@@ -852,14 +871,17 @@ async function deleteGroupImageFromDropboxByUrl(fileUrl) {
     if (!fileName) return;
 
     // groupImages klasöründeki gerçek dosya adını bul (normalizasyon/encoding farklarına dayanıklı)
-    const listResponse = await dbx.filesListFolder({ path: '/groupImages' });
-    const exactFile = listResponse.result.entries.find((f) => {
+    const entries = await listAllDropboxFolderEntries('/groupImages');
+    const exactFile = entries.find((f) => {
       if (f.name === fileName) return true;
       const dbTimestamp = String(f.name || '').split('-')[0];
       const urlTimestamp = String(fileName || '').split('-')[0];
       return dbTimestamp && urlTimestamp && dbTimestamp === urlTimestamp;
     });
-    if (!exactFile) return;
+    if (!exactFile) {
+      console.log(`ℹ️ Dropbox grup resmi zaten yok: ${fileName}`);
+      return;
+    }
 
     const dropboxPath = `/groupImages/${exactFile.name}`;
 
@@ -867,9 +889,38 @@ async function deleteGroupImageFromDropboxByUrl(fileUrl) {
     await dbx.filesDeleteV2({ path: dropboxPath });
   } catch (error) {
     // 409 hatası "not_found" demek, dosya zaten silinmiş - bu normal
-    if (error.status !== 409) {
-      console.error('Dropbox grup resmi silme hatası:', error);
+    if (error.status === 409) {
+      console.log(`ℹ️ Dropbox grup resmi zaten yok: ${fileUrl}`);
+      return;
     }
+
+    console.error('Dropbox grup resmi silme hatası:', error);
+    throw error;
+  }
+}
+
+async function deleteGroupDropboxImages(group, users) {
+  const deletionTasks = [];
+  const queuedUrls = new Set();
+
+  const queueDeletion = (fileUrl, deleteImage) => {
+    if (!isDropboxHostedUrl(fileUrl) || queuedUrls.has(fileUrl)) return;
+    queuedUrls.add(fileUrl);
+    deletionTasks.push(deleteImage(fileUrl));
+  };
+
+  queueDeletion(group?.groupImage, deleteGroupImageFromDropboxByUrl);
+  for (const user of users) {
+    queueDeletion(user.profileImage, deleteFromDropboxByUrl);
+  }
+
+  const results = await Promise.allSettled(deletionTasks);
+  const errors = results
+    .filter(result => result.status === 'rejected')
+    .map(result => result.reason);
+
+  if (errors.length > 0) {
+    throw new AggregateError(errors, 'Gruba ait Dropbox resimleri tamamen silinemedi');
   }
 }
 
@@ -1524,62 +1575,19 @@ app.delete('/api/delete-group/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
-    // Grup resmini Dropbox'tan sil
-    if (isDropboxHostedUrl(group.groupImage)) {
-      deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
-        console.error('Grup resmi silme hatası:', err)
-      );
-    }
-
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
-    // Tüm kullanıcıların profil resimlerini Dropbox'tan sil
+    // Veritabanı kayıtları silinmeden önce tüm Dropbox resimlerini sil
     const allUsers = await users.find().lean();
-    for (const user of allUsers) {
-      if (isDropboxHostedUrl(user.profileImage)) {
-        deleteFromDropboxByUrl(user.profileImage).catch(err =>
-          console.error('Kullanıcı resmi silme hatası:', err)
-        );
-      }
-    }
+    await deleteGroupDropboxImages(group, allUsers);
 
     // Grup koleksiyonlarını sil
     await users.deleteMany({});
     await readingStatuses.deleteMany({});
 
-    // Koleksiyonları tamamen sil - MongoDB native yöntemle
-    try {
-      // Doğrudan database bağlantısı ile koleksiyonları sil
-      const db = mongoose.connection.db;
-
-      // Users koleksiyonunu sil
-      try {
-        await db.collection(`users_${groupId}`).drop();
-        console.log(`✅ Users koleksiyonu silindi: users_${groupId}`);
-      } catch (dropErr) {
-        if (dropErr.code === 26) {
-          console.log(`ℹ️ Users koleksiyonu zaten yok: users_${groupId}`);
-        } else {
-          console.error('❌ Users koleksiyonu silme hatası:', dropErr);
-        }
-      }
-
-      // ReadingStatuses koleksiyonunu sil
-      try {
-        await db.collection(`readingstatuses_${groupId}`).drop();
-        console.log(`✅ ReadingStatuses koleksiyonu silindi: readingstatuses_${groupId}`);
-      } catch (dropErr) {
-        if (dropErr.code === 26) {
-          console.log(`ℹ️ ReadingStatuses koleksiyonu zaten yok: readingstatuses_${groupId}`);
-        } else {
-          console.error('❌ ReadingStatuses koleksiyonu silme hatası:', dropErr);
-        }
-      }
-
-    } catch (error) {
-      console.error('❌ Koleksiyon silme genel hatası:', error);
-    }
+    // Koleksiyonları tamamen sil
+    await dropGroupCollections(groupId);
 
     // Admin kaydı artık users koleksiyonunda, ayrı silmeye gerek yok
 
@@ -1646,6 +1654,33 @@ function getGroupCollections(groupId) {
     users: userModel,
     readingStatuses: readingStatusModel
   };
+}
+
+async function dropGroupCollections(groupId) {
+  const collectionNames = [
+    `users_${groupId}`,
+    `readingstatuses_${groupId}`
+  ];
+  const dropErrors = [];
+
+  for (const collectionName of collectionNames) {
+    try {
+      await mongoose.connection.db.dropCollection(collectionName);
+      console.log(`✅ Grup koleksiyonu silindi: ${collectionName}`);
+    } catch (error) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        console.log(`ℹ️ Grup koleksiyonu zaten yok: ${collectionName}`);
+        continue;
+      }
+
+      console.error(`❌ Grup koleksiyonu silme hatası (${collectionName}):`, error);
+      dropErrors.push(error);
+    }
+  }
+
+  if (dropErrors.length > 0) {
+    throw new AggregateError(dropErrors, `Grup koleksiyonları tamamen silinemedi: ${groupId}`);
+  }
 }
 
 
@@ -1852,25 +1887,17 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
 
     // Eğer gruptaki son kullanıcıyı silmeye çalışıyorsa grubu da sil
     if (totalUserCount <= 1) {
+      // Veritabanı kayıtları silinmeden önce Dropbox resimlerini sil
+      await deleteGroupDropboxImages(group, [user]);
+
       // Önce kullanıcıyı sil
       await users.findByIdAndDelete(id);
 
       // Kullanıcının okuma durumlarını sil
       await readingStatuses.deleteMany({ userId: id });
 
-      // Kullanıcının profil resmini Dropbox'tan sil (arka planda)
-      if (isDropboxHostedUrl(user.profileImage)) {
-        deleteFromDropboxByUrl(user.profileImage).catch(err =>
-          console.error('Dropbox silme hatası:', err)
-        );
-      }
-
-      // Grup resmi Dropbox'ta ise onu da sil
-      if (isDropboxHostedUrl(group.groupImage)) {
-        deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
-          console.error('Grup resmi silme hatası:', err)
-        );
-      }
+      // Son kullanıcıyla birlikte gruba ait MongoDB koleksiyonlarını da tamamen sil
+      await dropGroupCollections(groupId);
 
       // Grubu sil
       await UserGroup.findOneAndDelete({ groupId });
