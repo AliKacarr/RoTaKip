@@ -1131,8 +1131,15 @@
 .today-column {
     background-color: #EBF3FA;
     position: relative;
-    border:2px solid #c7c7c7;
     box-shadow: inset 0 0 0 2px rgba(91, 155, 213, 0.5);
+}
+
+#trackerTable thead th.today-column {
+    border: 2px solid #c7c7c7;
+}
+
+#trackerTable tbody td.today-column {
+    border: 2px solid #f0f0f0 !important;
 }
 
 /* Ensure colored cells still show their colors when they're also today's column */

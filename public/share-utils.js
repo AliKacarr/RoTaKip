@@ -211,6 +211,62 @@ async function shareContainerAsImage(config) {
     }
 }
 
+// DOM görüntüsü yakalamadan, kodla üretilen bir görseli aynı önizleme panelinde açar.
+async function shareGeneratedImage(config) {
+    const {
+        modalId,
+        titleText,
+        fileNamePrefix,
+        shareTitle,
+        shareText,
+        createImage,
+        onRestore
+    } = config;
+
+    const modalConfig = getShareModalConfig(modalId);
+    if (!modalConfig || typeof createImage !== 'function') {
+        console.error(`Kodla üretilen paylaşım yapılandırması geçersiz: ${modalId}`);
+        return;
+    }
+
+    const flags = shareProcessingFlags.get(modalId) || { isProcessing: false, cancel: false };
+    if (flags.isProcessing) return;
+
+    shareProcessingFlags.set(modalId, { isProcessing: true, cancel: false });
+    showShareModalLoading(modalId, titleText);
+
+    try {
+        const generated = await createImage();
+        const blob = generated instanceof Blob ? generated : generated?.blob;
+        if (!(blob instanceof Blob)) throw new Error('Görsel üreticisi geçerli bir resim döndürmedi.');
+
+        const currentFlags = shareProcessingFlags.get(modalId);
+        if (currentFlags?.cancel) {
+            shareProcessingFlags.set(modalId, { isProcessing: false, cancel: false });
+            return;
+        }
+
+        const safeTitle = String(titleText || 'gorsel').trim().replace(/\s+/g, '-');
+        const fileName = `${fileNamePrefix}-${safeTitle}-${Date.now()}.png`;
+        const imageUrl = URL.createObjectURL(blob);
+        showShareModalReady(
+            modalId,
+            titleText,
+            imageUrl,
+            blob,
+            fileName,
+            shareTitle,
+            shareText,
+            onRestore
+        );
+        shareProcessingFlags.set(modalId, { isProcessing: false, cancel: false });
+    } catch (error) {
+        console.error('Kodla görsel oluşturulurken hata oluştu:', error);
+        closeShareModal(modalId, onRestore);
+        shareProcessingFlags.set(modalId, { isProcessing: false, cancel: false });
+    }
+}
+
 // Modal'ı loading durumunda göster (genel)
 function showShareModalLoading(modalId, titleText) {
     const config = getShareModalConfig(modalId);
@@ -427,6 +483,7 @@ function setupShareModal(modalId, closeBtnId, onRestore) {
 
 // Global olarak erişilebilir yap
 window.shareContainerAsImage = shareContainerAsImage;
+window.shareGeneratedImage = shareGeneratedImage;
 window.setupShareModal = setupShareModal;
 window.getShareModalConfig = getShareModalConfig;
 window.showShareModalLoading = showShareModalLoading;

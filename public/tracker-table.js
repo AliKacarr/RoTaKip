@@ -1902,96 +1902,42 @@ function getDayOfWeekInTurkish(date) {
     return days[date.getDay()];
 }
 
-function removeCurrentUserHighlightFromShareClone(clonedLayout) {
-    if (!clonedLayout) return;
-    clonedLayout.querySelectorAll('.current-user-row').forEach(function (row) {
-        row.querySelectorAll('html2canvaspseudoelement').forEach(function (pseudoElement) {
-            pseudoElement.remove();
-        });
-        row.classList.remove('current-user-row');
-    });
-}
-
-// Tabloyu resme çevirip modal'da göster
+// Seçili referans gününde biten yedi günlük tabloyu kodla çizip modal'da göster.
 async function shareTrackerTable() {
     const shareDates = getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey());
     const weekText = formatDateRange(shareDates);
-    const selectedDates = new Set(shareDates);
-    const scrollLeftBeforeShare = tableArea ? tableArea.scrollLeft : 0;
-    const referenceDateBeforeShare = timelineReferenceDate;
+    const data = window.globalDataStore
+        ? window.globalDataStore.getAllData()
+        : { users: timelineLastUsers, stats: timelineLastStats };
+    const turkishNameCollator = new Intl.Collator('tr-TR', {
+        sensitivity: 'base',
+        numeric: true
+    });
+    const users = (Array.isArray(data.users) ? data.users : []).slice().sort(function (first, second) {
+        return turkishNameCollator.compare(first.name || '', second.name || '');
+    });
+    const stats = Array.isArray(data.stats) ? data.stats : [];
 
     timelineIsSharing = true;
     clearTimeout(timelineScrollTimer);
     timelineScrollTimer = null;
-    trackerTableLayout.classList.add('is-share-capture');
-
-    // Dropbox resimlerini default.png olarak değiştir
-    const prepareImages = async () => {
-        const profileImages = trackerUsersTable.querySelectorAll('.tracker-profile-image');
-        const imageUpdates = [];
-
-        profileImages.forEach(img => {
-            const src = img.src || img.getAttribute('src') || '';
-            const isLocalPath = src.includes('/images/') || src.includes('/userAvatars/');
-
-            if (src && (src.startsWith('http://') || src.startsWith('https://')) && !isLocalPath) {
-                imageUpdates.push({
-                    img: img,
-                    originalSrc: src
-                });
-                img.src = '/images/default.png';
-            }
-        });
-
-        await Promise.all(imageUpdates.map(({ img }) => {
-            return new Promise((resolve) => {
-                if (img.complete) {
-                    resolve();
-                } else {
-                    img.onload = resolve;
-                    img.onerror = resolve;
-                    setTimeout(resolve, 2000);
-                }
-            });
-        }));
-    };
 
     try {
-        await window.shareContainerAsImage({
-            container: trackerTableLayout,
+        await window.shareGeneratedImage({
             modalId: 'tableShareModal',
             titleText: weekText,
             fileNamePrefix: 'okuma-tablosu',
             shareTitle: 'Okuma Tablosu',
             shareText: `${weekText} haftası okuma tablosu`,
-            onRestore: () => {
-                if (typeof loadTrackerTable === 'function') {
-                    loadTrackerTable();
-                }
-            },
-            prepareImages: prepareImages,
-            prepareClone: (clonedDocument) => {
-                const clonedLayout = clonedDocument.querySelector('.tracker-table-layout');
-                if (!clonedLayout) return;
-                clonedLayout.querySelectorAll('#trackerTable .day-column[data-date]').forEach(function (cell) {
-                    if (!selectedDates.has(cell.dataset.date)) cell.remove();
-                });
-                removeCurrentUserHighlightFromShareClone(clonedLayout);
-                const clonedTableArea = clonedLayout.querySelector('.table-area');
-                if (clonedTableArea) clonedTableArea.scrollLeft = 0;
-            }
+            createImage: () => window.generateWeeklyTableImage({
+                users: users,
+                stats: stats,
+                dates: shareDates,
+                todayKey: getTodayDateKey()
+            })
         });
     } finally {
-        trackerTableLayout.classList.remove('is-share-capture');
-        // Paylaşım yardımcısı tabloyu bir sonraki karede eski DOM konumuna taşır.
-        // Ondan sonraki karede kullanıcının kaydırma konumunu ve açık haftasını geri yükle.
-        requestAnimationFrame(function () {
-            if (referenceDateBeforeShare) updateTimelineSummaries(referenceDateBeforeShare);
-            if (tableArea) tableArea.scrollLeft = scrollLeftBeforeShare;
-            requestAnimationFrame(function () {
-                timelineIsSharing = false;
-            });
-        });
+        timelineIsSharing = false;
     }
 }
 
@@ -2073,11 +2019,7 @@ document.addEventListener('DOMContentLoaded', () => {
         shareTableBtn.addEventListener('click', shareTrackerTable);
     }
 
-    window.setupShareModal('tableShareModal', 'closeTableShareModal', () => {
-        if (typeof loadTrackerTable === 'function') {
-            loadTrackerTable();
-        }
-    });
+    window.setupShareModal('tableShareModal', 'closeTableShareModal');
 
     // Month share modal setup
     window.setupShareModal('monthShareModal', 'closeMonthShareModal', () => {
