@@ -91,40 +91,81 @@ function getRandomVideos(videos, count) {
     return shuffled.slice(0, count);
 }
 
-// Videoları ekrana bas
-function renderVideos(videos) {
-    videosContainer.innerHTML = '';
+function lockVideosContainerHeight() {
+    const currentHeight = videosContainer.getBoundingClientRect().height;
 
-    const videoIds = videos.map(item => item.snippet.resourceId.videoId);
+    if (currentHeight > 0) {
+        videosContainer.style.setProperty('--videos-container-locked-height', `${currentHeight}px`);
+        videosContainer.classList.add('is-updating');
+    }
+}
 
-    fetchVideosDetails(videoIds).then(details => {
-        const viewMap = {};
-        details.forEach(item => {
-            viewMap[item.id] = parseInt(item.statistics.viewCount, 10) || 0;
+function unlockVideosContainerHeight() {
+    videosContainer.classList.remove('is-updating');
+    videosContainer.style.removeProperty('--videos-container-locked-height');
+}
+
+function waitForVideoThumbnails() {
+    const thumbnails = Array.from(videosContainer.querySelectorAll('.thumbnail'));
+
+    if (thumbnails.length === 0) return Promise.resolve();
+
+    const thumbnailsReady = Promise.all(thumbnails.map(thumbnail => {
+        if (thumbnail.complete) return Promise.resolve();
+
+        return new Promise(resolve => {
+            thumbnail.addEventListener('load', resolve, { once: true });
+            thumbnail.addEventListener('error', resolve, { once: true });
         });
+    }));
 
-        // Tüm video kartlarını topluca oluştur ve ekle
-        const fragment = document.createDocumentFragment();
+    // Bozuk veya yanıt vermeyen bir görsel yükseklik kilidini süresiz tutmasın.
+    const timeout = new Promise(resolve => setTimeout(resolve, 3000));
+    return Promise.race([thumbnailsReady, timeout]);
+}
 
-        videos.forEach((item, index) => {
-            const videoId = item.snippet.resourceId.videoId;
-            const title = item.snippet.title;
-            const thumbnail = item.snippet.thumbnails.high.url;
-            const viewCount = viewMap[videoId] || 0;
-            const formattedViewCount = new Intl.NumberFormat('tr-TR').format(viewCount);
+// Videoları ekrana bas
+async function renderVideos(videos) {
+    const videoIds = videos.map(item => item.snippet.resourceId.videoId);
+    const details = await fetchVideosDetails(videoIds);
+    const viewMap = {};
+    const previousVisibility = Array.from(
+        videosContainer.querySelectorAll('.video-card:not(.loading-card)'),
+        card => card.classList.contains('visible')
+    );
 
-            // İlk videoyu global olarak sakla (daily-gift.js için)
-            if (index === 0) {
-                window.currentVideoData = {
-                    url: `https://www.youtube.com/watch?v=${videoId}`,
-                    thumbnail: thumbnail,
-                    videoId: videoId
-                };
-            }
+    details.forEach(item => {
+        viewMap[item.id] = parseInt(item.statistics.viewCount, 10) || 0;
+    });
 
-            const videoCard = document.createElement('div');
-            videoCard.className = 'video-card scroll-fade-in';
-            videoCard.innerHTML = `
+    // Yeni kartlar hazırlanırken mevcut liste ekranda kalır.
+    const fragment = document.createDocumentFragment();
+
+    videos.forEach((item, index) => {
+        const videoId = item.snippet.resourceId.videoId;
+        const title = item.snippet.title;
+        const thumbnail = item.snippet.thumbnails.high.url;
+        const viewCount = viewMap[videoId] || 0;
+        const formattedViewCount = new Intl.NumberFormat('tr-TR').format(viewCount);
+
+        // İlk videoyu global olarak sakla (daily-gift.js için)
+        if (index === 0) {
+            window.currentVideoData = {
+                url: `https://www.youtube.com/watch?v=${videoId}`,
+                thumbnail: thumbnail,
+                videoId: videoId
+            };
+        }
+
+        const videoCard = document.createElement('div');
+        videoCard.className = 'video-card scroll-fade-in';
+        if (previousVisibility[index]) {
+            videoCard.classList.add('visible', 'video-card-refresh-enter');
+            videoCard.addEventListener('animationend', () => {
+                videoCard.classList.remove('video-card-refresh-enter');
+            }, { once: true });
+        }
+        videoCard.innerHTML = `
                 <img src="${thumbnail}" alt="${title}" class="thumbnail">
                 <span class="play-icon"><i class="fa-solid fa-play"></i></span>
                 <div class="video-title">
@@ -138,47 +179,50 @@ function renderVideos(videos) {
                 </div>
             `;
 
-            videoCard.addEventListener('click', () => {
-                openVideoModal(videoId);
-            });
-
-            // Share icon tıklama işlevi
-            const shareIcon = videoCard.querySelector('.video-share-icon');
-            if (shareIcon) {
-                shareIcon.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Video modalı açma
-                    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-                    const shareText = `${title} - ${videoUrl}`;
-                    if (navigator.share) {
-                        navigator.share({
-                            title: title,
-                            text: shareText
-                        }).catch(err => console.log('Paylaşım iptal edildi:', err));
-                    } else {
-                        navigator.clipboard.writeText(shareText).then(() => {
-                            alert('Paylaşım metni panoya kopyalandı!');
-                        }).catch(err => {
-                            console.error('Kopyalama hatası:', err);
-                            alert('Metin panoya kopyalanamadı.');
-                        });
-                    }
-                });
-            }
-
-            fragment.appendChild(videoCard);
+        videoCard.addEventListener('click', () => {
+            openVideoModal(videoId);
         });
 
-        videosContainer.appendChild(fragment);
+        // Share icon tıklama işlevi
+        const shareIcon = videoCard.querySelector('.video-share-icon');
+        if (shareIcon) {
+            shareIcon.addEventListener('click', (e) => {
+                e.stopPropagation(); // Video modalı açma
+                const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+                const shareText = `${title} - ${videoUrl}`;
+                if (navigator.share) {
+                    navigator.share({
+                        title: title,
+                        text: shareText
+                    }).catch(err => console.log('Paylaşım iptal edildi:', err));
+                } else {
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        alert('Paylaşım metni panoya kopyalandı!');
+                    }).catch(err => {
+                        console.error('Kopyalama hatası:', err);
+                        alert('Metin panoya kopyalanamadı.');
+                    });
+                }
+            });
+        }
 
+        fragment.appendChild(videoCard);
+    });
+
+    lockVideosContainerHeight();
+    videosContainer.replaceChildren(fragment);
+
+    try {
         if (typeof window.observeScrollFadeIn === 'function') {
-            document.querySelectorAll('.video-card:not(.loading-card)').forEach(card => {
+            videosContainer.querySelectorAll('.video-card').forEach(card => {
                 window.observeScrollFadeIn(card);
             });
         }
 
-    }).catch(error => {
-        console.error("Video detayları alınırken hata oluştu:", error);
-    });
+        await waitForVideoThumbnails();
+    } finally {
+        unlockVideosContainerHeight();
+    }
 }
 
 let isLoading = false;
@@ -199,7 +243,7 @@ async function showLatestVideos() {
         allVideos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
 
         // İlk 6 videoyu al
-        renderVideos(allVideos.slice(0, 6));
+        await renderVideos(allVideos.slice(0, 6));
     } catch (error) {
         videosContainer.innerHTML = `<div class="error">Videolar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</div>`;
     } finally {
@@ -231,7 +275,7 @@ async function showMostViewedVideos() {
             viewMap[item.id] = parseInt(item.statistics.viewCount, 10) || 0;
         });
         allVideos.sort((a, b) => (viewMap[b.snippet.resourceId.videoId] || 0) - (viewMap[a.snippet.resourceId.videoId] || 0));
-        renderVideos(allVideos.slice(0, 6));
+        await renderVideos(allVideos.slice(0, 6));
     } catch (error) {
         videosContainer.innerHTML = `<div class="error">Videolar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</div>`;
     } finally {
@@ -251,7 +295,7 @@ async function showRandomVideos() {
         const allVideos = await fetchLatestVideosFromAllChannels();
         if (!allVideos || allVideos.length === 0) throw new Error('Video bulunamadı');
         const randomVideos = getRandomVideos(allVideos, 6);
-        renderVideos(randomVideos);
+        await renderVideos(randomVideos);
     } catch (error) {
         videosContainer.innerHTML = `<div class="error">Videolar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</div>`;
     } finally {

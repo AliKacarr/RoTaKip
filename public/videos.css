@@ -22,8 +22,12 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     position: relative;
-    min-height: 660px;
     padding: 5px;
+}
+
+.videos-container.is-updating {
+    box-sizing: border-box;
+    min-height: var(--videos-container-locked-height);
 }
 
 /* Mobil uyumluluk */
@@ -45,6 +49,22 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+}
+
+.video-card.video-card-refresh-enter {
+    animation: video-card-refresh-enter 0.25s ease-out;
+}
+
+@keyframes video-card-refresh-enter {
+    from {
+        opacity: 0.82;
+        transform: translateY(6px) scale(0.995);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* Loading Card Styles */
