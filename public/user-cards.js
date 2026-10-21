@@ -623,7 +623,7 @@ window.loadUserCards = async function loadUserCards() {
 
     // Önce mevcut okuma serisi / zayıf halka / tebrik mesajı panellerini kaldır
     document
-      .querySelectorAll('.reading-streak-message, .weak-link-message, .consecutive-missed-message')
+      .querySelectorAll('.reading-streak-message, .weak-link-message, .everyone-read-message')
       .forEach((el) => el.remove());
 
     const today = new Date();
@@ -759,7 +759,7 @@ window.loadUserCards = async function loadUserCards() {
       const copyChip = document.createElement('div');
       copyChip.className = 'copy-chip';
       copyChip.style.cssText =
-        'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
+        'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(150, 150, 150, 0.8); color: #444;';
       copyChip.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
       panel.appendChild(copyChip);
 
@@ -992,7 +992,7 @@ window.loadUserCards = async function loadUserCards() {
       const copyChip = document.createElement('div');
       copyChip.className = 'copy-chip';
       copyChip.style.cssText =
-        'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
+        'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(150, 150, 150, 0.8); color: #444;';
       copyChip.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
       panelEl.appendChild(copyChip);
       return copyChip;
@@ -1118,38 +1118,44 @@ window.loadUserCards = async function loadUserCards() {
 
       // Sadece gerçekten bugün herkes okumuşsa tebrik mesajı göster
       if (everyoneReadToday) {
-        const missedMsg = document.createElement('div');
-        missedMsg.className = 'consecutive-missed-message';
-        missedMsg.innerHTML = 'Harika! Herkes bugün okumalarını yapmış! 🎉🎉<span class="missed-reminder"><br>Bu güzel alışkanlığı devam ettirelim!</span>';
+        const everyoneReadMsg = document.createElement('div');
+        everyoneReadMsg.className = 'everyone-read-message';
+
+        const messageContent = document.createElement('div');
+        messageContent.className = 'everyone-read-body';
+        messageContent.innerHTML =
+          '<span class="everyone-read-title">Harika! Herkes bugün okumalarını yapmış! 🎉🎉</span>' +
+          '<span class="everyone-read-reminder">Bu güzel alışkanlığı devam ettirelim!</span>';
+        everyoneReadMsg.appendChild(messageContent);
 
         // Sol alt köşe emoji ekle
         const leftEmoji = document.createElement('div');
         leftEmoji.className = 'left-emoji party-emoji';
-        missedMsg.appendChild(leftEmoji);
+        everyoneReadMsg.appendChild(leftEmoji);
 
         // Kopyala yazısı ve emoji ekle
         const copyText = document.createElement('div');
         copyText.className = 'copy-chip';
-        copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(180, 180, 180, 0.8); color: #6e6e6e;';
+        copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(150, 150, 150, 0.8); color: #444;';
         copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
-        missedMsg.appendChild(copyText);
+        everyoneReadMsg.appendChild(copyText);
 
         const userCardsSection = document.querySelector('.user-cards-section');
         if (userCardsSection) {
           const refBeforeHeader =
             userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
           if (refBeforeHeader) {
-            userCardsSection.insertBefore(missedMsg, refBeforeHeader);
+            userCardsSection.insertBefore(everyoneReadMsg, refBeforeHeader);
           } else {
-            userCardsSection.appendChild(missedMsg);
+            userCardsSection.appendChild(everyoneReadMsg);
           }
         }
         // Tıklama ile panoya kopyalama ve bildirim
-        missedMsg.style.cursor = 'pointer';
-        missedMsg.addEventListener('click', async () => {
+        everyoneReadMsg.style.cursor = 'pointer';
+        everyoneReadMsg.addEventListener('click', async () => {
           try {
-            await navigator.clipboard.writeText(missedMsg.innerText);
-            const chip = missedMsg.querySelector('.copy-chip');
+            await navigator.clipboard.writeText(messageContent.innerText);
+            const chip = everyoneReadMsg.querySelector('.copy-chip');
             if (chip) {
               const prev = chip.innerHTML;
               chip.innerHTML = 'Kopyalandı ✅';
@@ -1160,7 +1166,7 @@ window.loadUserCards = async function loadUserCards() {
           }
         });
         setTimeout(() => {
-          missedMsg.classList.add('message-fade-in');
+          everyoneReadMsg.classList.add('message-fade-in');
         }, 50);
       }
     }

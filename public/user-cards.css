@@ -667,26 +667,33 @@
     justify-content: center;
 }
 
-.league-promotion-message {
+.league-promotion-message,
+.league-promotion-backlog,
+.everyone-read-message,
+.reading-streak-message,
+.weak-link-message {
     width: 93%;
     max-width: 1200px;
-    background: #e6f2ff;
     border-radius: 10px;
     line-height: 1.7;
-    margin: 10px auto 18px auto;
-    padding: 60px 20px 35px 20px;
-    font-size: 18px;
-    color: #444;
+    color: #222;
+    margin: 10px auto 18px;
+    padding: 55px 20px 40px;
+    font-size: 19px;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
     text-align: center;
-    border: 1px solid #abcdef;
     letter-spacing: 0.01em;
     position: relative;
     opacity: 0;
     transform: translateY(20px);
     transition: opacity 0.5s ease-out, transform 0.5s ease-out;
     cursor: pointer;
+}
+
+.league-promotion-message {
+    background: #e6f2ff;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
+    border: 1px solid #abcdef;
 }
 
 .league-promotion-message::before {
@@ -787,26 +794,22 @@
 }
 
 
-/* Lig tebrik gövdeleri: başlık → yükselenler listesi → (varsa) alt not */
+/* Bildirim paneli gövdeleri: içerik blokları + eşit dikey aralık */
 .league-promotion-message .promotion-message-content,
-.league-promotion-backlog .promotion-message-content {
+.league-promotion-backlog .promotion-message-content,
+.reading-streak-message .streak-panel-body,
+.weak-link-message .weak-link-body,
+.everyone-read-message .everyone-read-body {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    position: relative;
-    z-index: 1;
-    line-height: 1.7;
-    font-size: 20px;
-    color: #444;
-    font-weight: 600;
+    line-height: 1.75;
     text-align: center;
-    letter-spacing: 0.01em;
 }
 
 .promotion-message-content .promotion-panel-title {
     display: block;
-    width: 100%;
 }
 
 .promotion-message-content .promotion-promoted-list {
@@ -824,11 +827,13 @@
     transform: translateY(0);
 }
 
+.league-promotion-backlog .promoted-username,
 .league-promotion-message .promoted-username {
     font-style: italic;
-    color: #505050;
+    color: #333;
 }
 
+.league-promotion-backlog .promoted-league,
 .league-promotion-message .promoted-league {
     font-style: italic;
     color: #313131;
@@ -842,25 +847,9 @@
 }
 
 .league-promotion-backlog {
-    width: 93%;
-    max-width: 1200px;
     background: #e8f4fc;
-    border-radius: 10px;
-    line-height: 1.7;
-    margin: 10px auto 18px auto;
-    padding: 60px 20px 35px 20px;
-    font-size: 17px;
-    color: #444;
-    font-weight: 600;
     box-shadow: 0 2px 8px rgba(30, 136, 229, 0.08);
-    text-align: center;
     border: 1px solid #90caf9;
-    letter-spacing: 0.01em;
-    position: relative;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    cursor: pointer;
 }
 
 .league-promotion-backlog::before {
@@ -889,7 +878,7 @@
     display: block;
     font-size: 0.92em;
     font-weight: 500;
-    color: #546e7a;
+    color: #333;
     font-style: normal;
 }
 
@@ -907,34 +896,13 @@
     z-index: 1;
 }
 
-.league-promotion-backlog .promoted-username,
-.league-promotion-backlog .promoted-league {
-    font-style: italic;
-}
-
-.consecutive-missed-message {
-    width: 93%;
-    max-width: 1200px;
+.everyone-read-message {
     background: #f0f7ff;
-    border-radius: 10px;
-    line-height: 1.7;
-    margin: 10px auto 18px auto;
-    padding: 55px 20px 35px 20px;
-    font-size: 19px;
-    color: #222;
-    font-weight: 600;
     box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
-    text-align: center;
     border: 1px solid #bcdaf8;
-    letter-spacing: 0.01em;
-    position: relative;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    cursor: pointer;
 }
 
-.consecutive-missed-message::before {
+.everyone-read-message::before {
     content: '';
     position: absolute;
     top: 20px;
@@ -950,25 +918,13 @@
     margin: 0 auto;
 }
 
-.consecutive-missed-message .chain-text {
-    position: absolute;
-    top: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #f0f7ff;
-    padding: 2px 8px;
-    height: 20px;
-    line-height: 15px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-    z-index: 2;
-    white-space: nowrap;
+.everyone-read-message .everyone-read-title {
+    display: block;
 }
 
 
 
-.consecutive-missed-message .left-emoji {
+.everyone-read-message .left-emoji {
     position: absolute;
     bottom: 8px;
     left: 12px;
@@ -981,7 +937,7 @@
     z-index: 1;
 }
 
-.consecutive-missed-message .left-emoji.party-emoji {
+.everyone-read-message .left-emoji.party-emoji {
     background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/partying_face.gif');
     transform: scaleX(-1);
 }
@@ -1013,7 +969,7 @@
 /* Copy Chip Hover Effects */
 .reading-streak-message:hover .copy-chip,
 .weak-link-message:hover .copy-chip,
-.consecutive-missed-message:hover .copy-chip,
+.everyone-read-message:hover .copy-chip,
 .league-promotion-message:hover .copy-chip,
 .league-promotion-backlog:hover .copy-chip {
     transform: scale(1.05);
@@ -1043,32 +999,16 @@
     }
 }
 
-.consecutive-missed-message.message-fade-in {
+.everyone-read-message.message-fade-in {
     opacity: 1;
     transform: translateY(0);
 }
 
 /* Okuma serisi paneli (Zinciri Kırma + zincir.webp) */
 .reading-streak-message {
-    width: 93%;
-    max-width: 1200px;
     background: #f0f4f9;
-    border-radius: 10px;
-    line-height: 1.7;
-    margin: 10px auto 18px auto;
-    padding: 55px 20px 35px 20px;
-    font-size: 19px;
-    color: #222;
-    font-weight: 600;
     box-shadow: 0 2px 8px rgba(33, 58, 90, 0.08);
-    text-align: center;
     border: 1px solid #abcdef;
-    letter-spacing: 0.01em;
-    position: relative;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    cursor: pointer;
 }
 
 .reading-streak-message::before {
@@ -1103,20 +1043,8 @@
     white-space: nowrap;
 }
 
-/* İki panelde gövde: üç blok (başlık, isimler, alt mesaj) + eşit dikey aralık */
-.reading-streak-message .streak-panel-body,
-.weak-link-message .weak-link-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 8px;
-    line-height: 1.75;
-}
-
 .reading-streak-message .streak-section-title {
     display: block;
-    color: #222;
 }
 
 .reading-streak-message .streak-names-block {
@@ -1125,23 +1053,13 @@
 }
 
 .reading-streak-message .streak-username {
-    color: #505050;
-    font-size: 18px;
+    color: #333;
     font-style: italic;
 }
 
 .reading-streak-message .streak-days {
-    color: #444;
-    font-weight: bold;
-}
-
-.reading-streak-message .streak-tagline {
-    display: block;
     color: #333;
-    font-size: 19px;
-    font-style: italic;
     font-weight: bold;
-    text-decoration: underline;
 }
 
 .reading-streak-message .left-emoji.streak-clap-emoji {
@@ -1164,25 +1082,9 @@
 
 /* Art arda okumayanlar paneli (Zayıf Halka + dugum.webp) */
 .weak-link-message {
-    width: 93%;
-    max-width: 1200px;
     background: #f7f4fb;
-    border-radius: 10px;
-    line-height: 1.7;
-    margin: 10px auto 18px auto;
-    padding: 55px 20px 35px 20px;
-    font-size: 19px;
-    color: #222;
-    font-weight: 600;
     box-shadow: 0 2px 8px rgba(94, 53, 177, 0.08);
-    text-align: center;
     border: 1px solid #abcdef;
-    letter-spacing: 0.01em;
-    position: relative;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    cursor: pointer;
 }
 
 .weak-link-message::before {
@@ -1217,17 +1119,13 @@
     white-space: nowrap;
 }
 
-.weak-link-message .weak-link-body .missed-title {
+.weak-link-message .missed-title {
     display: block;
 }
 
 .weak-link-message .weak-names-block {
     display: block;
     width: 100%;
-}
-
-.weak-link-message .weak-link-body .missed-reminder {
-    display: block;
 }
 
 .weak-link-message .left-emoji {
@@ -1248,24 +1146,19 @@
     transform: translateY(0);
 }
 
-
-.missed-title {
-    color: #222;
-    margin-right: 2px;
-}
-
 .missed-username {
-    color: #505050;
-    font-size: 18px;
+    color: #333;
     font-style: italic;
 }
 
 .missed-days {
-    color: #444;
+    color: #333;
     font-weight: bold;
 }
 
-.missed-reminder {
+.streak-tagline,
+.missed-reminder,
+.everyone-read-reminder {
     color: #333;
     font-size: 19px;
     font-style: italic;
