@@ -1199,7 +1199,7 @@ function performRenderUserList() {
             // Tüm kullanıcıları yeniden oluştur
             users.forEach((user, index) => {
                 const userProfileImage = user.profileImage || '/images/default.png';
-                const liHTML = `<div class="kullanıcı-item"><img src="${userProfileImage}" alt="${user.name}" class="user-profile-image user-profile-image-loading" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${user.name}</span><input type="text" class="edit-name-input" value="${user.name}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
+                const liHTML = `<div class="kullanıcı-item"><img src="${userProfileImage}" alt="${user.name}" class="user-profile-image user-profile-image-loading" loading="lazy" decoding="async" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${user.name}</span><input type="text" class="edit-name-input" value="${user.name}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
 
                 // Kullanıcı container'ı oluştur
                 const userContainer = document.createElement('div');
@@ -1357,20 +1357,8 @@ function updateAutoMarkUnreadIcon(isAutoMark) {
     }
 }
 
-// Avatar'ları önceden yükle (sayfa yüklendiğinde)
-async function preloadMainAreaAvatars() {
-    try {
-        // Grup avatar'larını önceden yükle
-        await loadAvatarOptions();
-        // Kullanıcı avatar'larını önceden yükle
-        await loadAddUserAvatarOptions();
-    } catch (error) {
-        console.error('Main area avatar ön yükleme hatası:', error);
-    }
-}
-
 // Hazır görseller modal'ını aç/kapat
-function toggleReadyImagesModal() {
+async function toggleReadyImagesModal() {
     // Hazır görseller modal açma işlemini logla
     if (typeof logUnauthorizedAccess === 'function') {
         logUnauthorizedAccess('Hazır görseller modal açma');
@@ -1383,7 +1371,10 @@ function toggleReadyImagesModal() {
     } else {
         modal.classList.add('show');
         document.body.style.overflow = 'hidden'; // Scroll'u kapat
-        // Avatar'lar önceden yüklendiği için tekrar yüklemeye gerek yok
+        if (modal.dataset.avatarsLoaded !== '1') {
+            await loadAvatarOptions();
+            modal.dataset.avatarsLoaded = '1';
+        }
     }
 }
 
@@ -1811,9 +1802,6 @@ async function deleteGroup() {
 
 // Event listener'ları ekle
 document.addEventListener('DOMContentLoaded', function () {
-    // Avatar'ları önceden yükle
-    preloadMainAreaAvatars();
-
     // Grup ayarları butonları
     const saveGroupBtn = document.querySelector('.save-group-btn');
     const changeImageBtn = document.querySelector('.change-image-btn');
@@ -2106,7 +2094,7 @@ function showNotification(message, type = 'info') {
 }
 
 // Add User Avatar Modal Functions
-function toggleAddUserAvatarModal() {
+async function toggleAddUserAvatarModal() {
     const modal = document.getElementById('addUserAvatarModal');
     ensureExistingUserUploadAreaInAvatarModal();
     const headerTitle = modal ? modal.querySelector('.modal-header h3') : null;
@@ -2128,6 +2116,10 @@ function toggleAddUserAvatarModal() {
     } else {
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
+        if (modal.dataset.avatarsLoaded !== '1') {
+            await loadAddUserAvatarOptions();
+            modal.dataset.avatarsLoaded = '1';
+        }
     }
 }
 

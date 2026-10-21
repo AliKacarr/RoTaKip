@@ -238,19 +238,21 @@ async function updateUserStatsAreaWithStreak() {
     const totalReading = userReadingCounts.get(userId) || 0;
 
     try {
-        // Giriş serisi bilgisini server'dan al
-        const response = await fetch('/api/update-login-streak', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, groupId })
-        });
+        let data = null;
+        if (window.loginStreakUpdatePromise) {
+            data = await window.loginStreakUpdatePromise;
+        } else {
+            const response = await fetch('/api/update-login-streak', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, groupId })
+            });
+            if (response.ok) data = await response.json();
+        }
 
-        if (response.ok) {
-            const data = await response.json();
-            const loginStreakElement = document.getElementById('userLoginStreak');
-            if (loginStreakElement) {
-                loginStreakElement.textContent = data.loginStreak || 0;
-            }
+        const loginStreakElement = document.getElementById('userLoginStreak');
+        if (loginStreakElement && data) {
+            loginStreakElement.textContent = data.loginStreak || 0;
         }
     } catch (error) {
         console.error('Giriş serisi bilgisi alınamadı:', error);
@@ -559,8 +561,12 @@ function parseFiniteAmount(value) {
 
 function sumUserAmounts(statsArray, userId, seasonKey) {
     const uid = String(userId);
+    const indexedStats = window.globalDataStore && typeof window.globalDataStore.getStatsForUser === 'function'
+        ? window.globalDataStore.getStatsForUser(uid)
+        : null;
+    const sourceStats = indexedStats || statsArray;
     let sum = 0;
-    for (const s of statsArray) {
+    for (const s of sourceStats) {
         if (String(s.userId) !== uid) continue;
         if (seasonKey && String(s.date || '').slice(0, 7) !== seasonKey) continue;
         const a = parseFiniteAmount(s.amount);

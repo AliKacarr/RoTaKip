@@ -6,11 +6,13 @@
   "scripts": {
     "start": "node server.js",
     "backup": "node backup.js",
+    "build:assets": "node scripts/build-assets.js",
+    "predev": "npm run build:assets",
     "dev": "nodemon server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "build": "npx playwright install chromium",
-    "postinstall": "npx playwright install chromium",
+    "build": "npm run build:assets",
+    "postinstall": "npm run build:assets && npx playwright install chromium",
     "docker:build": "docker build -t reading-tracker .",
     "docker:run": "docker run --rm -p 3001:3000 --env-file .env reading-tracker",
     "docker:dev": "docker build -t reading-tracker . && docker run --rm -p 3001:3000 --env-file .env reading-tracker"

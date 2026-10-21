@@ -60,24 +60,7 @@ function setupReadingStatsVisibilityObserver(chartContainer) {
 window.loadReadingStats = async function loadReadingStats() {
     try {
         // Global store'dan verileri al
-        const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
         const summary = window.globalDataStore ? window.globalDataStore.getReadingStatsSummary() : [];
-
-        // Create a map of all dates with status for each user
-        const userDatesMap = {};
-
-        // Initialize the map for each user
-        for (const user of (allData.users || [])) {
-            userDatesMap[user._id] = {};
-        }
-
-        // Fill in the map with actual statuses
-        for (const stat of (allData.stats || [])) {
-            if (!userDatesMap[stat.userId]) {
-                userDatesMap[stat.userId] = {};
-            }
-            userDatesMap[stat.userId][stat.date] = stat.status;
-        }
 
         // summary zaten okudum/okumadım içeriyor
         const turkishNameCollator = new Intl.Collator('tr-TR', {
@@ -154,11 +137,7 @@ window.loadReadingStats = async function loadReadingStats() {
                 : 'rgba(76, 217, 100, 1)'; // Regular green border for others
         });
 
-        // Check if Chart.js is loaded
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js is not loaded');
-            return;
-        }
+        await window.ensureChartLibraries();
 
         // Check if there's an existing chart instance
         if (window.readingStatsChart instanceof Chart) {

@@ -89,6 +89,8 @@ async function shareContainerAsImage(config) {
         // Modal'ı hemen aç (loading durumunda)
         showShareModalLoading(modalId, titleText);
 
+        const html2canvasRenderer = await window.ensureHtml2Canvas();
+
         // Resimleri hazırla (eğer fonksiyon sağlandıysa)
         if (prepareImages) {
             await prepareImages();
@@ -134,7 +136,7 @@ async function shareContainerAsImage(config) {
 
         // html2canvas ile container'ı resme çevir 
         const renderScale = Math.max(3, window.devicePixelRatio || 1);
-        const canvas = await html2canvas(tempContainer, {
+        const canvas = await html2canvasRenderer(tempContainer, {
             backgroundColor: '#ffffff',
             scale: renderScale,
             logging: false,

@@ -156,9 +156,13 @@ window.loadUserCards = async function loadUserCards() {
       return userStats.length > 0 ? getReadDayCount(user) / userStats.length : 0;
     };
     const longestStreaksByUser = new Map();
+    const longestStreakDetailsByUser = new Map();
     (streaks || []).forEach(item => {
       const userId = item.userId || item._id;
-      if (userId != null) longestStreaksByUser.set(String(userId), Number(item.streak) || 0);
+      if (userId != null) {
+        longestStreaksByUser.set(String(userId), Number(item.streak) || 0);
+        longestStreakDetailsByUser.set(String(userId), item);
+      }
     });
     const getLongestStreak = user => longestStreaksByUser.get(String(user._id)) || 0;
     const currentStreaks = new Map();
@@ -371,23 +375,13 @@ window.loadUserCards = async function loadUserCards() {
     const activeStreaks = [];
 
     orderedUsers.forEach(user => {
-      const userStats = stats.filter(s => s.userId === user._id && (s.status === 'okudum' || s.status === 'okumadım'));
+      const userId = String(user._id);
+      const userStats = readingStatsByUser.get(userId) || [];
       const okudumStats = userStats.filter(s => s.status === 'okudum');
       const totalDays = userStats.length;
       const okudumDays = okudumStats.length;
-      let amountTotal = 0;
-      let amountThisMonth = 0;
-      for (let i = 0; i < stats.length; i++) {
-        const s = stats[i];
-        if (String(s.userId) !== String(user._id)) continue;
-        const a = typeof parseFiniteAmount === 'function'
-          ? parseFiniteAmount(s.amount)
-          : Number(s.amount);
-        if (Number.isFinite(a) && a > 0) {
-          amountTotal += a;
-          if (String(s.date || '').slice(0, 7) === currentMonthKey) amountThisMonth += a;
-        }
-      }
+      const amountTotal = totalReadAmounts.get(userId) || 0;
+      const amountThisMonth = monthlyReadAmounts.get(userId) || 0;
       const amountSummaryHtml = amountTotal > 0
         ? `<span class="progress-summary progress-summary-amount">
           <span class="summary-count"><span class="progress-summary-amount-count">${amountTotal}</span><span class="progress-summary-amount-mark">✔</span></span>
@@ -419,7 +413,7 @@ window.loadUserCards = async function loadUserCards() {
       const percent = totalDays > 0 ? Math.round((okudumDays / totalDays) * 100) : 0;
 
       // En uzun seri
-      const userStreak = (streaks || []).find(s => (s.userId === user._id || s._id === user._id));
+      const userStreak = longestStreakDetailsByUser.get(userId);
       let longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span>-`;
       if (userStreak && userStreak.streak > 0) {
         const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
@@ -497,7 +491,7 @@ window.loadUserCards = async function loadUserCards() {
       card.innerHTML = `
       <div class="user-card-header" style="background: ${headerBg};">
         <div class="profile-img-wrapper">
-          <img class="profile-img profile-img-loading" src="${user.profileImage || '/images/default.png'}" alt="${user.name}" onload="this.classList.remove('profile-img-loading')" onerror="this.classList.remove('profile-img-loading'); this.src='/images/default.png'">
+          <img class="profile-img profile-img-loading" src="${user.profileImage || '/images/default.png'}" alt="${user.name}" loading="lazy" decoding="async" onload="this.classList.remove('profile-img-loading')" onerror="this.classList.remove('profile-img-loading'); this.src='/images/default.png'">
         </div>
         <div class="user-card-header-content">
           <div class="user-card-user-name">${user.name}</div>
@@ -642,8 +636,8 @@ window.loadUserCards = async function loadUserCards() {
 
     function getFirstDateAtOrAboveMinOkudum(userId, minOkudum) {
       const uid = String(userId);
-      const okudum = stats
-        .filter((s) => String(s.userId) === uid && s.status === 'okudum')
+      const okudum = (readingStatsByUser.get(uid) || [])
+        .filter((s) => s.status === 'okudum')
         .sort((a, b) => a.date.localeCompare(b.date));
       let cum = 0;
       for (const s of okudum) {
@@ -661,9 +655,7 @@ window.loadUserCards = async function loadUserCards() {
     users.forEach((user) => {
       const userId = user._id;
       const uidStr = String(userId);
-      const userStatsFiltered = stats.filter(
-        (s) => String(s.userId) === uidStr && (s.status === 'okudum' || s.status === 'okumadım')
-      );
+      const userStatsFiltered = readingStatsByUser.get(uidStr) || [];
       const okudumCount = userStatsFiltered.filter((s) => s.status === 'okudum').length;
       const currentLeague =
         leagues.find((l) => okudumCount >= l.min && okudumCount < l.max) || leagues[leagues.length - 1];
@@ -915,8 +907,7 @@ window.loadUserCards = async function loadUserCards() {
     users.forEach(user => {
       const userStatMap = {};
       const userDates = [];
-      stats
-        .filter(s => s.userId === user._id)
+      (readingStatsByUser.get(String(user._id)) || [])
         .forEach(s => {
           userStatMap[s.date] = s.status;
           if (s.date) userDates.push(s.date);
@@ -1110,7 +1101,8 @@ window.loadUserCards = async function loadUserCards() {
       // Bugün herkesin okuduğunu kontrol et
       let everyoneReadToday = true;
       users.forEach(user => {
-        const todayStat = stats.find(s => s.userId === user._id && s.date === todayStr);
+        const todayStat = (readingStatsByUser.get(String(user._id)) || [])
+          .find(s => s.date === todayStr);
         if (!todayStat || todayStat.status !== 'okudum') {
           everyoneReadToday = false;
         }
@@ -1196,6 +1188,15 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
     return;
   }
 
+  const targetUserId = clickedElement?.getAttribute('data-user-id') ||
+    (window.globalDataStore
+      ? window.globalDataStore.getUsers().find(user => user.name === userName)?._id
+      : null);
+  if (!targetUserId) {
+    console.error('Kullanıcı kartı kullanıcısı bulunamadı');
+    return;
+  }
+
   // Session kontrolü
   if (window.checkSessionTimeout && window.checkSessionTimeout()) {
     return; // İşlemi durdur
@@ -1203,29 +1204,10 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
 
   // Member kullanıcıları sadece kendi verilerini güncelleyebilir
   if (userInfo.userAuthority === 'member') {
-    // Member kullanıcılar için kullanıcı adını API'den al
-    fetch(`/api/users/${window.groupid}`)
-      .then(response => response.json())
-      .then(data => {
-        const currentUser = data.users.find(u => u._id === userInfo.userId);
-        if (!currentUser) {
-          logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme-kullanıcı bulunamadı');
-          return;
-        }
-
-        if (currentUser.name !== userName) {
-          logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme-başka kullanıcı');
-          return;
-        }
-
-        // Yetki kontrolü başarılı, işlemi devam ettir
-        continueWithToggle();
-      })
-      .catch(error => {
-        console.error('Kullanıcı kartlarında okuma durumu değiştirme-kullanıcı bilgisi alınırken hata:', error);
-        return;
-      });
-    return; // Async işlem başladı, fonksiyondan çık
+    if (String(targetUserId) !== String(userInfo.userId)) {
+      logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme-başka kullanıcı');
+      return;
+    }
   }
 
   // Admin kullanıcılar için direkt devam et
@@ -1271,26 +1253,17 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
     updateDayCircleStatus(clickedElement, newStatus);
 
     // 2. SONRA VERİTABANINI GÜNCELLE
-    let targetUserId = null;
-    fetch(`/api/all-data/${window.groupid}`)
-      .then(response => response.json())
-      .then(data => {
-        const user = data.users.find(u => u.name === userName);
-        if (!user) throw new Error('Kullanıcı bulunamadı');
-        targetUserId = user._id;
-
-        return fetch(`/api/update-status/${window.groupid}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user._id,
-            date: dateStr,
-            status: newStatus,
-            requestingUserId: userInfo.userId,
-            requestingUserAuthority: userInfo.userAuthority
-          })
-        });
+    fetch(`/api/update-status/${window.groupid}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: targetUserId,
+        date: dateStr,
+        status: newStatus,
+        requestingUserId: userInfo.userId,
+        requestingUserAuthority: userInfo.userAuthority
       })
+    })
       .then(response => {
         if (response && response.ok) {
           // Global store'u da güncelle

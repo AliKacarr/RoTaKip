@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Resmi oluştur - Promise döndüren tek bir fonksiyon
-    function createImage() {
+    async function createImage() {
+        const html2canvasRenderer = await window.ensureHtml2Canvas();
         return new Promise((resolve, reject) => {
             if (!lastQuoteSection) {
                 reject(new Error('Quote section bulunamadı'));
@@ -60,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
             tempContainer.appendChild(clonedContent);
             document.body.appendChild(tempContainer);
 
-            html2canvas(tempContainer, {
+            html2canvasRenderer(tempContainer, {
                 backgroundColor: null,
                 useCORS: true,
                 scale: Math.max(3, window.devicePixelRatio || 1),

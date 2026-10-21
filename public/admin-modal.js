@@ -1373,9 +1373,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Avatar'ları önceden yükle
-    preloadAdminAvatars();
-
     // Avatar selection functionality
     const avatarBtn = document.getElementById('welcomeInviteAvatarBtn');
     if (avatarBtn) {
@@ -1442,6 +1439,19 @@ function closeProfileModal() {
     }
 }
 
+async function getCachedOrFetchGroupData(groupId) {
+    if (window.globalDataStore && window.globalDataStore.groupId === groupId) {
+        return window.globalDataStore.getAllData();
+    }
+    if (window.initialAllData && window.initialAllData.group?.groupId === groupId) {
+        return window.initialAllData;
+    }
+
+    const response = await fetch(`/api/all-data/${groupId}`);
+    if (!response.ok) throw new Error('Grup verileri alınamadı');
+    return response.json();
+}
+
 async function loadProfileData() {
     try {
         const userInfo = LocalStorageManager.getCurrentUserInfo();
@@ -1455,9 +1465,8 @@ async function loadProfileData() {
             profileImage.style.display = 'none';
         }
 
-        // Tüm verileri al (kullanıcılar ve istatistikler)
-        const response = await fetch(`/api/all-data/${userInfo.groupId}`);
-        const data = await response.json();
+        // Sayfa açılışında yüklenmiş veriyi tekrar indirmeden kullan.
+        const data = await getCachedOrFetchGroupData(userInfo.groupId);
 
         if (data.users && data.stats) {
             // Kullanıcı bilgilerini bul
@@ -1490,9 +1499,12 @@ async function loadProfileData() {
             }
 
             // Okuma skorunu hesapla (readingstatuses koleksiyonundan)
-            const userReadingCount = data.stats.filter(stat => 
-                stat.userId === userInfo.userId && stat.status === 'okudum'
-            ).length;
+            const userReadingCount = window.globalDataStore &&
+                typeof window.globalDataStore.getUserReadingCount === 'function'
+                ? window.globalDataStore.getUserReadingCount(userInfo.userId)
+                : data.stats.filter(stat =>
+                    stat.userId === userInfo.userId && stat.status === 'okudum'
+                ).length;
             
             document.querySelector('.score-number').textContent = userReadingCount;
             
@@ -1632,12 +1644,15 @@ async function removeProfileImage() {
     }
 }
 
-function openProfileAvatarModal() {
+async function openProfileAvatarModal() {
     const avatarModal = document.getElementById('profileAvatarModal');
     if (!avatarModal) return;
 
-    // Avatarlar zaten önceden yüklenmiş, sadece modalı aç
     avatarModal.style.display = 'flex';
+    if (avatarModal.dataset.avatarsLoaded !== '1') {
+        await loadProfileAvatars();
+        avatarModal.dataset.avatarsLoaded = '1';
+    }
 }
 
 function closeProfileAvatarModal() {
@@ -1767,8 +1782,7 @@ async function loadProfileSettings() {
         const userInfo = LocalStorageManager.getCurrentUserInfo();
         if (!userInfo) return;
 
-        const response = await fetch(`/api/all-data/${userInfo.groupId}`);
-        const data = await response.json();
+        const data = await getCachedOrFetchGroupData(userInfo.groupId);
 
         if (data.users) {
             // Kullanıcı bilgilerini bul
@@ -2095,11 +2109,15 @@ function showToast(message, type = 'info') {
 // User Avatar Modal Functions
 let selectedAvatarPath = null; // Seçilen avatar yolunu saklamak için
 
-function toggleUserAvatarModal() {
+async function toggleUserAvatarModal() {
     const modal = document.getElementById('userAvatarModal');
     if (modal) {
+        const willOpen = !modal.classList.contains('show');
         modal.classList.toggle('show');
-        // Avatar'lar önceden yüklendiği için tekrar yüklemeye gerek yok
+        if (willOpen && modal.dataset.avatarsLoaded !== '1') {
+            await loadUserAvatarOptions();
+            modal.dataset.avatarsLoaded = '1';
+        }
     }
 }
 
@@ -2146,28 +2164,18 @@ async function loadUserAvatarOptions() {
     }
 }
 
-// Avatar'ları önceden yükle (sayfa yüklendiğinde)
-async function preloadAdminAvatars() {
-    try {
-        // Hoşgeldiniz panelindeki user avatar'larını önceden yükle
-        await loadUserAvatarOptions();
-        // Groups auth join panelindeki user avatar'larını önceden yükle
-        await loadGroupsAuthJoinAvatarOptions();
-        // Profil modalındaki user avatar'larını önceden yükle
-        await loadProfileAvatars();
-    } catch (error) {
-        console.error('Admin avatar ön yükleme hatası:', error);
-    }
-}
-
 // Groups Auth Join Avatar Modal Functions
 let selectedGroupsAuthJoinAvatarPath = null; // Groups auth join modal için seçilen avatar yolu
 
-function toggleGroupsAuthJoinAvatarModal() {
+async function toggleGroupsAuthJoinAvatarModal() {
     const modal = document.getElementById('groupsAuthJoinAvatarModal');
     if (modal) {
+        const willOpen = !modal.classList.contains('show');
         modal.classList.toggle('show');
-        // Avatar'lar önceden yüklendiği için tekrar yüklemeye gerek yok
+        if (willOpen && modal.dataset.avatarsLoaded !== '1') {
+            await loadGroupsAuthJoinAvatarOptions();
+            modal.dataset.avatarsLoaded = '1';
+        }
     }
 }
 

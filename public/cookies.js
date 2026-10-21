@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // If user accepted, we never ask again
         if (cookieConsent === 'accepted') {
+            if (typeof window.scheduleGoogleAnalyticsAfterPrimaryContent === 'function') {
+                window.scheduleGoogleAnalyticsAfterPrimaryContent();
+            }
             return;
         }
 
@@ -53,6 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('cookieConsentDate', date.toISOString());
 
         cookieConsentBanner.style.display = 'none';
+
+        if (typeof window.scheduleGoogleAnalyticsAfterPrimaryContent === 'function') {
+            window.scheduleGoogleAnalyticsAfterPrimaryContent();
+        }
 
         logPageVisit();
     });

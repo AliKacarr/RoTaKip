@@ -12,8 +12,6 @@ const moment = require('moment');
 const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
-const CleanCSS = require('clean-css');
-const { minify } = require('terser');
 require('dotenv').config({ quiet: true });
 const schedule = require('node-schedule');
 const https = require('https');
@@ -36,136 +34,6 @@ function hashCode(str) {
 }
 const app = express();
 const port = process.env.PORT || 3000;
-
-// Dosya varlık kontrolü
-function fileExists(filePath) {
-  return fs.existsSync(filePath);
-}
-
-// Otomatik minify fonksiyonu
-async function generateMinifiedFiles() {
-  const publicPath = path.join(__dirname, 'public');
-
-  // Index.html için CSS ve JS dosyaları
-  const indexCssFiles = ['index.css'];
-  const indexJsFiles = ['index.js'];
-
-  // Groups.html için CSS dosyaları - öncelik sırasına göre
-  const groupsCssFiles = [
-    'style.css',
-    'tracker-table.css',
-    'user-cards.css',
-    'admin-modal.css',
-    "daily-gift.css",
-    'quote.css',
-    'stats-section.css',
-    'longest-series.css',
-    'monthly.css',
-    'videos.css',
-    'main-area.css',
-    'preferences.css',
-    'articles.css',
-    'footer.css',
-    'profile-modal.css',
-    'cookies.css',
-    'share-modal.css'
-  ];
-
-
-  const groupsJsFiles = [
-    'script.js',
-    'admin-modal.js',
-    'reading-edit-mode.js',
-    'weekly-table-image.js',
-    'tracker-table.js',
-    'user-cards.js',
-    'daily-gift.js',
-    'longest-series.js',
-    'stats-section.js',
-    'monthly.js',
-    'quete.js',
-    'videos.js',
-    'main-area.js',
-    'preferences.js',
-    'articles.js',
-    'share-quote.js',
-    'share-utils.js',
-    'cookies.js',
-  ];
-
-  const validIndexCssFiles = indexCssFiles
-    .map(f => path.join(publicPath, f))
-    .filter(fileExists);
-
-  const validIndexJsFiles = indexJsFiles
-    .map(f => path.join(publicPath, f))
-    .filter(fileExists);
-
-  const validGroupsCssFiles = groupsCssFiles
-    .map(f => path.join(publicPath, f))
-    .filter(fileExists);
-
-  const validGroupsJsFiles = groupsJsFiles
-    .map(f => path.join(publicPath, f))
-    .filter(fileExists);
-
-  try {
-    const cleanCssInstance = new CleanCSS();
-
-    // Index.html için minify
-    if (validIndexCssFiles.length > 0) {
-      const indexCssContent = validIndexCssFiles
-        .map(file => fs.readFileSync(file, 'utf8'))
-        .join('\n');
-      const minifiedCss = cleanCssInstance.minify(indexCssContent);
-      if (minifiedCss.errors.length > 0) {
-        console.warn('⚠️ CSS minification warnings:', minifiedCss.errors);
-      }
-      fs.writeFileSync(path.join(publicPath, 'index.min.css'), minifiedCss.styles);
-    }
-
-    if (validIndexJsFiles.length > 0) {
-      // Terser API kullanarak minify
-      const indexJsContent = validIndexJsFiles
-        .map(file => fs.readFileSync(file, 'utf8'))
-        .join('\n');
-      const minifiedJs = await minify(indexJsContent, {
-        compress: true,
-        mangle: true
-      });
-      fs.writeFileSync(path.join(publicPath, 'index.min.js'), minifiedJs.code);
-    }
-
-    // Groups.html için minify
-    if (validGroupsCssFiles.length > 0) {
-      const groupsCssContent = validGroupsCssFiles
-        .map(file => fs.readFileSync(file, 'utf8'))
-        .join('\n');
-      const minifiedCss = cleanCssInstance.minify(groupsCssContent);
-      if (minifiedCss.errors.length > 0) {
-        console.warn('⚠️ CSS minification warnings:', minifiedCss.errors);
-      }
-      fs.writeFileSync(path.join(publicPath, 'groups.min.css'), minifiedCss.styles);
-    }
-
-    if (validGroupsJsFiles.length > 0) {
-      // Terser API kullanarak minify
-      const groupsJsContent = validGroupsJsFiles
-        .map(file => fs.readFileSync(file, 'utf8'))
-        .join('\n');
-      const minifiedJs = await minify(groupsJsContent, {
-        compress: true,
-        mangle: true
-      });
-      fs.writeFileSync(path.join(publicPath, 'groups.min.js'), minifiedJs.code);
-    }
-
-    console.log('🎉 All minify operations completed successfully');
-  } catch (err) {
-    console.error('❌ Minify error:', err.message);
-    console.log('⚠️ Minify hatası olsa bile uygulama çalışmaya devam edecek');
-  }
-}
 
 // Giriş serisi hesaplama fonksiyonu
 async function handleLoginStreak(user, groupId) {
@@ -221,7 +89,13 @@ function createStaticOptions(isMedia = false) {
     lastModified: true,
     setHeaders: (res, filePath) => {
       const ext = path.extname(filePath).toLowerCase();
-      if (!isMedia && (ext === '.html' || ext === '.js' || ext === '.css' || ext === '.json' || ext === '')) {
+      const fileName = path.basename(filePath).toLowerCase();
+      const isVersionedBundle = fileName.endsWith('.min.js') || fileName.endsWith('.min.css');
+
+      if (!isMedia && isVersionedBundle) {
+        // HTML içindeki içerik hash'i değişince URL de değişir; aynı sürüm 3 gün ağ isteği yapmadan kullanılabilir.
+        res.setHeader('Cache-Control', 'public, max-age=259200, immutable');
+      } else if (!isMedia && (ext === '.html' || ext === '.js' || ext === '.css' || ext === '.json' || ext === '')) {
         // Kod dosyaları: Tarayıcı her girişte sunucudan ETag kontrolü yapsın (değişmediyse 304, değiştiyse 200 döner)
         res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
       } else if (ext === '.png' || ext === '.jpg' || ext === '.jpeg' || ext === '.webp' || ext === '.gif' || ext === '.svg' || ext === '.ico' || ext === '.woff' || ext === '.woff2' || ext === '.ttf') {
@@ -1702,7 +1576,7 @@ app.get('/api/users/:groupId', async (req, res) => {
     const { users } = getGroupCollections(groupId);
 
     // Sadece kullanıcıları getir
-    const usersData = await users.find().sort({ name: 1 }).lean();
+    const usersData = await users.find().select('-userpassword').sort({ name: 1 }).lean();
 
     res.json({ users: usersData });
   } catch (error) {
@@ -2203,8 +2077,10 @@ app.get('/api/all-data/:groupId', async (req, res) => {
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
-    const usersData = await users.find().sort({ name: 1 }).lean();
-    const statsData = await readingStatuses.find().lean();
+    const [usersData, statsData] = await Promise.all([
+      users.find().select('-userpassword -__v').sort({ name: 1 }).lean(),
+      readingStatuses.find().select('userId date status amount -_id').lean()
+    ]);
 
     res.json({ users: usersData, stats: statsData, group });
   } catch (error) {
@@ -3851,10 +3727,8 @@ app.post('/api/reject-join-request/:requestId', async (req, res) => {
     // Dropbox'dan resmi sil (eğer varsa)
     if (isDropboxHostedUrl(joinRequest.profileImage)) {
       try {
-        const dbx = new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN });
-        const imagePath = joinRequest.profileImage.split('/').pop();
-        await dbx.filesDeleteV2({ path: `/profile-images/${imagePath}` });
-        console.log(`Profil resmi silindi: ${imagePath}`);
+        await deleteFromDropboxByUrl(joinRequest.profileImage);
+        console.log('Katılma isteği profil resmi Dropbox’tan silindi');
       } catch (dropboxError) {
         console.error('Dropbox resim silme hatası:', dropboxError);
       }
@@ -3892,10 +3766,8 @@ app.delete('/api/delete-join-request/:requestId', async (req, res) => {
     // Dropbox'dan resmi sil (eğer varsa)
     if (isDropboxHostedUrl(deletedRequest.profileImage)) {
       try {
-        const dbx = new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN });
-        const imagePath = deletedRequest.profileImage.split('/').pop();
-        await dbx.filesDeleteV2({ path: `/profile-images/${imagePath}` });
-        console.log(`Profil resmi silindi: ${imagePath}`);
+        await deleteFromDropboxByUrl(deletedRequest.profileImage);
+        console.log('Katılma isteği profil resmi Dropbox’tan silindi');
       } catch (dropboxError) {
         console.error('Dropbox resim silme hatası:', dropboxError);
       }
@@ -3928,9 +3800,8 @@ app.delete('/api/cancel-join-request-by-id/:requestId', async (req, res) => {
     // Dropbox'dan resmi sil (eğer varsa)
     if (isDropboxHostedUrl(deletedRequest.profileImage)) {
       try {
-        const fileName = deletedRequest.profileImage.split('/').pop();
-        await dropbox.filesDeleteV2({ path: `/join-requests/${fileName}` });
-        console.log('Dropbox resmi silindi:', fileName);
+        await deleteFromDropboxByUrl(deletedRequest.profileImage);
+        console.log('Katılma isteği profil resmi Dropbox’tan silindi');
       } catch (dropboxError) {
         console.error('Dropbox resim silme hatası:', dropboxError);
       }
@@ -4696,9 +4567,6 @@ initializeDropbox();
 
 // G. SERVER BAŞLATMA
 // ============================================================================
-
-// Server başlatıldığında otomatik minify çalıştır
-generateMinifiedFiles();
 
 app.listen(port, () => {
   console.log(`Uygulama http://localhost:${port} adresinde çalışıyor`);

@@ -2,6 +2,85 @@
 // YENİ YEREL DEPOLAMA SİSTEMİ
 // ============================================================================
 
+const externalScriptLoads = new Map();
+
+window.loadExternalScriptOnce = function loadExternalScriptOnce(src, isReady) {
+  if (typeof isReady === 'function' && isReady()) {
+    return Promise.resolve();
+  }
+  if (externalScriptLoads.has(src)) {
+    return externalScriptLoads.get(src);
+  }
+
+  const loadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      externalScriptLoads.delete(src);
+      reject(new Error(`Harici script yüklenemedi: ${src}`));
+    };
+    document.head.appendChild(script);
+  });
+
+  externalScriptLoads.set(src, loadPromise);
+  return loadPromise;
+};
+
+window.ensureChartLibraries = async function ensureChartLibraries() {
+  await window.loadExternalScriptOnce(
+    'https://cdn.jsdelivr.net/npm/chart.js',
+    () => typeof window.Chart !== 'undefined'
+  );
+  await window.loadExternalScriptOnce(
+    'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0',
+    () => typeof window.ChartDataLabels !== 'undefined'
+  );
+};
+
+window.ensureHtml2Canvas = async function ensureHtml2Canvas() {
+  await window.loadExternalScriptOnce(
+    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+    () => typeof window.html2canvas !== 'undefined'
+  );
+  return window.html2canvas;
+};
+
+window.runWhenElementNearViewport = function runWhenElementNearViewport(selector, task, rootMargin = '800px') {
+  const target = document.querySelector(selector);
+  if (!target || typeof task !== 'function') return;
+
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
+    Promise.resolve()
+      .then(task)
+      .catch(error => console.error(`${selector} ertelenmiş yükleme hatası:`, error));
+  };
+
+  if (!('IntersectionObserver' in window)) {
+    start();
+    return;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    if (entries.some(entry => entry.isIntersecting)) {
+      observer.disconnect();
+      start();
+    }
+  }, { rootMargin, threshold: 0.01 });
+
+  observer.observe(target);
+};
+
+function waitForLayoutPaint() {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  });
+}
+
 // Giriş serisi artırıldığında bildirim göster
 window.showStreakNotification = function showStreakNotification(name, streak) {
   console.log('Giriş serisi artırıldı4');
@@ -214,6 +293,8 @@ window.getInviteParams = function getInviteParams() {
 
 // Global grup ID değişkeni
 window.groupid = getGroupIdFromUrl();
+window.currentGroupData = null;
+window.initialAllData = null;
 
 // YENİ YETKİ KONTROLÜ SİSTEMİ
 // Sayfa yüklendiğinde 5 çerezi sil, groups dizisinden kontrol et, varsa yeniden oluştur
@@ -249,8 +330,9 @@ async function initializeAuthSystem() {
   
   
   try {
-    // 4. Kullanıcının hala bu grupta olup olmadığını kontrol et
-    const response = await fetch(`/api/users/${groupid}`);
+    // Kullanıcı, grup ve okuma verilerini açılışta tek istekte al.
+    // Aynı yanıt aşağıda GlobalDataStore tarafından tekrar kullanılacak.
+    const response = await fetch(`/api/all-data/${groupid}`);
     if (!response.ok) {
       LocalStorageManager.removeUserFromGroup(groupid);
       return false;
@@ -263,45 +345,45 @@ async function initializeAuthSystem() {
       LocalStorageManager.removeUserFromGroup(groupid);
       return false;
     }
-    
-    // 5. Grup bilgilerini al
-    const groupResponse = await fetch(`/api/group/${groupid}`);
-    if (!groupResponse.ok) {
+
+    if (!data.group) {
       return false;
     }
 
-    const groupData = await groupResponse.json();
+    window.initialAllData = data;
+    window.currentGroupData = data.group;
     
     // Giriş serisi güncelle (sayfa yüklendiğinde kontrol et)
-    try {
-      const streakResponse = await fetch('/api/update-login-streak', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: userId,
-          groupId: groupid
-        })
-      });
-      
-      if (streakResponse.ok) {
-        const streakData = await streakResponse.json();
-        
-        // Giriş serisi bilgisini UI'da güncelle
-        const streakNumber = document.querySelector('.streak-number');
-        if (streakNumber) {
-          streakNumber.textContent = streakData.loginStreak;
+    window.loginStreakUpdatePromise = fetch('/api/update-login-streak', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId: userId,
+        groupId: groupid
+      })
+    })
+      .then(async streakResponse => {
+        if (streakResponse.ok) {
+          const streakData = await streakResponse.json();
+          user.loginStreak = streakData.loginStreak;
+
+          // Giriş serisi bilgisini UI'da güncelle
+          const streakNumber = document.querySelector('.streak-number');
+          if (streakNumber) {
+            streakNumber.textContent = streakData.loginStreak;
+          }
+
+          // Giriş serisi artırıldıysa bildirim göster
+          if (streakData.streakIncreased && user.name) {
+            showStreakNotification(user.name, streakData.loginStreak);
+          }
+          return streakData;
         }
-        
-        // Giriş serisi artırıldıysa bildirim göster
-        if (streakData.streakIncreased && user.name) {
-          showStreakNotification(user.name, streakData.loginStreak);
-        }
-      }
-    } catch (streakError) {
-      console.error('Giriş serisi güncelleme hatası:', streakError);
-    }
+        return null;
+      })
+      .catch(streakError => console.error('Giriş serisi güncelleme hatası:', streakError));
     
     // Kullanıcı profil bilgilerini UI'da güncelle
     const profileUsername = document.getElementById('profileUsername');
@@ -324,7 +406,7 @@ async function initializeAuthSystem() {
       userId,
       user.authority,
       user.username,
-      groupData.group.groupName,
+      data.group.groupName,
       user.name
     );
     
@@ -349,18 +431,23 @@ async function initializeAuthSystem() {
 // Grup doğrulama fonksiyonu
 async function validateGroup() {
   try {
-    const response = await fetch(`/api/group/${window.groupid}`);
+    let group = window.currentGroupData;
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        window.location.href = '/';
-        return false;
+    if (!group) {
+      const response = await fetch(`/api/group/${window.groupid}`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          window.location.href = '/';
+          return false;
+        }
+        throw new Error('Grup doğrulama hatası');
       }
-      throw new Error('Grup doğrulama hatası');
-    }
 
-    const data = await response.json();
-    const group = data.group;
+      const data = await response.json();
+      group = data.group;
+      window.currentGroupData = group;
+    }
     window.currentGroupVisibility = group.visibility || 'public';
 
     // Davet parametrelerini kontrol et
@@ -526,17 +613,24 @@ async function updatePageTitle() {
   if (!groupId) return;
 
   try {
-    const response = await fetch(`/api/group/${groupId}`);
-    if (response.ok) {
+    let group = window.currentGroupData;
+    if (!group) {
+      const response = await fetch(`/api/group/${groupId}`);
+      if (!response.ok) return;
       const data = await response.json();
-      const groupName = data.group.groupName;
+      group = data.group;
+      window.currentGroupData = group;
+    }
+
+    if (group) {
+      const groupName = group.groupName;
       
       if (pageTitle) {
         pageTitle.textContent = `RoTaKip ${groupName}`;
       }
       
       if (secretAdminLogin) {
-        const groupImage = data.group.groupImage;
+        const groupImage = group.groupImage;
         const imgSrc = groupImage || '/images/open-book.webp';
         
         secretAdminLogin.innerHTML = `
@@ -607,7 +701,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     logPageVisit().catch(err => console.error('Sayfa ziyareti loglama hatası:', err));
 
     // Grup doğrulama
-    await validateGroup();
+    const canContinue = await validateGroup();
+    if (!canContinue) return;
 
     // Profil butonunu başlat
     initializeProfileButton();
@@ -625,14 +720,20 @@ document.addEventListener('DOMContentLoaded', async function () {
           this.stats = [];
           this.userMap = new Map(); // userId -> user
           this.statMap = new Map(); // userId -> { date: status }
+          this.statsByUser = new Map(); // userId -> okuma kayıtları
           this.userReadingCounts = new Map(); // userId -> okudum count
+          this.userUnreadCounts = new Map(); // userId -> okumadım count
           this.longestStreaks = []; // [{ userId, name, profileImage, streak, startDate, endDate }]
         }
 
         async init(groupId) {
           this.groupId = groupId;
-          const res = await fetch(`/api/all-data/${groupId}`);
-          const data = await res.json();
+          let data = window.initialAllData;
+          if (!data || !data.group || data.group.groupId !== groupId) {
+            const res = await fetch(`/api/all-data/${groupId}`);
+            data = await res.json();
+          }
+          window.initialAllData = null;
           this.users = Array.isArray(data.users) ? data.users : [];
           this.stats = Array.isArray(data.stats) ? data.stats : [];
           this._rebuildIndexes();
@@ -642,25 +743,32 @@ document.addEventListener('DOMContentLoaded', async function () {
         _rebuildIndexes() {
           this.userMap.clear();
           this.statMap.clear();
+          this.statsByUser.clear();
           this.userReadingCounts.clear();
+          this.userUnreadCounts.clear();
 
           for (const u of this.users) {
-            this.userMap.set(u._id, u);
-            this.statMap.set(u._id, {});
+            const userId = String(u._id);
+            this.userMap.set(userId, u);
+            this.statMap.set(userId, {});
+            this.statsByUser.set(userId, []);
+            this.userReadingCounts.set(userId, 0);
+            this.userUnreadCounts.set(userId, 0);
           }
 
           for (const s of this.stats) {
-            if (!this.statMap.has(s.userId)) {
-              this.statMap.set(s.userId, {});
+            const userId = String(s.userId);
+            if (!this.statMap.has(userId)) {
+              this.statMap.set(userId, {});
+              this.statsByUser.set(userId, []);
             }
-            this.statMap.get(s.userId)[s.date] = s.status;
-          }
-
-          // Okudum sayıları
-          for (const u of this.users) {
-            const map = this.statMap.get(u._id) || {};
-            const okCount = Object.values(map).filter(v => v === 'okudum').length;
-            this.userReadingCounts.set(u._id, okCount);
+            this.statMap.get(userId)[s.date] = s.status;
+            this.statsByUser.get(userId).push(s);
+            if (s.status === 'okudum') {
+              this.userReadingCounts.set(userId, (this.userReadingCounts.get(userId) || 0) + 1);
+            } else if (s.status === 'okumadım') {
+              this.userUnreadCounts.set(userId, (this.userUnreadCounts.get(userId) || 0) + 1);
+            }
           }
         }
 
@@ -672,6 +780,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         getStats() { return this.stats.slice(); }
         getUserMap() { return this.userMap; }
         getStatMap() { return this.statMap; }
+        getUserById(userId) { return this.userMap.get(String(userId)) || null; }
+        getStatsForUser(userId) { return this.statsByUser.get(String(userId)) || []; }
+        getUserReadingCount(userId) { return this.userReadingCounts.get(String(userId)) || 0; }
         getUserReadingCounts() { return this.userReadingCounts; }
 
         patchUsersLastCongratulated(items) {
@@ -680,7 +791,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const uid = it.userId;
             const leagueName = it.leagueName;
             if (!uid || !leagueName) continue;
-            const u = this.userMap.get(uid);
+            const u = this.userMap.get(String(uid));
             if (u) u.lastCongratulatedLeague = leagueName;
             const idStr = String(uid);
             for (let i = 0; i < this.users.length; i++) {
@@ -697,7 +808,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           // Sunucudan almak yerine eldeki stats üzerinden hesapla
           const results = [];
           for (const u of this.users) {
-            const map = this.statMap.get(u._id) || {};
+            const map = this.statMap.get(String(u._id)) || {};
             const okDates = Object.keys(map).filter(d => map[d] === 'okudum').sort();
             let maxStreak = 0, currentStreak = 0;
             let streakStart = null, streakEnd = null;
@@ -732,10 +843,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         getReadingStatsSummary() {
           const summary = [];
           for (const u of this.users) {
-            const map = this.statMap.get(u._id) || {};
-            const values = Object.values(map);
-            const okudum = values.filter(v => v === 'okudum').length;
-            const okumadim = values.filter(v => v === 'okumadım').length;
+            const userId = String(u._id);
+            const okudum = this.userReadingCounts.get(userId) || 0;
+            const okumadim = this.userUnreadCounts.get(userId) || 0;
             summary.push({ userId: u._id, name: u.name, profileImage: u.profileImage, okudum, okumadim });
           }
           return summary;
@@ -746,7 +856,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         applyLocalUpdate(userId, date, status, amount) {
           const uid = String(userId);
           const idx = this.stats.findIndex(s => String(s.userId) === uid && s.date === date);
-          const beforeStatus = idx >= 0 ? this.stats[idx].status : undefined;
           const amountNum =
             amount !== undefined && amount !== null && amount !== ''
               ? Number(amount)
@@ -766,20 +875,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (idx >= 0) this.stats.splice(idx, 1);
           }
 
-          if (!this.statMap.has(userId)) this.statMap.set(userId, {});
-          const userMap = this.statMap.get(userId);
-          if (status) userMap[date] = status; else delete userMap[date];
-
-          const prev = this.userReadingCounts.get(userId) || 0;
-          let next = prev;
-          if (status === 'okudum') {
-            if (beforeStatus !== 'okudum') next = prev + 1;
-          } else {
-            const map = this.statMap.get(userId) || {};
-            next = Object.values(map).filter(v => v === 'okudum').length;
-          }
-          this.userReadingCounts.set(userId, Math.max(0, next));
-
+          this._rebuildIndexes();
           this._buildLongestStreaks();
         }
       }
@@ -796,34 +892,53 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 
     
-    // 1️⃣ Öncelikli: tracker-table hemen yüklensin
+    // Öncelikli içerikleri önce oluştur. Aksi halde başlangıçta gizli olan bu
+    // bölümler, aşağıdaki bölümlerin geçici konumunu görünür gibi gösterebilir.
     await loadTrackerTable();
+    await loadUserCards();
+    await loadMonthlyCalendar();
+    await waitForLayoutPaint();
 
-    // 2️⃣ Arkada, hızlı yüklenebilecek veya birbirinden bağımsız fonksiyonları paralel çalıştır
-    Promise.all([
-      loadUserCards(),
-      renderLongestSeries(),
-      loadMonthlyCalendar(),
-      loadReadingStats()
-    ]).catch(err => console.error("İlk paralel yüklemelerde hata:", err));
+    window.rotakipPrimaryContentReady = true;
+    window.dispatchEvent(new Event('rotakip:primary-content-ready'));
 
-    // 3️⃣ Daha az öncelikli veya estetik içerikleri (ayet, hadis, alıntı, dua vs.) paralel başlat
-    Promise.all([
-      fetchRandomQuoteImage(),
-      fetchRandomAyet(),
-      fetchRandomQuote(),
-      fetchRandomHadis(),
-      fetchRandomDua()
-    ]).catch(err => console.error("Rastgele içerik yüklemede hata:", err));
+    if (typeof window.scheduleOneSignalLoad === 'function') {
+      window.scheduleOneSignalLoad();
+    }
 
-    // 4️⃣ Medya, makale ve yönetici listesi gibi en sona kalanlar
-    Promise.all([
-      initializeVideos(),
-      (typeof ArticlesManager !== 'undefined'
-        ? (window.articlesManager = new ArticlesManager(), Promise.resolve())
-        : Promise.resolve()),
-      (LocalStorageManager.isAdmin() ? renderUserList() : Promise.resolve())
-    ]).catch(err => console.error("Son yükleme grubunda hata:", err));
+    // İlk ekran çizildikten hemen sonra ikincil içeriklerin ağ isteklerini paralel
+    // başlat. Böylece ilk görünüm önceliğini korur ve kullanıcı aşağı kaydırmadan
+    // aşağıdaki bölümlerin verileri hazır olmaya başlar.
+    window.setTimeout(() => {
+      const secondaryContentLoads = [
+        ['Okuma istatistikleri', () => loadReadingStats()],
+        ['En Uzun Seri', () => renderLongestSeries()],
+        ['Günlük sözler', () => Promise.all([
+          fetchRandomQuoteImage(),
+          fetchRandomAyet(),
+          fetchRandomQuote(),
+          fetchRandomHadis(),
+          fetchRandomDua()
+        ])],
+        ['Videolar', () => initializeVideos()],
+        ['Makaleler', () => {
+          if (typeof ArticlesManager !== 'undefined' && !window.articlesManager) {
+            window.articlesManager = new ArticlesManager();
+          }
+        }]
+      ];
+
+      secondaryContentLoads.forEach(([label, load]) => {
+        Promise.resolve()
+          .then(load)
+          .catch(error => console.error(`${label} arka plan yükleme hatası:`, error));
+      });
+    }, 0);
+
+    // Yönetici listesi de ilgili ayar alanına yaklaşılınca yüklenir.
+    if (LocalStorageManager.isAdmin()) {
+      runWhenElementNearViewport('#userList', () => renderUserList(), '300px');
+    }
 
   } catch (error) {
     console.error('Sayfa yüklenirken hata oluştu:', error);

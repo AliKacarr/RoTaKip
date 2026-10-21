@@ -1818,4 +1818,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    if (typeof window.scheduleGoogleAnalyticsLoad === 'function') {
+        window.scheduleGoogleAnalyticsLoad();
+    }
+    if (typeof window.scheduleOneSignalLoad === 'function') {
+        window.scheduleOneSignalLoad();
+    }
 });

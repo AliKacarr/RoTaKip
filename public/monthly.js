@@ -371,6 +371,18 @@ function loadMonthlyCalendar() {
             return;
         }
 
+        const selectedOption = userSelector
+            ? Array.from(userSelector.options).find(option => option.value === userName)
+            : null;
+        const cachedUser = window.globalDataStore
+            ? window.globalDataStore.getUsers().find(user => user.name === userName)
+            : null;
+        const targetUserId = selectedOption?.dataset.userId || cachedUser?._id;
+        if (!targetUserId) {
+            console.error('Aylık takvim kullanıcısı bulunamadı');
+            return;
+        }
+
         const dateStr = formatDateForTable(day, month, year);
         // Haftalık tabloyla uyumlu şekilde Türkiye saatine göre bugünden sonrası engellenir.
         const today = new Date();
@@ -387,32 +399,12 @@ function loadMonthlyCalendar() {
 
         // Member kullanıcıları sadece kendi verilerini güncelleyebilir
         if (userInfo.userAuthority === 'member') {
-            // Member kullanıcılar için kullanıcı adını API'den al
-            fetch(`/api/users/${window.groupid}`)
-                .then(response => response.json())
-                .then(data => {
-                    const currentUser = data.users.find(u => u._id === userInfo.userId);
-                    if (!currentUser) {
-                        logUnauthorizedAccess('Aylık takvim okuma durumu değiştirme-kullanıcı bulunamadı');
-                        return;
-                    }
-
-                    if (currentUser.name !== userName) {
-                        logUnauthorizedAccess('Aylık takvim okuma durumu değiştirme-başka kullanıcı');
-                        return;
-                    }
-
-                    // Yetki kontrolü başarılı, işlemi devam ettir
-                    continueWithToggle();
-                })
-                .catch(error => {
-                    console.error('Aylık takvim okuma durumu değiştirme-kullanıcı bilgisi alınırken hata:', error);
-                    return;
-                });
-            return; // Async işlem başladı, fonksiyondan çık
+            if (String(targetUserId) !== String(userInfo.userId)) {
+                logUnauthorizedAccess('Aylık takvim okuma durumu değiştirme-başka kullanıcı');
+                return;
+            }
         }
 
-        // Admin kullanıcılar için direkt devam et
         continueWithToggle();
 
         function continueWithToggle() {
@@ -440,30 +432,23 @@ function loadMonthlyCalendar() {
             updateMonthlyCellStatus(clickedCell, newStatus);
 
             // Sonra veritabanını güncelle
-            fetch(`/api/all-data/${window.groupid}`)
-                .then(response => response.json())
-                .then(data => {
-                    const user = data.users.find(u => u.name === userName);
-                    if (!user) throw new Error('User not found');
-
-                    return fetch(`/api/update-status/${window.groupid}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            userId: user._id,
-                            date: dateStr,
-                            status: newStatus,
-                            requestingUserId: userInfo.userId,
-                            requestingUserAuthority: userInfo.userAuthority
-                        })
-                    });
+            fetch(`/api/update-status/${window.groupid}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: targetUserId,
+                    date: dateStr,
+                    status: newStatus,
+                    requestingUserId: userInfo.userId,
+                    requestingUserAuthority: userInfo.userAuthority
                 })
+            })
                 .then(response => {
                     if (response && response.ok) {
                         // Global store'u da güncelle
                         try {
                             if (window.globalDataStore) {
-                                window.globalDataStore.applyLocalUpdate(userInfo.userId, dateStr, newStatus);
+                                window.globalDataStore.applyLocalUpdate(targetUserId, dateStr, newStatus);
                             }
                         } catch (e) {
                             console.error('Global store senkronizasyon hatası:', e);
