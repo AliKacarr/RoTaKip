@@ -159,6 +159,22 @@
       return d + ' ' + getMonthName(mo - 1) + ' ' + y;
     }
     document.addEventListener('DOMContentLoaded', async function () {
+      let activeGroupId = new URLSearchParams(window.location.search).get('groupId');
+      if (!activeGroupId) {
+        try {
+          const response = await fetch('/api/auth/memberships');
+          const data = response.ok ? await response.json() : { memberships: [] };
+          const adminMembership = (data.memberships || []).find(function (membership) {
+            return membership.authority === 'admin' && membership.groupId;
+          });
+          if (adminMembership) {
+            activeGroupId = adminMembership.groupId;
+            window.history.replaceState(null, '', '/admin.html?groupId=' + encodeURIComponent(activeGroupId));
+          }
+        } catch (error) {
+          console.error('Yönetici grubu belirlenemedi:', error);
+        }
+      }
       function escapeHtml(text) {
         if (text == null) return '';
         const div = document.createElement('div');
@@ -196,7 +212,8 @@
         loadingEl.style.display = 'block';
 
         try {
-          const res = await fetch('/api/site-activity-groups');
+          if (!activeGroupId) throw new Error('Grup kimliği eksik');
+          const res = await fetch('/api/site-activity-groups?groupId=' + encodeURIComponent(activeGroupId));
           if (!res.ok) {
             throw new Error('HTTP ' + res.status);
           }
@@ -401,7 +418,8 @@
           const defaultNoLogsText = '• Henüz kayıt bulunmamaktadır.';
 
           if (refetch) {
-            const response = await fetch('/api/site-activity-logs');
+            if (!activeGroupId) throw new Error('Grup kimliği eksik');
+            const response = await fetch('/api/site-activity-logs?groupId=' + encodeURIComponent(activeGroupId));
             const data = await response.json();
             const rawLogs = Array.isArray(data) ? data : (data.logs || []);
             rawLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -551,7 +569,7 @@
                   : ' (tüm eylemler)';
                 if (!confirm('"' + dateKey + '" tarihine ait kayıtlar silinsin mi?' + scopeHint)) return;
                 try {
-                  const body = { trDate: trYmd };
+                  const body = { trDate: trYmd, groupId: activeGroupId };
                   if (actionVal) body.action = actionVal;
                   const res = await fetch('/api/site-activity-logs/day', {
                     method: 'DELETE',
@@ -627,12 +645,12 @@
 
               row.innerHTML = `
                 <td>${formattedDate}</td>
-                <td style="color: ${ipColor}; font-weight: bold; cursor: pointer;" 
-                    onclick='filterByIp(${JSON.stringify(actor)})'>${escapeHtml(actor)}</td>
+                <td class="log-actor" style="color: ${ipColor}; font-weight: bold; cursor: pointer;">${escapeHtml(actor)}</td>
                 <td>${formatSiteActivityEylem(log)}</td>
-                <td>${deviceInfo}</td>
-                <td>${screenSize}</td>
+                <td>${escapeHtml(deviceInfo)}</td>
+                <td>${escapeHtml(screenSize)}</td>
               `;
+              row.querySelector('.log-actor').addEventListener('click', function () { window.filterByIp(actor); });
 
               tableBody.appendChild(row);
             }
@@ -761,12 +779,12 @@
 
             row.innerHTML = `
               <td>${hours}:${minutes}:${seconds}</td>
-              <td style="color: ${ipColor}; font-weight: bold; cursor: pointer;" 
-                  onclick='filterByIp(${JSON.stringify(actor)})'>${escapeHtml(actor)}</td>
+              <td class="log-actor" style="color: ${ipColor}; font-weight: bold; cursor: pointer;">${escapeHtml(actor)}</td>
               <td>${formatSiteActivityEylem(log)}</td>
-              <td>${deviceInfo}</td>
-              <td>${screenSize}</td>
+              <td>${escapeHtml(deviceInfo)}</td>
+              <td>${escapeHtml(screenSize)}</td>
             `;
+            row.querySelector('.log-actor').addEventListener('click', function () { window.filterByIp(actor); });
 
             dateGroupTableBody.appendChild(row);
           }

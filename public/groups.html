@@ -245,7 +245,7 @@
                 <div class="groups-auth-join-input-container">
                   <i class="fas fa-lock groups-auth-join-input-icon"></i>
                   <input type="password" id="groupsAuthJoinMemberPasswordInput" class="groups-auth-join-form-input"
-                    required placeholder="Üye şifrenizi giriniz" maxlength="40">
+                    required minlength="6" placeholder="En az 6 karakter" maxlength="40">
                   <button type="button" class="groups-auth-join-password-toggle" id="groupsAuthJoinPasswordToggle">
                     <i class="fas fa-eye"></i>
                   </button>
@@ -386,7 +386,7 @@
                   <div class="welcome-input-container">
                     <i class="fas fa-lock welcome-input-icon"></i>
                     <input type="password" id="welcomeInviteMemberPassword" class="welcome-form-input"
-                      placeholder="Şifrenizi giriniz" maxlength="40">
+                      required minlength="6" placeholder="En az 6 karakter" maxlength="40">
                     <button type="button" class="welcome-password-toggle" id="welcomeInviteMemberPasswordToggle">
                       <i class="fas fa-eye"></i>
                     </button>
@@ -1363,11 +1363,11 @@
 
                 <form class="form-group">
                   <div class="form-group-label"><i class="fa-solid fa-clipboard-list"></i> Üye Kayıtları:</div>
-                  <button type="button" class="group-link-btn" onclick="window.location.href='/access-logs.html'">
+                  <button type="button" class="group-link-btn" onclick="window.location.href='/access-logs.html?groupId=' + encodeURIComponent(window.groupid)">
                     <i class="fa-solid fa-history"></i>
                     <span>Son İşlemler</span>
                   </button>
-                  <button type="button" class="group-link-btn" onclick="window.location.href='/login-logs.html'">
+                  <button type="button" class="group-link-btn" onclick="window.location.href='/login-logs.html?groupId=' + encodeURIComponent(window.groupid)">
                     <i class="fa-solid fa-font-awesome"></i>
                     <span>Giriş Kayıtları</span>
                   </button>
@@ -1924,7 +1924,7 @@
               <i class="fa-solid fa-lock"></i>
               Yeni Şifre
             </label>
-            <input type="password" id="settingsPassword" class="profile-settings-field"
+            <input type="password" id="settingsPassword" class="profile-settings-field" minlength="6"
               placeholder="Yeni şifrenizi girin" maxlength="40">
           </div>
 
@@ -1933,7 +1933,7 @@
               <i class="fa-solid fa-lock"></i>
               Şifre Tekrar
             </label>
-            <input type="password" id="settingsPasswordConfirm" class="profile-settings-field"
+            <input type="password" id="settingsPasswordConfirm" class="profile-settings-field" minlength="6"
               placeholder="Şifrenizi tekrar girin" maxlength="40">
           </div>
 
@@ -2433,7 +2433,7 @@
     });
   </script>
 
-  <script src="groups.min.js?v=6381d36c4fec"></script>
+  <script src="groups.min.js?v=aee5076d95bc"></script>
 
 </body>
 

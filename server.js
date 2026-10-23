@@ -4,14 +4,11 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const os = require('os'); // Added OS module
 const moment = require('moment');
-const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
 require('dotenv').config({ quiet: true });
 const schedule = require('node-schedule');
 const https = require('https');
@@ -19,19 +16,13 @@ const { Dropbox } = require('dropbox');
 const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
-const { doldurAnket, scheduleAnketJob } = require('./anket/anketService');
-const { syncErpReadings, scheduleErpReadingsSync } = require('./anket/erpReadingsSync');
+const session = require('express-session');
+const { MongoStore } = require('connect-mongo');
+const { rateLimit } = require('express-rate-limit');
+const crypto = require('crypto');
+const { scheduleAnketJob } = require('./anket/anketService');
+const { scheduleErpReadingsSync } = require('./anket/erpReadingsSync');
 
-// Hash fonksiyonu
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // 32bit integer'a çevir
-  }
-  return hash;
-}
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -80,6 +71,12 @@ async function handleLoginStreak(user, groupId) {
 // Middleware'ler
 // Gzip sıkıştırma (compression)
 app.use(compression());
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin');
+  next();
+});
 // Statik dosyalar önbellek yönetimi:
 // Kod dosyaları (.html, .js, .css, .json) için ETag revalidasyonu (no-cache, must-revalidate)
 // Görsel ve medya dosyaları için performans önbelleği (3 gün)
@@ -115,7 +112,60 @@ app.use('/groupAvatars', express.static(path.join(__dirname, 'public/groupAvatar
 app.use('/groupImages', express.static(path.join(__dirname, 'public/groupImages'), createStaticOptions(true)));
 app.use('/userAvatars', express.static(path.join(__dirname, 'public/userAvatars'), createStaticOptions(true)));
 app.use('/quotes', express.static(path.join(__dirname, 'public/quotes'), createStaticOptions(true)));
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
+
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+if (isProduction && !process.env.SESSION_SECRET) {
+  throw new Error('Üretimde SESSION_SECRET tanımlanmalıdır.');
+}
+const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const sessionCookieName = isProduction ? '__Host-rotakip.sid' : 'rotakip.sid';
+
+if (!process.env.SESSION_SECRET) {
+  console.warn('SESSION_SECRET tanımlı değil; oturumlar sunucu yeniden başladığında geçersiz olacak.');
+}
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGO_URI,
+  dbName: process.env.DB_NAME,
+  collectionName: 'sessions',
+  stringify: false,
+  touchAfter: 24 * 60 * 60
+});
+
+app.use(session({
+  name: sessionCookieName,
+  secret: sessionSecret,
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false,
+  rolling: true,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProduction,
+    path: '/',
+    maxAge: 30 * 24 * 60 * 60 * 1000
+  }
+}));
+
+function createRateLimiter(windowMs, limit, message) {
+  return rateLimit({
+    windowMs,
+    limit,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: message }
+  });
+}
+
+const loginLimiter = createRateLimiter(15 * 60 * 1000, 20, 'Çok fazla giriş denemesi yaptınız. Lütfen daha sonra tekrar deneyin.');
+const accountCreationLimiter = createRateLimiter(60 * 60 * 1000, 10, 'Çok fazla kayıt isteği gönderdiniz. Lütfen daha sonra tekrar deneyin.');
+const publicLogLimiter = createRateLimiter(60 * 1000, 60, 'Çok fazla istek gönderdiniz.');
+const imageProxyLimiter = createRateLimiter(60 * 1000, 60, 'Çok fazla görsel isteği gönderdiniz.');
 
 // HTML yanıtları için strictly revalidate başlığı ekleyen yardımcı fonksiyon
 function sendHtmlFile(res, fileName) {
@@ -138,7 +188,7 @@ app.get('/env.js', (req, res) => {
 
 // Canvas paylaşım görsellerinde Dropbox avatarlarını aynı origin üzerinden sunar.
 // Endpoint yalnızca Dropbox alan adlarını kabul eder; genel amaçlı proxy değildir.
-app.get('/api/dropbox-image', async (req, res) => {
+app.get('/api/dropbox-image', imageProxyLimiter, async (req, res) => {
   const source = typeof req.query.url === 'string' ? req.query.url.trim() : '';
   if (!source || source.length > 4096) {
     return res.status(400).json({ error: 'Geçerli bir Dropbox görsel URL’si gerekli' });
@@ -591,7 +641,7 @@ async function uploadToDropbox(fileBuffer, fileName, folder) {
     const normalizedFileName = normalizeFileName(fileName);
 
     const dropboxPath = `/${folder}/${normalizedFileName}`;
-    const response = await dbx.filesUpload({
+    await dbx.filesUpload({
       path: dropboxPath,
       contents: fileBuffer,
       mode: 'overwrite'
@@ -649,21 +699,6 @@ async function uploadToDropboxWithRetry(fileBuffer, fileName, folder, options = 
     }
   }
   throw lastErr;
-}
-
-async function deleteFromDropbox(fileName, folder) {
-  try {
-    const dropboxPath = `/${folder}/${fileName}`;
-    await dbx.filesDeleteV2({
-      path: dropboxPath
-    });
-  } catch (error) {
-    console.error('Dropbox delete hatası:', error);
-    // Dosya bulunamadıysa hata verme
-    if (error.status !== 409) {
-      throw error;
-    }
-  }
 }
 
 async function listAllDropboxFolderEntries(folderPath) {
@@ -744,20 +779,7 @@ async function deleteGroupImageFromDropboxByUrl(fileUrl) {
     const fileName = rawFileName ? decodeURIComponent(rawFileName) : '';
     if (!fileName) return;
 
-    // groupImages klasöründeki gerçek dosya adını bul (normalizasyon/encoding farklarına dayanıklı)
-    const entries = await listAllDropboxFolderEntries('/groupImages');
-    const exactFile = entries.find((f) => {
-      if (f.name === fileName) return true;
-      const dbTimestamp = String(f.name || '').split('-')[0];
-      const urlTimestamp = String(fileName || '').split('-')[0];
-      return dbTimestamp && urlTimestamp && dbTimestamp === urlTimestamp;
-    });
-    if (!exactFile) {
-      console.log(`ℹ️ Dropbox grup resmi zaten yok: ${fileName}`);
-      return;
-    }
-
-    const dropboxPath = `/groupImages/${exactFile.name}`;
+    const dropboxPath = `/groupImages/${fileName}`;
 
     // Dropbox'tan sil
     await dbx.filesDeleteV2({ path: dropboxPath });
@@ -799,6 +821,26 @@ async function deleteGroupDropboxImages(group, users) {
 }
 
 // Multer konfigürasyonları
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif'
+]);
+
+function imageFileFilter(req, file, cb) {
+  if (!ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype)) {
+    return cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', file.fieldname));
+  }
+  cb(null, true);
+}
+
+const imageUploadOptions = {
+  limits: { fileSize: MAX_IMAGE_BYTES, files: 2 },
+  fileFilter: imageFileFilter
+};
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const dir = 'public/uploads';
@@ -811,7 +853,7 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage, ...imageUploadOptions });
 
 // Grup resmi yükleme konfigürasyonu
 const groupImageStorage = multer.diskStorage({
@@ -829,26 +871,41 @@ const groupImageStorage = multer.diskStorage({
   }
 });
 
-const uploadGroupImage = multer({ storage: groupImageStorage });
+const uploadGroupImage = multer({ storage: groupImageStorage, ...imageUploadOptions });
 
-// Kullanıcı modeli
-const User = mongoose.model('User', {
-  name: String,
-  profileImage: String
-});
+function getUploadedFiles(req) {
+  if (req.file) return [req.file];
+  if (!req.files) return [];
+  return Object.values(req.files).flat();
+}
 
-// Okuma durumu modeli
-const ReadingStatus = mongoose.model('ReadingStatus', {
-  userId: String,
-  date: String,
-  status: String,
-  amount: { type: Number, required: false }
-});
+async function removeUploadedFiles(req) {
+  await Promise.all(getUploadedFiles(req).map(file => unlinkWithRetry(file.path)));
+}
+
+async function requireValidUploadedImages(req, res, next) {
+  res.once('finish', () => {
+    removeUploadedFiles(req).catch(error => console.error('Geçici yükleme dosyası silinemedi:', error.message));
+  });
+  try {
+    for (const file of getUploadedFiles(req)) {
+      const metadata = await sharp(file.path).metadata();
+      if (!['jpeg', 'png', 'webp', 'gif'].includes(metadata.format)) {
+        await removeUploadedFiles(req);
+        return res.status(415).json({ error: 'Yalnızca JPEG, PNG, WebP veya GIF görselleri yüklenebilir.' });
+      }
+    }
+    next();
+  } catch (_) {
+    await removeUploadedFiles(req);
+    res.status(415).json({ error: 'Yüklenen dosya geçerli bir görsel değil.' });
+  }
+}
 
 // Kullanıcı grupları modeli
 const UserGroup = mongoose.model('UserGroup', {
   groupName: String,
-  groupId: String,
+  groupId: { type: String, required: true },
   description: String,
   groupImage: { type: String, default: null },
   visibility: { type: String, default: 'public' },
@@ -893,21 +950,86 @@ if (mongoose.connection.readyState === 1) {
 
 // MongoDB index'lerini oluşturma fonksiyonu
 async function createIndexesForGroup(groupId) {
-  try {
-    const db = mongoose.connection.db;
+  const db = mongoose.connection.db;
+  await db.collection(`readingstatuses_${groupId}`).createIndex(
+    { userId: 1, date: 1 },
+    { unique: true, name: 'uniq_user_date' }
+  );
+  await db.collection(`users_${groupId}`).createIndex(
+    { name: 1 },
+    { name: 'idx_name' }
+  );
+  await db.collection(`users_${groupId}`).createIndex(
+    { username: 1 },
+    {
+      unique: true,
+      name: 'uniq_username',
+      partialFilterExpression: { username: { $type: 'string' } }
+    }
+  );
+  // username ve authority birlikte sorgulanıyor (admin kontrolü için)
+  await db.collection(`users_${groupId}`).createIndex(
+    { username: 1, authority: 1 },
+    { name: 'idx_username_authority' }
+  );
 
-    // Yeni grup için index'leri oluştur
-    await db.collection(`readingstatuses_${groupId}`).createIndex({ userId: 1, date: 1 });
-    await db.collection(`users_${groupId}`).createIndex({ name: 1 });
-    await db.collection(`users_${groupId}`).createIndex({ username: 1 });
-    // username ve authority birlikte sorgulanıyor (admin kontrolü için)
-    await db.collection(`users_${groupId}`).createIndex({ username: 1, authority: 1 });
+  console.log(`Grup index'leri hazır: ${groupId}`);
+}
 
-    console.log(`Yeni grup için index'ler oluşturuldu: ${groupId}`);
-  } catch (error) {
-    console.error(`Index oluşturma hatası (${groupId}):`, error);
+async function rollbackGroupCreation({
+  groupId,
+  groupRecordId,
+  uploadedGroupImageUrl,
+  uploadedAdminProfileImageUrl
+}) {
+  const rollbackErrors = [];
+
+  if (groupId && groupRecordId) {
+    try {
+      await dropGroupCollections(groupId);
+    } catch (error) {
+      rollbackErrors.push(error);
+    }
+
+    try {
+      await UserGroup.deleteOne({ _id: groupRecordId, groupId });
+    } catch (error) {
+      rollbackErrors.push(error);
+    }
+  }
+
+  const imageCleanupTasks = [
+    [uploadedGroupImageUrl, deleteGroupImageFromDropboxByUrl],
+    [uploadedAdminProfileImageUrl, deleteFromDropboxByUrl]
+  ];
+
+  for (const [imageUrl, deleteImage] of imageCleanupTasks) {
+    if (!imageUrl) continue;
+    try {
+      await deleteImage(imageUrl);
+    } catch (error) {
+      rollbackErrors.push(error);
+    }
+  }
+
+  if (rollbackErrors.length > 0) {
+    throw new AggregateError(rollbackErrors, `Grup oluşturma geri alma işlemi tamamlanamadı: ${groupId || 'bilinmiyor'}`);
   }
 }
+
+async function ensureApplicationIndexes() {
+  try {
+    await UserGroup.collection.createIndex(
+      { groupId: 1 },
+      { unique: true, name: 'uniq_group_id' }
+    );
+  } catch (error) {
+    console.error('Benzersiz index hazırlama hatası:', error.message);
+  }
+}
+
+if (mongoose.connection.readyState === 1) ensureApplicationIndexes();
+else mongoose.connection.once('connected', ensureApplicationIndexes);
 
 // Dropbox durumu endpoint'i
 app.get('/api/dropbox-status', async (req, res) => {
@@ -1017,10 +1139,15 @@ app.get('/api/groups', async (req, res) => {
 });
 
 // Grup oluşturma endpoint'i
-app.post('/api/groups', uploadGroupImage.fields([
+app.post('/api/groups', accountCreationLimiter, uploadGroupImage.fields([
   { name: 'groupImage', maxCount: 1 },
   { name: 'adminProfileImage', maxCount: 1 }
-]), async (req, res) => {
+]), requireValidUploadedImages, async (req, res) => {
+  let finalGroupId = null;
+  let createdGroupRecordId = null;
+  let uploadedGroupImageUrl = null;
+  let uploadedAdminProfileImageUrl = null;
+
   try {
     const {
       groupName,
@@ -1033,16 +1160,23 @@ app.post('/api/groups', uploadGroupImage.fields([
       selectedAdminAvatarPath
     } = req.body;
 
-    if (!groupName) {
-      return res.status(400).json({ error: 'Grup adı gereklidir' });
+    if (!isValidText(groupName, 40) || !isValidText(description || '', 200, { allowEmpty: true }) ||
+        !isValidText(adminUserName, 40) || !isValidText(adminName, 40)) {
+      return res.status(400).json({ error: 'Grup ve kullanıcı alanlarının uzunluklarını kontrol edin' });
     }
-
-    if (!adminUserName || !adminName || !adminPassword) {
-      return res.status(400).json({ error: 'Kullanıcı adı, yönetici adı ve şifresi gereklidir' });
+    if (!isValidPassword(adminPassword)) {
+      return res.status(400).json({ error: 'Şifre 6-40 karakter arasında olmalıdır' });
+    }
+    if (visibility && !['public', 'private'].includes(visibility)) {
+      return res.status(400).json({ error: 'Geçersiz grup görünürlüğü' });
+    }
+    if (!isAllowedAvatarPath(selectedGroupAvatarPath, 'groupAvatars') ||
+        !isAllowedAvatarPath(selectedAdminAvatarPath, 'userAvatars')) {
+      return res.status(400).json({ error: 'Geçersiz avatar seçimi' });
     }
 
     const baseGroupId = generateGroupId(groupName);
-    let finalGroupId = baseGroupId;
+    finalGroupId = isSafeGroupId(baseGroupId) ? baseGroupId : `${baseGroupId}-grup`;
     let counter = 1;
     let existingGroup = await UserGroup.findOne({ groupId: finalGroupId }).lean();
     while (existingGroup) {
@@ -1072,6 +1206,7 @@ app.post('/api/groups', uploadGroupImage.fields([
         });
         const fileBuffer = fs.readFileSync(req.files.groupImage[0].path);
         groupImageUrl = await uploadToDropbox(fileBuffer, fileName, 'groupImages');
+        uploadedGroupImageUrl = groupImageUrl;
 
         // Yerel dosyayı sil
         fs.unlinkSync(req.files.groupImage[0].path);
@@ -1098,6 +1233,7 @@ app.post('/api/groups', uploadGroupImage.fields([
         });
         const fileBuffer = fs.readFileSync(req.files.adminProfileImage[0].path);
         adminProfileImageUrl = await uploadToDropbox(fileBuffer, fileName, 'userImages');
+        uploadedAdminProfileImageUrl = adminProfileImageUrl;
 
         // Yerel dosyayı sil
         fs.unlinkSync(req.files.adminProfileImage[0].path);
@@ -1124,6 +1260,7 @@ app.post('/api/groups', uploadGroupImage.fields([
     });
 
     await newGroup.save();
+    createdGroupRecordId = newGroup._id;
 
     // Varsayılan kullanıcı ekle (admin olarak)
     const { users, readingStatuses } = getGroupCollections(finalGroupId);
@@ -1155,23 +1292,47 @@ app.post('/api/groups', uploadGroupImage.fields([
     // Yeni grup için index'leri oluştur
     await createIndexesForGroup(finalGroupId);
 
+    await authenticateSession(req, finalGroupId, defaultUser);
+
     await logSiteActivity({
       action: 'grup_oluşturma',
       req,
       groupId: finalGroupId,
-      userName: adminName,
       deviceInfo: req.body?.deviceInfo
     });
 
     res.status(201).json({ success: true, group: newGroup, userId: defaultUser._id });
   } catch (error) {
     console.error('Error creating group:', error);
+
+    if (finalGroupId && req.session?.memberships) {
+      delete req.session.memberships[finalGroupId];
+      if (Object.keys(req.session.memberships).length === 0) delete req.session.memberships;
+      await saveSession(req).catch(sessionCleanupError =>
+        console.error('Başarısız grup oluşturma oturumu temizlenemedi:', sessionCleanupError)
+      );
+    }
+
+    try {
+      await rollbackGroupCreation({
+        groupId: finalGroupId,
+        groupRecordId: createdGroupRecordId,
+        uploadedGroupImageUrl,
+        uploadedAdminProfileImageUrl
+      });
+    } catch (rollbackError) {
+      console.error('Grup oluşturma geri alınamadı:', rollbackError);
+    }
+
+    await removeUploadedFiles(req).catch(cleanupError =>
+      console.error('Grup oluşturma geçici dosyaları temizlenemedi:', cleanupError)
+    );
     res.status(500).json({ error: 'Grup oluşturulurken bir hata oluştu' });
   }
 });
 
 // Grup üye sayısını getirme endpoint'i
-app.get('/api/groups/:groupId/member-count', async (req, res) => {
+app.get('/api/groups/:groupId/member-count', requireReadableGroup, async (req, res) => {
   try {
     const { groupId } = req.params;
 
@@ -1195,10 +1356,14 @@ app.get('/api/groups/:groupId/member-count', async (req, res) => {
 });
 
 // Grup ayarlarını güncelleme endpoint'i
-app.post('/api/update-group/:groupId', async (req, res) => {
+app.post('/api/update-group/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
     const { groupName, description, visibility, autoMarkUnread } = req.body;
+    if (!isValidText(groupName, 40) || !isValidText(description || '', 200, { allowEmpty: true }) ||
+        !['public', 'private'].includes(visibility)) {
+      return res.status(400).json({ error: 'Grup bilgileri geçersiz' });
+    }
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -1230,7 +1395,9 @@ app.post('/api/update-group/:groupId', async (req, res) => {
 });
 
 // Grup resmini güncelleme endpoint'i
-app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage'), async (req, res) => {
+app.post('/api/update-group-image/:groupId', requireGroupAdmin, uploadGroupImage.single('groupImage'), requireValidUploadedImages, async (req, res) => {
+  let newImageUrl = null;
+  let imageSaved = false;
   try {
     const { groupId } = req.params;
 
@@ -1243,15 +1410,6 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
     }
-
-    // Eski grup resmini Dropbox'tan sil
-    if (isDropboxHostedUrl(group.groupImage)) {
-      deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
-        console.error('Eski grup resmi silme hatası:', err)
-      );
-    }
-
-    let newImageUrl = null;
 
     // Yeni resmi işle: WebP'ye dönüştür -> Dropbox'a gönder
     try {
@@ -1320,7 +1478,7 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
 
     } catch (error) {
       console.error('Dropbox grup resmi upload hatası:', error);
-      return res.status(500).json({ error: 'Image upload failed' });
+      throw error;
     }
 
     // Grup resmini güncelle
@@ -1329,16 +1487,29 @@ app.post('/api/update-group-image/:groupId', uploadGroupImage.single('groupImage
       { groupImage: newImageUrl },
       { returnDocument: 'after' }
     );
+    if (!updatedGroup) throw new Error('Grup güncelleme sırasında silindi');
+    imageSaved = true;
+
+    if (isDropboxHostedUrl(group.groupImage)) {
+      deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
+        console.error('Eski grup resmi silme hatası:', err)
+      );
+    }
 
     res.json({ success: true, imageUrl: newImageUrl, group: updatedGroup });
   } catch (error) {
+    if (newImageUrl && !imageSaved) {
+      await deleteGroupImageFromDropboxByUrl(newImageUrl).catch(cleanupError =>
+        console.error('Kaydedilemeyen yeni grup resmi temizlenemedi:', cleanupError)
+      );
+    }
     console.error('Error updating group image:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Grup resmini kaldırma endpoint'i
-app.post('/api/remove-group-image/:groupId', async (req, res) => {
+app.post('/api/remove-group-image/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
 
@@ -1348,19 +1519,18 @@ app.post('/api/remove-group-image/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
-    // Eski grup resmini Dropbox'tan sil
-    if (isDropboxHostedUrl(group.groupImage)) {
-      deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
-        console.error('Grup resmi silme hatası:', err)
-      );
-    }
-
     // Grup resmini null yap
     const updatedGroup = await UserGroup.findOneAndUpdate(
       { groupId },
       { groupImage: null },
       { returnDocument: 'after' }
     );
+
+    if (isDropboxHostedUrl(group.groupImage)) {
+      deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
+        console.error('Grup resmi silme hatası:', err)
+      );
+    }
 
     res.json({ success: true, group: updatedGroup });
   } catch (error) {
@@ -1394,10 +1564,13 @@ app.get('/api/group-avatars', (req, res) => {
 });
 
 // Hazır avatar ile grup resmini güncelleme endpoint'i
-app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
+app.post('/api/update-group-image-from-avatar/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
     const { avatarPath } = req.body;
+    if (!avatarPath || !isAllowedAvatarPath(avatarPath, 'groupAvatars')) {
+      return res.status(400).json({ error: 'Geçersiz avatar seçimi' });
+    }
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -1405,15 +1578,8 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
-    // Eski grup resmini Dropbox'tan sil (sadece Dropbox'ta varsa)
-    if (isDropboxHostedUrl(group.groupImage)) {
-      deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
-        console.error('Eski grup resmi silme hatası:', err)
-      );
-    }
-
     // Avatar dosyasının varlığını kontrol et
-    const avatarFilePath = path.join(__dirname, 'public', avatarPath);
+    const avatarFilePath = path.join(__dirname, 'public', avatarPath.slice(1));
     if (!fs.existsSync(avatarFilePath)) {
       return res.status(404).json({ error: 'Avatar dosyası bulunamadı' });
     }
@@ -1428,6 +1594,12 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
       { returnDocument: 'after' }
     );
 
+    if (isDropboxHostedUrl(group.groupImage)) {
+      deleteGroupImageFromDropboxByUrl(group.groupImage).catch(err =>
+        console.error('Eski grup resmi silme hatası:', err)
+      );
+    }
+
     console.log(`✅ Avatar seçimi: ${newImageUrl} (Dropbox'a yüklenmedi)`);
 
     res.json({ success: true, imageUrl: newImageUrl, group: updatedGroup });
@@ -1438,10 +1610,9 @@ app.post('/api/update-group-image-from-avatar/:groupId', async (req, res) => {
 });
 
 // Grup silme endpoint'i
-app.delete('/api/delete-group/:groupId', async (req, res) => {
+app.delete('/api/delete-group/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const actorUserName = req.body?.userName || req.query?.userName || null;
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -1450,31 +1621,25 @@ app.delete('/api/delete-group/:groupId', async (req, res) => {
     }
 
     // Dinamik koleksiyonları al
-    const { users, readingStatuses } = getGroupCollections(groupId);
-
-    // Veritabanı kayıtları silinmeden önce tüm Dropbox resimlerini sil
+    const { users } = getGroupCollections(groupId);
     const allUsers = await users.find().lean();
+
+    const deletionActor = await resolveLogActor(req, groupId);
+
+    // Dropbox temizliği başarısızsa grup kaydını silme; yönetici tekrar deneyebilsin.
+    await invalidateGroupSessions(groupId);
     await deleteGroupDropboxImages(group, allUsers);
-
-    // Grup koleksiyonlarını sil
-    await users.deleteMany({});
-    await readingStatuses.deleteMany({});
-
-    // Koleksiyonları tamamen sil
     await dropGroupCollections(groupId);
-
-    // Admin kaydı artık users koleksiyonunda, ayrı silmeye gerek yok
+    await UserGroup.findOneAndDelete({ groupId });
+    delete req.session.memberships[groupId];
 
     await logSiteActivity({
       action: 'grup_silme',
       req,
       groupId,
-      userName: actorUserName,
-      deviceInfo: req.body?.deviceInfo
-    });
-
-    // Grubu sil
-    await UserGroup.findOneAndDelete({ groupId });
+      deviceInfo: req.body?.deviceInfo,
+      actor: deletionActor
+    }).catch(error => console.error('Grup silme etkinliği kaydedilemedi:', error));
 
     res.json({ success: true, message: 'Grup başarıyla silindi' });
   } catch (error) {
@@ -1504,6 +1669,7 @@ const readingStatusSchema = new mongoose.Schema({
 });
 
 function getGroupCollections(groupId) {
+  if (!isSafeGroupId(groupId)) throw new Error('Geçersiz grup kimliği');
   const userModelName = `users_${groupId}`;
   const readingStatusModelName = `readingstatuses_${groupId}`;
 
@@ -1529,6 +1695,270 @@ function getGroupCollections(groupId) {
     readingStatuses: readingStatusModel
   };
 }
+
+function getAuthGroupId(req) {
+  return req.params.groupId || req.body?.groupId || req.query?.groupId;
+}
+
+function isSafeGroupId(groupId) {
+  const value = String(groupId || '');
+  return GROUP_ID_PATTERN.test(value) && !['__proto__', 'prototype', 'constructor'].includes(value);
+}
+
+function isValidPassword(password) {
+  return typeof password === 'string' && password.length >= 6 && password.length <= 40;
+}
+
+function isValidText(value, maxLength, { allowEmpty = false } = {}) {
+  if (typeof value !== 'string') return false;
+  const length = value.trim().length;
+  return (allowEmpty || length > 0) && length <= maxLength;
+}
+
+function isValidReadingDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return moment(value, 'YYYY-MM-DD', true).isValid()
+    && value <= moment().utcOffset(3).format('YYYY-MM-DD');
+}
+
+function isAllowedAvatarPath(value, folder) {
+  if (!value) return true;
+  if (typeof value !== 'string') return false;
+  const escapedFolder = folder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^/${escapedFolder}/[a-zA-Z0-9._-]+\\.(?:jpe?g|png|webp|gif)$`, 'i').test(value);
+}
+
+function getSessionMembership(req, groupId) {
+  if (!isSafeGroupId(groupId) || !req.session?.memberships || !Object.hasOwn(req.session.memberships, groupId)) {
+    return null;
+  }
+  return req.session.memberships[groupId] || null;
+}
+
+function setSessionMembership(req, groupId, user) {
+  if (!isSafeGroupId(groupId)) throw new Error('Geçersiz grup kimliği');
+  req.session.memberships ||= {};
+  req.session.memberships[groupId] = {
+    userId: String(user._id),
+    authority: user.authority
+  };
+}
+
+function saveSession(req) {
+  return new Promise((resolve, reject) => req.session.save(error => error ? reject(error) : resolve()));
+}
+
+function regenerateSession(req) {
+  return new Promise((resolve, reject) => req.session.regenerate(error => error ? reject(error) : resolve()));
+}
+
+async function authenticateSession(req, groupId, user) {
+  const previousMemberships = { ...(req.session.memberships || {}) };
+  const previousJoinClaims = { ...(req.session.joinClaims || {}) };
+  await regenerateSession(req);
+  req.session.memberships = previousMemberships;
+  if (Object.keys(previousJoinClaims).length > 0) {
+    req.session.joinClaims = previousJoinClaims;
+  }
+  setSessionMembership(req, groupId, user);
+  await saveSession(req);
+}
+
+function requireGroupAuth(req, res, next) {
+  const groupId = getAuthGroupId(req);
+  const membership = getSessionMembership(req, groupId);
+  if (!membership) {
+    return res.status(401).json({ error: 'Bu işlem için giriş yapmalısınız' });
+  }
+  req.auth = { groupId, ...membership };
+  next();
+}
+
+function requireGroupAdmin(req, res, next) {
+  requireGroupAuth(req, res, () => {
+    if (req.auth.authority !== 'admin') {
+      return res.status(403).json({ error: 'Bu işlem için yönetici yetkisi gerekli' });
+    }
+    next();
+  });
+}
+
+function requireSelfOrAdmin(req, res, next) {
+  requireGroupAuth(req, res, () => {
+    const targetUserId = String(req.params?.userId || req.body?.userId || req.body?.id || '');
+    if (req.auth.authority !== 'admin' && targetUserId !== String(req.auth.userId)) {
+      return res.status(403).json({ error: 'Yalnızca kendi hesabınızı değiştirebilirsiniz' });
+    }
+    next();
+  });
+}
+
+function requireSelf(req, res, next) {
+  requireGroupAuth(req, res, () => {
+    const targetUserId = String(req.params?.userId || req.body?.userId || req.body?.id || '');
+    if (!targetUserId || targetUserId !== String(req.auth.userId)) {
+      return res.status(403).json({ error: 'Yalnızca kendi hesabınızı değiştirebilirsiniz' });
+    }
+    next();
+  });
+}
+
+async function requireJoinRequestAdmin(req, res, next) {
+  try {
+    const joinRequest = await JoinRequest.findById(req.params.requestId).lean();
+    if (!joinRequest) return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
+    const membership = getSessionMembership(req, joinRequest.groupId);
+    if (!membership || membership.authority !== 'admin') {
+      return res.status(403).json({ error: 'Bu işlem için yönetici yetkisi gerekli' });
+    }
+    req.joinRequest = joinRequest;
+    req.auth = { groupId: joinRequest.groupId, ...membership };
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function requireReadableGroup(req, res, next) {
+  try {
+    const groupId = getAuthGroupId(req);
+    const group = await UserGroup.findOne({ groupId }).lean();
+    if (!group) return res.status(404).json({ error: 'Grup bulunamadı' });
+    if (group.visibility === 'private' && !getSessionMembership(req, groupId)) {
+      return res.status(401).json({ error: 'Bu grubu görüntülemek için giriş yapmalısınız' });
+    }
+    req.group = group;
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+function safeUser(user, includePrivate = false) {
+  const result = {
+    _id: user._id,
+    name: user.name,
+    profileImage: user.profileImage,
+    authority: user.authority,
+    loginStreak: user.loginStreak,
+    lastLoginDate: user.lastLoginDate,
+    lastCongratulatedLeague: user.lastCongratulatedLeague
+  };
+  if (includePrivate) {
+    result.username = user.username;
+    result.phone = user.phone || '';
+  }
+  return result;
+}
+
+async function invalidateUserSessions(groupId, userId) {
+  const membershipPath = `session.memberships.${groupId}`;
+  await mongoose.connection.db.collection('sessions').updateMany(
+    { [`${membershipPath}.userId`]: String(userId) },
+    { $unset: { [membershipPath]: '' } }
+  );
+}
+
+async function invalidateGroupSessions(groupId) {
+  const membershipPath = `session.memberships.${groupId}`;
+  await mongoose.connection.db.collection('sessions').updateMany(
+    { [membershipPath]: { $exists: true } },
+    { $unset: { [membershipPath]: '' } }
+  );
+}
+
+app.get('/api/auth/memberships', async (req, res) => {
+  try {
+    const memberships = req.session.memberships || {};
+    const groupIds = Object.keys(memberships);
+    if (groupIds.length === 0) return res.json({ memberships: [] });
+
+    const groups = await UserGroup.find({ groupId: { $in: groupIds } }).lean();
+    const existingIds = new Set(groups.map(group => group.groupId));
+    for (const groupId of groupIds) {
+      if (!existingIds.has(groupId)) delete req.session.memberships[groupId];
+    }
+
+    const result = await Promise.all(groups.map(async group => {
+      const membership = memberships[group.groupId];
+      const { users } = getGroupCollections(group.groupId);
+
+      // Oturum kaydı tek başına üyelik kanıtı değildir. Kullanıcı başka bir
+      // cihazdan silinmiş olabileceği için ana sayfada gerçek kaydı doğrula.
+      const membershipUserId = String(membership?.userId || '');
+      const user = mongoose.Types.ObjectId.isValid(membershipUserId)
+        ? await users.findById(membershipUserId).select('_id authority').lean()
+        : null;
+      if (!user) {
+        delete req.session.memberships[group.groupId];
+        return null;
+      }
+
+      // Veritabanındaki güncel yetkiyi oturuma yansıt.
+      membership.authority = user.authority;
+
+      return {
+        groupId: group.groupId,
+        userId: membership.userId,
+        authority: user.authority,
+        groupName: group.groupName,
+        description: group.description,
+        groupImage: group.groupImage,
+        visibility: group.visibility,
+        autoMarkUnread: group.autoMarkUnread,
+        memberCount: await users.countDocuments()
+      };
+    }));
+
+    await saveSession(req);
+    res.json({ memberships: result.filter(Boolean) });
+  } catch (error) {
+    console.error('Oturum grupları alınamadı:', error);
+    res.status(500).json({ error: 'Oturum bilgileri alınamadı' });
+  }
+});
+
+app.get('/api/auth/me/:groupId', requireGroupAuth, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const group = await UserGroup.findOne({ groupId }).lean();
+    if (!group) return res.status(404).json({ error: 'Grup bulunamadı' });
+
+    const { users } = getGroupCollections(groupId);
+    const user = await users.findById(req.auth.userId).lean();
+    if (!user) {
+      delete req.session.memberships[groupId];
+      await saveSession(req);
+      return res.status(401).json({ error: 'Oturum kullanıcısı bulunamadı' });
+    }
+
+    setSessionMembership(req, groupId, user);
+    await saveSession(req);
+    res.json({ user: safeUser(user, true), group });
+  } catch (error) {
+    console.error('Oturum doğrulanamadı:', error);
+    res.status(500).json({ error: 'Oturum doğrulanamadı' });
+  }
+});
+
+app.post('/api/auth/logout/:groupId', async (req, res) => {
+  const { groupId } = req.params;
+  if (req.session.memberships) delete req.session.memberships[groupId];
+  const hasMemberships = Object.keys(req.session.memberships || {}).length > 0;
+  const hasJoinClaims = Object.keys(req.session.joinClaims || {}).length > 0;
+
+  if (!hasMemberships) delete req.session.memberships;
+
+  if (!hasMemberships && !hasJoinClaims) {
+    return req.session.destroy(error => {
+      if (error) return res.status(500).json({ error: 'Oturum kapatılamadı' });
+      res.clearCookie(sessionCookieName, { httpOnly: true, sameSite: 'lax', secure: isProduction, path: '/' });
+      res.json({ success: true });
+    });
+  }
+  await saveSession(req);
+  res.json({ success: true });
+});
 
 async function dropGroupCollections(groupId) {
   const collectionNames = [
@@ -1562,7 +1992,7 @@ async function dropGroupCollections(groupId) {
 // ============================================================================
 
 // Kullanıcı listesi endpoint'i
-app.get('/api/users/:groupId', async (req, res) => {
+app.get('/api/users/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
 
@@ -1576,7 +2006,10 @@ app.get('/api/users/:groupId', async (req, res) => {
     const { users } = getGroupCollections(groupId);
 
     // Sadece kullanıcıları getir
-    const usersData = await users.find().select('-userpassword').sort({ name: 1 }).lean();
+    const usersData = await users.find()
+      .select('_id name profileImage username authority loginStreak lastLoginDate lastCongratulatedLeague phone')
+      .sort({ name: 1 })
+      .lean();
 
     res.json({ users: usersData });
   } catch (error) {
@@ -1586,10 +2019,16 @@ app.get('/api/users/:groupId', async (req, res) => {
 });
 
 // Kullanıcı ekleme endpoint'i
-app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, res) => {
+app.post('/api/add-user/:groupId', requireGroupAdmin, upload.single('profileImage'), requireValidUploadedImages, async (req, res) => {
   try {
     const { groupId } = req.params;
     const { name, selectedAvatarPath } = req.body;
+    if (!name || typeof name !== 'string' || name.trim().length > 40) {
+      return res.status(400).json({ error: 'Kullanıcı adı 1-40 karakter arasında olmalıdır' });
+    }
+    if (!isAllowedAvatarPath(selectedAvatarPath, 'userAvatars')) {
+      return res.status(400).json({ error: 'Geçersiz avatar seçimi' });
+    }
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -1612,9 +2051,6 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     // Resim varsa önce yerel olarak kaydet
     else if (req.file) {
       try {
-        // useTempFolder parametresi kontrolü
-        const useTempFolder = req.body.useTempFolder === 'true';
-
         // 1. Adım: Geçici klasöre kaydet (orijinal format)
         const originalFileName = req.file.originalname;
         const normalizedFileName = normalizeFileName(originalFileName);
@@ -1682,10 +2118,8 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
       return res.status(400).json({ error: 'Bu isimde çok fazla kullanıcı var. Lütfen farklı bir isim deneyin.' });
     }
 
-    const plainPassword = name + randomNumber;
+    const plainPassword = crypto.randomBytes(24).toString('base64url');
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
-
-    console.log(`Yeni kullanıcı ekleniyor: ${name}, username: ${username}, plainPassword: ${plainPassword}${attemptCount > 0 ? ` (${attemptCount} deneme sonrası)` : ''}`);
 
     // Dropbox: yükleme başarılı olmadan kayıt yapma (DB'de /uploads kalmasın)
     if (fileName && !selectedAvatarPath) {
@@ -1728,7 +2162,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
     });
     await user.save();
 
-    res.json({ success: true, user: user, fileName: fileName });
+    res.json({ success: true, user: safeUser(user, true), fileName: fileName });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Sunucu hatası' });
@@ -1736,7 +2170,7 @@ app.post('/api/add-user/:groupId', upload.single('profileImage'), async (req, re
 });
 
 // Kullanıcı silme endpoint'i
-app.post('/api/delete-user/:groupId', async (req, res) => {
+app.post('/api/delete-user/:groupId', requireSelfOrAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
     const { id } = req.body;
@@ -1756,25 +2190,19 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
-    // Toplam kullanıcı sayısını kontrol et
-    const totalUserCount = await users.countDocuments();
+    // Grup yönetilemez durumda kalmasın: son kullanıcı grubu silebilir, son yönetici tek başına silinemez.
+    const [totalUserCount, adminCount] = await Promise.all([
+      users.countDocuments(),
+      users.countDocuments({ authority: 'admin' })
+    ]);
 
     // Eğer gruptaki son kullanıcıyı silmeye çalışıyorsa grubu da sil
     if (totalUserCount <= 1) {
-      // Veritabanı kayıtları silinmeden önce Dropbox resimlerini sil
+      await invalidateGroupSessions(groupId);
       await deleteGroupDropboxImages(group, [user]);
-
-      // Önce kullanıcıyı sil
-      await users.findByIdAndDelete(id);
-
-      // Kullanıcının okuma durumlarını sil
-      await readingStatuses.deleteMany({ userId: id });
-
-      // Son kullanıcıyla birlikte gruba ait MongoDB koleksiyonlarını da tamamen sil
       await dropGroupCollections(groupId);
-
-      // Grubu sil
       await UserGroup.findOneAndDelete({ groupId });
+      delete req.session.memberships[groupId];
 
       // Kullanıcıya grup silindiğini bildir
       return res.json({
@@ -1784,24 +2212,28 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
       });
     }
 
-    // Kullanıcıyı sil
-    await users.findByIdAndDelete(id);
-
-    // Kullanıcıya hemen yanıt ver
-    res.json({ success: true });
-
-    // Arka planda temizlik işlemleri
-    if (user) {
-      // Kullanıcının okuma durumlarını sil
-      await readingStatuses.deleteMany({ userId: id });
-
-      // Kullanıcının profil resmini Dropbox'tan sil (arka planda)
-      if (isDropboxHostedUrl(user.profileImage)) {
-        deleteFromDropboxByUrl(user.profileImage).catch(err =>
-          console.error('Dropbox silme hatası:', err)
-        );
-      }
+    if (user.authority === 'admin' && adminCount <= 1) {
+      return res.status(409).json({ error: 'Gruptaki son yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.' });
     }
+
+    // Yetkili oturum kalmaması için önce oturumları geçersizleştir.
+    await invalidateUserSessions(groupId, id);
+    await users.findByIdAndDelete(id);
+    if (String(req.auth.userId) === String(id)) {
+      delete req.session.memberships[groupId];
+    }
+
+    // Ana kayıt silindi; ikincil verilerin temizlenememesi canlı kullanıcıyı bozmamalı.
+    await readingStatuses.deleteMany({ userId: id }).catch(error =>
+      console.error('Silinen kullanıcının okuma kayıtları temizlenemedi:', error)
+    );
+    if (isDropboxHostedUrl(user.profileImage)) {
+      await deleteFromDropboxByUrl(user.profileImage).catch(error =>
+        console.error('Silinen kullanıcının Dropbox resmi temizlenemedi:', error)
+      );
+    }
+
+    res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Sunucu hatası' });
@@ -1809,13 +2241,13 @@ app.post('/api/delete-user/:groupId', async (req, res) => {
 });
 
 // Kullanıcı ismi güncelleme endpoint'i
-app.post('/api/update-user/:groupId', async (req, res) => {
+app.post('/api/update-user/:groupId', requireGroupAdmin, async (req, res) => {
   const { groupId } = req.params;
   const { userId, name } = req.body;
 
   try {
     // Parametreleri kontrol et
-    if (!userId || !name) {
+    if (!userId || !isValidText(name, 40)) {
       return res.status(400).json({ error: 'userId ve name parametreleri gerekli' });
     }
 
@@ -1839,7 +2271,7 @@ app.post('/api/update-user/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
-    res.json({ success: true, user: updatedUser });
+    res.json({ success: true, user: safeUser(updatedUser, true) });
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ error: 'Kullanıcı güncellenirken hata oluştu' });
@@ -1863,7 +2295,7 @@ function formatPhoneNumber(phoneStr) {
 }
 
 // Kullanıcı telefon numarası güncelleme endpoint'i
-app.post('/api/update-user-phone/:groupId', async (req, res) => {
+app.post('/api/update-user-phone/:groupId', requireGroupAdmin, async (req, res) => {
   const { groupId } = req.params;
   const { userId, phone } = req.body;
 
@@ -1892,7 +2324,7 @@ app.post('/api/update-user-phone/:groupId', async (req, res) => {
 
     res.json({
       success: true,
-      user: updatedUser,
+      user: safeUser(updatedUser, true),
       formattedPhone: formattedPhone,
       message: 'Telefon numarası başarıyla güncellendi'
     });
@@ -1903,7 +2335,7 @@ app.post('/api/update-user-phone/:groupId', async (req, res) => {
 });
 
 // Kullanıcı yetkisi güncelleme endpoint'i
-app.post('/api/update-user-authority/:groupId', async (req, res) => {
+app.post('/api/update-user-authority/:groupId', requireGroupAdmin, async (req, res) => {
   const { groupId } = req.params;
   const { userId, authority } = req.body;
 
@@ -1948,9 +2380,14 @@ app.post('/api/update-user-authority/:groupId', async (req, res) => {
       { returnDocument: 'after' }
     );
 
+    await invalidateUserSessions(groupId, userId);
+    if (String(req.auth.userId) === String(userId)) {
+      delete req.session.memberships[groupId];
+    }
+
     res.json({
       success: true,
-      user: updatedUser,
+      user: safeUser(updatedUser, true),
       message: `Kullanıcı yetkisi ${authority === 'admin' ? 'Yönetici' : 'Üye'} olarak güncellendi`
     });
   } catch (error) {
@@ -1960,9 +2397,10 @@ app.post('/api/update-user-authority/:groupId', async (req, res) => {
 });
 
 // Kullanıcı resmi güncelleme endpoint'i
-app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async (req, res) => {
-  const { groupId } = req.params;
-  const { userId } = req.body;
+app.post('/api/update-user-image/:groupId/:userId', requireSelfOrAdmin, upload.single('profileImage'), requireValidUploadedImages, async (req, res) => {
+  const { groupId, userId } = req.params;
+  let uploadedImageUrl = null;
+  let imageSaved = false;
 
   try {
     // Grup var mı kontrol et
@@ -1978,7 +2416,8 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
     if (req.file) {
       // Find the user to get their old profile image
       const user = await users.findById(userId).lean();
-      const oldImageUrl = user ? user.profileImage : null;
+      if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+      const oldImageUrl = user.profileImage;
 
       // 1. Adım: Geçici klasöre kaydet (orijinal format)
       const originalFileName = req.file.originalname;
@@ -2029,6 +2468,7 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
           ext: path.extname(fileName) || '.webp'
         });
         newImageUrl = await uploadToDropboxWithRetry(fileBuffer, dropboxFileName, 'userImages');
+        uploadedImageUrl = newImageUrl;
       } catch (dropboxError) {
         console.error('Dropbox yükleme hatası:', dropboxError);
         await unlinkWithRetry(localPath);
@@ -2041,7 +2481,9 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
 
       await unlinkWithRetry(localPath);
 
-      await users.findByIdAndUpdate(userId, { profileImage: newImageUrl });
+      const updatedUser = await users.findByIdAndUpdate(userId, { profileImage: newImageUrl });
+      if (!updatedUser) throw new Error('Kullanıcı güncelleme sırasında silindi');
+      imageSaved = true;
 
       if (isDropboxHostedUrl(oldImageUrl)) {
         deleteFromDropboxByUrl(oldImageUrl).catch(err =>
@@ -2054,6 +2496,11 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
       res.status(400).json({ error: 'No image file provided' });
     }
   } catch (error) {
+    if (uploadedImageUrl && !imageSaved) {
+      await deleteFromDropboxByUrl(uploadedImageUrl).catch(cleanupError =>
+        console.error('Kaydedilemeyen yeni profil resmi temizlenemedi:', cleanupError)
+      );
+    }
     console.error('Error updating user image:', error);
     res.status(500).json({ error: 'Failed to update user image' });
   }
@@ -2064,25 +2511,24 @@ app.post('/api/update-user-image/:groupId', upload.single('profileImage'), async
 // ============================================================================
 
 // Tüm verileri çekme endpoint'i
-app.get('/api/all-data/:groupId', async (req, res) => {
+app.get('/api/all-data/:groupId', requireReadableGroup, async (req, res) => {
   try {
     const { groupId } = req.params;
 
-    // Grup var mı kontrol et
-    const group = await UserGroup.findOne({ groupId }).lean();
-    if (!group) {
-      return res.status(404).json({ error: 'Grup bulunamadı' });
-    }
+    const group = req.group;
 
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
     const [usersData, statsData] = await Promise.all([
-      users.find().select('-userpassword -__v').sort({ name: 1 }).lean(),
+      users.find()
+        .select('_id name profileImage authority loginStreak lastLoginDate lastCongratulatedLeague')
+        .sort({ name: 1 })
+        .lean(),
       readingStatuses.find().select('userId date status amount -_id').lean()
     ]);
 
-    res.json({ users: usersData, stats: statsData, group });
+    res.json({ users: usersData.map(user => safeUser(user)), stats: statsData, group });
   } catch (error) {
     console.error('Error fetching all data:', error);
     res.status(500).json({ error: 'Server error' });
@@ -2090,19 +2536,12 @@ app.get('/api/all-data/:groupId', async (req, res) => {
 });
 
 // Lig tebriği: kullanıcıların son kutlanan lig alanını güncelle (panoda kopyalama sonrası)
-app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
+app.post('/api/last-congratulated-league/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { items, requestingUserId, requestingUserAuthority } = req.body || {};
+    const { items } = req.body || {};
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'items dizisi gerekli' });
-    }
-
-    if (!requestingUserId || !requestingUserAuthority) {
-      return res.status(401).json({ error: 'Kullanıcı bilgileri eksik' });
-    }
-    if (requestingUserAuthority !== 'admin') {
-      return res.status(403).json({ error: 'Bu işlem için yönetici yetkisi gerekli' });
     }
 
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -2111,11 +2550,6 @@ app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
     }
 
     const { users } = getGroupCollections(groupId);
-    const requester = await users.findById(requestingUserId).lean();
-    if (!requester || requester.authority !== 'admin') {
-      return res.status(403).json({ error: 'Geçersiz kullanıcı veya yetki' });
-    }
-
     const allowedLeagues = new Set([
       'Bronz', 'Gümüş', 'Altın', 'İnci', 'Safir', 'Zümrüt', 'Elmas', 'Yakut', 'Mercan', 'Pırlanta'
     ]);
@@ -2163,7 +2597,7 @@ app.post('/api/last-congratulated-league/:groupId', async (req, res) => {
 });
 
 // Kullanıcı istatistikleri endpoint'i
-app.get('/api/user-stats/:groupId/:userId', async (req, res) => {
+app.get('/api/user-stats/:groupId/:userId', requireReadableGroup, async (req, res) => {
   try {
     const { groupId, userId } = req.params;
 
@@ -2187,7 +2621,7 @@ app.get('/api/user-stats/:groupId/:userId', async (req, res) => {
 });
 
 // Okuma istatistikleri endpoint'i
-app.get('/api/reading-stats/:groupId', async (req, res) => {
+app.get('/api/reading-stats/:groupId', requireReadableGroup, async (req, res) => {
   try {
     const { groupId } = req.params;
 
@@ -2224,7 +2658,7 @@ app.get('/api/reading-stats/:groupId', async (req, res) => {
 });
 
 // En uzun seriler endpoint'i
-app.get('/api/longest-streaks/:groupId', async (req, res) => {
+app.get('/api/longest-streaks/:groupId', requireReadableGroup, async (req, res) => {
   try {
     const { groupId } = req.params;
 
@@ -2293,10 +2727,23 @@ app.get('/api/longest-streaks/:groupId', async (req, res) => {
 });
 
 // Okuma durumu güncelleme endpoint'i
-app.post('/api/update-status/:groupId', async (req, res) => {
+app.post('/api/update-status/:groupId', requireSelfOrAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { userId, date, status, amount, requestingUserId, requestingUserAuthority } = req.body;
+    const { userId, date, status, amount } = req.body;
+
+    if (!mongoose.isValidObjectId(userId) || !isValidReadingDate(date)) {
+      return res.status(400).json({ error: 'Geçersiz kullanıcı veya tarih' });
+    }
+    if (!['', 'okudum', 'okumadım'].includes(status)) {
+      return res.status(400).json({ error: 'Geçersiz okuma durumu' });
+    }
+
+    const hasAmount = amount !== undefined && amount !== null && amount !== '';
+    const amountNum = hasAmount ? Number(amount) : null;
+    if (hasAmount && (status !== 'okudum' || !Number.isInteger(amountNum) || amountNum < 0 || amountNum > 99999)) {
+      return res.status(400).json({ error: 'Okuma miktarı 0-99999 arasında bir tam sayı olmalıdır' });
+    }
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -2304,30 +2751,11 @@ app.post('/api/update-status/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
-    // Yetki kontrolü
-    if (!requestingUserId || !requestingUserAuthority) {
-      return res.status(401).json({ error: 'Kullanıcı bilgileri eksik' });
-    }
-
-    // Member kullanıcıları sadece kendi verilerini güncelleyebilir
-    if (requestingUserAuthority === 'member' && requestingUserId !== userId) {
-      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
-    }
-
-    // Admin kullanıcıları tüm verileri güncelleyebilir
-    if (requestingUserAuthority !== 'admin' && requestingUserAuthority !== 'member') {
-      return res.status(403).json({ error: 'Geçersiz kullanıcı yetkisi' });
-    }
-
     // Dinamik koleksiyonu al
     const { readingStatuses } = getGroupCollections(groupId);
 
     if (status) {
-      const amountNum =
-        amount !== undefined && amount !== null && amount !== ''
-          ? Number(amount)
-          : null;
-      if (Number.isFinite(amountNum)) {
+      if (hasAmount) {
         await readingStatuses.findOneAndUpdate(
           { userId, date },
           {
@@ -2366,7 +2794,7 @@ app.post('/api/update-status/:groupId', async (req, res) => {
 // ============================================================================
 
 // Davet oluşturma endpoint'i
-app.post('/api/create-invite/:groupId', async (req, res) => {
+app.post('/api/create-invite/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
     const { userId } = req.body;
@@ -2462,8 +2890,7 @@ app.get('/api/verify-invite/:groupId', async (req, res) => {
       username: user.username,
       name: user.name,
       authority: user.authority,
-      profileImage: user.profileImage,
-      inviteId: inviteRecord._id
+      profileImage: user.profileImage
     });
   } catch (error) {
     console.error('Davet doğrulama hatası:', error);
@@ -2472,19 +2899,31 @@ app.get('/api/verify-invite/:groupId', async (req, res) => {
 });
 
 // Kullanıcı bilgilerini güncelleme endpoint'i
-app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), async (req, res) => {
+app.post('/api/update-user-via-invite/:groupId', accountCreationLimiter, upload.single('profileImage'), requireValidUploadedImages, async (req, res) => {
+  let uploadedProfileImageUrl = null;
+  let userUpdated = false;
   try {
     const { groupId } = req.params;
-    const { inviteId, userName, memberName, memberPassword, selectedAvatarPath } = req.body;
+    const { inviteToken, userName, memberName, memberPassword, selectedAvatarPath } = req.body;
     const profileImageFile = req.file;
 
-    if (!inviteId || !userName || !memberName || !memberPassword) {
+    if (!inviteToken || !isValidText(userName, 40) || !isValidText(memberName, 40) || !memberPassword) {
       return res.status(400).json({ error: 'Tüm alanlar gerekli' });
     }
+    if (!isValidPassword(memberPassword)) {
+      return res.status(400).json({ error: 'Şifre 6-40 karakter arasında olmalıdır' });
+    }
+    if (!isAllowedAvatarPath(selectedAvatarPath, 'userAvatars')) {
+      return res.status(400).json({ error: 'Geçersiz avatar seçimi' });
+    }
 
-    // Davet token'ını kontrol et (used alanını kullanmıyoruz)
-    const invite = await Invite.findById(inviteId).lean();
-    if (!invite || invite.groupId !== groupId) {
+    const inviteTokenHash = crypto.createHash('sha256').update(inviteToken).digest('hex');
+    const invite = await Invite.findOne({
+      inviteTokenHash,
+      groupId,
+      expiresAt: { $gt: new Date() }
+    }).lean();
+    if (!invite) {
       return res.status(404).json({ error: 'Geçersiz davet linki' });
     }
 
@@ -2494,6 +2933,12 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
 
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+    if (memberName !== user.username && await users.exists({
+      _id: { $ne: invite.userId },
+      username: memberName
+    })) {
+      return res.status(409).json({ error: 'Bu kullanıcı adı zaten kullanılıyor' });
     }
 
     // Şifreyi hash'le
@@ -2521,13 +2966,8 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
           ext: (path.extname(origName) || '.jpg').toLowerCase()
         });
         profileImagePath = await uploadToDropboxWithRetry(fileBuffer, dropboxFileName, 'userImages');
+        uploadedProfileImageUrl = profileImagePath;
         await unlinkWithRetry(localPath);
-
-        if (isDropboxHostedUrl(oldImageUrl)) {
-          deleteFromDropboxByUrl(oldImageUrl).catch(err =>
-            console.error('Eski resim silme hatası:', err)
-          );
-        }
       } catch (dropboxError) {
         console.error('Dropbox yükleme hatası:', dropboxError);
         await unlinkWithRetry(localPath);
@@ -2539,18 +2979,29 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
     }
 
     // Kullanıcı bilgilerini güncelle
-    await users.findByIdAndUpdate(invite.userId, {
+    const updatedUser = await users.findByIdAndUpdate(invite.userId, {
       username: memberName,
       userpassword: hashedMemberPassword,
       name: userName,
       profileImage: profileImagePath
-    });
+    }, { returnDocument: 'after' });
+    if (!updatedUser) throw new Error('Kullanıcı güncelleme sırasında silindi');
+    userUpdated = true;
+
+    if (profileImagePath !== oldImageUrl && isDropboxHostedUrl(oldImageUrl)) {
+      deleteFromDropboxByUrl(oldImageUrl).catch(err =>
+        console.error('Eski resim silme hatası:', err)
+      );
+    }
 
     // Davet token'ını sil
-    await Invite.findByIdAndDelete(inviteId);
+    await Invite.findByIdAndDelete(invite._id);
 
     // Grup bilgilerini al
     const group = await UserGroup.findOne({ groupId }).lean();
+
+    await invalidateUserSessions(groupId, invite.userId);
+    await authenticateSession(req, groupId, updatedUser);
 
     res.json({
       success: true,
@@ -2564,7 +3015,15 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
     });
 
   } catch (error) {
+    if (uploadedProfileImageUrl && !userUpdated) {
+      await deleteFromDropboxByUrl(uploadedProfileImageUrl).catch(cleanupError =>
+        console.error('Kaydedilemeyen davet profil resmi temizlenemedi:', cleanupError)
+      );
+    }
     console.error('Kullanıcı güncelleme hatası:', error);
+    if (error?.code === 11000) {
+      return res.status(409).json({ error: 'Bu kullanıcı adı zaten kullanılıyor' });
+    }
     res.status(500).json({ error: 'Kullanıcı güncellenirken hata oluştu' });
   }
 });
@@ -2573,9 +3032,16 @@ app.post('/api/update-user-via-invite/:groupId', upload.single('profileImage'), 
 // ============================================================================
 
 // Admin girişi endpoint'i
-app.post('/api/admin-login', async (req, res) => {
+app.post('/api/admin-login', loginLimiter, async (req, res) => {
   try {
     const { username, password, groupId } = req.body;
+
+    if (!isSafeGroupId(groupId) || !username || !password) {
+      return res.status(400).json({ success: false, error: 'Eksik veya geçersiz giriş bilgisi' });
+    }
+
+    const group = await UserGroup.findOne({ groupId }).lean();
+    if (!group) return res.json({ success: false });
 
     // Users koleksiyonundan kullanıcıyı bul (admin veya member)
     const { users } = getGroupCollections(groupId);
@@ -2601,11 +3067,8 @@ app.post('/api/admin-login', async (req, res) => {
         // Giriş serisi hesapla
         const { user: updatedUser, streakIncreased } = await handleLoginStreak(user, groupId);
 
-        // Grup bilgisini al
-        const group = await UserGroup.findOne({ groupId }).lean();
-        if (!group) {
-          return res.json({ success: false, error: 'Grup bulunamadı' });
-        }
+        await authenticateSession(req, groupId, updatedUser);
+
         res.json({
           success: true,
           groupName: group.groupName,
@@ -2614,6 +3077,7 @@ app.post('/api/admin-login', async (req, res) => {
           authority: updatedUser.authority, // Kullanıcının yetkisini de döndür
           userName: updatedUser.username, // Kullanıcının kullanıcı adını de döndür
           name: updatedUser.name, // Kullanıcının gerçek adını döndür
+          profileImage: updatedUser.profileImage,
           loginStreak: updatedUser.loginStreak, // Giriş serisini de döndür
           streakIncreased: streakIncreased // Seri artırıldı mı bilgisi
         });
@@ -2630,7 +3094,7 @@ app.post('/api/admin-login', async (req, res) => {
 });
 
 // Giriş serisi güncelleme endpoint'i
-app.post('/api/update-login-streak', async (req, res) => {
+app.post('/api/update-login-streak', requireSelfOrAdmin, async (req, res) => {
   try {
     const { userId, groupId } = req.body;
 
@@ -2659,22 +3123,6 @@ app.post('/api/update-login-streak', async (req, res) => {
   }
 });
 
-// Admin doğrulama endpoint'i
-app.post('/api/verify-admin', async (req, res) => {
-  try {
-    const { username, groupId } = req.body;
-
-    // Users koleksiyonundan admin kullanıcısını bul
-    const { users } = getGroupCollections(groupId);
-    const admin = await users.findOne({ username, authority: 'admin' }).lean();
-
-    res.json({ valid: !!admin });
-  } catch (error) {
-    console.error('Error verifying admin:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
 // Add an initial admin if none exists (you can remove this after first run)
 const AccessLog = mongoose.model('AccessLog', {
   action: String,
@@ -2685,19 +3133,16 @@ const AccessLog = mongoose.model('AccessLog', {
 });
 
 // Yetkisiz erişim logu endpoint'i
-app.post('/api/log-unauthorized', async (req, res) => {
+app.post('/api/log-unauthorized', publicLogLimiter, async (req, res) => {
   try {
-    const { action, deviceInfo, userName, groupId } = req.body;
-
-    // Get client IP address
-    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-    const storedActor = userName || ipAddress;
-    const gid = groupId || 'catikati23';
+    const { action, deviceInfo, groupId } = req.body;
+    const gid = isSafeGroupId(groupId) ? String(groupId) : 'catikati23';
+    const storedActor = await resolveLogActor(req, gid);
+    const storedAction = typeof action === 'string' ? action.trim().slice(0, 100) : 'bilinmeyen_eylem';
 
     if (await hasLogInSameTurkeyMinute(AccessLog, {
       groupId: gid,
-      action,
+      action: storedAction,
       ipAddress: storedActor
     })) {
       return res.json({ success: true });
@@ -2705,9 +3150,9 @@ app.post('/api/log-unauthorized', async (req, res) => {
 
     // Create a new log entry
     const log = new AccessLog({
-      action,
+      action: storedAction,
       timestamp: new Date(),
-      deviceInfo,
+      deviceInfo: buildDeviceInfo(req, deviceInfo),
       ipAddress: storedActor,
       groupId: gid
     });
@@ -2721,7 +3166,7 @@ app.post('/api/log-unauthorized', async (req, res) => {
 });
 
 // Erişim logları endpoint'i
-app.get('/api/access-logs', async (req, res) => {
+app.get('/api/access-logs', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.query;
     let query = {};
@@ -2740,7 +3185,7 @@ app.get('/api/access-logs', async (req, res) => {
 });
 
 // Belirli bir İstanbul takvim günündeki accesslogs kayıtlarını sil (grup bazlı)
-app.delete('/api/access-logs/day', async (req, res) => {
+app.delete('/api/access-logs/day', requireGroupAdmin, async (req, res) => {
   try {
     const { trDate, groupId } = req.body || {};
     if (!trDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(trDate))) {
@@ -2766,7 +3211,7 @@ app.delete('/api/access-logs/day', async (req, res) => {
 });
 
 // Login logs endpoint
-app.get('/api/login-logs', async (req, res) => {
+app.get('/api/login-logs', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.query;
     let query = {};
@@ -2809,7 +3254,7 @@ app.get('/api/login-logs', async (req, res) => {
 });
 
 // Belirli bir İstanbul takvim günündeki loginlogs kayıtlarını sil (grup bazlı)
-app.delete('/api/login-logs/day', async (req, res) => {
+app.delete('/api/login-logs/day', requireGroupAdmin, async (req, res) => {
   try {
     const { trDate, groupId } = req.body || {};
     if (!trDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(trDate))) {
@@ -2833,8 +3278,6 @@ app.delete('/api/login-logs/day', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
-const requestIp = require('request-ip');
 
 const loginLogSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
@@ -2888,27 +3331,31 @@ function getTurkeyDayBoundsFromTrDateString(trDate) {
 }
 
 function extractClientIp(req) {
-  const forwardedFor = req.headers['x-forwarded-for'];
-  if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
-    return forwardedFor[0];
-  }
-  if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
-    return forwardedFor.split(',')[0].trim();
-  }
-  return req.connection?.remoteAddress || req.socket?.remoteAddress || '';
+  return req.ip || req.socket?.remoteAddress || '';
 }
 
 function buildDeviceInfo(req, fallbackDeviceInfo = {}) {
-  if (fallbackDeviceInfo && Object.keys(fallbackDeviceInfo).length > 0) {
-    return fallbackDeviceInfo;
-  }
-
+  const width = Number(fallbackDeviceInfo?.screenWidth);
+  const height = Number(fallbackDeviceInfo?.screenHeight);
   return {
-    userAgent: req.headers['user-agent'] || 'unknown'
+    userAgent: String(req.headers['user-agent'] || 'unknown').slice(0, 500),
+    screenWidth: Number.isFinite(width) && width > 0 && width <= 20000 ? Math.round(width) : null,
+    screenHeight: Number.isFinite(height) && height > 0 && height <= 20000 ? Math.round(height) : null
   };
 }
 
-async function logSiteActivity({ action, req, groupId, userName, deviceInfo }) {
+async function resolveLogActor(req, groupId) {
+  const membership = getSessionMembership(req, groupId);
+  if (!membership) return extractClientIp(req);
+
+  const { users } = getGroupCollections(groupId);
+  const user = await users.findById(membership.userId).select('username').lean();
+  return typeof user?.username === 'string' && user.username.trim()
+    ? user.username.trim().slice(0, 100)
+    : extractClientIp(req);
+}
+
+async function logSiteActivity({ action, req, groupId, deviceInfo, actor }) {
   try {
     const allowedSiteActions = new Set([
       'grup_görüntüleme',
@@ -2918,17 +3365,12 @@ async function logSiteActivity({ action, req, groupId, userName, deviceInfo }) {
     ]);
     const normalizeSiteAction = (rawAction) => {
       const a = typeof rawAction === 'string' ? rawAction.trim() : '';
-      return allowedSiteActions.has(a) ? a : (a || 'bilinmeyen_eylem');
+      return allowedSiteActions.has(a) ? a : 'bilinmeyen_eylem';
     };
 
     const normalizedAction = normalizeSiteAction(action);
-    const clientIp = extractClientIp(req);
-    const normalizedUserName = typeof userName === 'string' && userName.trim()
-      ? userName.trim()
-      : null;
-
-    const storedActor = normalizedUserName || clientIp;
-    const storedGroupId = groupId || 'catikati23';
+    const storedGroupId = isSafeGroupId(groupId) ? String(groupId) : 'catikati23';
+    const storedActor = actor || await resolveLogActor(req, storedGroupId);
 
     if (await hasLogInSameTurkeyMinute(SiteActivityLog, {
       groupId: storedGroupId,
@@ -2953,14 +3395,10 @@ async function logSiteActivity({ action, req, groupId, userName, deviceInfo }) {
 }
 
 // Site activity logs endpoint
-app.get('/api/site-activity-logs', async (req, res) => {
+app.get('/api/site-activity-logs', requireGroupAdmin, async (req, res) => {
   try {
-    const { groupId, action } = req.query;
-    const query = {};
-
-    if (groupId) {
-      query.groupId = groupId;
-    }
+    const { action } = req.query;
+    const query = { groupId: req.auth.groupId };
     if (action) {
       query.action = action;
     }
@@ -2974,9 +3412,9 @@ app.get('/api/site-activity-logs', async (req, res) => {
 });
 
 // Etkinlik kayıtları sayfası: tüm grupların özeti (yalnızca kimlik / ad / görünürlük)
-app.get('/api/site-activity-groups', async (req, res) => {
+app.get('/api/site-activity-groups', requireGroupAdmin, async (req, res) => {
   try {
-    const groups = await UserGroup.find({})
+    const groups = await UserGroup.find({ groupId: req.auth.groupId })
       .select('groupId groupName visibility')
       .sort({ groupName: 1, groupId: 1 })
       .lean();
@@ -2988,7 +3426,7 @@ app.get('/api/site-activity-groups', async (req, res) => {
 });
 
 // Belirli bir İstanbul takvim günündeki siteactivitylogs kayıtlarını sil; action gönderilirse sadece o eylem
-app.delete('/api/site-activity-logs/day', async (req, res) => {
+app.delete('/api/site-activity-logs/day', requireGroupAdmin, async (req, res) => {
   try {
     const { trDate, action } = req.body || {};
     if (!trDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(trDate))) {
@@ -2999,6 +3437,7 @@ app.delete('/api/site-activity-logs/day', async (req, res) => {
       return res.status(400).json({ error: 'Geçersiz trDate' });
     }
     const q = {
+      groupId: req.auth.groupId,
       timestamp: { $gte: bounds.start, $lt: bounds.end }
     };
     if (action && String(action).trim()) {
@@ -3013,15 +3452,14 @@ app.delete('/api/site-activity-logs/day', async (req, res) => {
 });
 
 // Ana sayfa görüntüleme log endpoint'i
-app.post('/api/log-home-visit', async (req, res) => {
+app.post('/api/log-home-visit', publicLogLimiter, async (req, res) => {
   try {
-    const { deviceInfo, userName, action } = req.body || {};
+    const { deviceInfo, action } = req.body || {};
 
     await logSiteActivity({
       action: action || 'ana_sayfa_görüntüleme',
       req,
       groupId: null,
-      userName,
       deviceInfo
     });
 
@@ -3033,19 +3471,16 @@ app.post('/api/log-home-visit', async (req, res) => {
 });
 
 // Ziyaret logu endpoint'i
-app.post('/api/log-visit', async (req, res) => {
+app.post('/api/log-visit', publicLogLimiter, async (req, res) => {
   try {
-    const { deviceInfo, groupId, userName, action } = req.body || {};
+    const { deviceInfo, groupId, action } = req.body || {};
     const siteAction = (action || 'grup_görüntüleme').toString().trim();
     const shouldWriteAccessLog = (
       siteAction === 'grup_görüntüleme'
     );
 
-    // Get client IP address
-    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-    const storedActor = userName || ipAddress;
-    const gid = groupId || 'catikati23';
+    const gid = isSafeGroupId(groupId) ? String(groupId) : 'catikati23';
+    const storedActor = await resolveLogActor(req, gid);
 
     if (shouldWriteAccessLog) {
       if (!(await hasLogInSameTurkeyMinute(LoginLog, {
@@ -3053,7 +3488,7 @@ app.post('/api/log-visit', async (req, res) => {
         ipAddress: storedActor
       }))) {
         const log = new LoginLog({
-          deviceInfo,
+          deviceInfo: buildDeviceInfo(req, deviceInfo),
           ipAddress: storedActor,
           groupId: gid
         });
@@ -3065,8 +3500,8 @@ app.post('/api/log-visit', async (req, res) => {
       action: siteAction,
       req,
       groupId,
-      userName,
-      deviceInfo
+      deviceInfo,
+      actor: storedActor
     });
     res.json({ success: true });
   } catch (error) {
@@ -3076,19 +3511,16 @@ app.post('/api/log-visit', async (req, res) => {
 });
 
 // Ziyaret logu için adblock'a daha az takılan alternatif endpoint
-app.post('/api/visit-event', async (req, res) => {
+app.post('/api/visit-event', publicLogLimiter, async (req, res) => {
   try {
-    const { deviceInfo, groupId, userName, action } = req.body || {};
+    const { deviceInfo, groupId, action } = req.body || {};
     const siteAction = (action || 'grup_görüntüleme').toString().trim();
     const shouldWriteAccessLog = (
       siteAction === 'grup_görüntüleme'
     );
 
-    // Get client IP address
-    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-    const storedActor = userName || ipAddress;
-    const gid = groupId || 'catikati23';
+    const gid = isSafeGroupId(groupId) ? String(groupId) : 'catikati23';
+    const storedActor = await resolveLogActor(req, gid);
 
     if (shouldWriteAccessLog) {
       if (!(await hasLogInSameTurkeyMinute(LoginLog, {
@@ -3096,7 +3528,7 @@ app.post('/api/visit-event', async (req, res) => {
         ipAddress: storedActor
       }))) {
         const log = new LoginLog({
-          deviceInfo,
+          deviceInfo: buildDeviceInfo(req, deviceInfo),
           ipAddress: storedActor,
           groupId: gid
         });
@@ -3108,8 +3540,8 @@ app.post('/api/visit-event', async (req, res) => {
       action: siteAction,
       req,
       groupId,
-      userName,
-      deviceInfo
+      deviceInfo,
+      actor: storedActor
     });
     res.json({ success: true });
   } catch (error) {
@@ -3157,6 +3589,7 @@ const joinRequestSchema = new mongoose.Schema({
   userName: String,
   name: String,
   password: String,
+  claimTokenHash: String,
   profileImage: String,
   status: { type: String, default: 'pending' }, // pending, accepted, rejected
   createdAt: { type: Date, default: Date.now },
@@ -3166,16 +3599,42 @@ joinRequestSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const JoinRequest = mongoose.model('JoinRequest', joinRequestSchema, 'jointogroups');
 
-async function ensureJoinRequestTtlIndex() {
-  try {
-    await JoinRequest.collection.updateMany(
-      { $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }] },
-      [{ $set: { expiresAt: { $add: [{ $ifNull: ['$createdAt', '$$NOW'] }, JOIN_REQUEST_TTL_MS] } } }]
-    );
-  } catch (backfillErr) {
-    console.warn('jointogroups expiresAt doldurma:', backfillErr.message);
-  }
+function hasMatchingJoinClaimHash(joinRequest, storedHash) {
+  if (!joinRequest.claimTokenHash || !/^[a-f0-9]{64}$/i.test(String(storedHash || ''))) return false;
+  const actual = Buffer.from(String(storedHash), 'hex');
+  const expected = Buffer.from(joinRequest.claimTokenHash, 'hex');
+  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
 
+function getSessionJoinClaim(req, requestId) {
+  const id = String(requestId || '');
+  if (!id || !req.session?.joinClaims || !Object.hasOwn(req.session.joinClaims, id)) {
+    return null;
+  }
+  return req.session.joinClaims[id] || null;
+}
+
+function setSessionJoinClaim(req, requestId, claimToken) {
+  const id = String(requestId || '');
+  if (!id || !claimToken) throw new Error('Geçersiz katılma isteği oturum bilgisi');
+  req.session.joinClaims ||= {};
+  req.session.joinClaims[id] = crypto.createHash('sha256').update(String(claimToken)).digest('hex');
+}
+
+function clearSessionJoinClaim(req, requestId) {
+  const id = String(requestId || '');
+  if (!id || !req.session?.joinClaims) return;
+  delete req.session.joinClaims[id];
+  if (Object.keys(req.session.joinClaims).length === 0) delete req.session.joinClaims;
+}
+
+function verifyJoinRequestClaim(req, joinRequest) {
+  const requestId = String(joinRequest?._id || '');
+  const sessionClaimHash = getSessionJoinClaim(req, requestId);
+  return hasMatchingJoinClaimHash(joinRequest, sessionClaimHash);
+}
+
+async function ensureJoinRequestTtlIndex() {
   try {
     await JoinRequest.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   } catch (err) {
@@ -3354,9 +3813,16 @@ app.get('/api/random-reminder', async (req, res) => {
 // ============================================================================
 
 // Gruba katılma isteği gönderme endpoint'i
-app.post('/api/join-group-request', upload.single('profileImage'), async (req, res) => {
+app.post('/api/join-group-request', accountCreationLimiter, upload.single('profileImage'), requireValidUploadedImages, async (req, res) => {
   try {
     const { groupId, userName, memberName, userPassword, selectedAvatarPath } = req.body;
+
+    if (!isSafeGroupId(groupId) || !isValidText(userName, 40) || !isValidText(memberName, 40) || !isValidPassword(userPassword)) {
+      return res.status(400).json({ error: 'Alanları kontrol edin; şifre 6-40 karakter arasında olmalıdır' });
+    }
+    if (!isAllowedAvatarPath(selectedAvatarPath, 'userAvatars')) {
+      return res.status(400).json({ error: 'Geçersiz avatar seçimi' });
+    }
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -3457,17 +3923,30 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
     // Şifreyi hash'le
     const hashedPassword = await bcrypt.hash(userPassword, 10);
 
+    const claimToken = crypto.randomBytes(32).toString('hex');
+
     // Katılma isteği oluştur
     const joinRequest = new JoinRequest({
       groupId,
       userName: memberName, // joinMemberNameInput -> username
       name: userName, // joinUserNameInput -> name
       password: hashedPassword,
+      claimTokenHash: crypto.createHash('sha256').update(claimToken).digest('hex'),
       profileImage: profileImageUrl,
       status: 'pending'
     });
 
     await joinRequest.save();
+    try {
+      setSessionJoinClaim(req, joinRequest._id, claimToken);
+      await saveSession(req);
+    } catch (sessionError) {
+      await JoinRequest.findByIdAndDelete(joinRequest._id).catch(() => {});
+      if (isDropboxHostedUrl(profileImageUrl)) {
+        await deleteFromDropboxByUrl(profileImageUrl).catch(() => {});
+      }
+      throw sessionError;
+    }
 
     // Kullanıcıya hemen yanıt ver
     res.json({
@@ -3482,121 +3961,30 @@ app.post('/api/join-group-request', upload.single('profileImage'), async (req, r
   }
 });
 
-// Katılma isteğini iptal etme endpoint'i
-app.delete('/api/cancel-join-request/:groupId', async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    const { userName } = req.body;
-
-    // Katılma isteğini bul ve sil
-    const deletedRequest = await JoinRequest.findOneAndDelete({
-      groupId,
-      userName,
-      status: 'pending'
-    });
-
-    if (!deletedRequest) {
-      return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
-    }
-
-    // Eğer resim Dropbox'taysa sil
-    if (isDropboxHostedUrl(deletedRequest.profileImage)) {
-      deleteFromDropboxByUrl(deletedRequest.profileImage).catch(err =>
-        console.error('Dropbox silme hatası:', err)
-      );
-    }
-
-    res.json({
-      success: true,
-      message: 'Katılma isteği iptal edildi'
-    });
-
-  } catch (error) {
-    console.error('Katılma isteği iptal hatası:', error);
-    res.status(500).json({ error: 'Katılma isteği iptal edilirken hata oluştu' });
-  }
-});
-
-// Kullanıcı adı benzersizlik kontrol endpoint'i
-app.get('/api/check-username-exists/:groupId/:username', async (req, res) => {
-  try {
-    const { groupId, username } = req.params;
-
-    // Grup koleksiyonlarını al
-    const { users } = getGroupCollections(groupId);
-
-    // Kullanıcı adı var mı kontrol et
-    const existingUser = await users.findOne({ username }).lean();
-
-    // Ayrıca pending durumundaki katılma isteklerinde de var mı kontrol et
-    const existingRequest = await JoinRequest.findOne({
-      groupId,
-      userName: username,
-      status: 'pending'
-    }).lean();
-
-    res.json({
-      exists: !!(existingUser || existingRequest)
-    });
-
-  } catch (error) {
-    console.error('Kullanıcı adı kontrol hatası:', error);
-    res.status(500).json({ error: 'Kullanıcı adı kontrol edilirken hata oluştu' });
-  }
-});
-
-// Katılma isteği durumu kontrol endpoint'i
-app.get('/api/join-request-status/:groupId/:userName', async (req, res) => {
-  try {
-    const { groupId, userName } = req.params;
-
-    // Katılma isteğini bul
-    const joinRequest = await JoinRequest.findOne({ groupId, userName }).lean();
-
-    if (!joinRequest) {
-      return res.json({ status: 'none' });
-    }
-
-    // Eğer istek kabul edilmişse, kullanıcının gerçekten grupta olup olmadığını kontrol et
-    if (joinRequest.status === 'accepted') {
-      const { users } = getGroupCollections(groupId);
-      const user = await users.findOne({ username: userName }).lean();
-
-      if (user) {
-        return res.json({
-          status: 'accepted',
-          userId: user._id,
-          userName: userName,
-          message: 'Katılma isteğiniz kabul edildi! Artık gruba erişebilirsiniz.'
-        });
-      }
-    }
-
-    return res.json({
-      status: joinRequest.status,
-      requestId: joinRequest._id,
-      createdAt: joinRequest.createdAt
-    });
-
-  } catch (error) {
-    console.error('Katılma isteği durum kontrol hatası:', error);
-    res.status(500).json({ error: 'Durum kontrol edilirken hata oluştu' });
-  }
-});
-
 // ObjectId ile katılma isteği durumu kontrol endpoint'i
-app.get('/api/join-request-status-by-id/:requestId', async (req, res) => {
+app.post('/api/join-request-status-by-id/:requestId', async (req, res) => {
   try {
     const { requestId } = req.params;
 
     const joinRequest = await JoinRequest.findById(requestId).lean();
 
     if (!joinRequest) {
+      clearSessionJoinClaim(req, requestId);
       return res.json({ status: 'none' });
+    }
+    if (!verifyJoinRequestClaim(req, joinRequest)) {
+      return res.status(403).json({ error: 'Katılma isteği doğrulanamadı' });
     }
 
     // Eğer istek kabul edilmişse, jointogroups koleksiyonundan sil
     if (joinRequest.status === 'accepted') {
+      const { users } = getGroupCollections(joinRequest.groupId);
+      const user = await users.findById(requestId).lean();
+      if (!user) return res.status(404).json({ error: 'Kabul edilen kullanıcı bulunamadı' });
+
+      clearSessionJoinClaim(req, requestId);
+      await authenticateSession(req, joinRequest.groupId, user);
+
       // Kabul edilen isteği jointogroups koleksiyonundan sil
       await JoinRequest.findByIdAndDelete(requestId);
       console.log(`Kabul edilen katılma isteği silindi: ${requestId}`);
@@ -3631,7 +4019,7 @@ app.get('/api/join-request-status-by-id/:requestId', async (req, res) => {
 });
 
 // Gruba gelen katılma isteklerini getirme endpoint'i
-app.get('/api/join-requests/:groupId', async (req, res) => {
+app.get('/api/join-requests/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
 
@@ -3643,7 +4031,16 @@ app.get('/api/join-requests/:groupId', async (req, res) => {
 
     res.json({
       success: true,
-      requests: joinRequests
+      requests: joinRequests.map(request => ({
+        _id: request._id,
+        groupId: request.groupId,
+        userName: request.userName,
+        name: request.name,
+        profileImage: request.profileImage,
+        status: request.status,
+        createdAt: request.createdAt,
+        expiresAt: request.expiresAt
+      }))
     });
 
   } catch (error) {
@@ -3653,15 +4050,11 @@ app.get('/api/join-requests/:groupId', async (req, res) => {
 });
 
 // Katılma isteğini kabul etme endpoint'i
-app.post('/api/accept-join-request/:requestId', async (req, res) => {
+app.post('/api/accept-join-request/:requestId', requireJoinRequestAdmin, async (req, res) => {
   try {
     const { requestId } = req.params;
 
-    // Katılma isteğini bul
-    const joinRequest = await JoinRequest.findById(requestId).lean();
-    if (!joinRequest) {
-      return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
-    }
+    const joinRequest = req.joinRequest;
 
     if (joinRequest.status !== 'pending') {
       return res.status(400).json({ error: 'Bu istek zaten işlenmiş' });
@@ -3681,7 +4074,7 @@ app.post('/api/accept-join-request/:requestId', async (req, res) => {
       lastLoginDate: today
     };
 
-    await users.create(newUser);
+    const createdUser = await users.create(newUser);
 
     // Katılma isteğini accepted olarak işaretle
     await JoinRequest.findByIdAndUpdate(requestId, {
@@ -3694,7 +4087,7 @@ app.post('/api/accept-join-request/:requestId', async (req, res) => {
     res.json({
       success: true,
       message: 'Katılma isteği başarıyla kabul edildi',
-      user: newUser // Yeni kullanıcı bilgisini de döndür
+      user: safeUser(createdUser, true)
     });
 
   } catch (error) {
@@ -3704,15 +4097,11 @@ app.post('/api/accept-join-request/:requestId', async (req, res) => {
 });
 
 // Katılma isteğini reddetme endpoint'i
-app.post('/api/reject-join-request/:requestId', async (req, res) => {
+app.post('/api/reject-join-request/:requestId', requireJoinRequestAdmin, async (req, res) => {
   try {
     const { requestId } = req.params;
 
-    // Katılma isteğini bul
-    const joinRequest = await JoinRequest.findById(requestId).lean();
-    if (!joinRequest) {
-      return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
-    }
+    const joinRequest = req.joinRequest;
 
     if (joinRequest.status !== 'pending') {
       return res.status(400).json({ error: 'Bu istek zaten işlenmiş' });
@@ -3757,11 +4146,16 @@ app.delete('/api/delete-join-request/:requestId', async (req, res) => {
   try {
     const { requestId } = req.params;
 
-    const deletedRequest = await JoinRequest.findByIdAndDelete(requestId);
-
-    if (!deletedRequest) {
+    const joinRequest = await JoinRequest.findById(requestId).lean();
+    if (!joinRequest) {
       return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
     }
+    if (!verifyJoinRequestClaim(req, joinRequest)) {
+      return res.status(403).json({ error: 'Katılma isteği doğrulanamadı' });
+    }
+    const deletedRequest = await JoinRequest.findByIdAndDelete(requestId);
+    clearSessionJoinClaim(req, requestId);
+    await saveSession(req);
 
     // Dropbox'dan resmi sil (eğer varsa)
     if (isDropboxHostedUrl(deletedRequest.profileImage)) {
@@ -3791,11 +4185,16 @@ app.delete('/api/cancel-join-request-by-id/:requestId', async (req, res) => {
   try {
     const { requestId } = req.params;
 
-    const deletedRequest = await JoinRequest.findByIdAndDelete(requestId);
-
-    if (!deletedRequest) {
+    const joinRequest = await JoinRequest.findById(requestId).lean();
+    if (!joinRequest) {
       return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
     }
+    if (!verifyJoinRequestClaim(req, joinRequest)) {
+      return res.status(403).json({ error: 'Katılma isteği doğrulanamadı' });
+    }
+    const deletedRequest = await JoinRequest.findByIdAndDelete(requestId);
+    clearSessionJoinClaim(req, requestId);
+    await saveSession(req);
 
     // Dropbox'dan resmi sil (eğer varsa)
     if (isDropboxHostedUrl(deletedRequest.profileImage)) {
@@ -3819,7 +4218,7 @@ app.delete('/api/cancel-join-request-by-id/:requestId', async (req, res) => {
 });
 
 // Grup koleksiyonunda ObjectId'li kullanıcı var mı kontrol etme endpoint'i
-app.get('/api/check-user-in-group/:groupId/:objectId', async (req, res) => {
+app.get('/api/check-user-in-group/:groupId/:objectId', requireGroupAuth, async (req, res) => {
   try {
     const { groupId, objectId } = req.params;
 
@@ -3829,7 +4228,7 @@ app.get('/api/check-user-in-group/:groupId/:objectId', async (req, res) => {
     // ObjectId ile kullanıcı ara
     const user = await users.findOne({ _id: objectId }).lean();
 
-    if (user) {
+    if (user && (req.auth.authority === 'admin' || String(req.auth.userId) === String(objectId))) {
       res.json({
         exists: true,
         userName: user.username,
@@ -3851,105 +4250,88 @@ app.get('/api/check-user-in-group/:groupId/:objectId', async (req, res) => {
 // F. YEDEKLEME HİZMETİ
 // ============================================================================
 
-const { MongoClient } = require('mongodb');
-
-// MongoDB connection string from .env file
-const uri = process.env.MONGO_URI;
-const dbName = process.env.DB_NAME;
+const backupUri = process.env.MONGO_URI;
+const backupSourceDbName = process.env.DB_NAME;
 const backupDbName = process.env.BACKUP_DB_NAME || 'backups';
 
-// Function to perform the backup
-async function performBackup() {
-  console.log("Backup: Starting...");
-  const client = new MongoClient(uri);
+async function cleanupOldBackups(db, prefix, keepCount) {
+  const collections = await db.listCollections({}, { nameOnly: true }).toArray();
+  const backupCollections = collections
+    .map(collection => collection.name)
+    .filter(name => name.startsWith(prefix))
+    .sort((a, b) => b.localeCompare(a));
 
-  try {
-    await client.connect();
-    console.log("Connected to MongoDB for backup");
-
-    // Source database (the one we're backing up)
-    const sourceDb = client.db(dbName);
-
-    // Target database (where backups will be stored)
-    const backupDb = client.db(backupDbName);
-
-    // Get current date/time for collection naming
-    const now = new Date();
-
-    // Format date as "YYYY-MM-DD"
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const timestamp = `${year}-${month}-${day}`;
-
-    // Backup usergroups collection
-    const usergroups = await sourceDb.collection('usergroups').find({}).toArray();
-    const usergroupsCollectionName = `usergroups_backup_${timestamp}`;
-    if (usergroups.length > 0) {
-      await backupDb.collection(usergroupsCollectionName).insertMany(usergroups);
-      console.log(`✅ Usergroups backed up to collection: ${usergroupsCollectionName}`);
-    } else {
-      console.log(`ℹ️ No usergroups data to backup`);
-    }
-
-    console.log(`Backup completed at ${now.toLocaleString()}`);
-
-    // Clean up old backups
-    await cleanupOldBackups(backupDb, 'usergroups_backup_', 10);
-
-
-  } catch (err) {
-    console.error("Error during backup:", err);
-  } finally {
-    await client.close();
-    console.log("MongoDB connection closed after backup");
+  for (const collectionName of backupCollections.slice(keepCount)) {
+    await db.collection(collectionName).drop();
+    console.log(`✅ Eski yedek silindi: ${collectionName}`);
   }
 }
 
-// Function to clean up old backups, keeping only the most recent ones
-async function cleanupOldBackups(db, prefix, keepCount) {
+async function backupCollection(sourceDb, backupDb, collectionName, timestamp) {
+  const backupCollectionName = `${collectionName}_backup_${timestamp}`;
   try {
-    // Get all collections in the backup database
-    const collections = await db.listCollections().toArray();
+    await backupDb.createCollection(backupCollectionName);
+  } catch (error) {
+    if (error.code !== 48) throw error;
+  }
+  const target = backupDb.collection(backupCollectionName);
+  await target.deleteMany({});
 
-    // Filter collections that match our prefix
-    const backupCollections = collections
-      .filter(col => col.name.startsWith(prefix))
-      .map(col => col.name);
-
-    // Sort by date (newest first) - extract date from collection name
-    backupCollections.sort((a, b) => {
-      const dateA = a.replace(prefix, '');
-      const dateB = b.replace(prefix, '');
-      return dateB.localeCompare(dateA); // Descending order (newest first)
-    });
-
-    console.log(`Found ${backupCollections.length} backup collections for prefix ${prefix}:`, backupCollections);
-
-    // If we have more than keepCount, delete the oldest ones
-    if (backupCollections.length > keepCount) {
-      const collectionsToDelete = backupCollections.slice(keepCount);
-      console.log(`Deleting ${collectionsToDelete.length} old backup collections:`, collectionsToDelete);
-
-      for (const collectionName of collectionsToDelete) {
-        try {
-          await db.collection(collectionName).drop();
-          console.log(`✅ Deleted old backup collection: ${collectionName}`);
-        } catch (dropError) {
-          console.error(`❌ Failed to delete collection ${collectionName}:`, dropError.message);
-        }
-      }
-    } else {
-      console.log(`No cleanup needed for ${prefix} - only ${backupCollections.length} collections found (keeping ${keepCount})`);
+  let documentsCopied = 0;
+  let batch = [];
+  for await (const document of sourceDb.collection(collectionName).find({})) {
+    batch.push(document);
+    if (batch.length === 1000) {
+      await target.insertMany(batch);
+      documentsCopied += batch.length;
+      batch = [];
     }
-  } catch (err) {
-    console.error(`Error cleaning up old backups with prefix ${prefix}:`, err);
+  }
+  if (batch.length > 0) {
+    await target.insertMany(batch);
+    documentsCopied += batch.length;
+  }
+
+  console.log(`✅ ${collectionName}: ${documentsCopied} belge ${backupCollectionName} koleksiyonuna yedeklendi`);
+  await cleanupOldBackups(backupDb, `${collectionName}_backup_`, 10);
+}
+
+async function performBackup() {
+  if (!backupUri || !backupSourceDbName) {
+    throw new Error('MONGO_URI ve DB_NAME tanımlı olmalıdır.');
+  }
+
+  console.log('Backup: Starting...');
+  const client = new MongoClient(backupUri);
+  try {
+    await client.connect();
+    const sourceDb = client.db(backupSourceDbName);
+    const backupDb = client.db(backupDbName);
+    const now = new Date();
+    const timestamp = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0')
+    ].join('-');
+    const collectionNames = (await sourceDb.listCollections({}, { nameOnly: true }).toArray())
+      .map(collection => collection.name)
+      .filter(name => name === 'usergroups' || name.startsWith('users_') || name.startsWith('readingstatuses_'));
+
+    for (const collectionName of collectionNames) {
+      await backupCollection(sourceDb, backupDb, collectionName, timestamp);
+    }
+
+    console.log(`Backup completed at ${now.toLocaleString()}`);
+  } finally {
+    await client.close();
   }
 }
 
 function scheduleBackup() {
   // Schedule backups to run every 1440 minutes (24 hours)
-  const backupJob = schedule.scheduleJob('0 23 * * *', performBackup);
+  const backupJob = schedule.scheduleJob('0 23 * * *', () => {
+    performBackup().catch(error => console.error('Error during backup:', error));
+  });
 
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
@@ -4179,42 +4561,11 @@ function scheduleTokenRefresh() {
   return tokenJob;
 }
 
-// Otomatik anket doldurma test endpoint'i (Manuel çalıştırmak için)
-app.all('/api/admin/run-anket', async (req, res) => {
-  try {
-    const isHeadless = req.query.headless !== 'false';
-    const result = await doldurAnket(isHeadless);
-    res.json(result);
-  } catch (error) {
-    console.error("Anket manuel çalıştırma hatası:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 // Anket zamanlayıcısını başlat (Her gün saat 01:00 TSİ)
 scheduleAnketJob();
 
 // ERP Sheets → okudum senkronu (00–19: 30 dk, 20–23: 15 dk; dün+bugün)
 scheduleErpReadingsSync(() => mongoose.connection.db);
-
-// Manuel ERP okuma senkronu
-app.all('/api/admin/sync-erp-readings', async (req, res) => {
-  try {
-    if (mongoose.connection.readyState !== 1 || !mongoose.connection.db) {
-      return res.status(503).json({ success: false, error: 'Veritabanı bağlantısı yok' });
-    }
-    const dryRun = req.query.dryRun === '1' || req.body?.dryRun === true;
-    const result = await syncErpReadings({
-      db: mongoose.connection.db,
-      dryRun,
-      includeYesterday: true
-    });
-    res.json(result);
-  } catch (error) {
-    console.error('ERP okuma senkronu hatası:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
 
 // ==================== TEST GRUPLARI İÇİN SAHTE OKUMA VERİSİ EKLEYICI ====================
 
@@ -4387,17 +4738,6 @@ async function processMissingReadingStatusesForRealGroups() {
   console.log(`🏁 [AutoUnreadProcessor] Tamamlandı! Eklenen: ${totalInserted}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`);
 }
 
-// Otomatik okumadım kaydı ekleme işlemi için manuel admin endpoint'i
-app.all('/api/admin/process-missing-statuses', async (req, res) => {
-  try {
-    await processMissingReadingStatusesForRealGroups();
-    res.json({ success: true, message: 'Gerçek gruplar için eksik okumadım kayıtları işlendi.' });
-  } catch (error) {
-    console.error('Manuel okumadım işleme hatası:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 // Test grubu sahte veri zamanlayıcısını başlat
 function scheduleTestGroupSeeder() {
   // Her gün saat 06:00'da çalış (Europe/Istanbul)
@@ -4416,69 +4756,38 @@ function scheduleTestGroupSeeder() {
 }
 
 // Start the schedulers
-const backupJob = scheduleBackup();
-const pingJob = schedulePing();
-const tokenJob = scheduleTokenRefresh();
-const vecizeJobs = scheduleDailyNotifications();
-const testSeederJob = scheduleTestGroupSeeder();
+scheduleBackup();
+schedulePing();
+scheduleTokenRefresh();
+scheduleDailyNotifications();
+scheduleTestGroupSeeder();
 
 // ==================== Profile Management API Endpoints ====================
 
-// Profil resmi güncelleme
-app.post('/api/update-user-profile', upload.single('profileImage'), async (req, res) => {
-  try {
-    const { userId, groupId } = req.body;
-
-    if (!userId || !groupId) {
-      return res.status(400).json({ success: false, message: 'Kullanıcı ID ve Grup ID gerekli' });
-    }
-
-    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
-
-    if (req.file) {
-      const grpMeta = await UserGroup.findOne({ groupId }).lean();
-      const uDoc = await User.findById(userId).lean();
-      const origName = req.file.originalname || 'profil.jpg';
-      const dropboxFileName = buildDropboxImageFileName({
-        prefix: 'profil',
-        groupName: grpMeta ? grpMeta.groupName : groupId,
-        groupId,
-        userLabel: (uDoc && (uDoc.name || uDoc.username)) || String(userId),
-        sourceBase: path.parse(origName).name,
-        ext: (path.extname(origName) || '.jpg').toLowerCase()
-      });
-      const dropboxUrl = await uploadToDropboxWithRetry(req.file.buffer, dropboxFileName, 'userImages');
-
-      // Veritabanını güncelle
-      await User.findByIdAndUpdate(userId, { profileImage: dropboxUrl });
-
-      res.json({
-        success: true,
-        message: 'Profil resmi güncellendi',
-        profileImageUrl: dropboxUrl
-      });
-    } else {
-      res.status(400).json({ success: false, message: 'Resim dosyası bulunamadı' });
-    }
-  } catch (error) {
-    console.error('Profil resmi güncellenirken hata:', error);
-    res.status(500).json({ success: false, message: 'Profil resmi güncellenemedi' });
-  }
-});
-
 // Avatar güncelleme
-app.post('/api/update-user-avatar', async (req, res) => {
+app.post('/api/update-user-avatar', requireSelfOrAdmin, async (req, res) => {
   try {
     const { userId, groupId, avatarPath } = req.body;
 
     if (!userId || !groupId || !avatarPath) {
       return res.status(400).json({ success: false, message: 'Gerekli parametreler eksik' });
     }
+    if (!isAllowedAvatarPath(avatarPath, 'userAvatars')) {
+      return res.status(400).json({ success: false, message: 'Geçersiz avatar seçimi' });
+    }
 
-    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
+    const { users } = getGroupCollections(groupId);
+    const user = await users.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Kullanıcı bulunamadı' });
+    }
 
-    // Veritabanını güncelle
-    await User.findByIdAndUpdate(userId, { profileImage: avatarPath });
+    await users.findByIdAndUpdate(userId, { profileImage: avatarPath });
+    if (avatarPath !== user.profileImage && isDropboxHostedUrl(user.profileImage)) {
+      deleteFromDropboxByUrl(user.profileImage).catch(error =>
+        console.error('Eski profil resmi temizlenemedi:', error)
+      );
+    }
 
     res.json({
       success: true,
@@ -4491,15 +4800,21 @@ app.post('/api/update-user-avatar', async (req, res) => {
 });
 
 // Kullanıcı ayarları güncelleme
-app.post('/api/update-user-settings', async (req, res) => {
+app.post('/api/update-user-settings', requireSelf, async (req, res) => {
   try {
     const { userId, groupId, username, memberName, password } = req.body;
 
     if (!userId || !groupId) {
       return res.status(400).json({ success: false, message: 'Kullanıcı ID ve Grup ID gerekli' });
     }
+    if ((username && !isValidText(username, 40)) || (memberName && !isValidText(memberName, 40))) {
+      return res.status(400).json({ success: false, message: 'Kullanıcı alanları en fazla 40 karakter olabilir' });
+    }
+    if (password && !isValidPassword(password)) {
+      return res.status(400).json({ success: false, message: 'Şifre 6-40 karakter arasında olmalıdır' });
+    }
 
-    const User = mongoose.model(`users_${groupId}`, userSchema, `users_${groupId}`);
+    const { users } = getGroupCollections(groupId);
 
     const updateData = {};
     if (username) updateData.name = username;
@@ -4509,7 +4824,16 @@ app.post('/api/update-user-settings', async (req, res) => {
       updateData.userpassword = hashedPassword;
     }
 
-    await User.findByIdAndUpdate(userId, updateData);
+    const updatedUser = await users.findByIdAndUpdate(userId, updateData, { returnDocument: 'after' });
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'Kullanıcı bulunamadı' });
+    }
+
+    if (password) {
+      await invalidateUserSessions(groupId, userId);
+      setSessionMembership(req, groupId, updatedUser);
+      await saveSession(req);
+    }
 
     res.json({
       success: true,
@@ -4517,13 +4841,16 @@ app.post('/api/update-user-settings', async (req, res) => {
     });
   } catch (error) {
     console.error('Ayarlar güncellenirken hata:', error);
+    if (error?.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Bu üye adı zaten kullanılıyor' });
+    }
     res.status(500).json({ success: false, message: 'Ayarlar güncellenemedi' });
   }
 });
 
 
 // Profil resmi silme
-app.post('/api/remove-user-profile-image', async (req, res) => {
+app.post('/api/remove-user-profile-image', requireSelfOrAdmin, async (req, res) => {
   try {
     const { userId, groupId } = req.body;
 
@@ -4564,6 +4891,14 @@ app.post('/api/remove-user-profile-image', async (req, res) => {
 
 // Dropbox'ı başlat
 initializeDropbox();
+
+app.use((error, req, res, next) => {
+  if (!(error instanceof multer.MulterError)) return next(error);
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'Görsel en fazla 5 MB olabilir.' });
+  }
+  return res.status(400).json({ error: 'Yalnızca JPEG, PNG, WebP veya GIF görselleri yüklenebilir.' });
+});
 
 // G. SERVER BAŞLATMA
 // ============================================================================

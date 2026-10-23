@@ -1213,6 +1213,11 @@ body {
     color: #ffffff;
 }
 
+.join-modal-close-btn:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.35);
+    outline-offset: 2px;
+}
+
 .join-form-content {
     padding: 25px 30px;
 }
@@ -1221,6 +1226,7 @@ body {
     display: flex;
     align-items: center;
     gap: var(--gap-md);
+    padding-right: 42px;
 }
 
 .join-group-avatar {
@@ -1282,6 +1288,25 @@ body {
     display: flex;
     align-items: center;
     gap: var(--gap-md);
+}
+
+.join-modal-content.is-success {
+    max-width: 540px;
+}
+
+.join-modal-content.is-success .join-form-content {
+    padding: 24px 28px;
+}
+
+.join-modal-content.is-success .join-status-message {
+    margin: 0;
+    padding: 24px 20px;
+}
+
+.join-modal-content.is-success .group-form-actions {
+    border-top: 1px solid var(--gray-200);
+    margin-top: 18px;
+    padding-top: 20px;
 }
 
 .status-icon {
@@ -1844,6 +1869,14 @@ body {
         flex-direction: column;
         text-align: center;
         gap: var(--gap-sm);
+    }
+
+    .join-modal-content.is-success .join-form-content {
+        padding: 20px;
+    }
+
+    .join-modal-content.is-success .join-status-message {
+        padding: 22px 18px;
     }
     
     .status-icon {

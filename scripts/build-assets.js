@@ -47,7 +47,6 @@ const bundles = {
       'quete.js',
       'videos.js',
       'main-area.js',
-      'preferences.js',
       'articles.js',
       'share-quote.js',
       'share-utils.js',

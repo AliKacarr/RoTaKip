@@ -92,8 +92,8 @@ window.showStreakNotification = function showStreakNotification(name, streak) {
         <img src="/images/fire.webp" alt="Fire" style="width: 100%; height: 100%; object-fit: contain;">
       </div>
       <div>
-        <div style="font-weight: bold; font-size: 23px;">Hoş geldin ${name}!</div>
-        <div style="font-size: 23px;">Giriş serin ${streak} oldu.</div>
+        <div style="font-weight: bold; font-size: 23px;">Hoş geldin ${window.escapeHtml(name)}!</div>
+        <div style="font-size: 23px;">Giriş serin ${window.escapeHtml(streak)} oldu.</div>
       </div>
     </div>
   `;
@@ -124,111 +124,37 @@ window.showStreakNotification = function showStreakNotification(name, streak) {
   }, 6000);
 }
 
-// Yeni yerel depolama yönetimi fonksiyonları
+// Yetki bilgisi yalnızca sunucu oturumundan gelir; bu sınıf sadece sayfa içi UI durumunu tutar.
 class LocalStorageManager {
-  // Groups objesini al
   static getGroups() {
-    const groups = localStorage.getItem('groups');
-    return groups ? JSON.parse(groups) : {};
+    const user = this.getCurrentUserInfo();
+    return user ? { [user.groupId]: user.userId } : {};
   }
 
-  // Groups objesini kaydet
-  static setGroups(groups) {
-    localStorage.setItem('groups', JSON.stringify(groups));
-  }
-
-  // Bir gruba kullanıcı ekle/güncelle
-  static addUserToGroup(groupId, userId) {
-    const groups = this.getGroups();
-    groups[groupId] = userId;
-    this.setGroups(groups);
-  }
-
-  // Bir gruptan kullanıcıyı kaldır
   static removeUserFromGroup(groupId) {
-    const groups = this.getGroups();
-    delete groups[groupId];
-    this.setGroups(groups);
+    if (this.currentUser?.groupId === groupId) this.currentUser = null;
   }
 
-  // Mevcut grup için kullanıcı ID'sini al
   static getCurrentUserId() {
-    const groupid = getGroupIdFromUrl();
-    if (!groupid) return null;
-    
-    const groups = this.getGroups();
-    return groups[groupid] || null;
+    return this.currentUser?.userId || null;
   }
 
-  // Mevcut grup için kullanıcı bilgilerini al
   static getCurrentUserInfo() {
-    const groupid = getGroupIdFromUrl();
-    if (!groupid) return null;
-
-    const userId = this.getCurrentUserId();
-    if (!userId) return null;
-
-    // `groups` eşlemesi kalıcıdır; tek başına aktif oturum anlamına gelmez.
-    // Sayfa açılışındaki yeniden doğrulama tamamlanana kadar yarım oturum
-    // bilgisiyle navigasyon butonlarının farklı zamanlarda görünmesini önle.
-    const activeGroupId = localStorage.getItem('groupid');
-    const activeUserId = localStorage.getItem('userid');
-    const userAuthority = localStorage.getItem('userAuthority');
-    if (
-      activeGroupId !== groupid ||
-      activeUserId !== userId ||
-      !['admin', 'member'].includes(userAuthority)
-    ) {
-      return null;
-    }
-
-    return {
-      groupId: groupid,
-      userId: userId,
-      userAuthority,
-      userName: localStorage.getItem('userName'),
-      groupName: localStorage.getItem('groupName'),
-      name: localStorage.getItem('name')
-    };
+    return this.currentUser;
   }
 
-  // Kullanıcı girişi yap
   static loginUser(groupId, userId, userAuthority, userName, groupName, name) {
-    // Groups objesine ekle
-    this.addUserToGroup(groupId, userId);
-    
-    // Mevcut grup bilgilerini kaydet
-    localStorage.setItem('groupid', groupId);
-    localStorage.setItem('userid', userId);
-    localStorage.setItem('userAuthority', userAuthority);
-    localStorage.setItem('userName', userName);
-    localStorage.setItem('groupName', groupName);
-    localStorage.setItem('name', name || '');
+    this.currentUser = { groupId, userId: String(userId), userAuthority, userName, groupName, name: name || '' };
+    if (typeof window.updateProfileButton === 'function') window.updateProfileButton();
   }
 
-  // Kullanıcı çıkışı yap
   static logoutUser() {
-    const groupid = getGroupIdFromUrl();
-    if (groupid) {
-      this.removeUserFromGroup(groupid);
-    }
-    
-    // Mevcut grup bilgilerini sil
-    localStorage.removeItem('groupid');
-    localStorage.removeItem('userid');
-    localStorage.removeItem('userAuthority');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('groupName');
-    localStorage.removeItem('name');
+    this.currentUser = null;
   }
 
-  // 5 çerezi temizle
   static clearCookies() {
-    localStorage.removeItem('groupid');
-    localStorage.removeItem('userid');
-    localStorage.removeItem('userAuthority');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('groupName');
+    ['groups', 'groupid', 'userid', 'userAuthority', 'userName', 'groupName', 'name', 'firstDayOfWeek']
+      .forEach(key => localStorage.removeItem(key));
   }
 
   // Kullanıcının giriş yapıp yapmadığını kontrol et
@@ -249,6 +175,7 @@ class LocalStorageManager {
     return userInfo && userInfo.userAuthority === 'member';
   }
 }
+LocalStorageManager.currentUser = null;
 
 // URL'den grup ID'sini çıkarma fonksiyonu
 window.getGroupIdFromUrl = function getGroupIdFromUrl() {
@@ -296,8 +223,6 @@ window.groupid = getGroupIdFromUrl();
 window.currentGroupData = null;
 window.initialAllData = null;
 
-// YENİ YETKİ KONTROLÜ SİSTEMİ
-// Sayfa yüklendiğinde 5 çerezi sil, groups dizisinden kontrol et, varsa yeniden oluştur
 async function initializeAuthSystem() {
   
   // Admin sayfaları için çerezleri silme
@@ -311,7 +236,7 @@ async function initializeAuthSystem() {
     createNavigationButtons();
   }
   
-  // 1. Önce 5 çerezi temizle
+  // Eski sürümden kalan, güvenilir olmayan kimlik alanlarını temizle.
   LocalStorageManager.clearCookies();
   
   // 2. URL'deki grup ID'sini al
@@ -320,38 +245,21 @@ async function initializeAuthSystem() {
     return false;
   }
 
-  // 3. Groups dizisinde bu grup var mı kontrol et
-  const groups = LocalStorageManager.getGroups();
-  const userId = groups[groupid];
-  
-  if (!userId) {
-    return false;
-  }
-  
-  
   try {
-    // Kullanıcı, grup ve okuma verilerini açılışta tek istekte al.
-    // Aynı yanıt aşağıda GlobalDataStore tarafından tekrar kullanılacak.
-    const response = await fetch(`/api/all-data/${groupid}`);
+    const response = await fetch(`/api/auth/me/${groupid}`);
     if (!response.ok) {
-      LocalStorageManager.removeUserFromGroup(groupid);
       return false;
     }
 
     const data = await response.json();
-    const user = data.users.find(u => u._id === userId);
-    
-    if (!user) {
-      LocalStorageManager.removeUserFromGroup(groupid);
-      return false;
-    }
+    const user = data.user;
 
     if (!data.group) {
       return false;
     }
 
-    window.initialAllData = data;
     window.currentGroupData = data.group;
+    window.currentSessionUser = user;
     
     // Giriş serisi güncelle (sayfa yüklendiğinde kontrol et)
     window.loginStreakUpdatePromise = fetch('/api/update-login-streak', {
@@ -360,7 +268,7 @@ async function initializeAuthSystem() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        userId: userId,
+        userId: user._id,
         groupId: groupid
       })
     })
@@ -403,7 +311,7 @@ async function initializeAuthSystem() {
     // 7. 5 çerezi yeniden oluştur
     LocalStorageManager.loginUser(
       groupid,
-      userId,
+      user._id,
       user.authority,
       user.username,
       data.group.groupName,
@@ -583,22 +491,6 @@ function initializeProfileButton() {
   
   checkAuthStatus();
   
-  // LocalStorage değişikliklerini dinle
-  window.addEventListener('storage', function(e) {
-    if (e.key === 'groups' || e.key === 'groupid' || e.key === 'userid' || e.key === 'userAuthority' || e.key === 'userName' || e.key === 'groupName') {
-      checkAuthStatus();
-    }
-  });
-  
-  // Programatik localStorage değişikliklerini de dinle
-  const originalSetItem = localStorage.setItem;
-  localStorage.setItem = function(key, value) {
-    originalSetItem.call(this, key, value);
-    if (key === 'groups' || key === 'groupid' || key === 'userid' || key === 'userAuthority' || key === 'userName' || key === 'groupName') {
-      setTimeout(checkAuthStatus, 100);
-    }
-  };
-  
   window.updateProfileButton = checkAuthStatus;
 }
 
@@ -631,11 +523,11 @@ async function updatePageTitle() {
       
       if (secretAdminLogin) {
         const groupImage = group.groupImage;
-        const imgSrc = groupImage || '/images/open-book.webp';
+        const imgSrc = window.safeImageSrc(groupImage, '/images/open-book.webp');
         
         secretAdminLogin.innerHTML = `
-          <img src="${imgSrc}" class="secretAdminLoginImage" alt="Grup Resmi" style="border-radius: 6px;" onerror="this.src='/images/open-book.webp'">
-          <h2 style="margin: 0; font-size: inherit; font-weight: inherit;">${groupName} Okuma Grubu</h2>
+          <img src="${window.escapeHtml(imgSrc)}" class="secretAdminLoginImage" alt="Grup Resmi" style="border-radius: 6px;" onerror="this.src='/images/open-book.webp'">
+          <h2 style="margin: 0; font-size: inherit; font-weight: inherit;">${window.escapeHtml(groupName)} Okuma Grubu</h2>
         `;
       }
     }
@@ -735,6 +627,9 @@ document.addEventListener('DOMContentLoaded', async function () {
           }
           window.initialAllData = null;
           this.users = Array.isArray(data.users) ? data.users : [];
+          const sessionUser = window.currentSessionUser;
+          const currentUser = sessionUser && this.users.find(user => String(user._id) === String(sessionUser._id));
+          if (currentUser) Object.assign(currentUser, sessionUser);
           this.stats = Array.isArray(data.stats) ? data.stats : [];
           this._rebuildIndexes();
           await this._buildLongestStreaks();
@@ -959,25 +854,13 @@ window.isPrivateGroupAccessModal = false;
 // YARDIMCI FONKSİYONLAR
 // ============================================================================
 
-// Eğer firstDayOfWeek değişkeni yoksa, localStorage'dan oku veya varsayılanı belirle
-if (typeof window.firstDayOfWeek === 'undefined') {
-  const savedFirstDay = localStorage.getItem('firstDayOfWeek');
-  if (savedFirstDay !== null && savedFirstDay !== 'default') {
-    window.firstDayOfWeek = parseInt(savedFirstDay);
-  } else {
-    window.firstDayOfWeek = 'default'; // Varsayılan seçenek
-    localStorage.setItem('firstDayOfWeek', 'default');
-  }
-}
-
 // Yetkisiz erişim kontrolü
 async function logUnauthorizedAccess(action) {
   if (localStorage.getItem('cookieConsent') !== 'accepted') {
     return;
   }
 
-  // userName kontrolü
-  const userName = localStorage.getItem('userName');
+  const userName = LocalStorageManager.getCurrentUserInfo()?.userName;
   if (!userName) {
     return;
   }
@@ -1030,7 +913,7 @@ async function logSiteActivityEvent(action, options = {}) {
     groupId: options.groupId || getGroupIdFromUrl() || null,
     userName: Object.prototype.hasOwnProperty.call(options, 'userName')
       ? options.userName
-      : (localStorage.getItem('userName') || null),
+      : (LocalStorageManager.getCurrentUserInfo()?.userName || null),
     deviceInfo: {
       userAgent: navigator.userAgent,
       screenWidth: window.screen.width,
@@ -1071,7 +954,7 @@ window.logActionForAudit = function logActionForAudit(action, options = {}) {
 // Sayfa ziyaretleri kontrolü
 async function logPageVisit() {
   const groupId = getGroupIdFromUrl();
-  const userName = localStorage.getItem('userName');
+  const userName = LocalStorageManager.getCurrentUserInfo()?.userName || null;
 
 
   if (!groupId) {

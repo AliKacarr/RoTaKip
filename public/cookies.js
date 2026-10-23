@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const acceptCookiesBtn = document.getElementById('acceptCookies');
     const declineCookiesBtn = document.getElementById('declineCookies');
 
-
     function checkCookieConsent() {
         const cookieConsent = localStorage.getItem('cookieConsent');
         const cookieConsentDate = localStorage.getItem('cookieConsentDate');
@@ -17,9 +16,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // If user accepted, we never ask again
         if (cookieConsent === 'accepted') {
-            if (typeof window.scheduleGoogleAnalyticsAfterPrimaryContent === 'function') {
-                window.scheduleGoogleAnalyticsAfterPrimaryContent();
-            }
             return;
         }
 
@@ -57,11 +53,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         cookieConsentBanner.style.display = 'none';
 
-        if (typeof window.scheduleGoogleAnalyticsAfterPrimaryContent === 'function') {
-            window.scheduleGoogleAnalyticsAfterPrimaryContent();
+        if (typeof logPageVisit === 'function') {
+            logPageVisit();
         }
-
-        logPageVisit();
     });
 
     declineCookiesBtn.addEventListener('click', function () {
@@ -78,5 +72,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Check cookie consent when the page loads
+    if (typeof window.scheduleGoogleAnalyticsAfterPrimaryContent === 'function') {
+        window.scheduleGoogleAnalyticsAfterPrimaryContent();
+    }
     checkCookieConsent();
 });

@@ -115,6 +115,7 @@ Kök dizinde `.env` oluşturup değerleri doldurun:
 MONGO_URI=mongodb://localhost:27017/reading-tracker
 DB_NAME=readingTracker
 BACKUP_DB_NAME=backups
+SESSION_SECRET=uzun-rastgele-bir-deger
 
 # YouTube
 YOUTUBE_API_KEY=

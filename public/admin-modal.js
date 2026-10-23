@@ -1,3 +1,7 @@
+/* exported removeProfileImage, openProfileAvatarModal, openProfileSettingsModal,
+   saveProfileSettings, deleteAccount, logoutFromProfile,
+   copyPrivateGroupLogoutLink, confirmPrivateGroupLogout */
+
 // Global flag for join request success
 let isJoinRequestSuccess = false;
 
@@ -290,16 +294,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const infoMessage = document.getElementById('groupsAuthLoginInfoMessage');
         if (infoMessage) {
             infoMessage.style.display = 'none';
-        }
-    }
-
-    // Bilgilendirme mesajını göster
-    function showInfoMessage(text) {
-        const infoMessage = document.getElementById('groupsAuthLoginInfoMessage');
-        const infoText = document.getElementById('groupsAuthLoginInfoText');
-        if (infoMessage && infoText) {
-            infoText.textContent = text;
-            infoMessage.style.display = 'flex';
         }
     }
 
@@ -672,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (groupId && groupId !== 'groups.html') {
                             // Get join request ID from localStorage
                             const joinRequests = JSON.parse(localStorage.getItem('jointogroups') || '{}');
-                            const requestId = joinRequests[groupId];
+                            const requestId = typeof joinRequests[groupId] === 'string' ? joinRequests[groupId] : null;
                             
                             if (requestId) {
                                 try {
@@ -755,6 +749,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             alert('Lütfen tüm alanları doldurunuz.');
                             return;
                         }
+
+                        if (memberPassword.length < 6) {
+                            alert('Şifre en az 6 karakter olmalıdır.');
+                            return;
+                        }
                         
                         // Character limit validation
                         if (userName.length > 40 || memberName.length > 40 || memberPassword.length > 40) {
@@ -817,7 +816,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (result.success) {
                                 // Store join request info in localStorage
                                 const joinRequests = JSON.parse(localStorage.getItem('jointogroups') || '{}');
-                                joinRequests[groupId] = result.requestId;
+                                joinRequests[groupId] = String(result.requestId);
                                 localStorage.setItem('jointogroups', JSON.stringify(joinRequests));
                                 
                                 // Show success modal
@@ -886,6 +885,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            if (memberPassword.length < 6) {
+                alert('Şifre en az 6 karakter olmalıdır.');
+                return;
+            }
+
             // Character limit validation
             if (userName.length > 40 || memberName.length > 40 || memberPassword.length > 40) {
                 alert('Tüm alanlar 40 karakterden kısa olmalıdır.');
@@ -899,45 +903,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Check if username already exists (but allow user to keep their own username)
-            let verifyData;
-            try {
-                // First verify invite token to get current user data
-                const verifyResponse = await fetch(`/api/verify-invite/${window.groupid}?invite=${inviteParams.inviteToken}`);
-                verifyData = await verifyResponse.json();
-
-                if (!verifyData.success) {
-                    alert('Davet linki geçersiz veya süresi dolmuş.');
-                    return;
-                }
-
-                // Only check username if it's different from current username
-                if (memberName !== verifyData.username) {
-                    const checkResponse = await fetch(`/api/check-username-exists/${window.groupid}/${encodeURIComponent(memberName)}`);
-                    const checkData = await checkResponse.json();
-                    
-                    if (checkData.exists) {
-                        alert('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
-                        return;
-                    }
-                }
-            } catch (error) {
-                console.error('Kullanıcı adı kontrolü hatası:', error);
-                alert('Kullanıcı adı kontrol edilirken hata oluştu.');
-                return;
-            }
-
             // Show loading state
             const originalText = welcomeInviteJoinBtn.innerHTML;
             welcomeInviteJoinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Güncelleniyor...';
             welcomeInviteJoinBtn.disabled = true;
 
             try {
-                // verifyData is already available from the username check above
-
                 // Create FormData for file upload
                 const formData = new FormData();
-                formData.append('inviteId', verifyData.inviteId);
+                formData.append('inviteToken', inviteParams.inviteToken);
                 formData.append('userName', userName);
                 formData.append('memberName', memberName);
                 formData.append('memberPassword', memberPassword);
@@ -1221,6 +1195,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 // 1. ÖNCE: Veri kaydetme ve temel işlemler
                 LocalStorageManager.loginUser(data.groupId, data.userId, data.authority, username, data.groupName, data.name);
+                window.currentSessionUser = {
+                    _id: data.userId,
+                    authority: data.authority,
+                    username: data.userName,
+                    name: data.name,
+                    profileImage: data.profileImage,
+                    loginStreak: data.loginStreak
+                };
                 
                 // Private grup erişimi flag'ini sıfırla
                 window.isPrivateGroupAccessModal = false;
@@ -1332,11 +1314,6 @@ document.addEventListener('DOMContentLoaded', function () {
         errorElement.classList.add('show');
     }
 
-    function showSuccess(successElement, message) {
-        successElement.textContent = message;
-        successElement.classList.add('show');
-    }
-
     // Keyboard navigation for user login form
     groupsAuthLoginName.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
@@ -1364,7 +1341,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Groups Auth Join Profile Image Input Event Listener (already defined above, just add the avatar reset logic)
     if (groupsAuthJoinProfileImageInput) {
         // Add avatar reset logic to existing change event listener
-        const existingChangeHandler = groupsAuthJoinProfileImageInput.onchange;
         groupsAuthJoinProfileImageInput.addEventListener('change', function() {
             if (this.files.length > 0) {
                 selectedGroupsAuthJoinAvatarPath = null;
@@ -1566,7 +1542,7 @@ async function uploadProfileImage(file) {
         formData.append('userId', userInfo.userId);
         formData.append('groupId', userInfo.groupId);
 
-        const response = await fetch(`/api/update-user-image/${userInfo.groupId}`, {
+        const response = await fetch(`/api/update-user-image/${userInfo.groupId}/${userInfo.userId}`, {
             method: 'POST',
             body: formData
         });
@@ -1831,6 +1807,11 @@ async function saveProfileSettings() {
             return;
         }
 
+        if (password && password.length < 6) {
+            showToast('Şifre en az 6 karakter olmalıdır!', 'error');
+            return;
+        }
+
         const updateData = {
             userId: userInfo.userId,
             groupId: userInfo.groupId,
@@ -1868,20 +1849,6 @@ async function saveProfileSettings() {
     }
 }
 
-// Grup içindeki toplam kullanıcı sayısını kontrol eden fonksiyon
-async function checkTotalUserCountInGroup(groupId) {
-    try {
-        const response = await fetch(`/api/users/${groupId}`);
-        if (!response.ok) return 0;
-        
-        const data = await response.json();
-        return data.users.length;
-    } catch (error) {
-        console.error('Toplam kullanıcı sayısı kontrol edilirken hata:', error);
-        return 0;
-    }
-}
-
 async function deleteAccount() {
     const userInfo = LocalStorageManager.getCurrentUserInfo();
     if (!userInfo) return;
@@ -1890,80 +1857,21 @@ async function deleteAccount() {
         window.logActionForAudit('profilden_kendi_hesabini_silme');
     }
 
-    // Önce grup içindeki toplam kullanıcı sayısını kontrol et
-    const totalUserCount = await checkTotalUserCountInGroup(userInfo.groupId);
-    
-    let confirmMessage = 'Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!';
-    let shouldDeleteGroup = false;
-    
-    // Eğer tek kullanıcı ise grup da silinecek
-    if (totalUserCount <= 1) {
-        confirmMessage = 'Hesabınızı silmek istediğinizden emin misiniz?\n\nBu hesap gruptaki son kullanıcıdır. Hesabınız silindiğinde grup da tamamen silinecektir.\n\nBu işlem geri alınamaz!';
-        shouldDeleteGroup = true;
-    }
-    
-    if (confirm(confirmMessage)) {
+    if (confirm('Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
         try {
-            if (shouldDeleteGroup) {
-                // Grup silme işlemi - mevcut delete-group endpoint'ini kullan
-                const deviceInfo = {
-                    userAgent: navigator.userAgent,
-                    screenWidth: window.screen.width,
-                    screenHeight: window.screen.height
-                };
-
-                const response = await fetch(`/api/delete-group/${userInfo.groupId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        userName: userInfo.userName || null,
-                        deviceInfo
-                    })
-                });
-
-                if (response.ok) {
-                    showToast('Hesabınız ve grup silindi!', 'success');
-                    closeProfileSettingsModal();
-                    // Grup silindiği için ana sayfaya yönlendir
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1500);
-                } else {
-                    showToast('Grup silinemedi!', 'error');
-                }
+            const response = await fetch(`/api/delete-user/${userInfo.groupId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: userInfo.userId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast(data.groupDeleted ? 'Hesabınız ve grup silindi!' : 'Hesabınız silindi!', 'success');
+                closeProfileSettingsModal();
+                LocalStorageManager.logoutUser();
+                setTimeout(() => { window.location.href = '/'; }, 1500);
             } else {
-                // Normal hesap silme işlemi - backend'te grup silme kontrolü yapılacak
-                const response = await fetch(`/api/delete-user/${userInfo.groupId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ id: userInfo.userId })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    if (data.groupDeleted) {
-                        showToast('Hesabınız ve grup silindi!', 'success');
-                        closeProfileSettingsModal();
-                        // Grup silindiği için ana sayfaya yönlendir
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 1500);
-                    } else {
-                        showToast('Hesabınız silindi!', 'success');
-                        closeProfileSettingsModal();
-                        // Normal çıkış işlemi
-                        LocalStorageManager.logoutUser();
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 1500);
-                    }
-                } else {
-                    showToast(data.error || 'Hesap silinemedi!', 'error');
-                }
+                showToast(data.error || 'Hesap silinemedi!', 'error');
             }
         } catch (error) {
             console.error('Hesap silinirken hata:', error);
@@ -1972,7 +1880,18 @@ async function deleteAccount() {
     }
 }
 
-function performLogoutFromProfile() {
+async function performLogoutFromProfile() {
+    try {
+        const response = await fetch(`/api/auth/logout/${encodeURIComponent(window.groupid)}`, { method: 'POST' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error || `HTTP ${response.status}`);
+        }
+    } catch (error) {
+        console.error('Sunucu oturumu kapatılamadı:', error);
+        showToast('Çıkış yapılamadı. Lütfen tekrar deneyin.', 'error');
+        return false;
+    }
     LocalStorageManager.logoutUser();
     closePrivateGroupLogoutModal();
     closeProfileModal();
@@ -1980,6 +1899,11 @@ function performLogoutFromProfile() {
     showAdminIndicator();
 
     showToast('Çıkış yapıldı!', 'success');
+
+    if (window.currentGroupVisibility === 'private') {
+        window.location.href = '/';
+        return true;
+    }
 
     loadTrackerTable();
 
@@ -1990,6 +1914,7 @@ function performLogoutFromProfile() {
     if (typeof window.updateProfileButton === 'function') {
         window.updateProfileButton();
     }
+    return true;
 }
 
 function logoutFromProfile() {

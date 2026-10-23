@@ -1,4 +1,3 @@
-let lastCanvasDataUrl = null;
 let lastQuoteText = "";
 let lastQuoteSection = null;
 document.addEventListener('DOMContentLoaded', function () {
@@ -70,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Geçici kapsayıcıyı kaldır
                 document.body.removeChild(tempContainer);
 
-                lastCanvasDataUrl = canvas.toDataURL('image/png');
                 resolve(canvas);
             }).catch(function (error) {
                 if (tempContainer.parentNode) document.body.removeChild(tempContainer);
@@ -161,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('closeSharePanel').addEventListener('click', hideSharePanel);
 
     // İndir butonuna tıklandığında (sadece metin/canvas için)
-    document.getElementById('downloadImageBtn').addEventListener('click', function (e) {
+    document.getElementById('downloadImageBtn').addEventListener('click', function () {
         // Eğer sadece görsel paylaşımı için panel açıldıysa bu fonksiyon çalışmasın
         if (this.dataset.imageShare === "true") return;
         createImage().then((canvas) => {

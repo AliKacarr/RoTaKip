@@ -1,3 +1,5 @@
+/* exported loadTrackerTable */
+
 const trackerTable = document.getElementById('trackerTable');
 const tableArea = document.querySelector('.table-area');
 const trackerTableShell = document.querySelector('.tracker-table-shell');
@@ -48,10 +50,6 @@ let timelineScrollHintHideTimer = null;
 let timelineScrollHintScheduled = false;
 let timelineScrollHintDismissed = false;
 let timelineScrollHintInteractionBound = false;
-
-// Takvim haftası tercihi yerine bugünle biten kayan yedi günlük dönem kullanılır.
-window.firstDayOfWeek = 'default';
-localStorage.setItem('firstDayOfWeek', 'default');
 
 function toLocalDateKey(date) {
     const year = date.getFullYear();
@@ -780,9 +778,9 @@ async function loadTrackerTable(options = {}) {
         const userSeasonAmount = sumUserAmounts(statsArray, user._id, seasonKey);
         const userAllTimeAmount = sumUserAmounts(statsArray, user._id);
         let userRow = `<tr class="user-row${currentUserClass}" data-user-id="${user._id}"><td class="user-item" data-user-id="${user._id}" style="background: ${league.bg};"><div class="user-item-content">`;
-        const profileImage = user.profileImage || '/images/default.png';
-        userRow += `<img src="${profileImage}" alt="${user.name}" class="tracker-profile-image tracker-profile-image-loading" onload="this.classList.remove('tracker-profile-image-loading')" onerror="this.classList.remove('tracker-profile-image-loading'); this.src='/images/default.png'" />`;
-        userRow += `<span class="user-item-text"><span class="user-item-name">${user.name}</span>`;
+        const profileImage = window.safeImageSrc(user.profileImage);
+        userRow += `<img src="${window.escapeHtml(profileImage)}" alt="${window.escapeHtml(user.name)}" class="tracker-profile-image tracker-profile-image-loading" onload="this.classList.remove('tracker-profile-image-loading')" onerror="this.classList.remove('tracker-profile-image-loading'); this.src='/images/default.png'" />`;
+        userRow += `<span class="user-item-text"><span class="user-item-name">${window.escapeHtml(user.name)}</span>`;
         userRow += `<span class="user-item-meta" data-user-meta="${user._id}" data-amount="${userAllTimeAmount}">${formatUserItemMeta(league.name, userAllTimeAmount)}</span></span></div></td></tr>`;
         usersBodyHTML += userRow;
         let row = `<tr class="user-row${currentUserClass}" data-user-id="${user._id}">`;
@@ -1622,9 +1620,7 @@ window.toggleStatus = async function toggleStatus(userId, date, clickedCell) {
         body: JSON.stringify({
             userId,
             date,
-            status,
-            requestingUserId: userInfo.userId,
-            requestingUserAuthority: userInfo.userAuthority
+            status
         })
     });
 
@@ -1748,34 +1744,6 @@ function updateAllUserBackgroundColors() {
         });
     } catch (error) {
         console.error('Kullanıcı background renkleri güncellenemedi:', error);
-    }
-}
-
-// Kullanıcının background rengini güncelle (eski fonksiyon - geriye uyumluluk için)
-window.updateUserBackgroundColor = async function updateUserBackgroundColor(userId) {
-    try {
-        // Kullanıcının güncel istatistiklerini al
-        const response = await fetch(`/api/user-stats/${window.groupid}/${userId}`);
-        if (!response.ok) return;
-        const { stats } = await response.json();
-
-        // Okuma günlerini hesapla
-        const okudumDays = stats.filter(s => s.status === 'okudum').length;
-        // Lig hesapla
-        const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
-
-        // Kullanıcının user-item elementini bul ve background rengini güncelle
-        const userItem = trackerUsersTable.querySelector(`.user-item[data-user-id="${userId}"]`);
-        if (userItem) {
-            userItem.style.background = league.bg;
-            const meta = userItem.querySelector('.user-item-meta');
-            if (meta) {
-                const amountSum = Number(meta.getAttribute('data-amount')) || 0;
-                meta.textContent = formatUserItemMeta(league.name, amountSum);
-            }
-        }
-    } catch (error) {
-        console.error('Kullanıcı background rengi güncellenemedi:', error);
     }
 }
 

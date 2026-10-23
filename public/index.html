@@ -12,7 +12,7 @@
     <link rel="canonical" href="https://rotakip.onrender.com/">
     <link rel="icon" href="/images/favicon.webp" type="image/x-icon" />
     <title>RoTaKip Okuma Takip</title>
-    <link rel="stylesheet" href="index.min.css?v=abc47be1eba2">
+    <link rel="stylesheet" href="index.min.css?v=322037a1574a">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
@@ -215,8 +215,8 @@
                             <label for="adminPasswordInput">Yönetici Şifresi</label>
                             <div class="input-container">
                                 <i class="fas fa-lock input-icon"></i>
-                                <input type="password" id="adminPasswordInput" required
-                                    placeholder="Yönetici şifrenizi giriniz" maxlength="40">
+                                <input type="password" id="adminPasswordInput" required minlength="6"
+                                    placeholder="En az 6 karakter" maxlength="40">
                                 <button type="button" class="password-toggle" id="passwordToggle">
                                     <i class="fas fa-eye"></i>
                                 </button>
@@ -289,12 +289,14 @@
     </div>
 
     <!-- Join Group Request Modal -->
-    <div id="joinGroupModal" class="modal" style="display: none; opacity: 0; visibility: hidden;">
+    <div id="joinGroupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="joinGroupName"
+        style="display: none; opacity: 0; visibility: hidden;">
         <div class="join-modal-content">
             <form id="joinGroupForm" class="modal-body">
                 <div class="join-info-section">
-                    <button class="join-modal-close-btn" id="closeJoinModal">
-                        <i class="fas fa-times"></i>
+                    <button type="button" class="join-modal-close-btn" id="closeJoinModal"
+                        aria-label="Katılma penceresini kapat" title="Kapat">
+                        <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                     <div class="join-group-info">
                         <div class="join-group-avatar">
@@ -357,8 +359,8 @@
                             <label for="joinMemberPasswordInput">Üye Şifresi</label>
                             <div class="input-container">
                                 <i class="fas fa-lock input-icon"></i>
-                                <input type="password" id="joinMemberPasswordInput" required
-                                    placeholder="Üye şifrenizi giriniz" maxlength="40">
+                                <input type="password" id="joinMemberPasswordInput" required minlength="6"
+                                    placeholder="En az 6 karakter" maxlength="40">
                                 <button type="button" class="password-toggle" id="joinPasswordToggle">
                                     <i class="fas fa-eye"></i>
                                 </button>
@@ -389,9 +391,10 @@
                         <div id="successActions" style="display: none;">
                             <button type="button" class="btn-danger" id="cancelJoinRequest">
                                 <i class="fas fa-times-circle"></i>
-                                İptal Et
+                                İsteği İptal Et
                             </button>
                             <button type="button" class="btn-primary" id="goToHomePage">
+                                <i class="fas fa-arrow-right"></i>
                                 Grubu Görüntüle
                             </button>
                         </div>
@@ -422,20 +425,7 @@
     </div>
 
     <!-- Main Script -->
-    <script src="index.min.js?v=ca6329af5b1f"></script>
-
-    <!-- External Services -->
-    <script>
-        var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
-        (function () {
-            var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
-            s1.async = true;
-            s1.src = 'https://embed.tawk.to/68278ccfe4781d19149b3d72/1ird7s2qf';
-            s1.charset = 'UTF-8';
-            s1.setAttribute('crossorigin', '*');
-            s0.parentNode.insertBefore(s1, s0);
-        })();
-    </script>
+    <script src="index.min.js?v=567b9d480ecb"></script>
 
 </body>
 

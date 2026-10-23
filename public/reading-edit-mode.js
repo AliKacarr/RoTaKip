@@ -268,9 +268,7 @@
         body: JSON.stringify({
           userId: userId,
           date: date,
-          status: 'okudum',
-          requestingUserId: userInfo.userId,
-          requestingUserAuthority: userInfo.userAuthority
+          status: 'okudum'
         })
       });
     } catch (err) {
@@ -429,9 +427,7 @@
           userId: userId,
           date: date,
           status: 'okudum',
-          amount: amount,
-          requestingUserId: userInfo.userId,
-          requestingUserAuthority: userInfo.userAuthority
+          amount: amount
         })
       });
     } catch (err) {

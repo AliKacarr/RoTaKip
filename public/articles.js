@@ -1,3 +1,5 @@
+/* exported ArticlesManager */
+
 // ==================== Articles Section JavaScript ====================
 
 class ArticlesManager {
@@ -92,7 +94,7 @@ class ArticlesManager {
             const btn = document.createElement('button');
             btn.className = 'category-btn';
             btn.dataset.category = category;
-            btn.innerHTML = `<i class="fa-solid fa-tag"></i> ${category}`;
+            btn.innerHTML = `<i class="fa-solid fa-tag"></i> ${window.escapeHtml(category)}`;
             categoriesContainer.appendChild(btn);
         });
     }
@@ -106,7 +108,9 @@ class ArticlesManager {
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.querySelector(`[data-category="${category}"]`).classList.add('active');
+        const activeButton = Array.from(document.querySelectorAll('.category-btn'))
+            .find(button => button.dataset.category === category);
+        if (activeButton) activeButton.classList.add('active');
 
         // Makaleleri filtrele
         if (category === 'all') {
@@ -225,30 +229,42 @@ class ArticlesManager {
     createArticleCard(article) {
         const card = document.createElement('div');
         card.className = 'article-card';
+        const title = window.escapeHtml(article.title);
+        const imageUrl = window.escapeHtml(window.safeExternalUrl(article.image_url, '/images/default-article.png'));
+        const destinationUrl = window.safeExternalUrl(article.destination_url);
+        const categoryUrl = window.safeExternalUrl(article.category_url);
         
         card.innerHTML = `
             <div class="article-title">
-                • ${article.title}
+                • ${title}
             </div>
             <div class="article-content-wrapper">
                 <div class="article-image">
-                    <img src="${article.image_url}" alt="${article.title}"  
+                    <img src="${imageUrl}" alt="${title}"
                          onerror="this.src='/images/default-article.png'">
                 </div>
                 <div class="article-content">
-                    <div class="article-category" onclick="window.open('${article.category_url}', '_blank')">
-                       • ${article.category} 
+                    <div class="article-category">
+                       • ${window.escapeHtml(article.category)}
                     </div>
-                    <div class="article-date">${article.date}</div>
-                    <div class="article-text">${this.truncateText(article.text, 100)}</div>
+                    <div class="article-date">${window.escapeHtml(article.date)}</div>
+                    <div class="article-text">${window.escapeHtml(this.truncateText(article.text, 100))}</div>
                     <div class="article-share">
-                        <svg class="article-share-icon" viewBox="0 0 24 24" fill="currentColor" onclick="shareArticle('${article.destination_url}', '${article.title}')">
+                        <svg class="article-share-icon" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
                         </svg>
                     </div>
                 </div>
             </div>
         `;
+
+        card.querySelector('.article-category').addEventListener('click', () => {
+            if (categoryUrl) window.open(categoryUrl, '_blank', 'noopener');
+        });
+        card.querySelector('.article-share').addEventListener('click', event => {
+            event.stopPropagation();
+            if (destinationUrl) window.shareArticle(destinationUrl, String(article.title || ''));
+        });
 
         // Kartın kendisine ve içindeki öğelere tıklama olayı ekle (kategori ve paylaş butonu hariç)
         card.addEventListener('click', function(e) {
@@ -263,7 +279,7 @@ class ArticlesManager {
             }
             
             // Diğer tüm tıklamalarda destination_url'ye yönlendir
-            window.open(article.destination_url, '_blank');
+            if (destinationUrl) window.open(destinationUrl, '_blank', 'noopener');
         });
 
         return card;

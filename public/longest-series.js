@@ -110,7 +110,7 @@ window.renderLongestSeries = function renderLongestSeries() {
 
                 bar.innerHTML = `
                   ${rankHTML}
-                  <span class="series-info" style="opacity:0;">${user.name}</span>
+                  <span class="series-info" style="opacity:0;">${window.escapeHtml(user.name)}</span>
                   <span class="series-count" style="opacity:0;"><b><span class="longest-fire-emoji"><i class="fa-solid fa-bolt" style="color: #ffd700; text-shadow: 1px 2px rgb(0 58 255 / 40%);"></i></span> ${user.streak}</b></span>
                 `;
 

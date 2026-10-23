@@ -69,7 +69,7 @@ function setupDailyTasksEvents() {
     // Görev kutularına tıklama olayları - tek işlem
     const taskItems = document.querySelectorAll('.daily-task-item');
     taskItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+        item.addEventListener('click', function() {
             const taskType = this.getAttribute('data-task');
             const checkbox = this.querySelector('.daily-task-check');
             const isCompleted = checkbox.checked;
@@ -323,7 +323,7 @@ function checkTodayReading() {
     try {
         // Global store'dan verileri al
         const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
-        const { users, stats } = allData;
+        const { stats } = allData;
         
         // Giriş yapılan kullanıcı bilgisi
         const userInfo = LocalStorageManager.getCurrentUserInfo();
@@ -504,23 +504,6 @@ function loadDailyVideo() {
         }
     } catch (error) {
         console.error('Günün videosu yüklenirken hata:', error);
-    }
-}
-
-// Video modalını aç
-function openVideoModal() {
-    const videoModal = document.getElementById('videoModal');
-    const videoFrame = document.getElementById('videoFrame');
-    
-    if (videoModal && window.currentVideoData) {
-        // Mevcut video verisini kullan
-        const videoId = window.currentVideoData.videoId;
-        if (videoId) {
-            videoFrame.src = `https://www.youtube.com/embed/${videoId}`;
-            videoModal.style.display = 'flex';
-        } else {
-            showNotification('Video bulunamadı!', 'error');
-        }
     }
 }
 

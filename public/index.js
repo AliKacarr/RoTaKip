@@ -1,48 +1,48 @@
 /* ==================== LocalStorage Manager ==================== */
 class LocalStorageManager {
-    static loginUser(groupId, userId, authority, username, groupName, name) {
-        // Mevcut grupları al
-        const groups = this.getGroups();
-        
-        // Yeni grubu ekle
-        groups[groupId] = userId;
-        
-        // LocalStorage'a kaydet
-        localStorage.setItem('groups', JSON.stringify(groups));
-        
-        // Kullanıcı bilgilerini kaydet
-        localStorage.setItem('groupid', groupId);
-        localStorage.setItem('userid', userId);
-        localStorage.setItem('userAuthority', authority);
-        localStorage.setItem('userName', username);
-        localStorage.setItem('groupName', groupName);
-        localStorage.setItem('name', name || '');
+    static loginUser(groupId, userId, authority, username, groupName) {
+        const current = this.memberships.find(item => item.groupId === groupId);
+        const membership = { groupId, userId: String(userId), authority, groupName };
+        if (current) Object.assign(current, membership);
+        else this.memberships.push(membership);
     }
-    
+
+    static async refreshMemberships() {
+        try {
+            const response = await fetch('/api/auth/memberships');
+            const data = response.ok ? await response.json() : { memberships: [] };
+            this.memberships = Array.isArray(data.memberships) ? data.memberships : [];
+        } catch (error) {
+            console.error('Oturum grupları alınamadı:', error);
+            this.memberships = [];
+        }
+    }
+
+    static getMemberships() {
+        return this.memberships.slice();
+    }
+
     static getGroups() {
-        const groups = localStorage.getItem('groups');
-        return groups ? JSON.parse(groups) : {};
+        return Object.fromEntries(this.memberships.map(item => [item.groupId, item.userId]));
     }
-    
+
     static removeUserFromGroup(groupId) {
-        const groups = this.getGroups();
-        delete groups[groupId];
-        localStorage.setItem('groups', JSON.stringify(groups));
+        this.memberships = this.memberships.filter(item => item.groupId !== groupId);
     }
-    
+
     static isAdmin() {
-        return localStorage.getItem('userAuthority') === 'admin';
+        return this.memberships.some(item => item.authority === 'admin');
     }
-    
+
     static clearCookies() {
-        const keysToRemove = ['groupid', 'userid', 'userAuthority', 'userName', 'groupName', 'name'];
+        const keysToRemove = ['groups', 'groupid', 'userid', 'userAuthority', 'userName', 'groupName', 'name', 'firstDayOfWeek'];
         keysToRemove.forEach(key => localStorage.removeItem(key));
     }
 
     // Katılma istekleri yönetimi
     static addJoinRequest(groupId, requestId) {
         const joinRequests = this.getJoinRequests();
-        joinRequests[groupId] = requestId;
+        joinRequests[groupId] = String(requestId);
         localStorage.setItem('jointogroups', JSON.stringify(joinRequests));
     }
 
@@ -64,9 +64,11 @@ class LocalStorageManager {
 
     static getJoinRequestId(groupId) {
         const joinRequests = this.getJoinRequests();
-        return joinRequests[groupId] || null;
+        return typeof joinRequests[groupId] === 'string' ? joinRequests[groupId] : null;
     }
+
 }
+LocalStorageManager.memberships = [];
 
 /* ==================== Constants ==================== */
 const CONFIG = {
@@ -291,12 +293,7 @@ class GroupsPage {
                         this.totalPublicGroups = data.total;
                     }
                     // Sadece kullanıcının gruplarında olmayan grupları ekle
-                    const userGroupIds = new Set();
-                    const userGroups = localStorage.getItem('groups');
-                    if (userGroups) {
-                        const groupsData = JSON.parse(userGroups);
-                        Object.keys(groupsData).forEach(id => userGroupIds.add(id));
-                    }
+                    const userGroupIds = new Set(Object.keys(LocalStorageManager.getGroups()));
                     
                     const newGroups = data.groups.filter(group => !userGroupIds.has(group.groupId));
                     this.groups = [...this.groups, ...newGroups];
@@ -351,56 +348,23 @@ class GroupsPage {
 
     async loadUserGroups() {
         try {
-            // LocalStorage'dan kullanıcının gruplarını al
-            const userGroups = localStorage.getItem('groups');
-            if (!userGroups) return;
+            const memberships = LocalStorageManager.getMemberships();
+            const userGroupsData = memberships.map(item => ({
+                groupId: item.groupId,
+                groupName: item.groupName,
+                description: item.description,
+                groupImage: item.groupImage,
+                visibility: item.visibility,
+                autoMarkUnread: item.autoMarkUnread,
+                userAuthority: item.authority
+            }));
 
-            const groupsData = JSON.parse(userGroups);
-            const groupIds = Object.keys(groupsData);
-
-            if (groupIds.length === 0) return;
-
-            // Silinmiş grupları tutmak için array
-            const deletedGroupIds = [];
-
-            // Her grup için detayları al
-            const groupPromises = groupIds.map(async (groupId) => {
-                try {
-                    const response = await fetch(`/api/group/${groupId}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        return { groupId, group: data.group, exists: true };
-                    } else if (response.status === 404) {
-                        // Grup bulunamadı - silinmiş
-                        console.log(`⚠️ Grup bulunamadı, LocalStorage'dan temizlenecek: ${groupId}`);
-                        deletedGroupIds.push(groupId);
-                        return { groupId, group: null, exists: false };
-                    }
-                } catch (error) {
-                    console.error(`Error loading group ${groupId}:`, error);
-                }
-                return { groupId, group: null, exists: false };
-            });
-
-            const results = await Promise.all(groupPromises);
-            const userGroupsData = results
-                .filter(result => result.exists && result.group !== null)
-                .map(result => result.group);
-
-            // Silinmiş grupları LocalStorage'dan temizle
-            if (deletedGroupIds.length > 0) {
-                deletedGroupIds.forEach(groupId => {
-                    LocalStorageManager.removeUserFromGroup(groupId);
-                    console.log(`✅ Silinmiş grup LocalStorage'dan temizlendi: ${groupId}`);
-                });
-            }
+            memberships.forEach(item => this.memberCounts.set(item.groupId, item.memberCount || 0));
 
             if (userGroupsData.length > 0) {
                 // Kullanıcının gruplarını en başa ekle
                 this.groups = [...userGroupsData, ...this.groups];
                 this.filteredGroups = this.groups;
-                await this.loadMemberCounts(userGroupsData);
-                await this.loadUserAuthorities(userGroupsData, groupsData);
                 this.renderGroups();
             }
         } catch (error) {
@@ -425,33 +389,6 @@ class GroupsPage {
             await Promise.all(promises);
         } catch (error) {
             console.error('Error loading member counts:', error);
-        }
-    }
-
-    async loadUserAuthorities(groups, groupsData) {
-        try {
-            const promises = groups.map(async (group) => {
-                const userId = groupsData[group.groupId];
-                if (userId) {
-                    try {
-                        const response = await fetch(`/api/users/${group.groupId}`);
-                        if (response.ok) {
-                            const data = await response.json();
-                            const user = data.users.find(u => u._id === userId);
-                            if (user) {
-                                // Kullanıcının yetkisini grup objesine ekle
-                                group.userAuthority = user.authority;
-                            }
-                        }
-                    } catch (error) {
-                        console.error(`Error loading user authority for group ${group.groupId}:`, error);
-                    }
-                }
-            });
-
-            await Promise.all(promises);
-        } catch (error) {
-            console.error('Error loading user authorities:', error);
         }
     }
 
@@ -895,6 +832,9 @@ class GroupsPage {
         if (adminPassword.length > 40) {
             errors.push('Yönetici şifresi 40 karakterden uzun olamaz.');
         }
+        if (adminPassword && adminPassword.length < 6) {
+            errors.push('Yönetici şifresi en az 6 karakter olmalıdır.');
+        }
 
         // Hata varsa göster
         if (errors.length > 0) {
@@ -965,18 +905,13 @@ class GroupsPage {
         const memberCount = this.memberCounts.get(group.groupId) || 0;
         
         // Kullanıcının grupları için private kontrolü yapma
-        const userGroups = localStorage.getItem('groups');
-        let isUserGroup = false;
-        if (userGroups) {
-            const groupsData = JSON.parse(userGroups);
-            isUserGroup = Object.hasOwn(groupsData, group.groupId);
-        }
+        const isUserGroup = Object.hasOwn(LocalStorageManager.getGroups(), group.groupId);
         
         const isPrivate = group.visibility === 'private' && !isUserGroup;
 
         let avatarHtml;
         if (group.groupImage) {
-            avatarHtml = `<img src="${group.groupImage}" alt="${group.groupName}" class="group-avatar-image group-avatar-image-loading" onload="this.classList.remove('group-avatar-image-loading')" onerror="this.classList.remove('group-avatar-image-loading'); this.src='/images/open-book.webp'">`;
+            avatarHtml = `<img src="${window.escapeHtml(window.safeImageSrc(group.groupImage, '/images/open-book.webp'))}" alt="${this.escapeHtml(group.groupName)}" class="group-avatar-image group-avatar-image-loading" onload="this.classList.remove('group-avatar-image-loading')" onerror="this.classList.remove('group-avatar-image-loading'); this.src='/images/open-book.webp'">`;
         } else {
             const groupInitial = group.groupName.charAt(0).toUpperCase();
             avatarHtml = `<span>${groupInitial}</span>`;
@@ -1187,14 +1122,23 @@ class GroupsPage {
         const entries = Object.entries(joinRequests);
         
         if (entries.length === 0) return;
-        
-        // Tüm kontrolleri paralel olarak yap
-        const promises = entries.map(async ([groupId, requestId]) => {
+
+        let membershipChanged = false;
+
+        // Kabul edilen istekler oturumu değiştirdiği için kontrolleri sırayla yap.
+        for (const [groupId, storedRequest] of entries) {
+            if (typeof storedRequest !== 'string') {
+                LocalStorageManager.removeJoinRequest(groupId);
+                continue;
+            }
+            const requestId = storedRequest;
             try {
-                const response = await fetch(`/api/join-request-status-by-id/${requestId}`);
+                const response = await fetch(`/api/join-request-status-by-id/${requestId}`, {
+                    method: 'POST'
+                });
                 if (!response.ok) {
                     LocalStorageManager.removeJoinRequest(groupId);
-                    return;
+                    continue;
                 }
                 
                 const data = await response.json();
@@ -1206,21 +1150,16 @@ class GroupsPage {
                         
                     case 'accepted':
                         LocalStorageManager.removeJoinRequest(groupId);
-                        LocalStorageManager.loginUser(
-                            groupId, 
-                            requestId, 
-                            'member', 
-                            data.userName || '', 
-                            '', 
-                            data.userName || ''
-                        );
+                        membershipChanged = true;
                         this.showSuccessMessage(
                             `"${data.groupName || 'Bilinmeyen Grup'}" grubuna katılma isteğiniz kabul edildi!`
                         );
                         break;
                         
                     case 'rejected':
-                        await fetch(`/api/delete-join-request/${requestId}`, { method: 'DELETE' });
+                        await fetch(`/api/delete-join-request/${requestId}`, {
+                            method: 'DELETE'
+                        });
                         LocalStorageManager.removeJoinRequest(groupId);
                         this.showErrorMessage(
                             `"${data.groupName || 'Bilinmeyen Grup'}" grubuna katılma isteğiniz reddedildi.`
@@ -1235,9 +1174,13 @@ class GroupsPage {
                 console.error(`Katılma isteği durum kontrol hatası (${groupId}):`, error);
                 LocalStorageManager.removeJoinRequest(groupId);
             }
-        });
-        
-        await Promise.all(promises);
+        }
+
+        // Kabul endpoint'i üyeliği sunucu oturumuna ekler. Kart oluşturulmadan önce
+        // grup adı, resmi, açıklaması ve üye sayısını tam olarak yeniden al.
+        if (membershipChanged) {
+            await LocalStorageManager.refreshMemberships();
+        }
     }
 
     // Katılma butonu HTML'ini oluştur
@@ -1297,6 +1240,7 @@ class GroupsPage {
         
         // Form alanlarını tekrar göster (sadece join modal içinde)
         const joinModal = document.getElementById('joinGroupModal');
+        joinModal.querySelector('.join-modal-content').classList.remove('is-success');
         const joinInfoSection = joinModal.querySelector('.join-info-section');
         const formSections = joinModal.querySelectorAll('.form-section');
         
@@ -1367,6 +1311,9 @@ class GroupsPage {
         }
         if (memberPassword.length > 40) {
             errors.push('Üye şifresi 40 karakterden uzun olamaz.');
+        }
+        if (memberPassword && memberPassword.length < 6) {
+            errors.push('Üye şifresi en az 6 karakter olmalıdır.');
         }
 
         if (errors.length > 0) {
@@ -1539,14 +1486,10 @@ class GroupsPage {
 
     // Başarı paneli göster
     showSuccessPanel() {
-        // Tüm form alanlarını ve info section'ı gizle (sadece join modal içinde)
+        // Form alanlarını gizle; grup başlığı ve kapatma butonu görünür kalır
         const joinModal = document.getElementById('joinGroupModal');
-        const joinInfoSection = joinModal.querySelector('.join-info-section');
+        joinModal.querySelector('.join-modal-content').classList.add('is-success');
         const formSections = joinModal.querySelectorAll('.form-section');
-        
-        if (joinInfoSection) {
-            joinInfoSection.style.display = 'none';
-        }
         
         formSections.forEach(section => {
             section.style.display = 'none';
@@ -1560,7 +1503,7 @@ class GroupsPage {
         successActions.classList.add('show');
         
         // Başarı mesajını göster
-        document.getElementById('joinStatusMessage').style.display = 'block';
+        document.getElementById('joinStatusMessage').style.display = 'flex';
         
         // Debug: Butonları kontrol et
         const cancelJoinRequest = document.getElementById('cancelJoinRequest');
@@ -1720,12 +1663,10 @@ async function logHomePageVisit(userName) {
 }
 
 /* ==================== DOM Content Loaded ==================== */
-document.addEventListener('DOMContentLoaded', function() {
-    const cachedUserName = localStorage.getItem('userName');
-    logHomePageVisit(cachedUserName);
-
-    // 1. Çerezleri temizle
+document.addEventListener('DOMContentLoaded', async function() {
     LocalStorageManager.clearCookies();
+    await LocalStorageManager.refreshMemberships();
+    logHomePageVisit(null);
     
     // 2. Avatar modal manager'ı başlat
     avatarModalManager = new AvatarModalManager();
@@ -1820,6 +1761,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (typeof window.scheduleGoogleAnalyticsLoad === 'function') {
         window.scheduleGoogleAnalyticsLoad();
+    }
+    if (typeof window.scheduleTawkLoad === 'function') {
+        window.scheduleTawkLoad();
     }
     if (typeof window.scheduleOneSignalLoad === 'function') {
         window.scheduleOneSignalLoad();

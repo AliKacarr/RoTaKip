@@ -1,3 +1,5 @@
+/* exported loadMonthlyCalendar */
+
 // Monthly Calendar Functionality
 function loadMonthlyCalendar() {
     console.log('🔍 Monthly Calendar Loading...');
@@ -438,9 +440,7 @@ function loadMonthlyCalendar() {
                 body: JSON.stringify({
                     userId: targetUserId,
                     date: dateStr,
-                    status: newStatus,
-                    requestingUserId: userInfo.userId,
-                    requestingUserAuthority: userInfo.userAuthority
+                    status: newStatus
                 })
             })
                 .then(response => {

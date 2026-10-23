@@ -18,9 +18,7 @@ async function postLastCongratulatedLeagues(items) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        items,
-        requestingUserId: userInfo.userId,
-        requestingUserAuthority: userInfo.userAuthority
+        items
       })
     });
     if (!res.ok) {
@@ -491,10 +489,10 @@ window.loadUserCards = async function loadUserCards() {
       card.innerHTML = `
       <div class="user-card-header" style="background: ${headerBg};">
         <div class="profile-img-wrapper">
-          <img class="profile-img profile-img-loading" src="${user.profileImage || '/images/default.png'}" alt="${user.name}" loading="lazy" decoding="async" onload="this.classList.remove('profile-img-loading')" onerror="this.classList.remove('profile-img-loading'); this.src='/images/default.png'">
+          <img class="profile-img profile-img-loading" src="${window.escapeHtml(window.safeImageSrc(user.profileImage))}" alt="${window.escapeHtml(user.name)}" loading="lazy" decoding="async" onload="this.classList.remove('profile-img-loading')" onerror="this.classList.remove('profile-img-loading'); this.src='/images/default.png'">
         </div>
         <div class="user-card-header-content">
-          <div class="user-card-user-name">${user.name}</div>
+          <div class="user-card-user-name">${window.escapeHtml(user.name)}</div>
           <div class="user-league">${league.name}</div>
         </div>
         <div class="share-icon-wrapper">
@@ -722,7 +720,7 @@ window.loadUserCards = async function loadUserCards() {
         copyLines.push(
           `⚡${days} gün - *${u.name}* ${u.league.toLowerCase()} lige yükseldi${punctuation}`
         );
-        return `⚡${days} gün - <b class="promoted-username">${u.name}</b> <span class="promoted-league">${u.league.toLowerCase()}</span> lige yükseldi${punctuation}`;
+        return `⚡${days} gün - <b class="promoted-username">${window.escapeHtml(u.name)}</b> <span class="promoted-league">${window.escapeHtml(u.league.toLowerCase())}</span> lige yükseldi${punctuation}`;
       });
 
       let bodyHtml = '';
@@ -1005,7 +1003,7 @@ window.loadUserCards = async function loadUserCards() {
         activeStreaks
           .map(
             (u) =>
-              `<b class="streak-username">${u.name}</b> (<span class="streak-days">${u.streak} gün</span>)`
+              `<b class="streak-username">${window.escapeHtml(u.name)}</b> (<span class="streak-days">${u.streak} gün</span>)`
           )
           .join(', ') +
         '</div>' +
@@ -1057,7 +1055,7 @@ window.loadUserCards = async function loadUserCards() {
         consecutiveMissed
           .map(
             (u) =>
-              `<b class="missed-username">${u.name}</b> (<span class="missed-days">${u.days} gün</span>)`
+              `<b class="missed-username">${window.escapeHtml(u.name)}</b> (<span class="missed-days">${u.days} gün</span>)`
           )
           .join(', ') +
         '</div>' +
@@ -1259,9 +1257,7 @@ toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElem
       body: JSON.stringify({
         userId: targetUserId,
         date: dateStr,
-        status: newStatus,
-        requestingUserId: userInfo.userId,
-        requestingUserAuthority: userInfo.userAuthority
+        status: newStatus
       })
     })
       .then(response => {

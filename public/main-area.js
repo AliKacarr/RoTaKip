@@ -1,3 +1,8 @@
+/* exported deleteUser, saveUserName, editUserName, handleWaPhoneInputChange,
+   openWhatsappPhoneModal, closeWhatsappPhoneModal, saveWaPhone, changeUserImage,
+   toggleDeleteButton, cancelEditUserName, cancelSettings, changeUserAuthority,
+   inviteSelectedUser, acceptJoinRequest, rejectJoinRequest */
+
 // Global değişkenler
 let renderUserListTimeout = null;
 
@@ -205,6 +210,10 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
             });
 
             const result = await response.json();
+            if (!response.ok) {
+                showErrorMessage(result.error || 'Kullanıcı silinemedi.');
+                return;
+            }
 
             // Eğer grup silindi ise ana sayfaya yönlendir
             if (result.groupDeleted) {
@@ -508,16 +517,16 @@ async function loadWhatsappPhoneUsers() {
         }
 
         container.innerHTML = users.map(user => {
-            const profileImg = user.profileImage || '/images/default.png';
+            const profileImg = window.safeImageSrc(user.profileImage);
             const phoneVal = user.phone || '';
             return `
                 <div class="wa-user-row" data-user-id="${user._id}">
                     <div class="wa-user-info">
-                        <img src="${profileImg}" alt="${user.name}" class="wa-user-avatar" onerror="this.src='/images/default.png'" />
-                        <span class="wa-user-name">${user.name}</span>
+                        <img src="${window.escapeHtml(profileImg)}" alt="${window.escapeHtml(user.name)}" class="wa-user-avatar" onerror="this.src='/images/default.png'" />
+                        <span class="wa-user-name">${window.escapeHtml(user.name)}</span>
                     </div>
                     <div class="wa-phone-input-group">
-                        <input type="text" class="wa-phone-input" data-saved-value="${phoneVal}" placeholder="905..." value="${phoneVal}" oninput="handleWaPhoneInputChange(this)" maxlength="20">
+                        <input type="text" class="wa-phone-input" data-saved-value="${window.escapeHtml(phoneVal)}" placeholder="905..." value="${window.escapeHtml(phoneVal)}" oninput="handleWaPhoneInputChange(this)" maxlength="20">
                         <button type="button" class="wa-save-btn" onclick="saveWaPhone('${user._id}', this)">
                             <i class="fa-solid fa-check"></i> Kaydet
                         </button>
@@ -984,7 +993,6 @@ async function changeUserAuthority(userId, newAuthority) {
         });
 
         if (response.ok) {
-            const result = await response.json();
             showSuccessMessage(`Kullanıcı yetkisi başarıyla ${newAuthority === 'admin' ? 'Yönetici' : 'Üye'} olarak güncellendi!`);
 
             // GlobalDataStore'u güncelle
@@ -1120,8 +1128,6 @@ async function inviteSelectedUser() {
         // Grup URL'lerini oluştur
         const baseUrl = window.location.origin;
         const quickLoginUrl = `${baseUrl}/groupid=${window.groupid}?quick-login&invite=${inviteToken}`;
-        const groupUrl = `${baseUrl}/groupid=${window.groupid}`;
-
         // Davet metnini oluştur
         const inviteText = `*${groupName} okuma grubu*
 
@@ -1197,9 +1203,10 @@ function performRenderUserList() {
             userList.innerHTML = '';
 
             // Tüm kullanıcıları yeniden oluştur
-            users.forEach((user, index) => {
-                const userProfileImage = user.profileImage || '/images/default.png';
-                const liHTML = `<div class="kullanıcı-item"><img src="${userProfileImage}" alt="${user.name}" class="user-profile-image user-profile-image-loading" loading="lazy" decoding="async" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${user.name}</span><input type="text" class="edit-name-input" value="${user.name}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
+            users.forEach((user) => {
+                const userProfileImage = window.safeImageSrc(user.profileImage);
+                const safeUserName = window.escapeHtml(user.name);
+                const liHTML = `<div class="kullanıcı-item"><img src="${window.escapeHtml(userProfileImage)}" alt="${safeUserName}" class="user-profile-image user-profile-image-loading" loading="lazy" decoding="async" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${safeUserName}</span><input type="text" class="edit-name-input" value="${safeUserName}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
 
                 // Kullanıcı container'ı oluştur
                 const userContainer = document.createElement('div');
@@ -1755,7 +1762,7 @@ async function deleteGroup() {
 
     try {
         const userInfo = LocalStorageManager.getCurrentUserInfo();
-        const actorUserName = userInfo?.userName || localStorage.getItem('userName');
+        const actorUserName = userInfo?.userName || null;
         const deviceInfo = {
             userAgent: navigator.userAgent,
             screenWidth: window.screen.width,
@@ -1914,7 +1921,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // Katılma isteklerini yükle
 async function loadJoinRequests() {
     try {
-        const groupId = localStorage.getItem('groupid');
+        const groupId = window.groupid;
         if (!groupId) return;
 
         const response = await fetch(`/api/join-requests/${groupId}`);
@@ -1950,12 +1957,12 @@ function displayJoinRequests(requests) {
 
         return `
             <div class="join-request-item" data-request-id="${request._id}">
-                <img src="${request.profileImage || 'images/default.png'}" 
-                     alt="${request.userName}" 
+                <img src="${window.escapeHtml(window.safeImageSrc(request.profileImage))}"
+                     alt="${window.escapeHtml(request.userName)}"
                      class="join-request-avatar"
                      onerror="this.src='images/default.png'">
                 <div class="join-request-info">
-                    <div class="join-request-name">${request.name}</div>
+                    <div class="join-request-name">${window.escapeHtml(request.name)}</div>
                     <div class="join-request-date">${requestDate}</div>
                 </div>
                 <div class="join-request-actions">
@@ -2197,7 +2204,7 @@ async function updateExistingUserImageFromFile(userId, file) {
         formData.append('profileImage', file);
         formData.append('useTempFolder', 'true');
 
-        const response = await fetch(`/api/update-user-image/${window.groupid}`, {
+        const response = await fetch(`/api/update-user-image/${window.groupid}/${userId}`, {
             method: 'POST',
             body: formData
         });

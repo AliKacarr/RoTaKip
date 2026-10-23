@@ -127,6 +127,11 @@
 
 
   <script>
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = String(value == null ? '' : value);
+      return div.innerHTML;
+    }
     function getTurkeyYmdFromTimestamp(ts) {
       return new Date(ts).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' });
     }
@@ -142,45 +147,22 @@
     document.addEventListener('DOMContentLoaded', async function () {
       const accessDenied = document.getElementById('accessDenied');
       const logsSection = document.getElementById('logsSection');
+      const activeGroupId = new URLSearchParams(window.location.search).get('groupId');
 
-      // Check admin authority from cookies
       async function checkAdminAccess() {
         try {
-          // Get stored group information
-          const groupId = localStorage.getItem('groupid');
-          const userId = localStorage.getItem('userid');
-          const userName = localStorage.getItem('userName');
-          const userAuthority = localStorage.getItem('userAuthority');
-
-          if (!groupId || !userId || !userName) {
+          if (!activeGroupId) {
             showAccessDenied();
             return;
           }
 
-          // Check if user has admin authority
-          if (userAuthority !== 'admin') {
-            showAccessDenied();
-            return;
-          }
+          const response = await fetch(`/api/auth/me/${encodeURIComponent(activeGroupId)}`);
+          const data = response.ok ? await response.json() : null;
 
-          // Try to verify admin status with the server
-          const response = await fetch('/api/verify-admin', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              username: userName,
-              groupId: groupId
-            })
-          });
-
-          const data = await response.json();
-
-          if (data.valid) {
+          if (data?.user?.authority === 'admin') {
             // Admin verified, show logs with group filtering
             logsSection.style.display = 'block';
-            loadLogs(groupId);
+            loadLogs(activeGroupId);
           } else {
             // Admin verification failed
             showAccessDenied();
@@ -200,7 +182,7 @@
 
       // Add refresh button functionality
       refreshAdminLogsButton.addEventListener('click', function () {
-        if (localStorage.getItem('userAuthority') === 'admin') {
+        if (activeGroupId) {
           // Clear any active filters
           const filterContainer = document.getElementById('filterContainer');
           if (filterContainer) {
@@ -220,7 +202,7 @@
           const minimumAnimationTime = 1500; // 1.5 seconds minimum animation time
 
           // Load logs without updating button state
-          loadLogs(localStorage.getItem('groupid'), false).then(() => {
+          loadLogs(activeGroupId, false).then(() => {
             // Calculate how long the refresh has been running
             const refreshDuration = Date.now() - refreshStartTime;
 
@@ -289,7 +271,7 @@
         });
 
         // --- FIX: Always reload all logs when returning to all logs view ---
-        loadLogs(localStorage.getItem('groupid'), true);
+        loadLogs(activeGroupId, true);
       });
 
       // Function to load logs
@@ -490,12 +472,12 @@
 
               row.innerHTML = `
                 <td>${formattedDate}</td>
-                <td style="color: ${ipColor}; font-weight: bold; cursor: pointer;" 
-                    onclick="filterByIp('${ipAddress}')">${ipAddress}</td>
-                <td>${log.action}</td>
-                <td>${deviceInfo}</td>
-                <td>${screenSize}</td>
+                <td class="log-actor" style="color: ${ipColor}; font-weight: bold; cursor: pointer;">${escapeHtml(ipAddress)}</td>
+                <td>${escapeHtml(log.action)}</td>
+                <td>${escapeHtml(deviceInfo)}</td>
+                <td>${escapeHtml(screenSize)}</td>
               `;
+              row.querySelector('.log-actor').addEventListener('click', () => filterByIp(ipAddress));
 
               tableBody.appendChild(row);
             }
@@ -622,12 +604,12 @@
 
             row.innerHTML = `
               <td>${hours}:${minutes}:${seconds}</td>
-              <td style="color: ${ipColor}; font-weight: bold; cursor: pointer;" 
-                  onclick="filterByIp('${ipAddress}')">${ipAddress}</td>
-              <td>${log.action}</td>
-              <td>${deviceInfo}</td>
-              <td>${screenSize}</td>
+              <td class="log-actor" style="color: ${ipColor}; font-weight: bold; cursor: pointer;">${escapeHtml(ipAddress)}</td>
+              <td>${escapeHtml(log.action)}</td>
+              <td>${escapeHtml(deviceInfo)}</td>
+              <td>${escapeHtml(screenSize)}</td>
             `;
+            row.querySelector('.log-actor').addEventListener('click', () => filterByIp(ipAddress));
 
             dateGroupTableBody.appendChild(row);
           }
@@ -752,10 +734,8 @@
       // Create filter notification
       const ipFilterNotification = document.createElement('div');
       ipFilterNotification.id = 'ipFilterNotification';
-      ipFilterNotification.innerHTML = `
-        <span class="filter-text">${ipAddress} Kullanıcı adına göre filtrelendi</span>
-        <button id="clearIpFilter">×</button>
-      `;
+      ipFilterNotification.innerHTML = '<span class="filter-text"></span><button id="clearIpFilter">×</button>';
+      ipFilterNotification.querySelector('.filter-text').textContent = `${ipAddress} Kullanıcı adına göre filtrelendi`;
       document.getElementById('filterContainer').appendChild(ipFilterNotification);
 
       // Add event listener to clear filter button

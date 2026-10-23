@@ -1,3 +1,43 @@
+(function initializeSecurityUtils() {
+    const entities = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    };
+
+    window.escapeHtml = function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, character => entities[character]);
+    };
+
+    window.safeImageSrc = function safeImageSrc(value, fallback = '/images/default.png') {
+        if (typeof value !== 'string' || !value.trim()) return fallback;
+        try {
+            const url = new URL(value.trim(), window.location.origin);
+            const host = url.hostname.toLowerCase();
+            const isSameOrigin = url.origin === window.location.origin;
+            const isDropbox = url.protocol === 'https:' && (
+                host === 'dropbox.com' || host.endsWith('.dropbox.com') ||
+                host === 'dropboxusercontent.com' || host.endsWith('.dropboxusercontent.com')
+            );
+            return isSameOrigin || isDropbox ? url.href : fallback;
+        } catch (_) {
+            return fallback;
+        }
+    };
+
+    window.safeExternalUrl = function safeExternalUrl(value, fallback = '') {
+        if (typeof value !== 'string' || !value.trim()) return fallback;
+        try {
+            const url = new URL(value.trim(), window.location.origin);
+            return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : fallback;
+        } catch (_) {
+            return fallback;
+        }
+    };
+})();
+
 const deferredScriptLoads = new Map();
 
 function loadDeferredScriptOnce(src, isReady) {
@@ -76,6 +116,26 @@ window.scheduleGoogleAnalyticsAfterPrimaryContent = function scheduleGoogleAnaly
     window.addEventListener('rotakip:primary-content-ready', () => {
         window.scheduleGoogleAnalyticsLoad();
     }, { once: true });
+};
+
+window.loadTawkDeferred = async function loadTawkDeferred() {
+    if (window.Tawk_API) return;
+    window.Tawk_API = {};
+    window.Tawk_LoadStart = new Date();
+
+    try {
+        await loadDeferredScriptOnce(
+            'https://embed.tawk.to/68278ccfe4781d19149b3d72/1ird7s2qf',
+            () => Boolean(document.querySelector('script[src*="embed.tawk.to/68278ccfe4781d19149b3d72"]'))
+        );
+    } catch (error) {
+        delete window.Tawk_API;
+        console.error('Tawk.to yüklenemedi:', error);
+    }
+};
+
+window.scheduleTawkLoad = function scheduleTawkLoad() {
+    runAfterPageLoadWhenIdle(() => window.loadTawkDeferred());
 };
 
 window.loadOneSignalDeferred = async function loadOneSignalDeferred() {
