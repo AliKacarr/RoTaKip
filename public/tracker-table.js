@@ -605,7 +605,7 @@ function cellTextIsEmpty(text) {
 }
 
 function computeWeekMarkedReadFromTable() {
-    const dates = getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey());
+    const dates = getTimelineDisplayedDates(timelineReferenceDate || getTodayDateKey());
     const tbody = trackerTable && trackerTable.querySelector('tbody');
     if (!tbody) return { okudum: 0, marked: 0 };
 
@@ -898,7 +898,7 @@ async function loadTrackerTable(options = {}) {
             scrollTimelineDateIntoRightEdge(timelineReferenceDate || getTodayDateKey(), false);
             timelineHasPositioned = true;
         }
-        updateCurrentWeekDisplayFromViewport(timelineReferenceDate || getTodayDateKey());
+        updateTimelineSummaries(getTimelineRightmostVisibleDate());
         scheduleTimelineScrollHint();
     });
 }
@@ -1018,12 +1018,16 @@ function getTimelineRightmostVisibleDate() {
 }
 
 function updateCurrentWeekDisplayFromViewport(fallbackReferenceDate) {
-    if (!currentWeekDisplay) return;
+    const displayDates = getTimelineDisplayedDates(fallbackReferenceDate);
+    if (currentWeekDisplay) currentWeekDisplay.textContent = formatDateRange(displayDates);
+    return displayDates;
+}
+
+function getTimelineDisplayedDates(fallbackReferenceDate) {
     const visibleDates = getTimelineVisibleDates();
-    const displayDates = visibleDates.length > 0
+    return visibleDates.length > 0
         ? visibleDates
         : getSevenDaysEndingAt(fallbackReferenceDate || timelineReferenceDate || getTodayDateKey());
-    currentWeekDisplay.textContent = formatDateRange(displayDates);
 }
 
 function buildSeasonHeaderHtml(dates) {
@@ -1051,10 +1055,10 @@ function updateTimelineSummaries(referenceDate) {
     if (!referenceDate) return;
     timelineReferenceDate = referenceDate;
     const analysisDates = getSevenDaysEndingAt(referenceDate);
-    updateCurrentWeekDisplayFromViewport(referenceDate);
+    const displayDates = updateCurrentWeekDisplayFromViewport(referenceDate);
     setTimelineTodayButtonVisibility(referenceDate);
 
-    const weekStats = computeWeekMarkedReadStats(timelineLastUsers, timelineLastStatMap, analysisDates);
+    const weekStats = computeWeekMarkedReadStats(timelineLastUsers, timelineLastStatMap, displayDates);
     const successText = formatWeekReadSuccessText(weekStats.okudum, weekStats.marked);
     const successElement = document.getElementById('tfoot-total-read');
     if (successElement) {
@@ -1324,7 +1328,7 @@ function setupTimelineScrolling() {
 
     window.addEventListener('resize', function () {
         requestAnimationFrame(function () {
-            updateCurrentWeekDisplayFromViewport(timelineReferenceDate || getTodayDateKey());
+            updateTimelineSummaries(getTimelineRightmostVisibleDate());
         });
     }, { passive: true });
 }

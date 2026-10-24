@@ -1193,6 +1193,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
 
             if (data.success) {
+                const requiresPrivateGroupBootstrap = window.isPrivateGroupAccessModal === true;
+
                 // 1. ÖNCE: Veri kaydetme ve temel işlemler
                 LocalStorageManager.loginUser(data.groupId, data.userId, data.authority, username, data.groupName, data.name);
                 window.currentSessionUser = {
@@ -1220,6 +1222,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Modal'ı kapat ve form'u temizle
                 window.hideModal(groupsAuthLoginModal);
                 groupsAuthLoginForm.reset();
+
+                if (requiresPrivateGroupBootstrap) {
+                    window.location.reload();
+                    return;
+                }
 
                 // 2. KULLANICI BİLGİLERİNİ UI'DA GÜNCELLE
                 // Giriş serisi bilgisini UI'da güncelle
@@ -1947,7 +1954,7 @@ function closePrivateGroupLogoutModal() {
 
 function copyPrivateGroupLogoutLink() {
     const url = window.location.href || '';
-    const done = () => showToast('Bağlantı panoya kopyalandı!', 'success');
+    const done = () => showToast('Bağlantı panoya kopyalandı!', 'success', 'private-group-logout-toast');
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(done).catch(() => {
             const input = document.getElementById('privateGroupLogoutUrlInput');
@@ -1958,7 +1965,7 @@ function copyPrivateGroupLogoutLink() {
                     document.execCommand('copy');
                     done();
                 } catch (e) {
-                    showToast('Kopyalanamadı; bağlantıyı elle seçebilirsiniz.', 'error');
+                    showToast('Kopyalanamadı; bağlantıyı elle seçebilirsiniz.', 'error', 'private-group-logout-toast');
                 }
             }
         });
@@ -1971,7 +1978,7 @@ function copyPrivateGroupLogoutLink() {
                 document.execCommand('copy');
                 done();
             } catch (e) {
-                showToast('Kopyalanamadı; bağlantıyı elle seçebilirsiniz.', 'error');
+                showToast('Kopyalanamadı; bağlantıyı elle seçebilirsiniz.', 'error', 'private-group-logout-toast');
             }
         }
     }
@@ -2013,9 +2020,10 @@ async function updateUIAfterProfileChange() {
 }
 
 // Toast mesajı fonksiyonu
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', extraClass = '') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
+    if (extraClass) toast.classList.add(extraClass);
     toast.textContent = message;
     
     document.body.appendChild(toast);

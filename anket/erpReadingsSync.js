@@ -38,7 +38,13 @@ for (let i = 0; i <= 20; i += 1) {
   VALID_RISALE_HOURS.add(Number((i * 0.25).toFixed(2)));
 }
 
-let syncRunning = false;
+const SHEETS_REQUEST_TIMEOUT_MS = 10 * 1000;
+const ON_DEMAND_SYNC_COOLDOWN_MS = 60 * 1000;
+const lastSuccessfulSyncAtByGroup = new Map();
+const lastSyncAttemptAtByGroup = new Map();
+const changeVersionByGroup = new Map();
+let activeSyncPromise = null;
+let scheduledSyncQueuedOrRunning = false;
 
 function istanbulNowParts() {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -132,13 +138,27 @@ async function fetchSheetRows() {
     `/values/${encodeURIComponent(SHEETS.RANGE)}` +
     `?key=${SHEETS.API_KEY}&valueRenderOption=UNFORMATTED_VALUE`;
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Sheets API ${res.status}: ${await res.text()}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), SHEETS_REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) {
+      throw new Error(`Sheets API ${res.status}: ${await res.text()}`);
+    }
+    const json = await res.json();
+    const values = json.values || [];
+    return values.length > 1 ? values.slice(1) : [];
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error(
+        `Sheets API isteği ${SHEETS_REQUEST_TIMEOUT_MS / 1000} saniyede zaman aşımına uğradı`,
+        { cause: error }
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  const json = await res.json();
-  const values = json.values || [];
-  return values.length > 1 ? values.slice(1) : [];
 }
 
 /**
@@ -187,6 +207,7 @@ async function importGroup(db, groupId, byNameKey, dryRun) {
   let matchedUsers = 0;
   let docs = 0;
   let upserted = 0;
+  let modified = 0;
 
   for (const u of users) {
     const entries = byNameKey.get(toComparableKey(u.name)) || [];
@@ -219,10 +240,19 @@ async function importGroup(db, groupId, byNameKey, dryRun) {
     if (ops.length) {
       const result = await readingStatuses.bulkWrite(ops, { ordered: false });
       upserted += result.upsertedCount || 0;
+      modified += result.modifiedCount || 0;
     }
   }
 
-  return { groupId, users: users.length, matchedUsers, docs, upserted };
+  return {
+    groupId,
+    users: users.length,
+    matchedUsers,
+    docs,
+    upserted,
+    modified,
+    changed: upserted + modified > 0
+  };
 }
 
 async function resolveDb(db) {
@@ -275,19 +305,142 @@ async function syncErpReadings(options = {}) {
   }
 }
 
+function startCoordinatedSync(options) {
+  const groupIds = options.groupIds && options.groupIds.length
+    ? options.groupIds
+    : ERP_SKO_GROUPS;
+  const startedAt = Date.now();
+  groupIds.forEach((groupId) => lastSyncAttemptAtByGroup.set(groupId, startedAt));
+  const syncPromise = syncErpReadings({ ...options, groupIds })
+    .then((result) => {
+      const completedAt = Date.now();
+      groupIds.forEach((groupId) => lastSuccessfulSyncAtByGroup.set(groupId, completedAt));
+      result.groups.forEach((group) => {
+        if (group.changed) {
+          changeVersionByGroup.set(group.groupId, getErpReadingsChangeVersion(group.groupId) + 1);
+        }
+        group.changeVersion = getErpReadingsChangeVersion(group.groupId);
+      });
+      return result;
+    })
+    .finally(() => {
+      if (activeSyncPromise === syncPromise) activeSyncPromise = null;
+    });
+  activeSyncPromise = syncPromise;
+  return syncPromise;
+}
+
+function getErpReadingsChangeVersion(groupId) {
+  return changeVersionByGroup.get(String(groupId || '')) || 0;
+}
+
+function isGroupSyncFresh(groupId, cooldownMs) {
+  const lastSuccessfulSyncAt = lastSuccessfulSyncAtByGroup.get(groupId) || 0;
+  return Date.now() - lastSuccessfulSyncAt < cooldownMs;
+}
+
+function isGroupSyncCoolingDown(groupId, cooldownMs) {
+  const lastSyncAttemptAt = lastSyncAttemptAtByGroup.get(groupId) || 0;
+  return Date.now() - lastSyncAttemptAt < cooldownMs;
+}
+
+/**
+ * Grup sayfası açılırken ERP verisini yeniler.
+ * Aynı anda gelen istekler tek senkronu paylaşır; başarılı veya başarısız bir
+ * denemeden sonra aynı grup için kısa süreli tekrarlar harici servise gönderilmez.
+ */
+async function syncErpReadingsOnDemand(options = {}) {
+  const groupId = String(options.groupId || '');
+  if (!ERP_SKO_GROUPS.includes(groupId)) {
+    return {
+      success: true,
+      skipped: 'unsupported-group',
+      groupId,
+      changed: false,
+      changeVersion: getErpReadingsChangeVersion(groupId)
+    };
+  }
+
+  const requestedCooldown = Number(options.cooldownMs);
+  const cooldownMs = Number.isFinite(requestedCooldown) && requestedCooldown >= 0
+    ? requestedCooldown
+    : ON_DEMAND_SYNC_COOLDOWN_MS;
+
+  while (activeSyncPromise) {
+    const sharedSyncPromise = activeSyncPromise;
+    let sharedResult = null;
+    try {
+      sharedResult = await sharedSyncPromise;
+    } catch (_) {
+      // Önceki senkron başarısızsa bu istek kendi grubunu yeniden deneyebilir.
+    }
+    const sharedGroupResult = sharedResult?.groups?.find((group) => group.groupId === groupId);
+    if (sharedGroupResult) {
+      return {
+        success: true,
+        skipped: 'shared-sync',
+        groupId,
+        changed: sharedGroupResult.changed === true,
+        changeVersion: sharedGroupResult.changeVersion,
+        group: sharedGroupResult
+      };
+    }
+  }
+
+  if (isGroupSyncFresh(groupId, cooldownMs)) {
+    return {
+      success: true,
+      skipped: 'cooldown',
+      groupId,
+      changed: false,
+      changeVersion: getErpReadingsChangeVersion(groupId)
+    };
+  }
+  if (isGroupSyncCoolingDown(groupId, cooldownMs)) {
+    return {
+      success: false,
+      skipped: 'retry-cooldown',
+      groupId,
+      changed: false,
+      changeVersion: getErpReadingsChangeVersion(groupId)
+    };
+  }
+
+  const result = await startCoordinatedSync({
+    db: options.db,
+    groupIds: [groupId],
+    includeYesterday: true
+  });
+  const groupResult = result.groups.find((group) => group.groupId === groupId);
+  return {
+    ...result,
+    groupId,
+    changed: groupResult?.changed === true,
+    changeVersion: groupResult?.changeVersion ?? getErpReadingsChangeVersion(groupId),
+    group: groupResult
+  };
+}
+
 async function runScheduledSync(getDb) {
-  if (syncRunning) return;
-  syncRunning = true;
+  if (scheduledSyncQueuedOrRunning) return;
+  scheduledSyncQueuedOrRunning = true;
   try {
+    while (activeSyncPromise) {
+      try {
+        await activeSyncPromise;
+      } catch (_) {
+        // Zamanlanmış tam senkron, önceki denemenin sonucundan bağımsız çalışır.
+      }
+    }
     let db;
     if (typeof getDb === 'function') {
       db = getDb();
     }
-    await syncErpReadings({ db, includeYesterday: true });
+    await startCoordinatedSync({ db, includeYesterday: true });
   } catch (err) {
     console.error('[ErpReadingsSync]', err.message || err);
   } finally {
-    syncRunning = false;
+    scheduledSyncQueuedOrRunning = false;
   }
 }
 
@@ -307,7 +460,10 @@ function scheduleErpReadingsSync(getDb) {
 
 module.exports = {
   ERP_SKO_GROUPS,
+  ON_DEMAND_SYNC_COOLDOWN_MS,
+  getErpReadingsChangeVersion,
   syncErpReadings,
+  syncErpReadingsOnDemand,
   scheduleErpReadingsSync,
   istanbulNowParts,
   previousDateStr

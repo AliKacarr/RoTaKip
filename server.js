@@ -21,7 +21,13 @@ const { MongoStore } = require('connect-mongo');
 const { rateLimit } = require('express-rate-limit');
 const crypto = require('crypto');
 const { scheduleAnketJob } = require('./anket/anketService');
-const { scheduleErpReadingsSync } = require('./anket/erpReadingsSync');
+const {
+  ERP_SKO_GROUPS,
+  getErpReadingsChangeVersion,
+  scheduleErpReadingsSync,
+  syncErpReadingsOnDemand
+} = require('./anket/erpReadingsSync');
+const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -2510,12 +2516,53 @@ app.post('/api/update-user-image/:groupId/:userId', requireSelfOrAdmin, upload.s
 // 3.3. OKUMA İSTATİSTİKLERİ
 // ============================================================================
 
+// ERP bağlantılı gruplarda sayfa açıldıktan sonra senkronizasyonu arka planda
+// çalıştırır. İstemci yalnızca veritabanı gerçekten değiştiğinde sayfayı yeniler.
+app.post('/api/erp-readings-sync/:groupId', requireReadableGroup, async (req, res) => {
+  const { groupId } = req.params;
+  if (!ERP_SKO_GROUP_SET.has(groupId)) {
+    return res.status(404).json({ error: 'Bu grup için ERP senkronizasyonu etkin değil' });
+  }
+
+  try {
+    const rawKnownVersion = Number(req.body?.knownVersion);
+    const knownVersion = Number.isSafeInteger(rawKnownVersion) && rawKnownVersion >= 0
+      ? rawKnownVersion
+      : 0;
+    const result = await syncErpReadingsOnDemand({
+      db: mongoose.connection.db,
+      groupId
+    });
+    const changeVersion = result.changeVersion ?? getErpReadingsChangeVersion(groupId);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({
+      success: result.success !== false,
+      changed: result.changed === true || changeVersion > knownVersion,
+      changeVersion,
+      skipped: result.skipped || null
+    });
+  } catch (syncError) {
+    console.error(`[ErpReadingsSync:on-demand:${groupId}]`, syncError.message || syncError);
+    return res.status(502).json({
+      success: false,
+      changed: false,
+      error: 'ERP okuma verileri şu anda güncellenemedi'
+    });
+  }
+});
+
 // Tüm verileri çekme endpoint'i
 app.get('/api/all-data/:groupId', requireReadableGroup, async (req, res) => {
   try {
     const { groupId } = req.params;
 
     const group = req.group;
+    const erpSyncEnabled = ERP_SKO_GROUP_SET.has(groupId);
+    // Sürümü sorgulardan önce al: bu sırada tamamlanan bir senkron varsa
+    // istemcinin arka plan kontrolü eski anlık görüntüyü fark edebilsin.
+    const erpSyncVersion = erpSyncEnabled
+      ? getErpReadingsChangeVersion(groupId)
+      : 0;
 
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
@@ -2528,7 +2575,13 @@ app.get('/api/all-data/:groupId', requireReadableGroup, async (req, res) => {
       readingStatuses.find().select('userId date status amount -_id').lean()
     ]);
 
-    res.json({ users: usersData.map(user => safeUser(user)), stats: statsData, group });
+    res.json({
+      users: usersData.map(user => safeUser(user)),
+      stats: statsData,
+      group,
+      erpSyncEnabled,
+      erpSyncVersion
+    });
   } catch (error) {
     console.error('Error fetching all data:', error);
     res.status(500).json({ error: 'Server error' });

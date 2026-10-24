@@ -222,6 +222,9 @@ window.getInviteParams = function getInviteParams() {
 window.groupid = getGroupIdFromUrl();
 window.currentGroupData = null;
 window.initialAllData = null;
+window.erpSyncEnabled = false;
+window.erpSyncVersion = 0;
+let erpSyncRefreshStarted = false;
 
 async function initializeAuthSystem() {
   
@@ -546,6 +549,34 @@ function cleanUrlFromRefreshParam() {
   }
 }
 
+async function startErpReadingsSyncInBackground(groupId) {
+  if (erpSyncRefreshStarted || !groupId) return;
+  erpSyncRefreshStarted = true;
+
+  try {
+    const response = await fetch(`/api/erp-readings-sync/${encodeURIComponent(groupId)}`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ knownVersion: window.erpSyncVersion })
+    });
+    if (!response.ok) throw new Error(`ERP senkronizasyonu başarısız (${response.status})`);
+
+    const result = await response.json();
+    if (result.changed === true) {
+      window.location.reload();
+      return;
+    }
+    if (Number.isSafeInteger(result.changeVersion) && result.changeVersion >= 0) {
+      window.erpSyncVersion = result.changeVersion;
+    }
+  } catch (error) {
+    console.warn('ERP okuma verileri arka planda güncellenemedi:', error);
+  }
+}
+
 // Ana DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', async function () {
   try {
@@ -626,6 +657,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             data = await res.json();
           }
           window.initialAllData = null;
+          window.erpSyncEnabled = data.erpSyncEnabled === true;
+          window.erpSyncVersion = Number.isSafeInteger(data.erpSyncVersion) && data.erpSyncVersion >= 0
+            ? data.erpSyncVersion
+            : 0;
           this.users = Array.isArray(data.users) ? data.users : [];
           const sessionUser = window.currentSessionUser;
           const currentUser = sessionUser && this.users.find(user => String(user._id) === String(sessionUser._id));
@@ -784,6 +819,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     // Her sayfa yüklendiğinde verilerin güncel olması için init et
     await window.globalDataStore.init(window.groupid);
+
+    // Sayfa mevcut verilerle açılmaya devam ederken ERP senkronunu beklemeden
+    // başlat. Veritabanı gerçekten değişirse işlem tamamlandığında tek kez yenilenir.
+    if (window.erpSyncEnabled) {
+      startErpReadingsSyncInBackground(window.groupid);
+    }
 
 
     
@@ -1022,32 +1063,82 @@ async function logPageVisit() {
 
 // Kayarak gelme animasyonu (IntersectionObserver)
 const scrollFadeInObserved = new WeakSet();
+const scrollFadeInTargets = new Set();
+let scrollFadeInObserver = null;
+let scrollFadeInUpdateFrame = null;
+
+function getScrollFadeInTranslateY(target) {
+  const transform = window.getComputedStyle(target).transform;
+  if (!transform || transform === 'none') return 0;
+
+  const matrix3d = transform.match(/^matrix3d\((.+)\)$/);
+  if (matrix3d) {
+    const values = matrix3d[1].split(',').map(Number);
+    return Number.isFinite(values[13]) ? values[13] : 0;
+  }
+
+  const matrix2d = transform.match(/^matrix\((.+)\)$/);
+  if (matrix2d) {
+    const values = matrix2d[1].split(',').map(Number);
+    return Number.isFinite(values[5]) ? values[5] : 0;
+  }
+
+  return 0;
+}
+
+function updateScrollFadeInTargets() {
+  scrollFadeInUpdateFrame = null;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  const boundaryTolerance = 2;
+
+  scrollFadeInTargets.forEach(target => {
+    if (!target.isConnected) {
+      scrollFadeInTargets.delete(target);
+      if (scrollFadeInObserver) scrollFadeInObserver.unobserve(target);
+      return;
+    }
+
+    const rect = target.getBoundingClientRect();
+    const translateY = getScrollFadeInTranslateY(target);
+    const naturalTop = rect.top - translateY;
+    const naturalBottom = rect.bottom - translateY;
+    const isVisible = target.classList.contains('visible');
+
+    // Ufak tolerans, öğe tam ekran sınırındayken piksel yuvarlamalarının
+    // görünür sınıfını art arda ekleyip kaldırmasını önler.
+    const shouldBeVisible = isVisible
+      ? naturalBottom > -boundaryTolerance && naturalTop < viewportHeight + boundaryTolerance
+      : naturalBottom > boundaryTolerance && naturalTop < viewportHeight - boundaryTolerance;
+
+    target.classList.toggle('visible', shouldBeVisible);
+  });
+}
+
+function scheduleScrollFadeInUpdate() {
+  if (scrollFadeInUpdateFrame !== null) return;
+  scrollFadeInUpdateFrame = requestAnimationFrame(updateScrollFadeInTargets);
+}
+
+function getScrollFadeInObserver() {
+  if (!('IntersectionObserver' in window)) return null;
+  if (!scrollFadeInObserver) {
+    scrollFadeInObserver = new IntersectionObserver(scheduleScrollFadeInUpdate, {
+      threshold: 0,
+      rootMargin: '60px 0px'
+    });
+  }
+  return scrollFadeInObserver;
+}
 
 function attachScrollFadeInObserver(target) {
   if (!target || scrollFadeInObserved.has(target)) return;
   scrollFadeInObserved.add(target);
 
   target.classList.add('scroll-fade-in');
-
-  if (!('IntersectionObserver' in window)) {
-    target.classList.add('visible');
-    return;
-  }
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      } else {
-        entry.target.classList.remove('visible');
-      }
-    });
-  }, {
-    threshold: 0.1,
-    rootMargin: '0px'
-  });
-
-  observer.observe(target);
+  scrollFadeInTargets.add(target);
+  const observer = getScrollFadeInObserver();
+  if (observer) observer.observe(target);
+  scheduleScrollFadeInUpdate();
 }
 
 window.observeScrollFadeIn = function observeScrollFadeInSelector(selector) {
@@ -1073,17 +1164,12 @@ window.initScrollFadeInElements = function initScrollFadeInElements() {
     '.video-card:not(.loading-card)'
   ].forEach(window.observeScrollFadeIn);
 
-  requestAnimationFrame(() => {
-    document.querySelectorAll('.scroll-fade-in:not(.visible)').forEach(el => {
-      const rect = el.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        el.classList.add('visible');
-      }
-    });
-  });
+  scheduleScrollFadeInUpdate();
 };
 
 document.addEventListener('DOMContentLoaded', window.initScrollFadeInElements);
+document.addEventListener('scroll', scheduleScrollFadeInUpdate, { passive: true, capture: true });
+window.addEventListener('resize', scheduleScrollFadeInUpdate, { passive: true });
 
 // Yukarı Çık Butonu Fonksiyonalitesi
 document.addEventListener('DOMContentLoaded', function() {

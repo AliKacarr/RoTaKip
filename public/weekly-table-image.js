@@ -472,7 +472,7 @@
         drawTextWithCheck(ctx, amountX + amountWidth / 2, statsY + statsHeight / 2, totalSeasonAmount, {
             font: `700 16px ${FONT_FAMILY}`, checkSize: 13
         });
-        fillAndStrokeCell(ctx, streakX, statsY, streakWidth, statsHeight, '#f5f5f5');
+        fillAndStrokeCell(ctx, streakX, statsY, streakWidth, statsHeight, '#f0f0f0');
         drawStreak(ctx, streakX + streakWidth / 2, statsY + statsHeight / 2, totalStreak);
 
         if (!users.length) {
