@@ -1852,7 +1852,6 @@ function safeUser(user, includePrivate = false) {
   };
   if (includePrivate) {
     result.username = user.username;
-    result.phone = user.phone || '';
   }
   return result;
 }
@@ -2013,7 +2012,7 @@ app.get('/api/users/:groupId', requireGroupAdmin, async (req, res) => {
 
     // Sadece kullanıcıları getir
     const usersData = await users.find()
-      .select('_id name profileImage username authority loginStreak lastLoginDate lastCongratulatedLeague phone')
+      .select('_id name profileImage username authority loginStreak lastLoginDate lastCongratulatedLeague')
       .sort({ name: 1 })
       .lean();
 
@@ -2281,62 +2280,6 @@ app.post('/api/update-user/:groupId', requireGroupAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ error: 'Kullanıcı güncellenirken hata oluştu' });
-  }
-});
-
-// Telefon numarası temizleme/biçimlendirme yardımcı fonksiyonu (905312967580 formatı)
-function formatPhoneNumber(phoneStr) {
-  if (!phoneStr) return '';
-  let digits = String(phoneStr).replace(/\D/g, '');
-  if (!digits) return '';
-
-  if (digits.startsWith('0090')) {
-    digits = digits.substring(2);
-  } else if (digits.startsWith('0') && digits.length === 11) {
-    digits = '90' + digits.substring(1);
-  } else if (digits.length === 10 && digits.startsWith('5')) {
-    digits = '90' + digits;
-  }
-  return digits;
-}
-
-// Kullanıcı telefon numarası güncelleme endpoint'i
-app.post('/api/update-user-phone/:groupId', requireGroupAdmin, async (req, res) => {
-  const { groupId } = req.params;
-  const { userId, phone } = req.body;
-
-  try {
-    if (!userId) {
-      return res.status(400).json({ error: 'userId parametresi gerekli' });
-    }
-
-    const group = await UserGroup.findOne({ groupId }).lean();
-    if (!group) {
-      return res.status(404).json({ error: 'Grup bulunamadı' });
-    }
-
-    const { users } = getGroupCollections(groupId);
-    const formattedPhone = formatPhoneNumber(phone);
-
-    const updatedUser = await users.findByIdAndUpdate(
-      userId,
-      { phone: formattedPhone },
-      { returnDocument: 'after' }
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
-    }
-
-    res.json({
-      success: true,
-      user: safeUser(updatedUser, true),
-      formattedPhone: formattedPhone,
-      message: 'Telefon numarası başarıyla güncellendi'
-    });
-  } catch (error) {
-    console.error('Error updating user phone:', error);
-    res.status(500).json({ error: 'Kullanıcı telefon numarası güncellenirken hata oluştu' });
   }
 });
 
