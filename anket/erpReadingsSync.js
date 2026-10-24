@@ -3,7 +3,7 @@
  *
  * - Sadece bugün (+ gece yarısı kaçırmamak için dün) satırları
  * - Geçerli risale: 0.25 … 5 → amount = saat * 60
- * - Cron: 00–19 her 30 dk, 20–23 her 15 dk (Europe/Istanbul)
+ * - Cron: 01–19 her 30 dk, 20–23 her 15 dk (Europe/Istanbul)
  */
 const path = require('path');
 const schedule = require('node-schedule');
@@ -40,6 +40,9 @@ for (let i = 0; i <= 20; i += 1) {
 
 const SHEETS_REQUEST_TIMEOUT_MS = 10 * 1000;
 const ON_DEMAND_SYNC_COOLDOWN_MS = 60 * 1000;
+const ERP_SYNC_LOCK_COLLECTION = 'erp_sync_locks';
+const ERP_SYNC_LOCK_ID = 'erp-sko-data-sync';
+const ERP_SYNC_LOCK_LEASE_MS = 20 * 60 * 1000;
 const lastSuccessfulSyncAtByGroup = new Map();
 const lastSyncAttemptAtByGroup = new Map();
 const changeVersionByGroup = new Map();
@@ -158,6 +161,70 @@ async function fetchSheetRows() {
     throw error;
   } finally {
     clearTimeout(timeoutId);
+  }
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Kullanıcı ve okuma senkronlarının aynı koleksiyonlara eş zamanlı yazmasını önler.
+ * Kilit işlemi çöken bir süreçten sonra lease süresi dolduğunda kendiliğinden alınabilir.
+ */
+async function withErpSyncLock(db, owner, task, options = {}) {
+  if (!db) throw new Error('ERP senkron kilidi için veritabanı bağlantısı gerekli');
+  if (typeof task !== 'function') throw new Error('ERP senkron kilidi için görev fonksiyonu gerekli');
+
+  const waitMs = Number.isFinite(Number(options.waitMs))
+    ? Math.max(0, Number(options.waitMs))
+    : 0;
+  const retryMs = Number.isFinite(Number(options.retryMs))
+    ? Math.max(250, Number(options.retryMs))
+    : 1000;
+  const deadline = Date.now() + waitMs;
+  const lockOwner = String(owner || `erp-sync-${process.pid}-${Date.now()}`);
+  const locks = db.collection(ERP_SYNC_LOCK_COLLECTION);
+
+  let acquired = false;
+  do {
+    const now = new Date();
+    try {
+      await locks.findOneAndUpdate(
+        {
+          _id: ERP_SYNC_LOCK_ID,
+          $or: [
+            { expiresAt: { $lte: now } },
+            { owner: lockOwner }
+          ]
+        },
+        {
+          $set: {
+            owner: lockOwner,
+            acquiredAt: now,
+            expiresAt: new Date(now.getTime() + ERP_SYNC_LOCK_LEASE_MS)
+          }
+        },
+        { upsert: true, returnDocument: 'after' }
+      );
+      acquired = true;
+      break;
+    } catch (error) {
+      if (error?.code !== 11000) throw error;
+    }
+
+    if (Date.now() >= deadline) break;
+    await wait(Math.min(retryMs, Math.max(0, deadline - Date.now())));
+  } while (Date.now() <= deadline);
+
+  if (!acquired) return { acquired: false, value: null };
+
+  try {
+    return { acquired: true, value: await task() };
+  } finally {
+    await locks.deleteOne({ _id: ERP_SYNC_LOCK_ID, owner: lockOwner }).catch((error) => {
+      console.error('[ErpSyncLock] Kilit bırakılamadı:', error.message || error);
+    });
   }
 }
 
@@ -286,19 +353,40 @@ async function syncErpReadings(options = {}) {
 
   const { db, close } = await resolveDb(options.db);
   try {
-    const summaries = [];
-    for (const groupId of groupIds) {
-      const s = await importGroup(db, groupId, parsed.byNameKey, dryRun);
-      summaries.push(s);
-    }
+    const runImports = async () => {
+      const summaries = [];
+      for (const groupId of groupIds) {
+        const s = await importGroup(db, groupId, parsed.byNameKey, dryRun);
+        summaries.push(s);
+      }
+      return {
+        success: true,
+        today,
+        yesterday: includeYesterday ? yesterday : null,
+        sheetRows: rows.length,
+        ...parsed,
+        byNameKey: undefined,
+        groups: summaries
+      };
+    };
+
+    if (dryRun) return runImports();
+
+    const lockResult = await withErpSyncLock(
+      db,
+      `readings-${process.pid}-${Date.now()}`,
+      runImports,
+      { waitMs: options.lockWaitMs || 0 }
+    );
+    if (lockResult.acquired) return lockResult.value;
+
     return {
       success: true,
+      skipped: 'erp-sync-lock',
       today,
       yesterday: includeYesterday ? yesterday : null,
       sheetRows: rows.length,
-      ...parsed,
-      byNameKey: undefined,
-      groups: summaries
+      groups: groupIds.map((groupId) => ({ groupId, changed: false, skipped: 'erp-sync-lock' }))
     };
   } finally {
     if (close) await close();
@@ -314,7 +402,9 @@ function startCoordinatedSync(options) {
   const syncPromise = syncErpReadings({ ...options, groupIds })
     .then((result) => {
       const completedAt = Date.now();
-      groupIds.forEach((groupId) => lastSuccessfulSyncAtByGroup.set(groupId, completedAt));
+      if (!result.skipped) {
+        groupIds.forEach((groupId) => lastSuccessfulSyncAtByGroup.set(groupId, completedAt));
+      }
       result.groups.forEach((group) => {
         if (group.changed) {
           changeVersionByGroup.set(group.groupId, getErpReadingsChangeVersion(group.groupId) + 1);
@@ -445,14 +535,14 @@ async function runScheduledSync(getDb) {
 }
 
 /**
- * Gündüz (00:00–19:59): her 30 dk
+ * Gündüz (01:00–19:59): her 30 dk
  * Akşam (20:00–23:59): her 15 dk
  * @param {() => import('mongodb').Db} [getDb]
  */
 function scheduleErpReadingsSync(getDb) {
   const run = () => runScheduledSync(getDb);
 
-  const dayJob = schedule.scheduleJob({ rule: '0,30 0-19 * * *', tz: 'Europe/Istanbul' }, run);
+  const dayJob = schedule.scheduleJob({ rule: '0,30 1-19 * * *', tz: 'Europe/Istanbul' }, run);
   const nightJob = schedule.scheduleJob({ rule: '*/15 20-23 * * *', tz: 'Europe/Istanbul' }, run);
 
   return { dayJob, nightJob };
@@ -466,5 +556,14 @@ module.exports = {
   syncErpReadingsOnDemand,
   scheduleErpReadingsSync,
   istanbulNowParts,
-  previousDateStr
+  previousDateStr,
+  toComparableKey,
+  sheetsSerialToDateStr,
+  parseRisaleHours,
+  isValidRisaleHours,
+  hoursToAmount,
+  getNameFromRow,
+  fetchSheetRows,
+  resolveDb,
+  withErpSyncLock
 };

@@ -27,6 +27,7 @@ const {
   scheduleErpReadingsSync,
   syncErpReadingsOnDemand
 } = require('./anket/erpReadingsSync');
+const { scheduleErpUsersSync } = require('./anket/erpUsersSync');
 const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 
 const app = express();
@@ -2155,15 +2156,14 @@ app.post('/api/add-user/:groupId', requireGroupAdmin, upload.single('profileImag
     }
 
     // 3. Adım: Kullanıcıyı kaydet (Dropbox veya avatar / varsayılan URL ile)
-    const today = moment().format("YYYY-MM-DD");
     const user = new users({
       name,
       profileImage: profileImageUrl,
       username: username,
       userpassword: hashedPassword,
       authority: "member",
-      loginStreak: 1,
-      lastLoginDate: today
+      loginStreak: 0,
+      lastLoginDate: null
     });
     await user.save();
 
@@ -4560,7 +4560,10 @@ function scheduleTokenRefresh() {
 // Anket zamanlayıcısını başlat (Her gün saat 01:00 TSİ)
 scheduleAnketJob();
 
-// ERP Sheets → okudum senkronu (00–19: 30 dk, 20–23: 15 dk; dün+bugün)
+// ERP Form → kullanıcı/grup senkronu (Her gece 00:30 TSİ)
+scheduleErpUsersSync(() => mongoose.connection.db);
+
+// ERP Sheets → okudum senkronu (01–19: 30 dk, 20–23: 15 dk; dün+bugün)
 scheduleErpReadingsSync(() => mongoose.connection.db);
 
 // ==================== TEST GRUPLARI İÇİN SAHTE OKUMA VERİSİ EKLEYICI ====================
