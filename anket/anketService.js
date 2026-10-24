@@ -9,7 +9,7 @@ const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc4Ru7BjsB-sNgdw5-r9h
 
 const DROPDOWN_VALUES = [
     "Ali Kaçar",   // 1. Ad Soyad
-    "Ekip C",      // 2. Hangi Ekiptesin?
+    "Ekip B",      // 2. Hangi Ekiptesin?
     "5",           // 3. Kaç Vakit Namaz?
     "5",           // 4. Kaç Sayfa Kuran?
     "5",           // 5. Kaç Vakit Tesbihat?
