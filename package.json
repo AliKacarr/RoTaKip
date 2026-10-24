@@ -28,7 +28,7 @@
     "express-session": "^1.19.0",
     "moment": "^2.30.1",
     "mongodb": "^7.6.0",
-    "mongoose": "^9.10.1",
+    "mongoose": "^9.11.2",
     "multer": "^2.4.0",
     "node-schedule": "^2.1.1",
     "pino": "^10.3.1",
