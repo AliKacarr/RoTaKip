@@ -32,11 +32,47 @@ const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 
 const app = express();
 const port = process.env.PORT || 3000;
+const ISTANBUL_TIME_ZONE = 'Europe/Istanbul';
+
+function istanbulDateKey(at = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ISTANBUL_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const parts = Object.fromEntries(formatter.formatToParts(at).map(part => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function shiftDateKey(dateKey, dayCount) {
+  const [year, month, day] = String(dateKey).split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + dayCount);
+  return date.toISOString().slice(0, 10);
+}
+
+function istanbulYesterdayKey(at = new Date()) {
+  return shiftDateKey(istanbulDateKey(at), -1);
+}
+
+function formatIstanbulDateTime(at = new Date()) {
+  return new Intl.DateTimeFormat('tr-TR', {
+    timeZone: ISTANBUL_TIME_ZONE,
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).format(at);
+}
 
 // Giriş serisi hesaplama fonksiyonu
 async function handleLoginStreak(user, groupId) {
-  const today = moment().utcOffset(3).format("YYYY-MM-DD");
-  const yesterday = moment().utcOffset(3).subtract(1, "days").format("YYYY-MM-DD");
+  const today = istanbulDateKey();
+  const yesterday = istanbulYesterdayKey();
 
   // Mevcut seri değerini al
   const currentStreak = user.loginStreak || 0;
@@ -484,8 +520,7 @@ function slugSegment(str, maxLen) {
 }
 
 function todayYmd() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return istanbulDateKey();
 }
 
 function shortUniqSuffix() {
@@ -1285,8 +1320,7 @@ app.post('/api/groups', accountCreationLimiter, uploadGroupImage.fields([
     await defaultUser.save();
 
     // Varsayılan kullanıcının bugünkü okuma durumunu "okudum" olarak kaydet
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayStr = istanbulDateKey();
 
     const defaultReadingStatus = new readingStatuses({
       userId: defaultUser._id.toString(),
@@ -1725,7 +1759,7 @@ function isValidText(value, maxLength, { allowEmpty = false } = {}) {
 function isValidReadingDate(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   return moment(value, 'YYYY-MM-DD', true).isValid()
-    && value <= moment().utcOffset(3).format('YYYY-MM-DD');
+    && value <= istanbulDateKey();
 }
 
 function isAllowedAvatarPath(value, folder) {
@@ -3050,7 +3084,7 @@ app.post('/api/admin-login', loginLimiter, async (req, res) => {
       if (isPasswordValid) {
         // Eksik alanları ekle (migration)
         if (user.loginStreak === undefined || user.lastLoginDate === undefined) {
-          const today = moment().format("YYYY-MM-DD");
+          const today = istanbulDateKey();
           const loginStreak = user.loginStreak || 1;
           const lastLoginDate = user.lastLoginDate || today;
           await users.findByIdAndUpdate(user._id, { loginStreak, lastLoginDate });
@@ -3221,17 +3255,15 @@ app.get('/api/login-logs', requireGroupAdmin, async (req, res) => {
 
     // Format the dates before sending to client
     const formattedLogs = logs.map(log => {
-      const date = new Date(log.timestamp);
-      const day = date.getDate();
-      const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-      const month = monthNames[date.getMonth()];
-      const year = date.getFullYear();
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-
-      // Create a formatted date string
-      const formattedDate = `${day} ${month} ${year} ${hours}:${minutes}`;
+      const formattedDate = new Intl.DateTimeFormat('tr-TR', {
+        timeZone: ISTANBUL_TIME_ZONE,
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(new Date(log.timestamp));
 
       // Return the log with both raw date (for sorting) and formatted date
       // Note: logs are fetched with .lean(), so use plain object fields directly.
@@ -4058,7 +4090,7 @@ app.post('/api/accept-join-request/:requestId', requireJoinRequestAdmin, async (
 
     // Kullanıcıyı gruba ekle
     const { users } = getGroupCollections(joinRequest.groupId);
-    const today = moment().format("YYYY-MM-DD");
+    const today = istanbulDateKey();
     const newUser = {
       _id: joinRequest._id,
       name: joinRequest.name,
@@ -4246,9 +4278,10 @@ app.get('/api/check-user-in-group/:groupId/:objectId', requireGroupAuth, async (
 // F. YEDEKLEME HİZMETİ
 // ============================================================================
 
-const backupUri = process.env.MONGO_URI;
+const backupSourceUri = process.env.MONGO_URI;
+const backupTargetUri = process.env.BACKUP_MONGO_URI;
 const backupSourceDbName = process.env.DB_NAME;
-const backupDbName = process.env.BACKUP_DB_NAME || 'backups';
+const backupDbName = process.env.BACKUP_DB_NAME;
 
 async function cleanupOldBackups(db, prefix, keepCount) {
   const collections = await db.listCollections({}, { nameOnly: true }).toArray();
@@ -4293,22 +4326,21 @@ async function backupCollection(sourceDb, backupDb, collectionName, timestamp) {
 }
 
 async function performBackup() {
-  if (!backupUri || !backupSourceDbName) {
-    throw new Error('MONGO_URI ve DB_NAME tanımlı olmalıdır.');
+  if (!backupSourceUri || !backupSourceDbName || !backupTargetUri || !backupDbName) {
+    throw new Error(
+      'MONGO_URI, DB_NAME, BACKUP_MONGO_URI ve BACKUP_DB_NAME tanımlı olmalıdır.'
+    );
   }
 
   console.log('Backup: Starting...');
-  const client = new MongoClient(backupUri);
+  const sourceClient = new MongoClient(backupSourceUri);
+  const backupClient = new MongoClient(backupTargetUri);
   try {
-    await client.connect();
-    const sourceDb = client.db(backupSourceDbName);
-    const backupDb = client.db(backupDbName);
+    await Promise.all([sourceClient.connect(), backupClient.connect()]);
+    const sourceDb = sourceClient.db(backupSourceDbName);
+    const backupDb = backupClient.db(backupDbName);
     const now = new Date();
-    const timestamp = [
-      now.getFullYear(),
-      String(now.getMonth() + 1).padStart(2, '0'),
-      String(now.getDate()).padStart(2, '0')
-    ].join('-');
+    const timestamp = istanbulDateKey(now);
     const collectionNames = (await sourceDb.listCollections({}, { nameOnly: true }).toArray())
       .map(collection => collection.name)
       .filter(name => name === 'usergroups' || name.startsWith('users_') || name.startsWith('readingstatuses_'));
@@ -4317,15 +4349,15 @@ async function performBackup() {
       await backupCollection(sourceDb, backupDb, collectionName, timestamp);
     }
 
-    console.log(`Backup completed at ${now.toLocaleString()}`);
+    console.log(`Backup completed at ${formatIstanbulDateTime(now)} (${ISTANBUL_TIME_ZONE})`);
   } finally {
-    await client.close();
+    await Promise.allSettled([sourceClient.close(), backupClient.close()]);
   }
 }
 
 function scheduleBackup() {
   // Schedule backups to run every 1440 minutes (24 hours)
-  const backupJob = schedule.scheduleJob('0 23 * * *', () => {
+  const backupJob = schedule.scheduleJob({ rule: '0 23 * * *', tz: ISTANBUL_TIME_ZONE }, () => {
     performBackup().catch(error => console.error('Error during backup:', error));
   });
 
@@ -4557,7 +4589,7 @@ function scheduleTokenRefresh() {
   return tokenJob;
 }
 
-// Anket zamanlayıcısını başlat (Her gün saat 01:00 TSİ)
+// Anket zamanlayıcısını başlat (Her gün saat 22:00 TSİ)
 scheduleAnketJob();
 
 // ERP Form → kullanıcı/grup senkronu (Her gece 00:30 TSİ)
@@ -4604,7 +4636,7 @@ async function seedFakeReadingDataForTestGroups() {
   console.log('🤖 [TestSeeder] Sahte okuma verisi ekleme başladı...');
 
   // Dünün tarihini Europe/Istanbul saat dilimiyle hesapla
-  const yesterday = moment().utcOffset(3).subtract(1, 'days').format('YYYY-MM-DD');
+  const yesterday = istanbulYesterdayKey();
   console.log(`📅 [TestSeeder] Hedef tarih: ${yesterday}`);
 
   let totalInserted = 0;
@@ -4674,7 +4706,7 @@ async function seedFakeReadingDataForTestGroups() {
 async function processMissingReadingStatusesForRealGroups() {
   console.log('🔄 [AutoUnreadProcessor] Gerçek gruplar için eksik "okumadım" kayıtları işleniyor...');
 
-  const yesterday = moment().utcOffset(3).subtract(1, 'days').format('YYYY-MM-DD');
+  const yesterday = istanbulYesterdayKey();
   console.log(`📅 [AutoUnreadProcessor] Hedef tarih: ${yesterday}`);
 
   let totalInserted = 0;

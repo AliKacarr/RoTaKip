@@ -5,7 +5,9 @@ const {
   buildHistoricalStatuses,
   buildLatestTeams,
   buildSyncPlan,
-  extractFormUsersFromHtml
+  extractFormUsersFromHtml,
+  invalidateUserSessions,
+  migrateUserSessions
 } = require('../anket/erpUsersSync');
 
 function formHtml(names) {
@@ -30,6 +32,22 @@ function formHtml(names) {
 
 function row(timestamp, name, team, risaleHours) {
   return [timestamp, name, team, 0, 0, 0, risaleHours, 0, ''];
+}
+
+function sessionDb(modifiedCount = 1) {
+  const calls = [];
+  return {
+    calls,
+    collection(name) {
+      assert.equal(name, 'sessions');
+      return {
+        async updateMany(filter, update, options) {
+          calls.push({ filter, update, options });
+          return { modifiedCount };
+        }
+      };
+    }
+  };
 }
 
 test('Google Form Ad Soyad seçeneklerini normalize edip tekilleştirir', () => {
@@ -147,4 +165,49 @@ test('hiç pozitif okuması olmayan yeni kullanıcıya okuma belgesi üretmez', 
   ], 'ali\0kaçar', '2025-01-03');
 
   assert.deepEqual(statuses, []);
+});
+
+test('grup değişiminde açık oturumları eski gruptan yeni gruba taşır', async () => {
+  const db = sessionDb(2);
+  const mongoSession = { id: 'transaction-session' };
+  const modified = await migrateUserSessions(
+    db,
+    'sko-ekip-c',
+    'sko-ekip-b',
+    { _id: 'user-1', authority: 'member' },
+    mongoSession
+  );
+
+  assert.equal(modified, 2);
+  assert.deepEqual(db.calls, [{
+    filter: { 'session.memberships.sko-ekip-c.userId': 'user-1' },
+    update: {
+      $unset: { 'session.memberships.sko-ekip-c': '' },
+      $set: {
+        'session.memberships.sko-ekip-b': {
+          userId: 'user-1',
+          authority: 'member'
+        }
+      }
+    },
+    options: { session: mongoSession }
+  }]);
+});
+
+test('ERP listesinden silinen kullanıcının ilgili grup oturumlarını geçersizleştirir', async () => {
+  const db = sessionDb(3);
+  const mongoSession = { id: 'transaction-session' };
+  const modified = await invalidateUserSessions(
+    db,
+    'sko-ekip-a',
+    'user-2',
+    mongoSession
+  );
+
+  assert.equal(modified, 3);
+  assert.deepEqual(db.calls, [{
+    filter: { 'session.memberships.sko-ekip-a.userId': 'user-2' },
+    update: { $unset: { 'session.memberships.sko-ekip-a': '' } },
+    options: { session: mongoSession }
+  }]);
 });

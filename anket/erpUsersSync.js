@@ -2,8 +2,8 @@
  * Google Form aktif kullanıcı listesi → ERP SKO kullanıcı koleksiyonları senkronu.
  *
  * - Form'da olup geçerli ekibi bulunan yeni kullanıcıları ekler.
- * - Grubu değişen kullanıcı ve mevcut okumalarını hedef koleksiyona taşır.
- * - Form'da bulunmayan kullanıcıları (admin dahil) ve okumalarını siler.
+ * - Grubu değişen kullanıcı, okumaları ve açık oturumlarını hedef gruba taşır.
+ * - Form'da bulunmayan kullanıcıları (admin dahil), okumalarını ve oturumlarını siler.
  * - Yeni kullanıcıların 2025-01-01 sonrası geçmişini ilk pozitif okumadan kurar.
  * - Tek çalışmada %25'ten fazla kalıcı silmeyi --force olmadan engeller.
  * - Cron: her gece 00:30 (Europe/Istanbul).
@@ -357,6 +357,43 @@ function readingUserFilter(userId) {
   return { userId: { $in: values } };
 }
 
+function sessionMembershipPath(groupId) {
+  if (!ERP_SKO_GROUPS.includes(groupId)) {
+    throw new Error(`Geçersiz ERP grup kimliği: ${groupId}`);
+  }
+  return `session.memberships.${groupId}`;
+}
+
+async function migrateUserSessions(db, sourceGroupId, targetGroupId, user, session) {
+  const sourcePath = sessionMembershipPath(sourceGroupId);
+  const targetPath = sessionMembershipPath(targetGroupId);
+  const userId = String(user._id);
+  const result = await db.collection('sessions').updateMany(
+    { [`${sourcePath}.userId`]: userId },
+    {
+      $unset: { [sourcePath]: '' },
+      $set: {
+        [targetPath]: {
+          userId,
+          authority: user.authority || 'member'
+        }
+      }
+    },
+    { session }
+  );
+  return result.modifiedCount || 0;
+}
+
+async function invalidateUserSessions(db, groupId, userId, session) {
+  const membershipPath = sessionMembershipPath(groupId);
+  const result = await db.collection('sessions').updateMany(
+    { [`${membershipPath}.userId`]: String(userId) },
+    { $unset: { [membershipPath]: '' } },
+    { session }
+  );
+  return result.modifiedCount || 0;
+}
+
 async function runInTransaction(db, task) {
   const client = db.client;
   if (!client || typeof client.startSession !== 'function') {
@@ -452,7 +489,7 @@ async function moveUser(db, move) {
 
   return runInTransaction(db, async (session) => {
     const sourceUser = await sourceUsers.findOne({ _id: userId }, { session });
-    if (!sourceUser) return 0;
+    if (!sourceUser) return { readings: 0, sessions: 0 };
 
     const sourceStatuses = await sourceReadings
       .find(readingUserFilter(userId), { session })
@@ -472,8 +509,15 @@ async function moveUser(db, move) {
     }
     await sourceReadings.deleteMany(readingUserFilter(userId), { session });
     await sourceUsers.deleteOne({ _id: userId }, { session });
+    const migratedSessions = await migrateUserSessions(
+      db,
+      move.user.groupId,
+      move.target.groupId,
+      movedUser,
+      session
+    );
 
-    return sourceStatuses.length;
+    return { readings: sourceStatuses.length, sessions: migratedSessions };
   });
 }
 
@@ -485,9 +529,16 @@ async function removeUser(db, removal) {
   return runInTransaction(db, async (session) => {
     const deletedReadings = await readings.deleteMany(readingUserFilter(userId), { session });
     const deletedUser = await users.deleteOne({ _id: userId }, { session });
+    const invalidatedSessions = await invalidateUserSessions(
+      db,
+      removal.user.groupId,
+      userId,
+      session
+    );
     return {
       users: deletedUser.deletedCount || 0,
-      readings: deletedReadings.deletedCount || 0
+      readings: deletedReadings.deletedCount || 0,
+      sessions: invalidatedSessions
     };
   });
 }
@@ -522,8 +573,10 @@ async function applyPlan(db, plan, rows, today) {
     addedReadingStatuses: 0,
     movedUsers: 0,
     movedReadingStatuses: 0,
+    migratedSessions: 0,
     deletedUsers: 0,
-    deletedReadingStatuses: 0
+    deletedReadingStatuses: 0,
+    invalidatedSessions: 0
   };
 
   // Önce ekleme ve taşımaları tamamla. Bunlardan biri başarısızsa kalıcı silmelere geçme.
@@ -532,13 +585,16 @@ async function applyPlan(db, plan, rows, today) {
     result.addedUsers += 1;
   }
   for (const move of plan.moves) {
-    result.movedReadingStatuses += await moveUser(db, move);
+    const moved = await moveUser(db, move);
+    result.movedReadingStatuses += moved.readings;
+    result.migratedSessions += moved.sessions;
     result.movedUsers += 1;
   }
   for (const removal of plan.removals) {
     const deleted = await removeUser(db, removal);
     result.deletedUsers += deleted.users;
     result.deletedReadingStatuses += deleted.readings;
+    result.invalidatedSessions += deleted.sessions;
   }
 
   return result;
@@ -655,6 +711,8 @@ module.exports = {
   buildLatestTeams,
   buildSyncPlan,
   extractFormUsersFromHtml,
+  invalidateUserSessions,
+  migrateUserSessions,
   normalizeDisplayName,
   normalizeTeam,
   scheduleErpUsersSync,

@@ -129,6 +129,31 @@ function getNameFromRow(row) {
   return String(row[COL.NAME_ALT] || '').trim();
 }
 
+function sheetTimestampSortValue(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+  const text = String(value || '').trim();
+  const numeric = Number(text.replace(',', '.'));
+  if (Number.isFinite(numeric)) return numeric;
+
+  const trMatch = text.match(
+    /^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/
+  );
+  if (trMatch) {
+    return Date.UTC(
+      Number(trMatch[3]),
+      Number(trMatch[2]) - 1,
+      Number(trMatch[1]),
+      Number(trMatch[4] || 0),
+      Number(trMatch[5] || 0),
+      Number(trMatch[6] || 0)
+    );
+  }
+
+  const parsed = Date.parse(text);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 async function fetchSheetRows() {
   if (!SHEETS.API_KEY) {
     throw new Error('ERP_SHEETS_API_KEY .env içinde tanımlı değil');
@@ -236,26 +261,33 @@ function buildEntriesByNameKey(rows, allowedDates) {
   const byUserDate = new Map();
   let inWindow = 0;
   let validPositive = 0;
+  let validZero = 0;
   let invalidRisale = 0;
 
-  for (const row of rows) {
+  rows.forEach((row, rowIndex) => {
     const dateStr = sheetsSerialToDateStr(row[COL.TIMESTAMP]);
-    if (!dateStr || !allowedDates.has(dateStr)) continue;
+    if (!dateStr || !allowedDates.has(dateStr)) return;
     inWindow += 1;
 
     const name = getNameFromRow(row);
-    if (!name) continue;
+    if (!name) return;
 
     const hours = parseRisaleHours(row[COL.RISALE_HOURS]);
     if (hours == null || !isValidRisaleHours(hours)) {
       invalidRisale += 1;
-      continue;
+      return;
     }
-    if (!(hours > 0)) continue;
-    validPositive += 1;
+    if (hours > 0) validPositive += 1;
+    else validZero += 1;
 
-    byUserDate.set(`${toComparableKey(name)}|${dateStr}`, { name, date: dateStr, hours });
-  }
+    const key = `${toComparableKey(name)}|${dateStr}`;
+    const sortValue = sheetTimestampSortValue(row[COL.TIMESTAMP]);
+    const current = byUserDate.get(key);
+    if (!current || sortValue > current.sortValue ||
+        (sortValue === current.sortValue && rowIndex > current.rowIndex)) {
+      byUserDate.set(key, { name, date: dateStr, hours, sortValue, rowIndex });
+    }
+  });
 
   const byNameKey = new Map();
   for (const entry of byUserDate.values()) {
@@ -264,7 +296,34 @@ function buildEntriesByNameKey(rows, allowedDates) {
     byNameKey.get(nameKey).push(entry);
   }
 
-  return { byNameKey, inWindow, validPositive, invalidRisale, uniqueUserDate: byUserDate.size };
+  return {
+    byNameKey,
+    inWindow,
+    validPositive,
+    validZero,
+    invalidRisale,
+    uniqueUserDate: byUserDate.size
+  };
+}
+
+function buildReadingUpdate(hours) {
+  if (hours > 0) {
+    return {
+      $set: {
+        status: 'okudum',
+        amount: hoursToAmount(hours),
+        __v: 0
+      }
+    };
+  }
+
+  return {
+    $set: {
+      status: 'okumadım',
+      __v: 0
+    },
+    $unset: { amount: '' }
+  };
 }
 
 async function importGroup(db, groupId, byNameKey, dryRun) {
@@ -283,8 +342,6 @@ async function importGroup(db, groupId, byNameKey, dryRun) {
 
     const ops = [];
     for (const entry of entries) {
-      const amount = hoursToAmount(entry.hours);
-      if (amount == null) continue;
       docs += 1;
 
       if (dryRun) continue;
@@ -292,13 +349,7 @@ async function importGroup(db, groupId, byNameKey, dryRun) {
       ops.push({
         updateOne: {
           filter: { userId: u._id.toString(), date: entry.date },
-          update: {
-            $set: {
-              status: 'okudum',
-              amount,
-              __v: 0
-            }
-          },
+          update: buildReadingUpdate(entry.hours),
           upsert: true
         }
       });
@@ -370,7 +421,9 @@ async function syncErpReadings(options = {}) {
       };
     };
 
-    if (dryRun) return runImports();
+    // Standalone dry-run kendi MongoClient bağlantısını kullanıyorsa sorgular
+    // tamamlanmadan finally bloğunda bağlantının kapanmasını önle.
+    if (dryRun) return await runImports();
 
     const lockResult = await withErpSyncLock(
       db,
@@ -559,10 +612,13 @@ module.exports = {
   previousDateStr,
   toComparableKey,
   sheetsSerialToDateStr,
+  sheetTimestampSortValue,
   parseRisaleHours,
   isValidRisaleHours,
   hoursToAmount,
   getNameFromRow,
+  buildEntriesByNameKey,
+  buildReadingUpdate,
   fetchSheetRows,
   resolveDb,
   withErpSyncLock
