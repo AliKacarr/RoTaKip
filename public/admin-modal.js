@@ -1864,6 +1864,33 @@ async function deleteAccount() {
         window.logActionForAudit('profilden_kendi_hesabini_silme');
     }
 
+    // Son yönetici, gruptaki kullanıcı sayısından bağımsız olarak kendi hesabını silemez.
+    // Genel onayı göstermeden önce güncel sunucu verisiyle kontrol et.
+    if (userInfo.userAuthority === 'admin') {
+        try {
+            const usersResponse = await fetch(`/api/users/${userInfo.groupId}`);
+            if (!usersResponse.ok) {
+                showToast('Kullanıcı bilgileri alınamadı. Lütfen tekrar deneyin.', 'error');
+                return;
+            }
+            const usersData = await usersResponse.json();
+            const users = Array.isArray(usersData.users) ? usersData.users : [];
+            const adminCount = users.filter(user => user.authority === 'admin').length;
+            if (adminCount <= 1) {
+                showToast(
+                    'Gruptaki son yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.',
+                    'error',
+                    'profile-settings-toast'
+                );
+                return;
+            }
+        } catch (error) {
+            console.error('Kullanıcı sayıları alınırken hata:', error);
+            showToast('Kullanıcı bilgileri alınamadı. Lütfen tekrar deneyin.', 'error');
+            return;
+        }
+    }
+
     if (confirm('Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
         try {
             const response = await fetch(`/api/delete-user/${userInfo.groupId}`, {

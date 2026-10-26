@@ -170,24 +170,31 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
     const userElement = userContainer.querySelector('li');
     const userName = userElement ? userElement.querySelector('.profil-image-user-name').textContent : 'this user';
 
-    // Toplam kullanıcı sayısını kontrol et
-    const currentTotalCount = await getTotalUserCount();
-
+    // Toplam kullanıcı ve yönetici sayısını güncel sunucu verisinden kontrol et
+    const userCounts = await getUserCounts();
+    if (!userCounts) {
+        showErrorMessage('Kullanıcı bilgileri alınamadı. Lütfen tekrar deneyin.');
+        return;
+    }
     // Kendi hesabını silme kontrolü
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
     const isDeletingSelf = currentUserInfo && currentUserInfo.userId === id;
 
+    // Son yönetici, gruptaki kullanıcı sayısından bağımsız olarak kendi hesabını silemez.
+    // Genel silme onayını göstermeden doğrudan açıklayıcı uyarıyı göster.
+    if (isDeletingSelf && userCounts.admin <= 1) {
+        showErrorMessage('Gruptaki son yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.');
+        return;
+    }
+
     let confirmMessage;
 
-    // Eğer son kullanıcıyı silmeye çalışıyorsa grup da silinecek
-    if (currentTotalCount <= 1) {
-        confirmMessage = `Silmek istediğine emin misin: ->  ${userName}  <- Bu kullanıcı gruptaki son kullanıcıdır. Silindiğinde grup da tamamen silinecektir.\n\nBu işlem geri alınamaz!`;
-    } else if (isDeletingSelf) {
+    if (isDeletingSelf) {
         confirmMessage = `Kendi hesabınızı silmek istediğinizi onaylıyor musunuz?\n\n` +
             `Bu işlem sonrasında otomatik olarak çıkış yapacaksınız ve hesabınız tamamen silinecektir.\n\n` +
             `Bu işlem geri alınamaz!`;
     } else {
-        confirmMessage = `Silmek istediğine emin misin: ->  ${userName}  <- Bu işlem geri alınamaz.`;
+        confirmMessage = `Kullanıcıyı silmek istediğinize emin misiniz: ->  ${userName}  <- Bu işlem geri alınamaz.`;
     }
 
     // Ask for confirmation before deleting
@@ -737,17 +744,21 @@ function cancelSettings(userId) {     //Ayarlar iptal fonksiyonu
     editButton.style.display = 'inline-block';
 }
 
-// Toplam kullanıcı sayısını kontrol eden yardımcı fonksiyon
-async function getTotalUserCount() {
+// Güncel kullanıcı ve yönetici sayılarını kontrol eden yardımcı fonksiyon
+async function getUserCounts() {
     try {
         const response = await fetch(`/api/users/${window.groupid}`);
-        if (!response.ok) return 0;
+        if (!response.ok) return null;
 
         const data = await response.json();
-        return data.users.length;
+        const users = Array.isArray(data.users) ? data.users : [];
+        return {
+            total: users.length,
+            admin: users.filter(user => user.authority === 'admin').length
+        };
     } catch (error) {
-        console.error('Toplam kullanıcı sayısı alınırken hata:', error);
-        return 0;
+        console.error('Kullanıcı sayıları alınırken hata:', error);
+        return null;
     }
 }
 
@@ -781,7 +792,7 @@ async function changeUserAuthority(userId, newAuthority) {
     if (currentUserInfo && currentUserInfo.userId === userId &&
         currentUserInfo.userAuthority === 'admin' && newAuthority === 'member' &&
         currentAdminCount <= 1) {
-        showErrorMessage('En az bir yönetici hesabı bulunmalıdır!');
+        showErrorMessage('Grupta en az bir yönetici hesabı bulunmalıdır!');
         // Combobox'ı eski değerine geri döndür
         const authoritySelect = document.querySelector(`#userList [data-user-id="${userId}"] .authority-select`);
         if (authoritySelect) {

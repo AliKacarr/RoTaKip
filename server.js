@@ -33,6 +33,7 @@ const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 const app = express();
 const port = process.env.PORT || 3000;
 const ISTANBUL_TIME_ZONE = 'Europe/Istanbul';
+const SITE_ACTIVITY_ADMIN_GROUP_ID = 'catikati23';
 
 function istanbulDateKey(at = new Date()) {
   const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -148,13 +149,6 @@ function createStaticOptions(isMedia = false) {
   };
 }
 
-app.use(express.static(path.join(__dirname, 'public'), createStaticOptions(false)));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), createStaticOptions(true)));
-app.use('/images', express.static(path.join(__dirname, 'public/images'), createStaticOptions(true)));
-app.use('/groupAvatars', express.static(path.join(__dirname, 'public/groupAvatars'), createStaticOptions(true)));
-app.use('/groupImages', express.static(path.join(__dirname, 'public/groupImages'), createStaticOptions(true)));
-app.use('/userAvatars', express.static(path.join(__dirname, 'public/userAvatars'), createStaticOptions(true)));
-app.use('/quotes', express.static(path.join(__dirname, 'public/quotes'), createStaticOptions(true)));
 app.use(express.json({ limit: '100kb' }));
 
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
@@ -194,6 +188,20 @@ app.use(session({
     maxAge: 30 * 24 * 60 * 60 * 1000
   }
 }));
+
+// Etkinlik kayıtları sayfasının HTML'i de yalnızca catikati23 yöneticilerine açıktır.
+// Bu rota statik dosya middleware'inden önce tanımlanmalıdır.
+app.get('/admin.html', requireSiteActivityAdmin, (req, res) => {
+  sendHtmlFile(res, 'admin.html');
+});
+
+app.use(express.static(path.join(__dirname, 'public'), createStaticOptions(false)));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), createStaticOptions(true)));
+app.use('/images', express.static(path.join(__dirname, 'public/images'), createStaticOptions(true)));
+app.use('/groupAvatars', express.static(path.join(__dirname, 'public/groupAvatars'), createStaticOptions(true)));
+app.use('/groupImages', express.static(path.join(__dirname, 'public/groupImages'), createStaticOptions(true)));
+app.use('/userAvatars', express.static(path.join(__dirname, 'public/userAvatars'), createStaticOptions(true)));
+app.use('/quotes', express.static(path.join(__dirname, 'public/quotes'), createStaticOptions(true)));
 
 function createRateLimiter(windowMs, limit, message) {
   return rateLimit({
@@ -1824,6 +1832,24 @@ function requireGroupAdmin(req, res, next) {
   });
 }
 
+function requireSiteActivityAdmin(req, res, next) {
+  const membership = getSessionMembership(req, SITE_ACTIVITY_ADMIN_GROUP_ID);
+  if (!membership) {
+    if (req.path === '/admin.html') {
+      return res.redirect('/');
+    }
+    return res.status(401).json({ error: 'Bu işlem için catikati23 grubunda giriş yapmalısınız' });
+  }
+  if (membership.authority !== 'admin') {
+    if (req.path === '/admin.html') {
+      return res.redirect('/');
+    }
+    return res.status(403).json({ error: 'Bu işlem için catikati23 grup yöneticisi olmalısınız' });
+  }
+  req.auth = { groupId: SITE_ACTIVITY_ADMIN_GROUP_ID, ...membership };
+  next();
+}
+
 function requireSelfOrAdmin(req, res, next) {
   requireGroupAuth(req, res, () => {
     const targetUserId = String(req.params?.userId || req.body?.userId || req.body?.id || '');
@@ -2235,7 +2261,12 @@ app.post('/api/delete-user/:groupId', requireSelfOrAdmin, async (req, res) => {
       users.countDocuments({ authority: 'admin' })
     ]);
 
-    // Eğer gruptaki son kullanıcıyı silmeye çalışıyorsa grubu da sil
+    // Son yönetici, gruptaki kullanıcı sayısından bağımsız olarak hesabını silemez.
+    if (user.authority === 'admin' && adminCount <= 1) {
+      return res.status(409).json({ error: 'Gruptaki son yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.' });
+    }
+
+    // Yöneticisiz kalmış eski/veri dışı bir gruptaki son üye silinirse grubu da sil.
     if (totalUserCount <= 1) {
       await invalidateGroupSessions(groupId);
       await deleteGroupDropboxImages(group, [user]);
@@ -2249,10 +2280,6 @@ app.post('/api/delete-user/:groupId', requireSelfOrAdmin, async (req, res) => {
         groupDeleted: true,
         message: 'Son kullanıcı silindiği için grup da silindi'
       });
-    }
-
-    if (user.authority === 'admin' && adminCount <= 1) {
-      return res.status(409).json({ error: 'Gruptaki son yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.' });
     }
 
     // Yetkili oturum kalmaması için önce oturumları geçersizleştir.
@@ -3423,10 +3450,10 @@ async function logSiteActivity({ action, req, groupId, deviceInfo, actor }) {
 }
 
 // Site activity logs endpoint
-app.get('/api/site-activity-logs', requireGroupAdmin, async (req, res) => {
+app.get('/api/site-activity-logs', requireSiteActivityAdmin, async (req, res) => {
   try {
     const { action } = req.query;
-    const query = { groupId: req.auth.groupId };
+    const query = {};
     if (action) {
       query.action = action;
     }
@@ -3440,9 +3467,9 @@ app.get('/api/site-activity-logs', requireGroupAdmin, async (req, res) => {
 });
 
 // Etkinlik kayıtları sayfası: tüm grupların özeti (yalnızca kimlik / ad / görünürlük)
-app.get('/api/site-activity-groups', requireGroupAdmin, async (req, res) => {
+app.get('/api/site-activity-groups', requireSiteActivityAdmin, async (req, res) => {
   try {
-    const groups = await UserGroup.find({ groupId: req.auth.groupId })
+    const groups = await UserGroup.find({})
       .select('groupId groupName visibility')
       .sort({ groupName: 1, groupId: 1 })
       .lean();
@@ -3454,7 +3481,7 @@ app.get('/api/site-activity-groups', requireGroupAdmin, async (req, res) => {
 });
 
 // Belirli bir İstanbul takvim günündeki siteactivitylogs kayıtlarını sil; action gönderilirse sadece o eylem
-app.delete('/api/site-activity-logs/day', requireGroupAdmin, async (req, res) => {
+app.delete('/api/site-activity-logs/day', requireSiteActivityAdmin, async (req, res) => {
   try {
     const { trDate, action } = req.body || {};
     if (!trDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(trDate))) {

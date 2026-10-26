@@ -103,6 +103,10 @@ h3 {
   z-index: 10020;
 }
 
+.toast.profile-settings-toast {
+  z-index: 10020;
+}
+
 
 /* Slide out helper */
 .toast-hide,

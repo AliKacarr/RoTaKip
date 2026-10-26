@@ -31,7 +31,7 @@
 }
 
 /* Mobil uyumluluk */
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
     .videos-container {
         gap: 40px;
     }

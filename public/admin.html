@@ -12,7 +12,7 @@
 
 <body>
 
-  <div id="logsSection" class="logs-container" style="display: block;">
+  <div id="logsSection" class="logs-container" style="display: none;">
     <div class="admin-page-header">
       <h1 class="admin-page-title">Site Etkinlik Kayıtları</h1>
       <div class="admin-toolbar">
@@ -159,21 +159,20 @@
       return d + ' ' + getMonthName(mo - 1) + ' ' + y;
     }
     document.addEventListener('DOMContentLoaded', async function () {
-      let activeGroupId = new URLSearchParams(window.location.search).get('groupId');
-      if (!activeGroupId) {
-        try {
-          const response = await fetch('/api/auth/memberships');
-          const data = response.ok ? await response.json() : { memberships: [] };
-          const adminMembership = (data.memberships || []).find(function (membership) {
-            return membership.authority === 'admin' && membership.groupId;
-          });
-          if (adminMembership) {
-            activeGroupId = adminMembership.groupId;
-            window.history.replaceState(null, '', '/admin.html?groupId=' + encodeURIComponent(activeGroupId));
-          }
-        } catch (error) {
-          console.error('Yönetici grubu belirlenemedi:', error);
+      const activeGroupId = 'catikati23';
+      try {
+        const response = await fetch('/api/auth/me/' + encodeURIComponent(activeGroupId));
+        const data = response.ok ? await response.json() : null;
+        if (!data || !data.user || data.user.authority !== 'admin') {
+          window.location.replace('/');
+          return;
         }
+        document.getElementById('logsSection').style.display = 'block';
+        window.history.replaceState(null, '', '/admin.html');
+      } catch (error) {
+        console.error('Yönetici oturumu doğrulanamadı:', error);
+        window.location.replace('/');
+        return;
       }
       function escapeHtml(text) {
         if (text == null) return '';
@@ -212,8 +211,7 @@
         loadingEl.style.display = 'block';
 
         try {
-          if (!activeGroupId) throw new Error('Grup kimliği eksik');
-          const res = await fetch('/api/site-activity-groups?groupId=' + encodeURIComponent(activeGroupId));
+          const res = await fetch('/api/site-activity-groups');
           if (!res.ok) {
             throw new Error('HTTP ' + res.status);
           }
@@ -418,8 +416,7 @@
           const defaultNoLogsText = '• Henüz kayıt bulunmamaktadır.';
 
           if (refetch) {
-            if (!activeGroupId) throw new Error('Grup kimliği eksik');
-            const response = await fetch('/api/site-activity-logs?groupId=' + encodeURIComponent(activeGroupId));
+            const response = await fetch('/api/site-activity-logs');
             const data = await response.json();
             const rawLogs = Array.isArray(data) ? data : (data.logs || []);
             rawLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
