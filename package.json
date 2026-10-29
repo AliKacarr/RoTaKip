@@ -34,7 +34,7 @@
     "mongodb": "^7.6.0",
     "mongoose": "^9.11.4",
     "multer": "^2.5.0",
-    "node-schedule": "^2.1.1",
+    "node-schedule": "^2.1.2",
     "pino": "^10.4.0",
     "playwright": "^1.62.1",
     "sharp": "^0.35.4",
