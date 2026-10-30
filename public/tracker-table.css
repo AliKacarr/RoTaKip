@@ -1162,12 +1162,7 @@
 
 /* Hafta içinde ay geçişi: yeni ayın ilk sütununun solu */
 #trackerTable .month-start {
-    border-left: 3px solid #7a8288;
-}
-
-#trackerTable thead > tr:first-child th.month-start,
-#trackerTable thead .stats-footer-row th.month-start {
-    border-left: 3px solid #7a8288;
+    border-left: 3px solid #7a8288 !important;
 }
 
 /* Tablo animasyonu */
