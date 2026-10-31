@@ -644,6 +644,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           this.userMap = new Map(); // userId -> user
           this.statMap = new Map(); // userId -> { date: status }
           this.statsByUser = new Map(); // userId -> okuma kayıtları
+          this.statRecordIndex = new Map(); // userId + date -> this.stats index
           this.userReadingCounts = new Map(); // userId -> okudum count
           this.userUnreadCounts = new Map(); // userId -> okumadım count
           this.longestStreaks = []; // [{ userId, name, profileImage, streak, startDate, endDate }]
@@ -674,6 +675,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           this.userMap.clear();
           this.statMap.clear();
           this.statsByUser.clear();
+          this.statRecordIndex.clear();
           this.userReadingCounts.clear();
           this.userUnreadCounts.clear();
 
@@ -686,7 +688,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             this.userUnreadCounts.set(userId, 0);
           }
 
-          for (const s of this.stats) {
+          for (let statIndex = 0; statIndex < this.stats.length; statIndex++) {
+            const s = this.stats[statIndex];
             const userId = String(s.userId);
             if (!this.statMap.has(userId)) {
               this.statMap.set(userId, {});
@@ -694,6 +697,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
             this.statMap.get(userId)[s.date] = s.status;
             this.statsByUser.get(userId).push(s);
+            this.statRecordIndex.set(this._statKey(userId, s.date), statIndex);
             if (s.status === 'okudum') {
               this.userReadingCounts.set(userId, (this.userReadingCounts.get(userId) || 0) + 1);
             } else if (s.status === 'okumadım') {
@@ -715,6 +719,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         getUserReadingCount(userId) { return this.userReadingCounts.get(String(userId)) || 0; }
         getUserReadingCounts() { return this.userReadingCounts; }
 
+        _statKey(userId, date) {
+          return `${String(userId)}\u0000${String(date)}`;
+        }
+
         patchUsersLastCongratulated(items) {
           if (!Array.isArray(items)) return;
           for (const it of items) {
@@ -734,10 +742,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           }
         }
 
-        async _buildLongestStreaks() {
-          // Sunucudan almak yerine eldeki stats üzerinden hesapla
-          const results = [];
-          for (const u of this.users) {
+        _buildLongestStreakForUser(u) {
             const map = this.statMap.get(String(u._id)) || {};
             const okDates = Object.keys(map).filter(d => map[d] === 'okudum').sort();
             let maxStreak = 0, currentStreak = 0;
@@ -761,7 +766,14 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (currentStreak > maxStreak) {
               maxStreak = currentStreak; maxStart = streakStart; maxEnd = streakEnd;
             }
-            results.push({ userId: u._id, name: u.name, profileImage: u.profileImage, streak: maxStreak, startDate: maxStart, endDate: maxEnd });
+            return { userId: u._id, name: u.name, profileImage: u.profileImage, streak: maxStreak, startDate: maxStart, endDate: maxEnd };
+        }
+
+        async _buildLongestStreaks() {
+          // Sunucudan almak yerine eldeki stats üzerinden hesapla
+          const results = [];
+          for (const u of this.users) {
+            results.push(this._buildLongestStreakForUser(u));
           }
           results.sort((a, b) => b.streak - a.streak);
           this.longestStreaks = results;
@@ -785,7 +797,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Manuel tıklamada amount yalnızca açıkça verilirse yazılır
         applyLocalUpdate(userId, date, status, amount) {
           const uid = String(userId);
-          const idx = this.stats.findIndex(s => String(s.userId) === uid && s.date === date);
+          const statKey = this._statKey(uid, date);
+          const indexedPosition = this.statRecordIndex.get(statKey);
+          const idx = Number.isInteger(indexedPosition) ? indexedPosition : -1;
+          const previous = idx >= 0 ? this.stats[idx] : null;
+          const previousStatus = previous ? previous.status : '';
           const amountNum =
             amount !== undefined && amount !== null && amount !== ''
               ? Number(amount)
@@ -800,13 +816,62 @@ document.addEventListener('DOMContentLoaded', async function () {
               const prevAmount = Number(this.stats[idx].amount);
               if (Number.isFinite(prevAmount)) newObj.amount = prevAmount;
             }
-            if (idx >= 0) this.stats[idx] = newObj; else this.stats.push(newObj);
+            if (idx >= 0) {
+              this.stats[idx] = newObj;
+            } else {
+              this.statRecordIndex.set(statKey, this.stats.length);
+              this.stats.push(newObj);
+            }
           } else {
-            if (idx >= 0) this.stats.splice(idx, 1);
+            if (idx >= 0) {
+              const lastIndex = this.stats.length - 1;
+              if (idx !== lastIndex) {
+                const moved = this.stats[lastIndex];
+                this.stats[idx] = moved;
+                this.statRecordIndex.set(this._statKey(moved.userId, moved.date), idx);
+              }
+              this.stats.pop();
+              this.statRecordIndex.delete(statKey);
+            }
           }
 
-          this._rebuildIndexes();
-          this._buildLongestStreaks();
+          if (!this.statMap.has(uid)) this.statMap.set(uid, {});
+          if (!this.statsByUser.has(uid)) this.statsByUser.set(uid, []);
+
+          const userStatMap = this.statMap.get(uid);
+          const userStats = this.statsByUser.get(uid);
+          const userStatIndex = userStats.findIndex(s => s.date === date);
+          if (status) {
+            const stored = this.stats[this.statRecordIndex.get(statKey)];
+            userStatMap[date] = status;
+            if (userStatIndex >= 0) userStats[userStatIndex] = stored;
+            else userStats.push(stored);
+          } else {
+            delete userStatMap[date];
+            if (userStatIndex >= 0) userStats.splice(userStatIndex, 1);
+          }
+
+          if (previousStatus !== status) {
+            if (previousStatus === 'okudum') {
+              this.userReadingCounts.set(uid, Math.max(0, (this.userReadingCounts.get(uid) || 0) - 1));
+            } else if (previousStatus === 'okumadım') {
+              this.userUnreadCounts.set(uid, Math.max(0, (this.userUnreadCounts.get(uid) || 0) - 1));
+            }
+            if (status === 'okudum') {
+              this.userReadingCounts.set(uid, (this.userReadingCounts.get(uid) || 0) + 1);
+            } else if (status === 'okumadım') {
+              this.userUnreadCounts.set(uid, (this.userUnreadCounts.get(uid) || 0) + 1);
+            }
+          }
+
+          const user = this.userMap.get(uid);
+          if (user) {
+            const longest = this._buildLongestStreakForUser(user);
+            const longestIndex = this.longestStreaks.findIndex(item => String(item.userId) === uid);
+            if (longestIndex >= 0) this.longestStreaks[longestIndex] = longest;
+            else this.longestStreaks.push(longest);
+            this.longestStreaks.sort((a, b) => b.streak - a.streak);
+          }
         }
       }
       window.GlobalDataStore = GlobalDataStore;

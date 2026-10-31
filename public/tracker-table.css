@@ -441,8 +441,7 @@
     color: #2a5a8f;
 }
 
-.table-area[data-reading-edit-mode="status"] #trackerTable td[onclick]:not(.future-date),
-.table-area[data-reading-edit-mode="amount"] #trackerTable td[onclick]:not(.future-date) {
+.table-area[data-reading-edit-mode="edit"] #trackerTable td[onclick]:not(.future-date) {
     cursor: pointer;
 }
 

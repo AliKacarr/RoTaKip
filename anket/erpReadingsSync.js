@@ -38,7 +38,7 @@ for (let i = 0; i <= 20; i += 1) {
   VALID_RISALE_HOURS.add(Number((i * 0.25).toFixed(2)));
 }
 
-const SHEETS_REQUEST_TIMEOUT_MS = 10 * 1000;
+const SHEETS_REQUEST_TIMEOUT_MS = 20 * 1000;
 const ON_DEMAND_SYNC_COOLDOWN_MS = 60 * 1000;
 const ERP_SYNC_LOCK_COLLECTION = 'erp_sync_locks';
 const ERP_SYNC_LOCK_ID = 'erp-sko-data-sync';

@@ -12,6 +12,7 @@
   };
 
   var amountEditState = null;
+  var tableModePaintToken = 0;
   // { userId, date, cell, buffer, prevText }
 
   var HINTS = {
@@ -29,7 +30,26 @@
     if (hint) hint.innerHTML = HINTS[window.readingEditMode] || HINTS.default;
   }
 
-  function updateSegmentButtons() {
+  function updateTableModeMarker() {
+    var tableArea = document.querySelector('.table-area');
+    if (!tableArea) return;
+    var marker = window.readingEditMode === 'default' ? 'default' : 'edit';
+    if (tableArea.getAttribute('data-reading-edit-mode') !== marker) {
+      tableArea.setAttribute('data-reading-edit-mode', marker);
+    }
+  }
+
+  function scheduleTableModeMarkerUpdate() {
+    var token = ++tableModePaintToken;
+    // Önce segment butonunun yeni aktif hali çizilsin. Büyük tablonun CSS
+    // eşleşmesi sonraki tarayıcı turunda güncellensin.
+    runAfterNextPaint(function () {
+      if (token !== tableModePaintToken) return;
+      updateTableModeMarker();
+    });
+  }
+
+  function updateSegmentButtons(options) {
     var defaultBtn = $('readingEditModeDefault');
     var statusBtn = $('readingEditModeStatus');
     var amountBtn = $('readingEditModeAmount');
@@ -45,11 +65,15 @@
       amountBtn.classList.toggle('is-active', window.readingEditMode === 'amount');
       amountBtn.setAttribute('aria-pressed', window.readingEditMode === 'amount' ? 'true' : 'false');
     }
-    var tableArea = document.querySelector('.table-area');
-    if (tableArea) {
-      tableArea.setAttribute('data-reading-edit-mode', window.readingEditMode);
+    if (options && options.skipTableMarker) {
+      return;
     }
-    document.body.setAttribute('data-reading-edit-mode', window.readingEditMode);
+    if (options && options.immediateTableMarker) {
+      tableModePaintToken += 1;
+      updateTableModeMarker();
+    } else {
+      scheduleTableModeMarkerUpdate();
+    }
   }
 
   function hideAmountOverlay() {
@@ -83,26 +107,34 @@
       return;
     }
     var cell = amountEditState.cell;
-    var existingAmount = amountEditState.existingAmount;
+    var previousText = String(amountEditState.prevText || '➖').trim();
     amountEditState = null;
     hideAmountOverlay();
-    cell.classList.remove('amount-editing', 'red', 'empty');
-    cell.classList.add('green');
-    if (existingAmount != null) {
-      refreshAmountCellDisplay(cell, existingAmount);
+    cell.classList.remove('amount-editing', 'green', 'red', 'empty');
+    cell.textContent = previousText;
+    if (typeof cellTextIsOkudum === 'function' && cellTextIsOkudum(previousText)) {
+      cell.classList.add('green');
+    } else if (typeof cellTextIsOkumadim === 'function' && cellTextIsOkumadim(previousText)) {
+      cell.classList.add('red');
     } else {
-      cell.textContent = '✔';
+      cell.classList.add('empty');
     }
   }
 
   function setReadingEditMode(mode) {
     var next = mode === 'status' || mode === 'amount' || mode === 'default' ? mode : 'default';
-    if (window.readingEditMode === 'amount' && next !== 'amount') {
+    var previous = window.readingEditMode;
+    if (previous === next) return;
+    window.readingEditMode = next;
+    updateSegmentButtons({
+      // Durum ve Miktar aynı tablo imlecini kullanır. Bu iki mod arasında
+      // geçerken binlerce hücrenin CSS eşleşmesine hiç dokunma.
+      skipTableMarker: previous !== 'default' && next !== 'default'
+    });
+    updateHint();
+    if (previous === 'amount' && next !== 'amount') {
       cancelAmountCellEdit();
     }
-    window.readingEditMode = next;
-    updateSegmentButtons();
-    updateHint();
   }
 
   window.setReadingEditMode = setReadingEditMode;
@@ -140,34 +172,6 @@
     }
   };
 
-  function recountDayAndWeekFooters(date) {
-    try {
-      var statsRow = document.querySelector('#trackerTable thead .stats-footer-row');
-      if (!statsRow || typeof cellTextIsOkudum !== 'function') return;
-      var countsEl = statsRow.querySelector('.col-counts[data-date="' + date + '"] .col-read');
-      if (countsEl) {
-        var readCount = 0;
-        document.querySelectorAll('#trackerTable tbody tr.user-row').forEach(function (row) {
-          var dayCell = row.querySelector('td.day-column[data-date="' + date + '"]');
-          if (dayCell && cellTextIsOkudum(dayCell.textContent)) {
-            readCount++;
-          }
-        });
-        countsEl.setAttribute('aria-label', readCount + ' okundu');
-        countsEl.innerHTML = readCount + '<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i>';
-      }
-      var totalReadEl = document.getElementById('tfoot-total-read');
-      if (totalReadEl && typeof computeWeekMarkedReadFromTable === 'function') {
-        var weekStats = computeWeekMarkedReadFromTable();
-        var weekReadSuccessText = formatWeekReadSuccessText(weekStats.okudum, weekStats.marked);
-        totalReadEl.setAttribute('aria-label', weekReadSuccessText + ' okundu');
-        totalReadEl.innerHTML = weekReadSuccessText + '<i class="fa-solid fa-check stats-footer-check-icon" aria-hidden="true"></i>';
-      }
-    } catch (e) {
-      console.error('Footer sayaç güncellenemedi:', e);
-    }
-  }
-
   function refreshRowStreak(userId, cell) {
     try {
       if (!cell || typeof calculateStreakFromCache !== 'function') return;
@@ -189,7 +193,7 @@
         window.animateStreakIncrease(lastTd, oldStreak, newStreak, cell);
       }
       if (typeof window.refreshStreakTotalInTable === 'function') {
-        window.refreshStreakTotalInTable();
+        window.refreshStreakTotalInTable(oldStreak, newStreak);
       }
     } catch (e) {
       console.error('Seri güncellenemedi:', e);
@@ -210,69 +214,6 @@
       cell.textContent = a + ' ✔';
     } else {
       cell.textContent = '✔';
-    }
-  }
-
-  /** Arka planda okudum kaydı (seri/sayaç); hücre metnini değiştirmez */
-  async function markCellOkudumOnAmountClick(userId, date, cell, prevText) {
-    var userInfo = LocalStorageManager.getCurrentUserInfo();
-    if (!userInfo) return;
-
-    var alreadyOkudum =
-      typeof cellTextIsOkudum === 'function' ? cellTextIsOkudum(prevText) : false;
-
-    if (typeof updateUserStatsCache === 'function') {
-      updateUserStatsCache(userId, date, 'okudum');
-    }
-
-    if (!alreadyOkudum && typeof updateDateColumnCounts === 'function') {
-      updateDateColumnCounts(date, prevText, 'okudum');
-    } else {
-      recountDayAndWeekFooters(date);
-    }
-
-    try {
-      if (window.globalDataStore) {
-        window.globalDataStore.applyLocalUpdate(userId, date, 'okudum');
-      }
-    } catch (e) {
-      console.error('Global store okudum güncellenemedi:', e);
-    }
-
-    if (typeof userReadingCounts !== 'undefined' && userReadingCounts && !alreadyOkudum) {
-      userReadingCounts.set(userId, (userReadingCounts.get(userId) || 0) + 1);
-    }
-
-    refreshRowStreak(userId, cell);
-
-    if (typeof refreshAmountTotalsInTable === 'function') {
-      refreshAmountTotalsInTable();
-    }
-
-    if (!alreadyOkudum) {
-      if (userInfo.userId === userId && typeof window.animateStarToUserStats === 'function') {
-        window.animateStarToUserStats(cell);
-      }
-      if (typeof updateUserStatsArea === 'function') {
-        updateUserStatsArea();
-      }
-      if (typeof window.schedulePostToggleUiRefresh === 'function') {
-        window.schedulePostToggleUiRefresh();
-      }
-    }
-
-    try {
-      await fetch('/api/update-status/' + window.groupid, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userId,
-          date: date,
-          status: 'okudum'
-        })
-      });
-    } catch (err) {
-      console.error('Okudum kaydı başarısız:', err);
     }
   }
 
@@ -335,13 +276,21 @@
         }
       });
       input.addEventListener('blur', function () {
-        if (!amountEditState || amountEditState.input !== input) return;
-        var buf = String(amountEditState.buffer || input.value || '').trim();
-        if (buf) {
-          commitAmountCellEdit();
-        } else {
-          cancelAmountCellEdit();
-        }
+        // Mod düğmesinin click olayı blur'dan sonra çalışır. Kararı bir sonraki
+        // göreve bırakarak mod değişiminde taslağın yanlışlıkla kaydedilmesini önle.
+        window.setTimeout(function () {
+          if (!amountEditState || amountEditState.input !== input) return;
+          if (window.getReadingEditMode() !== 'amount') {
+            cancelAmountCellEdit();
+            return;
+          }
+          var buf = String(amountEditState.buffer || input.value || '').trim();
+          if (buf) {
+            commitAmountCellEdit();
+          } else {
+            cancelAmountCellEdit();
+          }
+        }, 0);
       });
     }
     return input;
@@ -370,7 +319,17 @@
     return input;
   }
 
-  async function commitAmountCellEdit() {
+  function runAfterNextPaint(callback) {
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(function () {
+        window.setTimeout(callback, 0);
+      });
+    } else {
+      window.setTimeout(callback, 0);
+    }
+  }
+
+  function commitAmountCellEdit() {
     if (!amountEditState) return;
     var state = amountEditState;
     var buffer = sanitizeAmountDigits(state.buffer || (state.input && state.input.value) || '');
@@ -394,55 +353,89 @@
     var userId = state.userId;
     var date = state.date;
     var existingAmount = state.existingAmount;
+    var previousText = state.prevText;
+    var previousStatus =
+      typeof cellTextIsOkudum === 'function' && cellTextIsOkudum(previousText)
+        ? 'okudum'
+        : typeof cellTextIsOkumadim === 'function' && cellTextIsOkumadim(previousText)
+          ? 'okumadım'
+          : '';
+
+    // Mevcut miktar değişmediyse kapat; önbellek, sayaç ve veritabanına dokunma.
+    if (previousStatus === 'okudum' && existingAmount != null && amount === existingAmount) {
+      amountEditState = null;
+      hideAmountOverlay();
+      cell.classList.remove('amount-editing');
+      refreshAmountCellDisplay(cell, existingAmount);
+      return;
+    }
 
     amountEditState = null;
     hideAmountOverlay();
     cell.classList.remove('amount-editing');
     refreshAmountCellDisplay(cell, amount);
 
-    try {
-      if (window.globalDataStore) {
-        window.globalDataStore.applyLocalUpdate(userId, date, 'okudum', amount);
+    // Hücre ve input değişikliğinin önce ekrana çizilmesine izin ver; hesaplama
+    // ve kayıt işlemleri bir sonraki tarayıcı turunda çalışır.
+    runAfterNextPaint(function () {
+      if (typeof updateUserStatsCache === 'function') {
+        updateUserStatsCache(userId, date, 'okudum');
       }
-    } catch (e) {
-      console.error('Global store amount güncellenemedi:', e);
-    }
+      if (typeof updateDateColumnCounts === 'function') {
+        updateDateColumnCounts(date, previousText, 'okudum');
+      }
+      if (typeof adjustUserReadingCount === 'function') {
+        adjustUserReadingCount(userId, previousStatus, 'okudum');
+      }
 
-    if (typeof refreshAmountTotalsInTable === 'function') {
-      refreshAmountTotalsInTable();
-    }
+      try {
+        if (window.globalDataStore) {
+          window.globalDataStore.applyLocalUpdate(userId, date, 'okudum', amount);
+        }
+      } catch (e) {
+        console.error('Global store amount güncellenemedi:', e);
+      }
 
-    var amountDelta = existingAmount != null ? amount - existingAmount : amount;
-    if (amountDelta > 0 && typeof window.celebrateOkudumCell === 'function') {
-      window.celebrateOkudumCell(cell, { amountDelta: amountDelta });
-    }
+      refreshRowStreak(userId, cell);
 
-    recountDayAndWeekFooters(date);
+      if (typeof window.queueReadingStatusUpdate === 'function') {
+        window.queueReadingStatusUpdate(userId, date, 'okudum', amount, cell, previousText);
+      } else {
+        fetch('/api/update-status/' + window.groupid, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: userId, date: date, status: 'okudum', amount: amount })
+        }).catch(function (error) {
+          console.error('Amount kaydı başarısız:', error);
+        });
+      }
 
-    try {
-      await fetch('/api/update-status/' + window.groupid, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userId,
-          date: date,
-          status: 'okudum',
-          amount: amount
-        })
-      });
-    } catch (err) {
-      console.error('Amount kaydı başarısız:', err);
-    }
+      if (typeof refreshAmountTotalsInTable === 'function') {
+        refreshAmountTotalsInTable(userId);
+      }
 
-    if (typeof updateUserStatsArea === 'function') {
-      updateUserStatsArea();
-    }
-    if (typeof window.schedulePostToggleUiRefresh === 'function') {
-      window.schedulePostToggleUiRefresh();
-    }
+      var amountDelta = existingAmount != null ? amount - existingAmount : amount;
+      if (amountDelta > 0 && typeof window.celebrateOkudumCell === 'function') {
+        window.celebrateOkudumCell(cell, { amountDelta: amountDelta });
+      }
+      if (
+        previousStatus !== 'okudum' &&
+        userInfo.userId === userId &&
+        typeof window.animateStarToUserStats === 'function'
+      ) {
+        window.animateStarToUserStats(cell);
+      }
+
+      if (typeof updateUserStatsArea === 'function') {
+        updateUserStatsArea();
+      }
+      if (typeof window.schedulePostToggleUiRefresh === 'function') {
+        window.schedulePostToggleUiRefresh(userId);
+      }
+    });
   }
 
-  window.beginAmountCellEdit = async function beginAmountCellEdit(userId, date, cell) {
+  window.beginAmountCellEdit = function beginAmountCellEdit(userId, date, cell) {
     if (!cell) return;
     if (cell.classList.contains('future-date')) return;
 
@@ -461,8 +454,6 @@
     }
 
     var prevText = (cell.textContent || '').trim();
-    var alreadyOkudum =
-      typeof cellTextIsOkudum === 'function' ? cellTextIsOkudum(prevText) : false;
     var existingAmount = parseAmountFromCellText(prevText);
     var startDigits = existingAmount != null ? String(existingAmount) : '';
 
@@ -476,7 +467,6 @@
       buffer: startDigits,
       prevText: prevText,
       existingAmount: existingAmount,
-      alreadyOkudum: alreadyOkudum,
       input: null
     };
     var input = showAmountOverlay(cell, startDigits);
@@ -489,10 +479,6 @@
       } catch (e) {
         /* select desteklenmeyebilir */
       }
-    }
-
-    if (!alreadyOkudum) {
-      await markCellOkudumOnAmountClick(userId, date, cell, prevText);
     }
     if (amountEditState && amountEditState.cell === cell && amountEditState.input) {
       cell.classList.add('green');

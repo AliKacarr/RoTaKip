@@ -517,6 +517,13 @@ function loadMonthlyCalendar() {
 
     // Expose the update function globally so it can be called from your main script
     window.updateMonthlyCalendar = updateCalendarWithUserData;
+    window.refreshMonthlyCalendarForUser = function refreshMonthlyCalendarForUser(userId) {
+        if (!userSelector || userId == null) return;
+        const selectedOption = userSelector.options[userSelector.selectedIndex];
+        if (!selectedOption || String(selectedOption.dataset.userId) !== String(userId)) return;
+        selectedUser = selectedOption.value;
+        generateCalendar(currentMonth, currentYear, false);
+    };
 
     // Try to populate users initially if the table is already loaded
     setTimeout(populateUserSelector, 500);

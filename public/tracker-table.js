@@ -19,6 +19,12 @@ let weekOffset = 0;
 window.weekOffset = weekOffset;
 let isFirstLoad = true;
 let postToggleUpdateTimer = null;
+let postToggleIdleHandle = null;
+let postToggleIdleUsesTimeout = false;
+const pendingPostToggleUserIds = new Set();
+const STATUS_CELL_CLICK_GUARD_MS = 250;
+const statusCellLastClickAt = new WeakMap();
+const statusUpdateQueues = new Map();
 
 // Haftalık tablo artık, sınırlı sayıda hücreyi yeniden kullanan yatay bir
 // zaman şeridi olarak çalışır. Böylece kullanıcı geçmişe/geleceğe doğru
@@ -602,29 +608,6 @@ function cellTextIsOkumadim(text) {
 
 function cellTextIsEmpty(text) {
     return String(text || '').trim() === '➖';
-}
-
-function computeWeekMarkedReadFromTable() {
-    const dates = getTimelineDisplayedDates(timelineReferenceDate || getTodayDateKey());
-    const tbody = trackerTable && trackerTable.querySelector('tbody');
-    if (!tbody) return { okudum: 0, marked: 0 };
-
-    let okudum = 0;
-    let marked = 0;
-    tbody.querySelectorAll('tr.user-row').forEach(function (row) {
-        const cells = row.querySelectorAll('td.day-column[data-date]');
-        cells.forEach(function (cell) {
-            if (!dates.includes(cell.dataset.date)) return;
-            const symbol = (cell.textContent || '').trim();
-            if (cellTextIsOkudum(symbol)) {
-                okudum += 1;
-                marked += 1;
-            } else if (cellTextIsOkumadim(symbol)) {
-                marked += 1;
-            }
-        });
-    });
-    return { okudum, marked };
 }
 
 async function loadTrackerTable(options = {}) {
@@ -1415,29 +1398,50 @@ function calculateStreak(userStats) {
     return streak;
 }
 
-function schedulePostToggleUiRefresh() {
+function schedulePostToggleUiRefresh(userId) {
     try {
+        if (userId != null) pendingPostToggleUserIds.add(String(userId));
         if (postToggleUpdateTimer) {
             clearTimeout(postToggleUpdateTimer);
         }
+        if (postToggleIdleHandle) {
+            if (postToggleIdleUsesTimeout) window.clearTimeout(postToggleIdleHandle);
+            else if ('cancelIdleCallback' in window) window.cancelIdleCallback(postToggleIdleHandle);
+            postToggleIdleHandle = null;
+        }
         postToggleUpdateTimer = setTimeout(function () {
-            try {
-                updateAllUserBackgroundColors();
+            postToggleUpdateTimer = null;
+            const refreshSecondarySections = function () {
+                postToggleIdleHandle = null;
+                postToggleIdleUsesTimeout = false;
+                try {
+                    const changedUserIds = Array.from(pendingPostToggleUserIds);
+                    pendingPostToggleUserIds.clear();
+                    changedUserIds.forEach(updateUserBackgroundColor);
 
-                if (typeof window.loadUserCards === 'function') {
-                    window.loadUserCards();
+                    if (typeof window.loadUserCards === 'function') {
+                        window.loadUserCards();
+                    }
+                    if (typeof window.loadReadingStats === 'function') {
+                        window.loadReadingStats();
+                    }
+                    if (typeof window.renderLongestSeries === 'function') {
+                        window.renderLongestSeries();
+                    }
+                    if (typeof window.refreshMonthlyCalendarForUser === 'function') {
+                        changedUserIds.forEach(window.refreshMonthlyCalendarForUser);
+                    }
+                } catch (err) {
+                    console.error('Gecikmeli güncelleme hatası:', err);
                 }
-                if (typeof window.loadReadingStats === 'function') {
-                    window.loadReadingStats();
-                }
-                if (typeof window.renderLongestSeries === 'function') {
-                    window.renderLongestSeries();
-                }
-                if (typeof window.loadMonthlyCalendar === 'function') {
-                    window.loadMonthlyCalendar();
-                }
-            } catch (err) {
-                console.error('Gecikmeli güncelleme hatası:', err);
+            };
+
+            if ('requestIdleCallback' in window) {
+                postToggleIdleUsesTimeout = false;
+                postToggleIdleHandle = window.requestIdleCallback(refreshSecondarySections, { timeout: 2500 });
+            } else {
+                postToggleIdleUsesTimeout = true;
+                postToggleIdleHandle = window.setTimeout(refreshSecondarySections, 250);
             }
         }, 1000);
     } catch (err) {
@@ -1446,7 +1450,167 @@ function schedulePostToggleUiRefresh() {
 }
 window.schedulePostToggleUiRefresh = schedulePostToggleUiRefresh;
 
-window.toggleStatus = async function toggleStatus(userId, date, clickedCell) {
+function getStatusUpdateQueueKey(userId, date) {
+    return `${String(userId)}\u0000${String(date)}`;
+}
+
+function getStatusSnapshotFromText(text) {
+    const normalized = String(text || '').trim();
+    if (cellTextIsOkudum(normalized)) {
+        const amountMatch = normalized.match(/\d+(?:[.,]\d+)?/);
+        const amount = amountMatch ? parseFiniteAmount(amountMatch[0]) : null;
+        return {
+            status: 'okudum',
+            amount,
+            text: amount != null ? formatOkudumCellSymbol(amount) : '✔'
+        };
+    }
+    if (cellTextIsOkumadim(normalized)) return { status: 'okumadım', amount: null, text: '✖' };
+    return { status: '', amount: null, text: '➖' };
+}
+
+function createStatusSnapshot(status, amount) {
+    const parsedAmount = parseFiniteAmount(amount);
+    if (status === 'okudum') {
+        return {
+            status,
+            amount: parsedAmount,
+            text: parsedAmount != null ? formatOkudumCellSymbol(parsedAmount) : '✔'
+        };
+    }
+    if (status === 'okumadım') return { status, amount: null, text: '✖' };
+    return { status: '', amount: null, text: '➖' };
+}
+
+function findTrackerStatusCell(userId, date, fallbackCell) {
+    if (fallbackCell && fallbackCell.isConnected && fallbackCell.dataset.date === String(date)) return fallbackCell;
+    const row = Array.from(trackerTable.querySelectorAll('tbody tr.user-row'))
+        .find(item => item.dataset.userId === String(userId));
+    return row ? row.querySelector(`td.day-column[data-date="${date}"]`) : null;
+}
+
+function adjustUserReadingCount(userId, previousStatus, nextStatus) {
+    if (previousStatus === nextStatus) return;
+    let count = userReadingCounts.get(userId) || 0;
+    if (previousStatus === 'okudum') count = Math.max(0, count - 1);
+    if (nextStatus === 'okudum') count += 1;
+    userReadingCounts.set(userId, count);
+}
+
+function restoreConfirmedStatus(userId, date, fallbackCell, failedSnapshot, confirmedSnapshot) {
+    const cell = findTrackerStatusCell(userId, date, fallbackCell);
+    const previousText = failedSnapshot.text;
+
+    updateUserStatsCache(userId, date, confirmedSnapshot.status);
+    adjustUserReadingCount(userId, failedSnapshot.status, confirmedSnapshot.status);
+
+    if (cell) {
+        cell.textContent = confirmedSnapshot.text;
+        cell.classList.remove('green', 'pink', 'lila', 'red', 'empty');
+        if (confirmedSnapshot.status === 'okudum') cell.classList.add('green');
+        else if (confirmedSnapshot.status === 'okumadım') cell.classList.add('red');
+        else cell.classList.add('empty');
+        updateDateColumnCounts(date, previousText, confirmedSnapshot.status);
+    }
+
+    const streakCell = getTrackerSummaryStreakCell(userId);
+    if (streakCell) {
+        const oldStreak = parseInt(String(streakCell.textContent || '').replace('⭐', '').trim(), 10) || 0;
+        const newStreak = calculateStreakFromCache(userId);
+        streakCell.innerHTML = newStreak > 0 ? `<span class="weekly-fire-emoji">⭐</span> ${newStreak}` : '-';
+        refreshStreakTotalInTable(oldStreak, newStreak);
+    }
+
+    if (window.globalDataStore) {
+        window.globalDataStore.applyLocalUpdate(
+            userId,
+            date,
+            confirmedSnapshot.status,
+            confirmedSnapshot.amount
+        );
+    }
+    if (failedSnapshot.amount != null || confirmedSnapshot.amount != null) {
+        refreshAmountTotalsInTable(userId);
+    }
+    schedulePostToggleUiRefresh(userId);
+    updateUserStatsArea();
+}
+
+// Aynı hücreye ait istekleri sırayla gönderir ve bekleyen ara durumları son
+// duruma indirger. Farklı hücrelerin istekleri birbirini beklemez.
+function queueStatusUpdate(userId, date, status, cell, previousSnapshot, nextSnapshot) {
+    const key = getStatusUpdateQueueKey(userId, date);
+    let queue = statusUpdateQueues.get(key);
+    if (!queue) {
+        queue = {
+            running: false,
+            pendingUpdate: undefined,
+            confirmedSnapshot: previousSnapshot
+        };
+        statusUpdateQueues.set(key, queue);
+    }
+    queue.pendingUpdate = { status, cell, snapshot: nextSnapshot };
+    if (queue.running) return;
+
+    queue.running = true;
+    void (async function flushStatusUpdates() {
+        while (queue.pendingUpdate !== undefined) {
+            const update = queue.pendingUpdate;
+            queue.pendingUpdate = undefined;
+            try {
+                const response = await fetch(`/api/update-status/${window.groupid}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId,
+                        date,
+                        status: update.status,
+                        ...(update.snapshot.amount != null ? { amount: update.snapshot.amount } : {})
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error(`Okuma durumu kaydedilemedi (${response.status})`);
+                }
+                queue.confirmedSnapshot = update.snapshot;
+            } catch (error) {
+                console.error('Okuma durumu kaydedilemedi:', error);
+                if (queue.pendingUpdate === undefined) {
+                    restoreConfirmedStatus(
+                        userId,
+                        date,
+                        update.cell,
+                        update.snapshot,
+                        queue.confirmedSnapshot
+                    );
+                    if (typeof showNotification === 'function') {
+                        showNotification('Okuma durumu kaydedilemedi; önceki durum geri yüklendi.', 'error');
+                    }
+                }
+            }
+        }
+        queue.running = false;
+        statusUpdateQueues.delete(key);
+    })();
+}
+window.queueReadingStatusUpdate = function queueReadingStatusUpdate(
+    userId,
+    date,
+    status,
+    amount,
+    cell,
+    previousText
+) {
+    queueStatusUpdate(
+        userId,
+        date,
+        status,
+        cell,
+        getStatusSnapshotFromText(previousText),
+        createStatusSnapshot(status, amount)
+    );
+};
+
+window.toggleStatus = function toggleStatus(userId, date, clickedCell) {
     const editMode = typeof window.getReadingEditMode === 'function'
         ? window.getReadingEditMode()
         : 'default';
@@ -1489,7 +1653,15 @@ window.toggleStatus = async function toggleStatus(userId, date, clickedCell) {
         return;
     }
 
+    // Fare anahtarı sıçraması veya çift tıklamanın aynı hücreyi iki durum
+    // birden ilerletmesini engelle. Başka hücreler bu bekleme süresinden etkilenmez.
+    const clickTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const previousClickTime = statusCellLastClickAt.get(cell);
+    if (previousClickTime != null && clickTime - previousClickTime < STATUS_CELL_CLICK_GUARD_MS) return;
+    statusCellLastClickAt.set(cell, clickTime);
+
     const current = (cell.innerText || '').trim();
+    const previousSnapshot = getStatusSnapshotFromText(current);
     let status;
     let newSymbol;
 
@@ -1511,6 +1683,7 @@ window.toggleStatus = async function toggleStatus(userId, date, clickedCell) {
     } else {
         return;
     }
+    const nextSnapshot = createStatusSnapshot(status);
 
     // Hücre ikonunu güncelle
     cell.innerText = newSymbol;
@@ -1521,57 +1694,15 @@ window.toggleStatus = async function toggleStatus(userId, date, clickedCell) {
     // Sütun başlığındaki sayaçları güncelle
     updateDateColumnCounts(date, current, status);
 
-    // Tüm satırdaki hücrelerin renklerini yeniden hesapla
-    const rowEl = cell.closest('tr');
+    // Yalnızca değişen hücrenin durum sınıfını güncelle. Satırdaki diğer
+    // 41 gün zaten doğru durumda olduğu için yeniden taranmalarına gerek yoktur.
+    cell.classList.remove('green', 'pink', 'lila', 'red', 'empty');
+    if (status === 'okudum') cell.classList.add('green');
+    else if (status === 'okumadım') cell.classList.add('red');
+    else cell.classList.add('empty');
 
-    if (rowEl) {
-        const dateCells = rowEl.querySelectorAll('td[onclick*="toggleStatus"]');
-        // Cache'den güncel verileri al
-        const userStatsMap = getUserStatsFromCache(userId);
-
-        // Her hücrenin rengini güncelle
-        dateCells.forEach((dateCell) => {
-            const cellDate = dateCell.dataset.date;
-            const cellStatus = userStatsMap[cellDate];
-
-            // Eski sınıfları temizle
-            dateCell.classList.remove('green', 'pink', 'lila', 'red', 'empty');
-
-            // Yeni sınıfı belirle
-            if (cellStatus === 'okudum') {
-                dateCell.classList.add('green');
-            } else if (cellStatus === 'okumadım') {
-                dateCell.classList.add('red');
-            } else {
-                // Boş hücreler için empty sınıfı
-                dateCell.classList.add('empty');
-            }
-
-            // Bugün sınıfını koru
-            const today = new Date();
-            // UTC+3 saat dilimi ekle (Türkiye saati)
-            today.setHours(today.getHours() + 3);
-            const todayString = today.toISOString().split('T')[0];
-            if (cellDate === todayString) {
-                dateCell.classList.add('today-column');
-            }
-        });
-    }
-
-    // Önbellekteki okuma sayısını güncelle
-    const currentCount = userReadingCounts.get(userId) || 0;
-    let newCount = currentCount;
-
-    if (cellTextIsEmpty(current) && status === 'okudum') {
-        // Boş -> Okudum: +1
-        newCount = currentCount + 1;
-    } else if (cellTextIsOkudum(current) && status === 'okumadım') {
-        // Okudum -> Okumadım: -1
-        newCount = Math.max(0, currentCount - 1);
-    } else if (cellTextIsOkumadim(current) && status === '') {
-        // Okumadım -> Boş: değişiklik yok
-        newCount = currentCount;
-    }
+    // Önbellekteki okuma sayısını yalnızca durum farkı kadar güncelle.
+    adjustUserReadingCount(userId, previousSnapshot.status, status);
 
     // Kullanıcının serisini cache'den hesapla (veritabanına gitmeden)
     try {
@@ -1593,15 +1724,12 @@ window.toggleStatus = async function toggleStatus(userId, date, clickedCell) {
                     animateStreakIncrease(lastTd, oldStreak, newStreak, cell);
                 }
 
-                refreshStreakTotalInTable();
+                refreshStreakTotalInTable(oldStreak, newStreak);
             }
         }
     } catch (e) {
         console.error('Seri güncellenemedi:', e);
     }
-
-
-    userReadingCounts.set(userId, newCount);
 
     // Global store'u senkronize et
     try {
@@ -1612,21 +1740,13 @@ window.toggleStatus = async function toggleStatus(userId, date, clickedCell) {
         console.error('Global store güncellenemedi:', e);
     }
 
-    // Satır / footer Toplam Okuma (amount manuel tıklamada kalkar)
-    refreshAmountTotalsInTable();
+    // Yalnızca miktarlı bir okudum kaydı kaldırılıyorsa miktar toplamı değişir.
+    if (previousSnapshot.amount != null) refreshAmountTotalsInTable(userId);
 
-    schedulePostToggleUiRefresh();
+    schedulePostToggleUiRefresh(userId);
 
-    // Veri tabanı güncellemesini hemen yap
-    await fetch(`/api/update-status/${window.groupid}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            userId,
-            date,
-            status
-        })
-    });
+    // Aynı hücrenin hızlı güncellemelerini geliş sırası bozulmadan kaydet.
+    queueStatusUpdate(userId, date, status, cell, previousSnapshot, nextSnapshot);
 
     // Kullanıcı istatistik alanını güncelle (sadece okuma sayısı ve lig bilgisi)
     updateUserStatsArea();
@@ -1657,7 +1777,8 @@ function updateDateColumnCounts(date, prevSymbol, newStatus) {
         // Haftalık okuma başarı oranını güncelle (okundu / işaretli gün)
         const totalReadEl = document.getElementById('tfoot-total-read');
         if (totalReadEl) {
-            const weekStats = computeWeekMarkedReadFromTable();
+            const displayDates = getTimelineDisplayedDates(timelineReferenceDate || getTodayDateKey());
+            const weekStats = computeWeekMarkedReadStats(timelineLastUsers, timelineLastStatMap, displayDates);
             const weekReadSuccessText = formatWeekReadSuccessText(
                 weekStats.okudum,
                 weekStats.marked
@@ -1671,18 +1792,21 @@ function updateDateColumnCounts(date, prevSymbol, newStatus) {
 }
 
 /** Manuel tıklama sonrası Toplam Okuma satır/footer değerlerini store’dan yenile */
-function refreshAmountTotalsInTable() {
+function refreshAmountTotalsInTable(changedUserId) {
     try {
-        const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
-        const statsArray = Array.isArray(data.stats) ? data.stats : [];
-        const users = Array.isArray(data.users) ? data.users : [];
+        const store = window.globalDataStore;
+        const fallbackData = store ? null : { users: [], stats: [] };
+        const statsArray = store ? [] : fallbackData.stats;
+        const users = store && typeof store.getUsers === 'function' ? store.getUsers() : fallbackData.users;
         const seasonKey = getWeekSeasonKey(getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey()));
+        const changedId = changedUserId == null ? null : String(changedUserId);
+        const usersToRefresh = changedId
+            ? users.filter(user => String(user._id) === changedId)
+            : users;
 
-        let grand = 0;
-        users.forEach(function (user) {
+        usersToRefresh.forEach(function (user) {
             const seasonSum = sumUserAmounts(statsArray, user._id, seasonKey);
             const allTimeSum = sumUserAmounts(statsArray, user._id);
-            grand += seasonSum;
             const cell = trackerSummaryTable.querySelector(`td.col-total-amount[data-user-amount="${user._id}"]`);
             if (cell) {
                 cell.textContent = seasonSum > 0 ? `${seasonSum} ✔` : '-';
@@ -1696,6 +1820,12 @@ function refreshAmountTotalsInTable() {
             }
         });
 
+        let grand = 0;
+        trackerSummaryTable.querySelectorAll('tbody td.col-total-amount[data-user-amount]').forEach(function (cell) {
+            const amountMatch = String(cell.textContent || '').match(/-?\d+(?:[.,]\d+)?/);
+            const amount = amountMatch ? parseFiniteAmount(amountMatch[0]) : null;
+            if (amount != null) grand += amount;
+        });
         const footerAmount = document.getElementById('tfoot-total-amount');
         if (footerAmount) {
             footerAmount.textContent = `${grand} ✔`;
@@ -1707,22 +1837,27 @@ function refreshAmountTotalsInTable() {
 }
 
 /** Okuma serisi sütunu toplamını istatistik satırında yenile */
-function refreshStreakTotalInTable() {
+function refreshStreakTotalInTable(previousUserStreak, nextUserStreak) {
     try {
         const footerStreak = document.getElementById('tfoot-total-streak');
         if (!footerStreak || !trackerSummaryTable) return;
         let total = 0;
-        trackerSummaryTable.querySelectorAll('tbody tr.summary-user-row').forEach(function (row) {
-            const lastTd = row.querySelector('td.col-streak');
-            if (!lastTd) return;
-            const text = (lastTd.textContent || '').trim();
-            if (!text || text === '-') return;
-            total += parseInt(text.replace('⭐', '').trim(), 10) || 0;
-        });
+        if (Number.isFinite(previousUserStreak) && Number.isFinite(nextUserStreak)) {
+            const currentTotal = parseInt(String(footerStreak.textContent || '').replace('⭐', '').trim(), 10) || 0;
+            total = Math.max(0, currentTotal + nextUserStreak - previousUserStreak);
+        } else {
+            // İlk yükleme veya dışarıdan parametresiz çağrı için güvenli geri dönüş.
+            trackerSummaryTable.querySelectorAll('tbody tr.summary-user-row').forEach(function (row) {
+                const lastTd = row.querySelector('td.col-streak');
+                if (!lastTd) return;
+                const text = (lastTd.textContent || '').trim();
+                if (!text || text === '-') return;
+                total += parseInt(text.replace('⭐', '').trim(), 10) || 0;
+            });
+        }
         footerStreak.innerHTML = total > 0
             ? `<span class="weekly-fire-emoji">⭐</span> ${total}`
             : `<span class="weekly-fire-emoji">⭐</span> 0`;
-        scheduleTrackerSummaryRowSync();
     } catch (e) {
         console.error('Okuma serisi toplamı güncellenemedi:', e);
     }
@@ -1748,6 +1883,27 @@ function updateAllUserBackgroundColors() {
         });
     } catch (error) {
         console.error('Kullanıcı background renkleri güncellenemedi:', error);
+    }
+}
+
+function updateUserBackgroundColor(userId) {
+    if (userId == null) {
+        updateAllUserBackgroundColors();
+        return;
+    }
+    try {
+        const okudumDays = userReadingCounts.get(userId) || 0;
+        const league = LEAGUES.find(l => okudumDays >= l.min && okudumDays < l.max) || LEAGUES[LEAGUES.length - 1];
+        const userItem = trackerUsersTable.querySelector(`.user-item[data-user-id="${userId}"]`);
+        if (!userItem) return;
+        userItem.style.background = league.bg;
+        const meta = userItem.querySelector('.user-item-meta');
+        if (meta) {
+            const amountSum = Number(meta.getAttribute('data-amount')) || 0;
+            meta.textContent = formatUserItemMeta(league.name, amountSum);
+        }
+    } catch (error) {
+        console.error('Kullanıcı background rengi güncellenemedi:', error);
     }
 }
 
