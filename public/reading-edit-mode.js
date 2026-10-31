@@ -39,17 +39,21 @@
     }
   }
 
-  function scheduleTableModeMarkerUpdate() {
+  function scheduleReadingModeSideEffects() {
     var token = ++tableModePaintToken;
-    // Önce segment butonunun yeni aktif hali çizilsin. Büyük tablonun CSS
-    // eşleşmesi sonraki tarayıcı turunda güncellensin.
+    // Tıklama sırasında yalnızca aktif buton değişir. Diğer küçük arayüz
+    // işleri yeni renk ekrana çizildikten sonra tek seferde çalışır.
     runAfterNextPaint(function () {
       if (token !== tableModePaintToken) return;
       updateTableModeMarker();
+      updateHint();
+      if (window.readingEditMode !== 'amount' && amountEditState) {
+        cancelAmountCellEdit();
+      }
     });
   }
 
-  function updateSegmentButtons(options) {
+  function updateSegmentButtons() {
     var defaultBtn = $('readingEditModeDefault');
     var statusBtn = $('readingEditModeStatus');
     var amountBtn = $('readingEditModeAmount');
@@ -64,15 +68,6 @@
     if (amountBtn) {
       amountBtn.classList.toggle('is-active', window.readingEditMode === 'amount');
       amountBtn.setAttribute('aria-pressed', window.readingEditMode === 'amount' ? 'true' : 'false');
-    }
-    if (options && options.skipTableMarker) {
-      return;
-    }
-    if (options && options.immediateTableMarker) {
-      tableModePaintToken += 1;
-      updateTableModeMarker();
-    } else {
-      scheduleTableModeMarkerUpdate();
     }
   }
 
@@ -123,18 +118,10 @@
 
   function setReadingEditMode(mode) {
     var next = mode === 'status' || mode === 'amount' || mode === 'default' ? mode : 'default';
-    var previous = window.readingEditMode;
-    if (previous === next) return;
+    if (window.readingEditMode === next) return;
     window.readingEditMode = next;
-    updateSegmentButtons({
-      // Durum ve Miktar aynı tablo imlecini kullanır. Bu iki mod arasında
-      // geçerken binlerce hücrenin CSS eşleşmesine hiç dokunma.
-      skipTableMarker: previous !== 'default' && next !== 'default'
-    });
-    updateHint();
-    if (previous === 'amount' && next !== 'amount') {
-      cancelAmountCellEdit();
-    }
+    updateSegmentButtons();
+    scheduleReadingModeSideEffects();
   }
 
   window.setReadingEditMode = setReadingEditMode;
@@ -281,7 +268,6 @@
         window.setTimeout(function () {
           if (!amountEditState || amountEditState.input !== input) return;
           if (window.getReadingEditMode() !== 'amount') {
-            cancelAmountCellEdit();
             return;
           }
           var buf = String(amountEditState.buffer || input.value || '').trim();
@@ -548,6 +534,7 @@
     }
     document.addEventListener('keydown', onAmountKeydown, true);
     updateSegmentButtons();
+    updateTableModeMarker();
     updateHint();
     window.syncReadingEditModeBarVisibility();
   }
