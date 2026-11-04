@@ -263,10 +263,14 @@
         }
       });
       input.addEventListener('blur', function () {
+        var blurredEditState = amountEditState;
         // Mod düğmesinin click olayı blur'dan sonra çalışır. Kararı bir sonraki
         // göreve bırakarak mod değişiminde taslağın yanlışlıkla kaydedilmesini önle.
         window.setTimeout(function () {
-          if (!amountEditState || amountEditState.input !== input) return;
+          // Bu sırada başka bir hücre açılmış olabilir. Paylaşılan overlay input'u
+          // yeni hücre için de kullanıldığı için yalnızca input'u karşılaştırmak,
+          // hızlı ikinci tıklamadaki yeni düzenlemeyi yanlışlıkla kapatıyordu.
+          if (!blurredEditState || amountEditState !== blurredEditState) return;
           if (window.getReadingEditMode() !== 'amount') {
             return;
           }
