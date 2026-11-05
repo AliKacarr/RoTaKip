@@ -439,10 +439,31 @@ ul#passiveUserList li span {
     background-color: #d9363e;
 }
 
+.member-records-form {
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 25px;
+    padding: 24px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.member-records-form .form-group-label {
+    color: #34495e;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #3498db;
+    font-size: 20px;
+    font-weight: 600;
+}
+
 /* Kullanıcı Ekleme Formu - Site Temasına Uygun */
 #newUserForm {
     position: relative;
     padding: 24px;
+    padding-bottom: 28px;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border-radius: 12px;
     border: 1px solid #e1e8ed;
@@ -450,7 +471,7 @@ ul#passiveUserList li span {
     margin-bottom: 25px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    margin-bottom: 4px;
     align-items: center;
     max-width: 100%;
 }
@@ -480,10 +501,15 @@ ul#passiveUserList li span {
     min-width: 301px;
     max-width: 301px;
     box-sizing: border-box;
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    margin-top: 24px;
+}
+
+.form-right-column.is-visible {
+    display: flex;
 }
 
 .add-user-form-group label {
@@ -583,7 +609,7 @@ ul#passiveUserList li span {
 }
 
 #newUserInput::placeholder {
-    color: #aaa;
+    color: #787878;
     font-style: italic;
 }
 
@@ -1452,6 +1478,15 @@ input[type="file"] {
     transform: translateY(-2px);
 }
 
+.save-group-btn.has-unsaved-changes {
+    background-color: #229954;
+    box-shadow: 0 3px 10px rgba(230, 162, 60, 0.3);
+}
+
+.save-group-btn.has-unsaved-changes:hover {
+    box-shadow: 0 4px 12px rgba(230, 162, 60, 0.4);
+}
+
 .save-group-btn:active {
     transform: scale(0.98);
     background-color: #229954;
@@ -1867,4 +1902,16 @@ input[type="file"] {
     font-size: 16px;
     font-style: italic;
     margin-left: 8px;
+}
+
+#passiveUserListEmpty {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 400px;
+    min-width: 0;
+    margin-left: 0;
+    padding: 0 8px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.45;
 }

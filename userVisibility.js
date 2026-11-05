@@ -22,6 +22,10 @@ function activeAdminQuery() {
   return { authority: 'admin', ...activeUserQuery() };
 }
 
+function activeMemberQuery() {
+  return { authority: 'member', ...activeUserQuery() };
+}
+
 function isActiveUser(user) {
   return normalizeUserVisibility(user?.visibility) === USER_VISIBILITY_ACTIVE;
 }
@@ -31,6 +35,7 @@ module.exports = {
   USER_VISIBILITY_PASSIVE,
   VALID_USER_VISIBILITIES,
   activeAdminQuery,
+  activeMemberQuery,
   activeUserQuery,
   isActiveUser,
   normalizeUserVisibility

@@ -642,10 +642,10 @@ class GroupsPage {
         
         if (visibilitySelect.value === 'public') {
             visibilityIcon.className = 'fas fa-eye input-icon';
-            if (infoSpan) infoSpan.textContent = 'Herkes bu grubu görüntüleyebilir';
+            if (infoSpan) infoSpan.textContent = 'Herkes bu grubu görüntüleyebilir.';
         } else if (visibilitySelect.value === 'private') {
             visibilityIcon.className = 'fas fa-eye-slash input-icon';
-            if (infoSpan) infoSpan.textContent = 'Sadece üyeler grubu görüntüleyebilir';
+            if (infoSpan) infoSpan.textContent = 'Sadece üyeler grubu görüntüleyebilir.';
         }
     }
 
@@ -802,8 +802,6 @@ class GroupsPage {
         const groupImageInput = document.getElementById('groupImageInput');
         const adminProfileImageInput = document.getElementById('adminProfileImageInput');
         const visibility = document.getElementById('groupVisibilityInput').value;
-        const autoMarkUnreadInput = document.getElementById('autoMarkUnreadInput');
-        const autoMarkUnread = autoMarkUnreadInput ? autoMarkUnreadInput.value : 'true';
 
         // Karakter limiti kontrolü
         const errors = [];
@@ -858,7 +856,6 @@ class GroupsPage {
         formData.append('adminName', adminName);
         formData.append('adminPassword', adminPassword);
         formData.append('visibility', visibility);
-        formData.append('autoMarkUnread', autoMarkUnread);
         
         // Grup resmi
         if (this.selectedAvatarPath) {

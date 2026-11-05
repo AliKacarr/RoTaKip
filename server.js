@@ -33,10 +33,21 @@ const {
   USER_VISIBILITY_PASSIVE,
   VALID_USER_VISIBILITIES,
   activeAdminQuery,
+  activeMemberQuery,
   activeUserQuery,
   isActiveUser,
   normalizeUserVisibility
 } = require('./userVisibility');
+const {
+  INACTIVE_MEMBER_ACTION_DELETE,
+  INACTIVE_MEMBER_ACTION_NONE,
+  INACTIVE_MEMBER_ACTION_PASSIVE,
+  VALID_INACTIVE_MEMBER_ACTIONS,
+  calculateConsecutiveMissedDays,
+  normalizeInactiveMemberAction
+} = require('./inactiveMemberPolicy');
+const { deleteGroupUser, passivateGroupUser } = require('./groupUserLifecycle');
+const { runDailyReadingMaintenance } = require('./dailyReadingMaintenance');
 const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 
 const app = express();
@@ -969,6 +980,11 @@ const UserGroup = mongoose.model('UserGroup', {
   groupImage: { type: String, default: null },
   visibility: { type: String, default: 'public' },
   autoMarkUnread: { type: Boolean, default: true },
+  inactiveMemberAction: {
+    type: String,
+    enum: [...VALID_INACTIVE_MEMBER_ACTIONS],
+    default: INACTIVE_MEMBER_ACTION_NONE
+  },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -1144,7 +1160,12 @@ app.get('/api/group/:groupId', async (req, res) => {
       return res.status(404).json({ error: 'Grup bulunamadı' });
     }
 
-    res.json({ group });
+    res.json({
+      group: {
+        ...group,
+        inactiveMemberAction: normalizeInactiveMemberAction(group.inactiveMemberAction)
+      }
+    });
   } catch (error) {
     console.error('Error fetching group:', error);
     res.status(500).json({ error: 'Server error' });
@@ -1320,6 +1341,7 @@ app.post('/api/groups', accountCreationLimiter, uploadGroupImage.fields([
       groupImage: groupImageUrl,
       visibility: visibility || 'public',
       autoMarkUnread,
+      inactiveMemberAction: INACTIVE_MEMBER_ACTION_NONE,
       createdAt: new Date()
     });
 
@@ -1423,9 +1445,10 @@ app.get('/api/groups/:groupId/member-count', requireReadableGroup, async (req, r
 app.post('/api/update-group/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { groupName, description, visibility, autoMarkUnread } = req.body;
+    const { groupName, description, visibility, autoMarkUnread, inactiveMemberAction } = req.body;
     if (!isValidText(groupName, 40) || !isValidText(description || '', 200, { allowEmpty: true }) ||
-        !['public', 'private'].includes(visibility)) {
+        !['public', 'private'].includes(visibility) ||
+        (inactiveMemberAction !== undefined && !VALID_INACTIVE_MEMBER_ACTIONS.has(inactiveMemberAction))) {
       return res.status(400).json({ error: 'Grup bilgileri geçersiz' });
     }
 
@@ -1443,6 +1466,9 @@ app.post('/api/update-group/:groupId', requireGroupAdmin, async (req, res) => {
     if (autoMarkUnread !== undefined) {
       updateFields.autoMarkUnread = (autoMarkUnread === 'true' || autoMarkUnread === true);
     }
+    if (inactiveMemberAction !== undefined) {
+      updateFields.inactiveMemberAction = inactiveMemberAction;
+    }
 
     // Grup bilgilerini güncelle
     const updatedGroup = await UserGroup.findOneAndUpdate(
@@ -1455,6 +1481,33 @@ app.post('/api/update-group/:groupId', requireGroupAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating group:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Zamanlanmış grup ayarlarını diğer grup alanlarından bağımsız güncelle.
+app.post('/api/update-group-automation/:groupId', requireGroupAdmin, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { autoMarkUnread, inactiveMemberAction } = req.body;
+
+    if (typeof autoMarkUnread !== 'boolean' ||
+        !VALID_INACTIVE_MEMBER_ACTIONS.has(inactiveMemberAction)) {
+      return res.status(400).json({ error: 'Zamanlanmış grup ayarları geçersiz' });
+    }
+
+    const updatedGroup = await UserGroup.findOneAndUpdate(
+      { groupId },
+      { autoMarkUnread, inactiveMemberAction },
+      { returnDocument: 'after' }
+    );
+    if (!updatedGroup) {
+      return res.status(404).json({ error: 'Grup bulunamadı' });
+    }
+
+    res.json({ success: true, group: updatedGroup });
+  } catch (error) {
+    console.error('Zamanlanmış grup ayarları güncellenemedi:', error);
+    res.status(500).json({ error: 'Zamanlanmış grup ayarları güncellenemedi' });
   }
 });
 
@@ -1998,6 +2051,40 @@ async function invalidateGroupSessions(groupId) {
   );
 }
 
+function deleteUserProfileImage(profileImage) {
+  if (!isDropboxHostedUrl(profileImage)) return Promise.resolve();
+  return deleteFromDropboxByUrl(profileImage);
+}
+
+function deleteUserWithRelatedData({ groupId, user, users, readingStatuses, userFilter }) {
+  return deleteGroupUser({
+    user,
+    userFilter,
+    users,
+    readingStatuses,
+    invalidateSessions: userId => invalidateUserSessions(groupId, userId),
+    deleteInvites: userId => Invite.deleteMany({ groupId, userId }),
+    deleteProfileImage: deleteUserProfileImage
+  });
+}
+
+function passivateUserWithAccessCleanup({ groupId, user, users, userFilter }) {
+  return passivateGroupUser({
+    user,
+    userFilter,
+    users,
+    passiveVisibility: USER_VISIBILITY_PASSIVE,
+    invalidateSessions: userId => invalidateUserSessions(groupId, userId),
+    deleteInvites: userId => Invite.deleteMany({ groupId, userId })
+  });
+}
+
+function logUserCleanupErrors(context, cleanupErrors) {
+  for (const error of cleanupErrors) {
+    console.error(`${context}:`, error);
+  }
+}
+
 // Aynı grupta hızlıca yapılan yetki/görünürlük/silme işlemlerinin birlikte
 // son aktif yöneticiyi ortadan kaldırmasını engellemek için sıraya al.
 const groupUserMutationLocks = new Map();
@@ -2062,6 +2149,7 @@ app.get('/api/auth/memberships', async (req, res) => {
         groupImage: group.groupImage,
         visibility: group.visibility,
         autoMarkUnread: group.autoMarkUnread,
+        inactiveMemberAction: normalizeInactiveMemberAction(group.inactiveMemberAction),
         memberCount: await users.countDocuments(activeUserQuery())
       };
     }));
@@ -2090,7 +2178,13 @@ app.get('/api/auth/me/:groupId', requireGroupAuth, async (req, res) => {
 
     setSessionMembership(req, groupId, user);
     await saveSession(req);
-    res.json({ user: safeUser(user, true), group });
+    res.json({
+      user: safeUser(user, true),
+      group: {
+        ...group,
+        inactiveMemberAction: normalizeInactiveMemberAction(group.inactiveMemberAction)
+      }
+    });
   } catch (error) {
     console.error('Oturum doğrulanamadı:', error);
     res.status(500).json({ error: 'Oturum doğrulanamadı' });
@@ -2382,22 +2476,19 @@ app.post('/api/delete-user/:groupId', requireSelfOrAdmin, async (req, res) => {
       });
     }
 
-    // Yetkili oturum kalmaması için önce oturumları geçersizleştir.
-    await invalidateUserSessions(groupId, id);
-    await users.findByIdAndDelete(id);
+    const deletionResult = await deleteUserWithRelatedData({
+      groupId,
+      user,
+      users,
+      readingStatuses
+    });
+    if (!deletionResult.applied) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
     if (String(req.auth.userId) === String(id)) {
       delete req.session.memberships[groupId];
     }
-
-    // Ana kayıt silindi; ikincil verilerin temizlenememesi canlı kullanıcıyı bozmamalı.
-    await readingStatuses.deleteMany({ userId: id }).catch(error =>
-      console.error('Silinen kullanıcının okuma kayıtları temizlenemedi:', error)
-    );
-    if (isDropboxHostedUrl(user.profileImage)) {
-      await deleteFromDropboxByUrl(user.profileImage).catch(error =>
-        console.error('Silinen kullanıcının Dropbox resmi temizlenemedi:', error)
-      );
-    }
+    logUserCleanupErrors('Silinen kullanıcının ilişkili verileri tamamen temizlenemedi', deletionResult.cleanupErrors);
 
     res.json({ success: true });
   } catch (err) {
@@ -2549,20 +2640,27 @@ app.post('/api/update-user-visibility/:groupId', requireGroupAdmin, async (req, 
       }
     }
 
-    const updatedUser = await users.findByIdAndUpdate(
-      userId,
-      { visibility },
-      { returnDocument: 'after' }
-    );
-
+    let updatedUser;
     if (visibility === USER_VISIBILITY_PASSIVE) {
-      await Promise.all([
-        invalidateUserSessions(groupId, userId),
-        Invite.deleteMany({ groupId, userId: String(userId) })
-      ]);
+      const passivationResult = await passivateUserWithAccessCleanup({
+        groupId,
+        user,
+        users
+      });
+      if (!passivationResult.applied) {
+        return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+      }
+      updatedUser = passivationResult.user;
+      logUserCleanupErrors('Pasife alınan kullanıcının erişim verileri tamamen temizlenemedi', passivationResult.cleanupErrors);
       if (String(req.auth.userId) === String(userId)) {
         delete req.session.memberships[groupId];
       }
+    } else {
+      updatedUser = await users.findByIdAndUpdate(
+        userId,
+        { visibility },
+        { returnDocument: 'after' }
+      );
     }
 
     res.json({
@@ -4930,8 +5028,6 @@ async function seedFakeReadingDataForTestGroups() {
 
   console.log(`🏁 [TestSeeder] Tamamlandı! Eklenen: ${totalInserted}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`);
 
-  // Test grubuna veri attıktan sonra geri kalan tüm gerçek gruplara otomatik işlem yap
-  await processMissingReadingStatusesForRealGroups();
 }
 
 // Gerçek gruplarda düne ait okuma kaydı olmayan aktif kullanıcılara 'okumadım' ekleyen fonksiyon
@@ -5001,12 +5097,122 @@ async function processMissingReadingStatusesForRealGroups() {
   console.log(`🏁 [AutoUnreadProcessor] Tamamlandı! Eklenen: ${totalInserted}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`);
 }
 
+async function processInactiveMembers() {
+  console.log('🔎 [InactiveMemberProcessor] 15 gündür okumayan aktif üyeler denetleniyor...');
+
+  const today = istanbulDateKey();
+  const threshold = 15;
+  let totalDeleted = 0;
+  let totalPassivated = 0;
+  let totalSkipped = 0;
+  let totalErrors = 0;
+
+  try {
+    const configuredGroups = await UserGroup.find({
+      inactiveMemberAction: {
+        $in: [INACTIVE_MEMBER_ACTION_DELETE, INACTIVE_MEMBER_ACTION_PASSIVE]
+      }
+    }).lean();
+
+    for (const group of configuredGroups) {
+      const action = normalizeInactiveMemberAction(group.inactiveMemberAction);
+
+      try {
+        const { users, readingStatuses } = getGroupCollections(group.groupId);
+        const activeMembers = await users.find(activeMemberQuery()).lean();
+
+        for (const user of activeMembers) {
+          let releaseUserMutationLock;
+          try {
+            const readingHistory = await readingStatuses
+              .find({ userId: String(user._id), date: { $lte: today } })
+              .select('date status -_id')
+              .lean();
+            const missedDays = calculateConsecutiveMissedDays(readingHistory, today);
+
+            if (missedDays < threshold) {
+              totalSkipped++;
+              continue;
+            }
+
+            releaseUserMutationLock = await acquireGroupUserMutationLock(group.groupId);
+            const userFilter = {
+              _id: user._id,
+              ...activeMemberQuery()
+            };
+
+            if (action === INACTIVE_MEMBER_ACTION_DELETE) {
+              const result = await deleteUserWithRelatedData({
+                groupId: group.groupId,
+                user,
+                users,
+                readingStatuses,
+                userFilter
+              });
+              if (!result.applied) {
+                totalSkipped++;
+                continue;
+              }
+              totalDeleted++;
+              totalErrors += result.cleanupErrors.length;
+              logUserCleanupErrors(
+                `[InactiveMemberProcessor] ${group.groupId}/${user._id} silme temizliği tamamlanamadı`,
+                result.cleanupErrors
+              );
+            } else if (action === INACTIVE_MEMBER_ACTION_PASSIVE) {
+              const result = await passivateUserWithAccessCleanup({
+                groupId: group.groupId,
+                user,
+                users,
+                userFilter
+              });
+              if (!result.applied) {
+                totalSkipped++;
+                continue;
+              }
+              totalPassivated++;
+              totalErrors += result.cleanupErrors.length;
+              logUserCleanupErrors(
+                `[InactiveMemberProcessor] ${group.groupId}/${user._id} pasife alma temizliği tamamlanamadı`,
+                result.cleanupErrors
+              );
+            }
+          } catch (userError) {
+            totalErrors++;
+            console.error(
+              `❌ [InactiveMemberProcessor] ${group.groupId} kullanıcı hatası (${user._id}):`,
+              userError.message
+            );
+          } finally {
+            releaseUserMutationLock?.();
+          }
+        }
+      } catch (groupError) {
+        totalErrors++;
+        console.error(`❌ [InactiveMemberProcessor] ${group.groupId} grup hatası:`, groupError.message);
+      }
+    }
+  } catch (error) {
+    totalErrors++;
+    console.error('❌ [InactiveMemberProcessor] Grupları çekme hatası:', error.message);
+  }
+
+  console.log(
+    `🏁 [InactiveMemberProcessor] Tamamlandı! Silinen: ${totalDeleted}, ` +
+    `Pasife alınan: ${totalPassivated}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`
+  );
+}
+
 // Test grubu sahte veri zamanlayıcısını başlat
 function scheduleTestGroupSeeder() {
   // Her gün saat 06:00'da çalış (Europe/Istanbul)
   const seederJob = schedule.scheduleJob({ rule: '0 6 * * *', tz: 'Europe/Istanbul' }, async () => {
     console.log('⏰ [TestSeeder] 06:00 - Sahte okuma verisi ekleme tetiklendi.');
-    await seedFakeReadingDataForTestGroups();
+    await runDailyReadingMaintenance({
+      seedTestData: seedFakeReadingDataForTestGroups,
+      processMissingStatuses: processMissingReadingStatusesForRealGroups,
+      processInactiveMembers
+    });
   });
 
   console.log('✅ Test grubu sahte veri zamanlayıcısı başlatıldı (Her gün 06:00, Europe/Istanbul).');

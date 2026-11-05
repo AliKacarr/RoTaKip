@@ -11,7 +11,7 @@
   <link rel="icon" href="/images/favicon.webp" type="image/x-icon" />
   <title id="page-title">RoTaKip</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="groups.min.css?v=0877b07bff29" />
+  <link rel="stylesheet" href="groups.min.css?v=740065bc6ba6" />
 
 </head>
 
@@ -1314,7 +1314,7 @@
                     </div>
                     <div class="visibility-info" id="visibilityInfo">
                       <i class="fa-solid fa-info-circle"></i>
-                      <span>Herkes bu grubu görüntüleyebilir</span>
+                      <span>Herkes bu grubu görüntüleyebilir.</span>
                     </div>
                   </div>
                 </div>
@@ -1361,17 +1361,22 @@
                   </div>
                 </form>
 
-                <form class="form-group">
-                  <div class="form-group-label"><i class="fa-solid fa-clipboard-list"></i> Üye Kayıtları:</div>
-                  <button type="button" class="group-link-btn" onclick="window.location.href='/access-logs.html?groupId=' + encodeURIComponent(window.groupid)">
-                    <i class="fa-solid fa-history"></i>
-                    <span>Son İşlemler</span>
-                  </button>
-                  <button type="button" class="group-link-btn" onclick="window.location.href='/login-logs.html?groupId=' + encodeURIComponent(window.groupid)">
-                    <i class="fa-solid fa-font-awesome"></i>
-                    <span>Giriş Kayıtları</span>
-                  </button>
-                </form>
+                <div class="form-group">
+                  <div class="form-group-label">Art arda 15 Gün Okumayan Üyeler:</div>
+                  <div class="visibility-container">
+                    <i class="fa-solid fa-circle-pause visibility-icon public" id="inactiveMemberActionIcon"></i>
+                    <select id="inactiveMemberActionSelect" name="inactiveMemberAction" class="group-select"
+                      style="width: 100%; cursor: pointer;">
+                      <option value="none">Kapalı</option>
+                      <option value="delete">Otomatik Sil</option>
+                      <option value="passive">Otomatik Pasife Al</option>
+                    </select>
+                  </div>
+                  <div class="visibility-info public" id="inactiveMemberActionInfo">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Okumayanlar için otomatik işlem kapalı.</span>
+                  </div>
+                </div>
 
                 <div class="group-action-buttons">
                   <button type="button" class="danger-toggle-btn">
@@ -1432,7 +1437,7 @@
                   Pasif Kullanıcılar</h3>
                 <ul id="passiveUserList" class="managed-user-list" hidden></ul>
                 <div id="passiveUserListEmpty" class="no-join-requests">
-                  <i class="fa-solid fa-exclamation-circle"></i> Pasif kullanıcı bulunmamakta.
+                  <i class="fa-solid fa-exclamation-circle"></i> Kullanıcıları gizlemek veya yeniden görünür yapmak için Aktif/Pasif seçeneğini kullanabilirsiniz.
                 </div>
               </section>
             </div>
@@ -1441,6 +1446,17 @@
         </div>
 
         <div class="right-column">
+          <div class="form-group member-records-form">
+            <div class="form-group-label"><i class="fa-solid fa-clipboard-list"></i> Kullanıcı Etkinlikleri:</div>
+            <button type="button" class="group-link-btn" onclick="window.location.href='/access-logs.html?groupId=' + encodeURIComponent(window.groupid)">
+              <i class="fa-solid fa-history"></i>
+              <span>Son İşlemler</span>
+            </button>
+            <button type="button" class="group-link-btn" onclick="window.location.href='/login-logs.html?groupId=' + encodeURIComponent(window.groupid)">
+              <i class="fa-solid fa-font-awesome"></i>
+              <span>Giriş Kayıtları</span>
+            </button>
+          </div>
           <!-- Add the Add User section -->
           <form id="newUserForm" enctype="multipart/form-data">
             <div class="form-left-column">
@@ -1957,7 +1973,7 @@
     </div>
   </div>
 
-  <script src="groups.min.js?v=9d6fb3c3abda"></script>
+  <script src="groups.min.js?v=3c9269932667"></script>
 
 </body>
 

@@ -136,7 +136,7 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
         if (uploadBtn) {
             uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
         }
-        imagePreviewContainer.style.display = 'none';
+        setImagePreviewVisible(false);
 
         // Input-profile-image'i varsayılan resme döndür
         inputProfileImage.src = '/images/default.png';
@@ -501,6 +501,16 @@ const imagePreviewContainer = document.getElementById('imagePreviewContainer');
 const closePreviewButton = document.getElementById('closePreview');
 const inputProfileImage = document.getElementById('imagePreview'); // imagePreview element'ini kullan
 
+function setImagePreviewVisible(isVisible) {
+    if (!imagePreviewContainer) return;
+
+    imagePreviewContainer.style.display = isVisible ? 'flex' : 'none';
+    const previewColumn = imagePreviewContainer.closest('.form-right-column');
+    if (previewColumn) {
+        previewColumn.classList.toggle('is-visible', isVisible);
+    }
+}
+
 // Add User Avatar Selection
 let selectedAddUserAvatarPath = null; // Kullanıcı ekleme için seçilen avatar yolu
 let avatarSelectionContext = { mode: 'add-user', userId: null }; // add-user | existing-user
@@ -548,9 +558,7 @@ if (addUserRemoveBtn) {
         selectedAddUserAvatarPath = null;
 
         // Resim önizleme container'ını gizle
-        if (imagePreviewContainer) {
-            imagePreviewContainer.style.display = 'none';
-        }
+        setImagePreviewVisible(false);
 
         // Buton metnini sıfırla
         if (uploadBtn) {
@@ -581,7 +589,7 @@ if (addUserInputProfileImage) {
 }
 
 function resetImagePreview() {    // Resim önizleme kapatma fonksiyonu
-    imagePreviewContainer.style.display = 'none';
+    setImagePreviewVisible(false);
     if (uploadBtn) {
         uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
     }
@@ -621,7 +629,7 @@ if (profileImageInput) {
             reader.onload = function (e) {
                 // Ana önizleme alanını güncelle
                 imagePreview.src = e.target.result;
-                imagePreviewContainer.style.display = 'flex';
+                setImagePreviewVisible(true);
 
                 // Input-profile-image'i güncelle
                 inputProfileImage.src = e.target.result;
@@ -1244,6 +1252,13 @@ async function loadGroupSettings() {
             if (autoMarkUnreadSelect) {
                 autoMarkUnreadSelect.value = group.autoMarkUnread !== false ? 'true' : 'false';
             }
+            const inactiveMemberActionSelect = document.getElementById('inactiveMemberActionSelect');
+            const inactiveMemberAction = ['delete', 'passive'].includes(group.inactiveMemberAction)
+                ? group.inactiveMemberAction
+                : 'none';
+            if (inactiveMemberActionSelect) {
+                inactiveMemberActionSelect.value = inactiveMemberAction;
+            }
 
             // Grup resmini ayarla
             const groupImage = document.getElementById('currentGroupImage');
@@ -1260,6 +1275,8 @@ async function loadGroupSettings() {
             // Görünürlük ve otomatik okumadı ikonlarını güncelle
             updateVisibilityIcon(group.visibility || 'public');
             updateAutoMarkUnreadIcon(group.autoMarkUnread !== false);
+            updateInactiveMemberActionIcon(inactiveMemberAction);
+            captureSavedGroupSettings();
         }
     } catch (error) {
         console.error('Grup ayarları yüklenirken hata:', error);
@@ -1304,10 +1321,10 @@ function updateVisibilityIcon(visibility) {
     // İkonu değiştir
     if (visibility === 'public') {
         icon.className = 'fa-solid fa-eye visibility-icon public';
-        if (infoSpan) infoSpan.textContent = 'Herkes bu grubu görüntüleyebilir';
+        if (infoSpan) infoSpan.textContent = 'Herkes bu grubu görüntüleyebilir.';
     } else {
         icon.className = 'fa-solid fa-eye-slash visibility-icon private';
-        if (infoSpan) infoSpan.textContent = 'Sadece üyeler grubu görüntüleyebilir';
+        if (infoSpan) infoSpan.textContent = 'Sadece üyeler grubu görüntüleyebilir.';
     }
 }
 
@@ -1327,12 +1344,105 @@ function updateAutoMarkUnreadIcon(isAutoMark) {
     if (isActive) {
         icon.className = 'fa-solid fa-user-clock visibility-icon public';
         if (info) info.classList.add('public');
-        if (infoSpan) infoSpan.textContent = 'Okumayanlar sabah 06:00\'da işaretlenir.';
+        if (infoSpan) infoSpan.textContent = 'Okumayanlar her sabah 06:00\'da işaretlenir.';
     } else {
         icon.className = 'fa-solid fa-user-slash visibility-icon private';
         if (info) info.classList.add('private');
         if (infoSpan) infoSpan.textContent = 'Okumayanları otomatik işaretleme kapalı.';
     }
+}
+
+function updateInactiveMemberActionIcon(action) {
+    const icon = document.getElementById('inactiveMemberActionIcon');
+    const info = document.getElementById('inactiveMemberActionInfo');
+    const infoSpan = info ? info.querySelector('span') : null;
+
+    if (!icon) return;
+
+    icon.classList.remove('public', 'private');
+    if (info) info.classList.remove('public', 'private');
+
+    if (action === 'delete') {
+        icon.className = 'fa-solid fa-user-xmark visibility-icon private';
+        if (info) info.classList.add('private');
+        if (infoSpan) infoSpan.textContent = 'Bu üyeler gruptan kalıcı olarak silinir.';
+    } else if (action === 'passive') {
+        icon.className = 'fa-solid fa-user-slash visibility-icon private';
+        if (info) info.classList.add('private');
+        if (infoSpan) infoSpan.textContent = 'Bu üyelerin görünürlüğü pasif olarak değiştirilir.';
+    } else {
+        icon.className = 'fa-solid fa-circle-pause visibility-icon public';
+        if (info) info.classList.add('public');
+        if (infoSpan) infoSpan.textContent = 'Okumayanlar için otomatik işlem kapalı.';
+    }
+}
+
+let automationSettingsSaveTimer = null;
+let automationSettingsSaveChain = Promise.resolve();
+
+function getScheduledSettingSuccessMessage(changedSetting, settings) {
+    if (changedSetting === 'autoMarkUnread') {
+        return settings.autoMarkUnread
+            ? 'Otomatik "✖" İşaretleme Aktif'
+            : 'Otomatik "✖" İşaretleme Pasif';
+    }
+
+    if (settings.inactiveMemberAction === 'delete') {
+        return 'Okumayan Üyeleri Otomatik Silme Aktif';
+    }
+    if (settings.inactiveMemberAction === 'passive') {
+        return 'Okumayan Üyeleri Otomatik Pasife Alma Aktif';
+    }
+    return 'Okumayan Üyeler Otomasyonu Kapalı';
+}
+
+async function saveAutomationSettings(settings, successMessage) {
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/update-group-automation/${window.groupid}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Ayarlar kaydedilemedi');
+        }
+
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('grup_ayarlarindan_zamanlanmis_ayarlari_degistirme');
+        }
+        showSuccessMessage(successMessage);
+    } catch (error) {
+        console.error('Zamanlanmış grup ayarları kaydetme hatası:', error);
+        showErrorMessage('Ayar kaydedilemedi!');
+    }
+}
+
+function scheduleAutomationSettingsSave(changedSetting) {
+    clearTimeout(automationSettingsSaveTimer);
+    automationSettingsSaveTimer = setTimeout(() => {
+        const autoMarkUnreadSelect = document.getElementById('autoMarkUnreadSelect');
+        const inactiveMemberActionSelect = document.getElementById('inactiveMemberActionSelect');
+        if (!autoMarkUnreadSelect || !inactiveMemberActionSelect) return;
+
+        const settings = {
+            autoMarkUnread: autoMarkUnreadSelect.value === 'true',
+            inactiveMemberAction: inactiveMemberActionSelect.value
+        };
+        const successMessage = getScheduledSettingSuccessMessage(changedSetting, settings);
+        automationSettingsSaveChain = automationSettingsSaveChain.then(
+            () => saveAutomationSettings(settings, successMessage),
+            () => saveAutomationSettings(settings, successMessage)
+        );
+    }, 300);
 }
 
 // Hazır görseller modal'ını aç/kapat
@@ -1458,6 +1568,44 @@ async function updateGroupImageFromAvatar(avatarPath) {
     }
 }
 
+let savedGroupSettings = null;
+
+function readGroupSettingsThatRequireSave() {
+    const groupNameInput = document.getElementById('groupName');
+    const groupDescriptionInput = document.getElementById('groupDescription');
+    const groupVisibilitySelect = document.getElementById('groupVisibility');
+    if (!groupNameInput || !groupDescriptionInput || !groupVisibilitySelect) return null;
+
+    return {
+        groupName: groupNameInput.value.trim(),
+        description: groupDescriptionInput.value.trim(),
+        visibility: groupVisibilitySelect.value
+    };
+}
+
+function setGroupSettingsDirty(isDirty) {
+    const saveBtn = document.querySelector('.save-group-btn');
+    if (!saveBtn) return;
+
+    saveBtn.classList.toggle('has-unsaved-changes', isDirty);
+    saveBtn.title = isDirty ? 'Kaydedilmemiş grup ayarları var' : '';
+}
+
+function captureSavedGroupSettings() {
+    savedGroupSettings = readGroupSettingsThatRequireSave();
+    setGroupSettingsDirty(false);
+}
+
+function updateGroupSettingsDirtyState() {
+    const currentSettings = readGroupSettingsThatRequireSave();
+    if (!currentSettings || !savedGroupSettings) return;
+
+    const isDirty = Object.keys(savedGroupSettings).some(
+        key => currentSettings[key] !== savedGroupSettings[key]
+    );
+    setGroupSettingsDirty(isDirty);
+}
+
 // Grup ayarlarını kaydet
 async function saveGroupSettings() {
     if (typeof window.logActionForAudit === 'function') {
@@ -1478,6 +1626,10 @@ async function saveGroupSettings() {
     const groupVisibility = document.getElementById('groupVisibility').value;
     const autoMarkUnreadSelect = document.getElementById('autoMarkUnreadSelect');
     const autoMarkUnread = autoMarkUnreadSelect ? (autoMarkUnreadSelect.value === 'true') : true;
+    const inactiveMemberActionSelect = document.getElementById('inactiveMemberActionSelect');
+    const inactiveMemberAction = inactiveMemberActionSelect
+        ? inactiveMemberActionSelect.value
+        : 'none';
 
     if (!groupName) {
         showErrorMessage('Grup adı boş olamaz!');
@@ -1511,12 +1663,19 @@ async function saveGroupSettings() {
                 groupName,
                 description: groupDescription,
                 visibility: groupVisibility,
-                autoMarkUnread
+                autoMarkUnread,
+                inactiveMemberAction
             })
         });
 
         if (response.ok) {
             window.currentGroupVisibility = groupVisibility;
+            savedGroupSettings = {
+                groupName,
+                description: groupDescription,
+                visibility: groupVisibility
+            };
+            updateGroupSettingsDirtyState();
             showSuccessMessage('Grup ayarları başarıyla kaydedildi!');
             // Sayfa başlığını güncelle
             if (typeof updatePageTitle === 'function') {
@@ -1829,6 +1988,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (groupVisibilitySelect) {
         groupVisibilitySelect.addEventListener('change', function () {
             updateVisibilityIcon(this.value);
+            updateGroupSettingsDirtyState();
         });
     }
 
@@ -1837,6 +1997,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (autoMarkUnreadSelectEl) {
         autoMarkUnreadSelectEl.addEventListener('change', function () {
             updateAutoMarkUnreadIcon(this.value);
+            scheduleAutomationSettingsSave('autoMarkUnread');
+        });
+    }
+
+    const inactiveMemberActionSelectEl = document.getElementById('inactiveMemberActionSelect');
+    if (inactiveMemberActionSelectEl) {
+        inactiveMemberActionSelectEl.addEventListener('change', function () {
+            updateInactiveMemberActionIcon(this.value);
+            scheduleAutomationSettingsSave('inactiveMemberAction');
         });
     }
 
@@ -1850,11 +2019,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const groupDescriptionInput = document.getElementById('groupDescription');
 
     if (groupNameInput) {
-        groupNameInput.addEventListener('input', checkCharacterLimit);
+        groupNameInput.addEventListener('input', function (event) {
+            checkCharacterLimit(event);
+            updateGroupSettingsDirtyState();
+        });
     }
 
     if (groupDescriptionInput) {
-        groupDescriptionInput.addEventListener('input', checkCharacterLimit);
+        groupDescriptionInput.addEventListener('input', function (event) {
+            checkCharacterLimit(event);
+            updateGroupSettingsDirtyState();
+        });
     }
 
     // Modal dışına tıklandığında kapat
@@ -2377,9 +2552,7 @@ async function loadAddUserAvatarOptions() {
                     if (uploadBtn) {
                         uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
                     }
-                    if (imagePreviewContainer) {
-                        imagePreviewContainer.style.display = 'none';
-                    }
+                    setImagePreviewVisible(false);
                 }
 
                 // Modal'ı kapat
