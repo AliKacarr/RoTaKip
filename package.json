@@ -36,7 +36,7 @@
     "multer": "^2.5.0",
     "node-schedule": "^2.1.2",
     "pino": "^10.4.0",
-    "playwright": "^1.62.1",
+    "playwright": "^1.64.1",
     "sharp": "^0.35.4",
     "terser": "^5.51.2"
   },
