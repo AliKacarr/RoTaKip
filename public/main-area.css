@@ -68,7 +68,8 @@
     width: 294px;
 }
 
-ul#userList {
+ul#userList,
+ul#passiveUserList {
     list-style: none;
     padding: 0;
     min-width: 100px;
@@ -78,6 +79,10 @@ ul#userList {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+ul#passiveUserList[hidden] {
+    display: none !important;
 }
 
 .user-container {
@@ -154,7 +159,8 @@ ul#userList {
     background: linear-gradient(135deg, #d4edda 0%, #e8f5e8 100%);
 }
 
-ul#userList li span {
+ul#userList li span,
+ul#passiveUserList li span {
     flex-grow: 1;
     text-align: left;
 }
@@ -234,39 +240,84 @@ ul#userList li span {
 }
 
 
-.authority-select {
+.user-selects {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 110px;
+}
+
+.authority-select,
+.visibility-select {
     background: mintcream;
     border: 1px solid #aeb2b5;
     border-radius: 8px;
     color: #2c3e50;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 14px;
+    line-height: 20px;
     font-weight: 500;
-    padding: 10px 14px;
+    padding: 0 28px 0 10px;
     cursor: pointer;
     transition: all 0.3s ease;
     min-width: 110px;
-    height: 50px;
+    height: 40px;
     outline: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
-.authority-select:hover {
+.authority-select:hover,
+.visibility-select:hover {
     border-color: #3498db;
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
     background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
     transform: translateY(-1px);
 }
 
-.authority-select:focus {
+.authority-select:focus,
+.visibility-select:focus {
     border-color: #3498db;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
     background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
 }
 
-.authority-select option {
+.authority-select option,
+.visibility-select option {
     background-color: #ffffff;
     color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
     padding: 4px;
+}
+
+.visibility-select[data-current-value="pasif"] {
+    background: #fff5f5;
+    border-color: #e7a5a5;
+    color: #9b2c2c;
+}
+
+.visibility-select:disabled {
+    opacity: 1;
+    color: #2c3e50;
+    -webkit-text-fill-color: currentColor;
+    cursor: progress;
+}
+
+.visibility-select[data-current-value="pasif"]:disabled {
+    color: #9b2c2c;
+}
+
+.passive-user-section {
+    margin-top: 28px;
+}
+
+.passive-user-section h3 {
+    border-bottom-color: #95a5a6;
+}
+
+.passive-user-section .user-container li {
+    background: #f7f7f7;
+    opacity: 0.88;
 }
 
 .settings-button {
@@ -399,7 +450,7 @@ ul#userList li span {
     margin-bottom: 25px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
     align-items: center;
     max-width: 100%;
 }
@@ -415,14 +466,20 @@ ul#userList li span {
 }
 
 .form-left-column {
-    width: 100%;
+    width: 301px;
+    min-width: 301px;
+    max-width: 301px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
 }
 
 .form-right-column {
-    width: 100%;
+    width: 301px;
+    min-width: 301px;
+    max-width: 301px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -437,6 +494,12 @@ ul#userList li span {
     font-size: 16px;
 }
 
+.image-upload,
+.add-user-form-group {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .add-user-input-container {
     display: flex;
     align-items: center;
@@ -448,7 +511,8 @@ ul#userList li span {
     position: relative;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    width: 280px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .add-user-input-container::before {
@@ -513,12 +577,53 @@ ul#userList li span {
     color: #2c3e50;
     outline: none;
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     font-weight: 500;
 }
 
 #newUserInput::placeholder {
     color: #aaa;
     font-style: italic;
+}
+
+.add-user-options-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 10px;
+}
+
+.new-user-option-select {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 24px 0 10px;
+    border: 1px solid #b8c2cc;
+    border-radius: 6px;
+    background: #fff;
+    color: #34495e;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.new-user-option-select option {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+}
+
+.add-user-options-row .submit-button {
+    margin-left: 0;
+    height: 100%;
+    padding-right: 14px;
+    padding-left: 14px;
 }
 
 .submit-button {
@@ -552,7 +657,9 @@ ul#userList li span {
 }
 
 .file-input-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.22fr) minmax(0, 0.68fr);
+    gap: 8px;
     align-items: center;
     background: rgb(246, 249, 251);
     border: 1px solid #b0b0b0;
@@ -562,7 +669,8 @@ ul#userList li span {
     position: relative;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    width: 275px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .file-input-container::before {
@@ -601,7 +709,8 @@ input[type="file"] {
 .upload-btn {
     background: linear-gradient(135deg, #29a55e, #29a55e);
     color: white !important;
-    padding: 8px 16px;
+    width: 100%;
+    padding: 8px 6px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
@@ -609,7 +718,7 @@ input[type="file"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-right: 8px;
+    margin-right: 0;
     gap: 6px;
     transition: all 0.3s;
     border: none;
@@ -631,7 +740,8 @@ input[type="file"] {
 .avatar-select-btn {
     background: linear-gradient(135deg, #4B8EF5 0%, #2563EB 100%);
     color: white !important;
-    padding: 8px 14px;
+    width: 100%;
+    padding: 8px 6px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
@@ -639,7 +749,7 @@ input[type="file"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-right: 8px;
+    margin-right: 0;
     transition: all 0.3s;
     border: none;
     gap: 6px;
@@ -661,7 +771,8 @@ input[type="file"] {
 .remove-image-btn {
     background: linear-gradient(135deg, #F87171, #EF4444);
     color: white !important;
-    padding: 8px 12px;
+    width: 100%;
+    padding: 8px 6px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
@@ -669,7 +780,7 @@ input[type="file"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-right: 10px;
+    margin-right: 0;
     transition: all 0.3s;
     border: none;
     gap: 6px;
@@ -699,7 +810,6 @@ input[type="file"] {
     border: 1px solid #b0b0b0;
     transition: all 0.3s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    margin-top: 20px;
 }
 
 .profile-preview-image {

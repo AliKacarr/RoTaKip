@@ -1,9 +1,31 @@
 /* exported deleteUser, saveUserName, editUserName, changeUserImage,
-   toggleDeleteButton, cancelEditUserName, cancelSettings, changeUserAuthority,
+   toggleDeleteButton, cancelEditUserName, cancelSettings, changeUserAuthority, changeUserVisibility,
    inviteSelectedUser, acceptJoinRequest, rejectJoinRequest */
 
 // Global değişkenler
 let renderUserListTimeout = null;
+const VISIBILITY_RELOAD_DELAY_MS = 3000;
+let visibilityReloadTimer = null;
+let pendingVisibilityUpdates = 0;
+let hasSavedVisibilityChange = false;
+
+function deferVisibilityReload() {
+    if (visibilityReloadTimer) {
+        window.clearTimeout(visibilityReloadTimer);
+        visibilityReloadTimer = null;
+    }
+    if (!hasSavedVisibilityChange || pendingVisibilityUpdates > 0) return;
+
+    visibilityReloadTimer = window.setTimeout(() => {
+        window.location.reload();
+    }, VISIBILITY_RELOAD_DELAY_MS);
+}
+
+function getManagedUserContainer(userId) {
+    return document.querySelector(
+        `#userManagementLists .user-container[data-user-id="${userId}"]`
+    );
+}
 
 // Mesaj kuyruğu sistemi
 let messageQueue = [];
@@ -66,8 +88,12 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
 
     const input = document.getElementById('newUserInput');
     const imageInput = document.getElementById('profileImage');
+    const authorityInput = document.getElementById('newUserAuthority');
+    const visibilityInput = document.getElementById('newUserVisibility');
     const submitBtn = document.querySelector('#newUserForm button[type="submit"]');
     const name = input.value.trim();
+    const authority = authorityInput ? authorityInput.value : 'member';
+    const visibility = visibilityInput ? visibilityInput.value : 'aktif';
 
     if (!name) return;
 
@@ -79,6 +105,8 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
     try {
         const formData = new FormData();
         formData.append('name', name);
+        formData.append('authority', authority);
+        formData.append('visibility', visibility);
 
         if (imageInput.files.length > 0) {
             formData.append('profileImage', imageInput.files[0]);
@@ -103,6 +131,8 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
         // Form alanlarını temizle
         input.value = '';
         imageInput.value = '';
+        if (authorityInput) authorityInput.value = 'member';
+        if (visibilityInput) visibilityInput.value = 'aktif';
         if (uploadBtn) {
             uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
         }
@@ -121,7 +151,7 @@ newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonk
         selectedAddUserAvatarPath = null;
 
         // GlobalDataStore'u güncelle
-        if (window.globalDataStore) {
+        if (visibility === 'aktif' && window.globalDataStore) {
             // Yeni kullanıcıyı users array'ine ekle
             window.globalDataStore.users.push(result.user);
             // Index'leri yeniden oluştur
@@ -162,7 +192,7 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
     }
 
     // Find the user name for the confirmation message
-    const userContainer = document.querySelector(`#userList [data-user-id="${id}"]`);
+    const userContainer = getManagedUserContainer(id);
     if (!userContainer) {
         console.error('User container not found for userId:', id);
         return;
@@ -180,10 +210,10 @@ async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
     const isDeletingSelf = currentUserInfo && currentUserInfo.userId === id;
 
-    // Son yönetici, gruptaki kullanıcı sayısından bağımsız olarak kendi hesabını silemez.
+    // Son aktif yönetici, gruptaki kullanıcı sayısından bağımsız olarak kendi hesabını silemez.
     // Genel silme onayını göstermeden doğrudan açıklayıcı uyarıyı göster.
-    if (isDeletingSelf && userCounts.admin <= 1) {
-        showErrorMessage('Gruptaki son yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.');
+    if (isDeletingSelf && userCounts.activeAdmin <= 1) {
+        showErrorMessage('Gruptaki son aktif yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.');
         return;
     }
 
@@ -287,7 +317,7 @@ async function saveUserName(userId) {   //Kullanıcı adını güncelleme fonksi
         return;
     }
 
-    const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+    const userContainer = getManagedUserContainer(userId);
     if (!userContainer) {
         console.error('User container not found for userId:', userId);
         return;
@@ -410,7 +440,7 @@ function editUserName(userId) {     //Kullanıcı adını düzenleme fonksiyonu
         return;
     }
 
-    const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+    const userContainer = getManagedUserContainer(userId);
     if (!userContainer) {
         console.error('User container bulunamadı, userId:', userId);
         return;
@@ -640,7 +670,7 @@ function toggleDeleteButton(userId) {     //Kullanıcı silme butonunu açma fon
         return;
     }
 
-    const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+    const userContainer = getManagedUserContainer(userId);
     if (!userContainer) {
         console.error('User container bulunamadı, userId:', userId);
         return;
@@ -677,7 +707,7 @@ function cancelEditUserName(userId) {     //Kullanıcı adı düzenleme iptal fo
         return;
     }
 
-    const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+    const userContainer = getManagedUserContainer(userId);
     if (!userContainer) {
         console.error('User container not found for userId:', userId);
         return;
@@ -722,7 +752,7 @@ function cancelSettings(userId) {     //Ayarlar iptal fonksiyonu
         return;
     }
 
-    const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+    const userContainer = getManagedUserContainer(userId);
     if (!userContainer) {
         console.error('User container not found for userId:', userId);
         return;
@@ -744,7 +774,7 @@ function cancelSettings(userId) {     //Ayarlar iptal fonksiyonu
     editButton.style.display = 'inline-block';
 }
 
-// Güncel kullanıcı ve yönetici sayılarını kontrol eden yardımcı fonksiyon
+// Güncel aktif yönetici sayısını kontrol eden yardımcı fonksiyon
 async function getUserCounts() {
     try {
         const response = await fetch(`/api/users/${window.groupid}`);
@@ -753,8 +783,9 @@ async function getUserCounts() {
         const data = await response.json();
         const users = Array.isArray(data.users) ? data.users : [];
         return {
-            total: users.length,
-            admin: users.filter(user => user.authority === 'admin').length
+            activeAdmin: users.filter(user =>
+                user.authority === 'admin' && user.visibility !== 'pasif'
+            ).length
         };
     } catch (error) {
         console.error('Kullanıcı sayıları alınırken hata:', error);
@@ -762,14 +793,16 @@ async function getUserCounts() {
     }
 }
 
-// Admin sayısını kontrol eden yardımcı fonksiyon
-async function getAdminCount() {
+// Aktif yönetici sayısını kontrol eden yardımcı fonksiyon
+async function getActiveAdminCount() {
     try {
         const response = await fetch(`/api/users/${window.groupid}`);
         if (!response.ok) return 0;
 
         const data = await response.json();
-        return data.users.filter(user => user.authority === 'admin').length;
+        return data.users.filter(user =>
+            user.authority === 'admin' && user.visibility !== 'pasif'
+        ).length;
     } catch (error) {
         console.error('Admin sayısı alınırken hata:', error);
         return 0;
@@ -784,17 +817,17 @@ async function changeUserAuthority(userId, newAuthority) {
         return;
     }
 
-    // Admin sayısını kontrol et (önce admin sayısını kontrol et)
-    const currentAdminCount = await getAdminCount();
+    // Aktif yönetici sayısını kontrol et
+    const currentActiveAdminCount = await getActiveAdminCount();
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
 
-    // Eğer son admin'i üye yapmaya çalışıyorsa engelle
+    // Eğer son aktif yönetici kendisini üyeye çevirmeye çalışıyorsa engelle
     if (currentUserInfo && currentUserInfo.userId === userId &&
         currentUserInfo.userAuthority === 'admin' && newAuthority === 'member' &&
-        currentAdminCount <= 1) {
-        showErrorMessage('Grupta en az bir yönetici hesabı bulunmalıdır!');
+        currentActiveAdminCount <= 1) {
+        showErrorMessage('Grupta en az bir aktif yönetici bulunmalıdır.');
         // Combobox'ı eski değerine geri döndür
-        const authoritySelect = document.querySelector(`#userList [data-user-id="${userId}"] .authority-select`);
+        const authoritySelect = getManagedUserContainer(userId)?.querySelector('.authority-select');
         if (authoritySelect) {
             authoritySelect.value = 'admin';
         }
@@ -810,7 +843,7 @@ async function changeUserAuthority(userId, newAuthority) {
 
         if (currentAuthority === newAuthority) {
             // Aynı yetkiye değiştirmeye çalışıyor, combobox'ı eski değerine döndür
-            const authoritySelect = document.querySelector(`#userList [data-user-id="${userId}"] .authority-select`);
+            const authoritySelect = getManagedUserContainer(userId)?.querySelector('.authority-select');
             if (authoritySelect) {
                 authoritySelect.value = currentAuthority;
             }
@@ -825,7 +858,7 @@ async function changeUserAuthority(userId, newAuthority) {
 
         if (!confirmed) {
             // Onaylanmadı, combobox'ı eski değerine döndür
-            const authoritySelect = document.querySelector(`#userList [data-user-id="${userId}"] .authority-select`);
+            const authoritySelect = getManagedUserContainer(userId)?.querySelector('.authority-select');
             if (authoritySelect) {
                 authoritySelect.value = currentAuthority;
             }
@@ -845,6 +878,7 @@ async function changeUserAuthority(userId, newAuthority) {
             })
         });
 
+        const result = await response.json();
         if (response.ok) {
             showSuccessMessage(`Kullanıcı yetkisi başarıyla ${newAuthority === 'admin' ? 'Yönetici' : 'Üye'} olarak güncellendi!`);
 
@@ -879,14 +913,14 @@ async function changeUserAuthority(userId, newAuthority) {
                 }
             }
         } else {
-            throw new Error('Yetki güncellenemedi');
+            throw new Error(result.error || 'Yetki güncellenemedi');
         }
     } catch (error) {
         console.error('Yetki güncelleme hatası:', error);
-        showErrorMessage('Yetki güncellenirken hata oluştu!');
+        showErrorMessage(error.message || 'Yetki güncellenirken hata oluştu!');
 
         // Hata durumunda combobox'ı eski değerine geri döndür
-        const authoritySelect = document.querySelector(`li[data-user-id="${userId}"] .authority-select`);
+        const authoritySelect = getManagedUserContainer(userId)?.querySelector('.authority-select');
         if (authoritySelect) {
             // Eski değeri geri yükle (API'den alınan değer)
             fetch(`/api/users/${window.groupid}`)
@@ -898,6 +932,60 @@ async function changeUserAuthority(userId, newAuthority) {
                     }
                 });
         }
+    }
+}
+
+// Görünürlük seçimi değişir değişmez kaydet; ad düzenleme butonlarına bağlı değildir.
+async function changeUserVisibility(userId, newVisibility, selectElement) {
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı görünürlüğü değiştirme denemesi');
+        return;
+    }
+
+    const select = selectElement || getManagedUserContainer(userId)?.querySelector('.visibility-select');
+    const previousVisibility = select?.dataset.currentValue || (newVisibility === 'aktif' ? 'pasif' : 'aktif');
+    if (!['aktif', 'pasif'].includes(newVisibility) || newVisibility === previousVisibility) return;
+
+    // Yeni bir seçim yapıldığı anda mevcut yenileme sayacını durdur. Kayıt
+    // tamamlanınca tüm bekleyen istekler bittiyse sayaç yeniden başlayacak.
+    if (visibilityReloadTimer) {
+        window.clearTimeout(visibilityReloadTimer);
+        visibilityReloadTimer = null;
+    }
+    pendingVisibilityUpdates += 1;
+    if (select) select.disabled = true;
+    try {
+        const response = await fetch(`/api/update-user-visibility/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, visibility: newVisibility })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.error || 'Kullanıcı görünürlüğü güncellenemedi');
+        }
+
+        if (select) {
+            select.dataset.currentValue = newVisibility;
+            select.value = newVisibility;
+        }
+        hasSavedVisibilityChange = true;
+        showSuccessMessage(
+            `Kullanıcı ${newVisibility === 'aktif' ? 'aktif' : 'pasif'} olarak kaydedildi.`
+        );
+    } catch (error) {
+        console.error('Kullanıcı görünürlüğü güncelleme hatası:', error);
+        if (select) {
+            select.value = previousVisibility;
+            select.dataset.currentValue = previousVisibility;
+        }
+        showErrorMessage(error.message || 'Kullanıcı görünürlüğü güncellenemedi!');
+    } finally {
+        pendingVisibilityUpdates = Math.max(0, pendingVisibilityUpdates - 1);
+        if (select) select.disabled = false;
+        // all-data yalnızca aktif kullanıcıları içerdiğinden son değişiklikten
+        // sonra tablo, kart, istatistik ve sayaçları birlikte yenile.
+        deferVisibilityReload();
     }
 }
 
@@ -1040,22 +1128,27 @@ function renderUserList() {
 
 function performRenderUserList() {
     const userList = document.getElementById('userList');
-    if (!userList) {
-        console.error('userList element bulunamadı');
+    const passiveUserList = document.getElementById('passiveUserList');
+    const passiveEmpty = document.getElementById('passiveUserListEmpty');
+    if (!userList || !passiveUserList) {
+        console.error('Aktif/pasif kullanıcı listesi bulunamadı');
         return;
     }
 
     const prevScrollTop = userList.scrollTop; // scroll pozisyonunu koru
+    const prevPassiveScrollTop = passiveUserList.scrollTop;
 
     fetch(`/api/users/${window.groupid}`)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error('Kullanıcı listesi alınamadı');
+            return res.json();
+        })
         .then(data => {
-            const users = data.users;
+            const users = Array.isArray(data.users) ? data.users : [];
 
-            // Kullanıcı listesini tamamen temizle ve yeniden oluştur
             userList.innerHTML = '';
+            passiveUserList.innerHTML = '';
 
-            // Tüm kullanıcıları yeniden oluştur
             users.forEach((user) => {
                 const userProfileImage = window.safeImageSrc(user.profileImage);
                 const safeUserName = window.escapeHtml(user.name);
@@ -1072,33 +1165,58 @@ function performRenderUserList() {
 
                 // Giriş yapılan kullanıcı için özel class ekle
                 const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
-                if (currentUserInfo && currentUserInfo.userId === user._id) {
+                if (currentUserInfo && String(currentUserInfo.userId) === String(user._id)) {
                     li.classList.add('current-user');
                 }
 
                 li.innerHTML = liHTML;
                 userContainer.appendChild(li);
 
-                // Authority select'i oluştur ve container'a ekle
+                const selectGroup = document.createElement('div');
+                selectGroup.className = 'user-selects';
+
                 const authoritySelect = document.createElement('select');
                 authoritySelect.className = 'authority-select';
+                authoritySelect.id = `userAuthority-${user._id}`;
+                authoritySelect.name = `userAuthority-${user._id}`;
                 authoritySelect.setAttribute('onchange', `changeUserAuthority('${user._id}', this.value)`);
                 authoritySelect.setAttribute('title', 'Kullanıcı Yetkisi');
+                authoritySelect.setAttribute('aria-label', `${user.name} kullanıcı yetkisi`);
                 authoritySelect.innerHTML = `
                     <option value="member" ${user.authority === 'member' ? 'selected' : ''}>Üye</option>
                     <option value="admin" ${user.authority === 'admin' ? 'selected' : ''}>Yönetici</option>
                 `;
-                userContainer.appendChild(authoritySelect);
+                selectGroup.appendChild(authoritySelect);
 
-                // Davet butonunu kaldır - artık ayrı bir davet sistemi kullanıyoruz
+                const visibility = user.visibility === 'pasif' ? 'pasif' : 'aktif';
+                const visibilitySelect = document.createElement('select');
+                visibilitySelect.className = 'visibility-select';
+                visibilitySelect.id = `userVisibility-${user._id}`;
+                visibilitySelect.name = `userVisibility-${user._id}`;
+                visibilitySelect.title = 'Kullanıcı Görünürlüğü';
+                visibilitySelect.setAttribute('aria-label', `${user.name} kullanıcı görünürlüğü`);
+                visibilitySelect.dataset.currentValue = visibility;
+                visibilitySelect.innerHTML = `
+                    <option value="aktif" ${visibility === 'aktif' ? 'selected' : ''}>Aktif</option>
+                    <option value="pasif" ${visibility === 'pasif' ? 'selected' : ''}>Pasif</option>
+                `;
+                visibilitySelect.addEventListener('change', function () {
+                    changeUserVisibility(String(user._id), this.value, this);
+                });
+                selectGroup.appendChild(visibilitySelect);
+                userContainer.appendChild(selectGroup);
 
-                userList.appendChild(userContainer);
+                (visibility === 'pasif' ? passiveUserList : userList).appendChild(userContainer);
             });
 
             userList.scrollTop = prevScrollTop; // scroll pozisyonunu geri yükle
+            passiveUserList.scrollTop = prevPassiveScrollTop;
+            const hasPassiveUsers = passiveUserList.children.length > 0;
+            passiveUserList.hidden = !hasPassiveUsers;
+            if (passiveEmpty) passiveEmpty.hidden = hasPassiveUsers;
 
-            // Kullanıcı seçim kutusunu güncelle
-            updateUserSelectDropdown(users);
+            // Pasif kullanıcılar davet ve normal site seçimlerinde gösterilmez.
+            updateUserSelectDropdown(users.filter(user => user.visibility !== 'pasif'));
         })
         .catch(error => {
             console.error('Kullanıcı listesi yüklenirken hata:', error);
@@ -2014,7 +2132,7 @@ async function updateExistingUserImageFromAvatar(userId, avatarPath) {
             }
         }
 
-        const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+        const userContainer = getManagedUserContainer(userId);
         if (userContainer) {
             const userImage = userContainer.querySelector('.user-profile-image');
             if (userImage) {
@@ -2039,7 +2157,7 @@ async function updateExistingUserImageFromFile(userId, file) {
         if (typeof window.logActionForAudit === 'function') {
             window.logActionForAudit('kullanıcı_listesinden_profil_resmi_degistirme');
         }
-        const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+        const userContainer = getManagedUserContainer(userId);
         const userItem = userContainer ? userContainer.querySelector('li') : null;
         if (userItem) {
             const userImage = userItem.querySelector('.user-profile-image');
@@ -2118,7 +2236,7 @@ async function removeExistingUserImage(userId) {
             }
         }
 
-        const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+        const userContainer = getManagedUserContainer(userId);
         if (userContainer) {
             const userImage = userContainer.querySelector('.user-profile-image');
             if (userImage) {
@@ -2182,7 +2300,7 @@ function ensureExistingUserUploadAreaInAvatarModal() {
                     profileImage = currentUser.profileImage;
                 }
             } else {
-                const userContainer = document.querySelector(`#userList [data-user-id="${userId}"]`);
+                const userContainer = getManagedUserContainer(userId);
                 const userImage = userContainer ? userContainer.querySelector('.user-profile-image') : null;
                 if (userImage && userImage.src) {
                     profileImage = userImage.src;

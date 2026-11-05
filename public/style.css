@@ -54,12 +54,6 @@ h3 {
   width: 98%;
 }
 
-.user-list,
-#newUserForm,
-.settings-section h3 {
-  min-width: 300px;
-}
-
 /* Unified Toast/Notification Styles */
 .toast,
 .notification-toast,

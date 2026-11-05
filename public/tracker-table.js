@@ -902,12 +902,18 @@ function syncTrackerSummaryRowHeights() {
     userRows.forEach(function (row) { row.style.height = ''; });
     mainRows.forEach(function (row) { row.style.height = ''; });
     summaryRows.forEach(function (row) { row.style.height = ''; });
-    mainRows.forEach(function (row, index) {
-        const height = Math.max(
+
+    // Önce bütün ölçümleri oku, ardından yükseklikleri yaz. Okuma ve yazmayı
+    // satır satır karıştırmak her kullanıcıda yeniden layout hesaplatıyordu.
+    const rowHeights = mainRows.map(function (row, index) {
+        return Math.max(
             userRows[index].getBoundingClientRect().height,
             row.getBoundingClientRect().height,
             summaryRows[index].getBoundingClientRect().height
         );
+    });
+    mainRows.forEach(function (row, index) {
+        const height = rowHeights[index];
         const value = `${Math.ceil(height * 100) / 100}px`;
         userRows[index].style.height = value;
         row.style.height = value;

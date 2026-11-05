@@ -8,7 +8,7 @@
     "build:assets": "node scripts/build-assets.js",
     "predev": "npm run build:assets",
     "dev": "node --watch server.js",
-    "test": "node --test tests/erpUsersSync.test.js tests/erpReadingsSync.test.js",
+    "test": "node --test tests/erpUsersSync.test.js tests/erpReadingsSync.test.js tests/userVisibility.test.js",
     "sync:erp-users": "node anket/erpUsersSync.js",
     "sync:erp-users:dry-run": "node anket/erpUsersSync.js --dry-run",
     "lint": "eslint .",

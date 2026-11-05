@@ -28,6 +28,15 @@ const {
   syncErpReadingsOnDemand
 } = require('./anket/erpReadingsSync');
 const { scheduleErpUsersSync } = require('./anket/erpUsersSync');
+const {
+  USER_VISIBILITY_ACTIVE,
+  USER_VISIBILITY_PASSIVE,
+  VALID_USER_VISIBILITIES,
+  activeAdminQuery,
+  activeUserQuery,
+  isActiveUser,
+  normalizeUserVisibility
+} = require('./userVisibility');
 const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 
 const app = express();
@@ -1022,6 +1031,10 @@ async function createIndexesForGroup(groupId) {
     { username: 1, authority: 1 },
     { name: 'idx_username_authority' }
   );
+  await db.collection(`users_${groupId}`).createIndex(
+    { visibility: 1 },
+    { name: 'idx_visibility' }
+  );
 
   console.log(`Grup index'leri hazır: ${groupId}`);
 }
@@ -1076,6 +1089,7 @@ async function ensureApplicationIndexes() {
   } catch (error) {
     console.error('Benzersiz index hazırlama hatası:', error.message);
   }
+
 }
 
 if (mongoose.connection.readyState === 1) ensureApplicationIndexes();
@@ -1323,7 +1337,8 @@ app.post('/api/groups', accountCreationLimiter, uploadGroupImage.fields([
       profileImage: adminProfileImageUrl,
       username: adminName,
       userpassword: hashedAdminPassword,
-      authority: "admin"
+      authority: "admin",
+      visibility: USER_VISIBILITY_ACTIVE
     });
     await defaultUser.save();
 
@@ -1395,7 +1410,7 @@ app.get('/api/groups/:groupId/member-count', requireReadableGroup, async (req, r
     const { users } = getGroupCollections(groupId);
 
     // Kullanıcı sayısını al
-    const count = await users.countDocuments();
+    const count = await users.countDocuments(activeUserQuery());
 
     res.json({ count });
   } catch (error) {
@@ -1704,6 +1719,11 @@ const userSchema = new mongoose.Schema({
   username: String,
   userpassword: String,
   authority: String,
+  visibility: {
+    type: String,
+    enum: [USER_VISIBILITY_ACTIVE, USER_VISIBILITY_PASSIVE],
+    default: USER_VISIBILITY_ACTIVE
+  },
   loginStreak: { type: Number, default: 0 },
   lastLoginDate: { type: String, default: null },
   lastCongratulatedLeague: { type: String, default: 'Bronz' },
@@ -1789,7 +1809,8 @@ function setSessionMembership(req, groupId, user) {
   req.session.memberships ||= {};
   req.session.memberships[groupId] = {
     userId: String(user._id),
-    authority: user.authority
+    authority: user.authority,
+    visibility: normalizeUserVisibility(user.visibility)
   };
 }
 
@@ -1813,18 +1834,54 @@ async function authenticateSession(req, groupId, user) {
   await saveSession(req);
 }
 
-function requireGroupAuth(req, res, next) {
-  const groupId = getAuthGroupId(req);
+async function getValidatedSessionMembership(req, groupId) {
   const membership = getSessionMembership(req, groupId);
-  if (!membership) {
-    return res.status(401).json({ error: 'Bu işlem için giriş yapmalısınız' });
+  if (!membership) return null;
+
+  if (membership.visibility === USER_VISIBILITY_PASSIVE) {
+    delete req.session.memberships[groupId];
+    await saveSession(req);
+    return null;
   }
-  req.auth = { groupId, ...membership };
-  next();
+
+  // Yeni oturumlar aktiflik bilgisini taşır. Eski veya ERP tarafından taşınmış
+  // oturumları ilk korumalı istekte yalnızca bir kez veritabanından doğrula.
+  if (membership.visibility === USER_VISIBILITY_ACTIVE) return membership;
+
+  const membershipUserId = String(membership.userId || '');
+  const { users } = getGroupCollections(groupId);
+  const user = mongoose.Types.ObjectId.isValid(membershipUserId)
+    ? await users.findById(membershipUserId).select('_id authority visibility').lean()
+    : null;
+
+  if (!user || !isActiveUser(user)) {
+    delete req.session.memberships[groupId];
+    await saveSession(req);
+    return null;
+  }
+
+  membership.authority = user.authority;
+  membership.visibility = USER_VISIBILITY_ACTIVE;
+  await saveSession(req);
+  return membership;
+}
+
+async function requireGroupAuth(req, res, next) {
+  const groupId = getAuthGroupId(req);
+  try {
+    const membership = await getValidatedSessionMembership(req, groupId);
+    if (!membership) {
+      return res.status(401).json({ error: 'Bu işlem için giriş yapmalısınız' });
+    }
+    req.auth = { groupId, ...membership };
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 function requireGroupAdmin(req, res, next) {
-  requireGroupAuth(req, res, () => {
+  return requireGroupAuth(req, res, () => {
     if (req.auth.authority !== 'admin') {
       return res.status(403).json({ error: 'Bu işlem için yönetici yetkisi gerekli' });
     }
@@ -1832,26 +1889,30 @@ function requireGroupAdmin(req, res, next) {
   });
 }
 
-function requireSiteActivityAdmin(req, res, next) {
-  const membership = getSessionMembership(req, SITE_ACTIVITY_ADMIN_GROUP_ID);
-  if (!membership) {
-    if (req.path === '/admin.html') {
-      return res.redirect('/');
+async function requireSiteActivityAdmin(req, res, next) {
+  try {
+    const membership = await getValidatedSessionMembership(req, SITE_ACTIVITY_ADMIN_GROUP_ID);
+    if (!membership) {
+      if (req.path === '/admin.html') {
+        return res.redirect('/');
+      }
+      return res.status(401).json({ error: 'Bu işlem için catikati23 grubunda giriş yapmalısınız' });
     }
-    return res.status(401).json({ error: 'Bu işlem için catikati23 grubunda giriş yapmalısınız' });
-  }
-  if (membership.authority !== 'admin') {
-    if (req.path === '/admin.html') {
-      return res.redirect('/');
+    if (membership.authority !== 'admin') {
+      if (req.path === '/admin.html') {
+        return res.redirect('/');
+      }
+      return res.status(403).json({ error: 'Bu işlem için catikati23 grup yöneticisi olmalısınız' });
     }
-    return res.status(403).json({ error: 'Bu işlem için catikati23 grup yöneticisi olmalısınız' });
+    req.auth = { groupId: SITE_ACTIVITY_ADMIN_GROUP_ID, ...membership };
+    next();
+  } catch (error) {
+    next(error);
   }
-  req.auth = { groupId: SITE_ACTIVITY_ADMIN_GROUP_ID, ...membership };
-  next();
 }
 
 function requireSelfOrAdmin(req, res, next) {
-  requireGroupAuth(req, res, () => {
+  return requireGroupAuth(req, res, () => {
     const targetUserId = String(req.params?.userId || req.body?.userId || req.body?.id || '');
     if (req.auth.authority !== 'admin' && targetUserId !== String(req.auth.userId)) {
       return res.status(403).json({ error: 'Yalnızca kendi hesabınızı değiştirebilirsiniz' });
@@ -1861,7 +1922,7 @@ function requireSelfOrAdmin(req, res, next) {
 }
 
 function requireSelf(req, res, next) {
-  requireGroupAuth(req, res, () => {
+  return requireGroupAuth(req, res, () => {
     const targetUserId = String(req.params?.userId || req.body?.userId || req.body?.id || '');
     if (!targetUserId || targetUserId !== String(req.auth.userId)) {
       return res.status(403).json({ error: 'Yalnızca kendi hesabınızı değiştirebilirsiniz' });
@@ -1874,7 +1935,7 @@ async function requireJoinRequestAdmin(req, res, next) {
   try {
     const joinRequest = await JoinRequest.findById(req.params.requestId).lean();
     if (!joinRequest) return res.status(404).json({ error: 'Katılma isteği bulunamadı' });
-    const membership = getSessionMembership(req, joinRequest.groupId);
+    const membership = await getValidatedSessionMembership(req, joinRequest.groupId);
     if (!membership || membership.authority !== 'admin') {
       return res.status(403).json({ error: 'Bu işlem için yönetici yetkisi gerekli' });
     }
@@ -1891,8 +1952,11 @@ async function requireReadableGroup(req, res, next) {
     const groupId = getAuthGroupId(req);
     const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) return res.status(404).json({ error: 'Grup bulunamadı' });
-    if (group.visibility === 'private' && !getSessionMembership(req, groupId)) {
-      return res.status(401).json({ error: 'Bu grubu görüntülemek için giriş yapmalısınız' });
+    if (group.visibility === 'private') {
+      const membership = await getValidatedSessionMembership(req, groupId);
+      if (!membership) {
+        return res.status(401).json({ error: 'Bu grubu görüntülemek için giriş yapmalısınız' });
+      }
     }
     req.group = group;
     next();
@@ -1907,6 +1971,7 @@ function safeUser(user, includePrivate = false) {
     name: user.name,
     profileImage: user.profileImage,
     authority: user.authority,
+    visibility: normalizeUserVisibility(user.visibility),
     loginStreak: user.loginStreak,
     lastLoginDate: user.lastLoginDate,
     lastCongratulatedLeague: user.lastCongratulatedLeague
@@ -1933,6 +1998,30 @@ async function invalidateGroupSessions(groupId) {
   );
 }
 
+// Aynı grupta hızlıca yapılan yetki/görünürlük/silme işlemlerinin birlikte
+// son aktif yöneticiyi ortadan kaldırmasını engellemek için sıraya al.
+const groupUserMutationLocks = new Map();
+
+async function acquireGroupUserMutationLock(groupId) {
+  const previousMutation = groupUserMutationLocks.get(groupId) || Promise.resolve();
+  let releaseCurrentMutation;
+  const currentMutation = new Promise(resolve => {
+    releaseCurrentMutation = resolve;
+  });
+  groupUserMutationLocks.set(groupId, currentMutation);
+  await previousMutation.catch(() => {});
+
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    releaseCurrentMutation();
+    if (groupUserMutationLocks.get(groupId) === currentMutation) {
+      groupUserMutationLocks.delete(groupId);
+    }
+  };
+}
+
 app.get('/api/auth/memberships', async (req, res) => {
   try {
     const memberships = req.session.memberships || {};
@@ -1953,15 +2042,16 @@ app.get('/api/auth/memberships', async (req, res) => {
       // cihazdan silinmiş olabileceği için ana sayfada gerçek kaydı doğrula.
       const membershipUserId = String(membership?.userId || '');
       const user = mongoose.Types.ObjectId.isValid(membershipUserId)
-        ? await users.findById(membershipUserId).select('_id authority').lean()
+        ? await users.findById(membershipUserId).select('_id authority visibility').lean()
         : null;
-      if (!user) {
+      if (!user || !isActiveUser(user)) {
         delete req.session.memberships[group.groupId];
         return null;
       }
 
       // Veritabanındaki güncel yetkiyi oturuma yansıt.
       membership.authority = user.authority;
+      membership.visibility = USER_VISIBILITY_ACTIVE;
 
       return {
         groupId: group.groupId,
@@ -1972,7 +2062,7 @@ app.get('/api/auth/memberships', async (req, res) => {
         groupImage: group.groupImage,
         visibility: group.visibility,
         autoMarkUnread: group.autoMarkUnread,
-        memberCount: await users.countDocuments()
+        memberCount: await users.countDocuments(activeUserQuery())
       };
     }));
 
@@ -1992,7 +2082,7 @@ app.get('/api/auth/me/:groupId', requireGroupAuth, async (req, res) => {
 
     const { users } = getGroupCollections(groupId);
     const user = await users.findById(req.auth.userId).lean();
-    if (!user) {
+    if (!user || !isActiveUser(user)) {
       delete req.session.memberships[groupId];
       await saveSession(req);
       return res.status(401).json({ error: 'Oturum kullanıcısı bulunamadı' });
@@ -2073,7 +2163,7 @@ app.get('/api/users/:groupId', requireGroupAdmin, async (req, res) => {
 
     // Sadece kullanıcıları getir
     const usersData = await users.find()
-      .select('_id name profileImage username authority loginStreak lastLoginDate lastCongratulatedLeague')
+      .select('_id name profileImage username authority visibility loginStreak lastLoginDate lastCongratulatedLeague')
       .sort({ name: 1 })
       .lean();
 
@@ -2089,11 +2179,19 @@ app.post('/api/add-user/:groupId', requireGroupAdmin, upload.single('profileImag
   try {
     const { groupId } = req.params;
     const { name, selectedAvatarPath } = req.body;
+    const authority = req.body.authority || 'member';
+    const visibility = req.body.visibility || USER_VISIBILITY_ACTIVE;
     if (!name || typeof name !== 'string' || name.trim().length > 40) {
       return res.status(400).json({ error: 'Kullanıcı adı 1-40 karakter arasında olmalıdır' });
     }
     if (!isAllowedAvatarPath(selectedAvatarPath, 'userAvatars')) {
       return res.status(400).json({ error: 'Geçersiz avatar seçimi' });
+    }
+    if (!VALID_USER_VISIBILITIES.has(visibility)) {
+      return res.status(400).json({ error: 'Geçersiz kullanıcı görünürlüğü' });
+    }
+    if (!['admin', 'member'].includes(authority)) {
+      return res.status(400).json({ error: 'Geçersiz kullanıcı yetkisi' });
     }
 
     // Grup var mı kontrol et
@@ -2221,7 +2319,8 @@ app.post('/api/add-user/:groupId', requireGroupAdmin, upload.single('profileImag
       profileImage: profileImageUrl,
       username: username,
       userpassword: hashedPassword,
-      authority: "member",
+      authority,
+      visibility,
       loginStreak: 0,
       lastLoginDate: null
     });
@@ -2236,9 +2335,11 @@ app.post('/api/add-user/:groupId', requireGroupAdmin, upload.single('profileImag
 
 // Kullanıcı silme endpoint'i
 app.post('/api/delete-user/:groupId', requireSelfOrAdmin, async (req, res) => {
+  let releaseUserMutationLock;
   try {
     const { groupId } = req.params;
     const { id } = req.body;
+    releaseUserMutationLock = await acquireGroupUserMutationLock(groupId);
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -2255,15 +2356,14 @@ app.post('/api/delete-user/:groupId', requireSelfOrAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
-    // Grup yönetilemez durumda kalmasın: son kullanıcı grubu silebilir, son yönetici tek başına silinemez.
-    const [totalUserCount, adminCount] = await Promise.all([
+    // Grup yönetilemez durumda kalmasın: en az bir aktif yönetici korunur.
+    const [totalUserCount, activeAdminCount] = await Promise.all([
       users.countDocuments(),
-      users.countDocuments({ authority: 'admin' })
+      users.countDocuments(activeAdminQuery())
     ]);
 
-    // Son yönetici, gruptaki kullanıcı sayısından bağımsız olarak hesabını silemez.
-    if (user.authority === 'admin' && adminCount <= 1) {
-      return res.status(409).json({ error: 'Gruptaki son yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.' });
+    if (user.authority === 'admin' && isActiveUser(user) && activeAdminCount <= 1) {
+      return res.status(409).json({ error: 'Grupta en az bir aktif yönetici bulunmalıdır.' });
     }
 
     // Yöneticisiz kalmış eski/veri dışı bir gruptaki son üye silinirse grubu da sil.
@@ -2303,6 +2403,8 @@ app.post('/api/delete-user/:groupId', requireSelfOrAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Sunucu hatası' });
+  } finally {
+    releaseUserMutationLock?.();
   }
 });
 
@@ -2348,6 +2450,7 @@ app.post('/api/update-user/:groupId', requireGroupAdmin, async (req, res) => {
 app.post('/api/update-user-authority/:groupId', requireGroupAdmin, async (req, res) => {
   const { groupId } = req.params;
   const { userId, authority } = req.body;
+  let releaseUserMutationLock;
 
   try {
     // Parametreleri kontrol et
@@ -2359,6 +2462,8 @@ app.post('/api/update-user-authority/:groupId', requireGroupAdmin, async (req, r
     if (!['admin', 'member'].includes(authority)) {
       return res.status(400).json({ error: 'Geçersiz yetki değeri. Sadece admin veya member olabilir' });
     }
+
+    releaseUserMutationLock = await acquireGroupUserMutationLock(groupId);
 
     // Grup var mı kontrol et
     const group = await UserGroup.findOne({ groupId }).lean();
@@ -2375,12 +2480,12 @@ app.post('/api/update-user-authority/:groupId', requireGroupAdmin, async (req, r
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
-    // Admin sayısını kontrol et
-    const adminCount = await users.countDocuments({ authority: 'admin' });
+    const activeAdminCount = await users.countDocuments(activeAdminQuery());
 
-    // Eğer son admin'i üye yapmaya çalışıyorsa engelle
-    if (user.authority === 'admin' && authority === 'member' && adminCount <= 1) {
-      return res.status(400).json({ error: 'En az bir yönetici hesabı bulunmalıdır!' });
+    // Son aktif yönetici üyeye çevrilemez.
+    if (user.authority === 'admin' && isActiveUser(user) &&
+        authority === 'member' && activeAdminCount <= 1) {
+      return res.status(409).json({ error: 'Grupta en az bir aktif yönetici bulunmalıdır.' });
     }
 
     // Kullanıcıyı güncelle
@@ -2403,6 +2508,73 @@ app.post('/api/update-user-authority/:groupId', requireGroupAdmin, async (req, r
   } catch (error) {
     console.error('Error updating user authority:', error);
     res.status(500).json({ error: 'Kullanıcı yetkisi güncellenirken hata oluştu' });
+  } finally {
+    releaseUserMutationLock?.();
+  }
+});
+
+// Kullanıcı görünürlüğü güncelleme endpoint'i
+app.post('/api/update-user-visibility/:groupId', requireGroupAdmin, async (req, res) => {
+  const { groupId } = req.params;
+  const { userId, visibility } = req.body;
+  let releaseUserMutationLock;
+
+  try {
+    if (!userId || !VALID_USER_VISIBILITIES.has(visibility)) {
+      return res.status(400).json({ error: 'Geçersiz kullanıcı veya görünürlük değeri' });
+    }
+
+    releaseUserMutationLock = await acquireGroupUserMutationLock(groupId);
+
+    const group = await UserGroup.findOne({ groupId }).lean();
+    if (!group) {
+      return res.status(404).json({ error: 'Grup bulunamadı' });
+    }
+
+    const { users } = getGroupCollections(groupId);
+    const user = await users.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    const currentVisibility = normalizeUserVisibility(user.visibility);
+    if (currentVisibility === visibility) {
+      return res.json({ success: true, user: safeUser(user, true) });
+    }
+
+    if (visibility === USER_VISIBILITY_PASSIVE) {
+      const activeAdminCount = await users.countDocuments(activeAdminQuery());
+      if (user.authority === 'admin' && activeAdminCount <= 1) {
+        return res.status(409).json({ error: 'Grupta en az bir aktif yönetici bulunmalıdır.' });
+      }
+    }
+
+    const updatedUser = await users.findByIdAndUpdate(
+      userId,
+      { visibility },
+      { returnDocument: 'after' }
+    );
+
+    if (visibility === USER_VISIBILITY_PASSIVE) {
+      await Promise.all([
+        invalidateUserSessions(groupId, userId),
+        Invite.deleteMany({ groupId, userId: String(userId) })
+      ]);
+      if (String(req.auth.userId) === String(userId)) {
+        delete req.session.memberships[groupId];
+      }
+    }
+
+    res.json({
+      success: true,
+      user: safeUser(updatedUser, true),
+      message: `Kullanıcı ${visibility === USER_VISIBILITY_ACTIVE ? 'aktif' : 'pasif'} yapıldı`
+    });
+  } catch (error) {
+    console.error('Kullanıcı görünürlüğü güncellenemedi:', error);
+    res.status(500).json({ error: 'Kullanıcı görünürlüğü güncellenemedi' });
+  } finally {
+    releaseUserMutationLock?.();
   }
 });
 
@@ -2571,13 +2743,16 @@ app.get('/api/all-data/:groupId', requireReadableGroup, async (req, res) => {
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
-    const [usersData, statsData] = await Promise.all([
-      users.find()
-        .select('_id name profileImage authority loginStreak lastLoginDate lastCongratulatedLeague')
-        .sort({ name: 1 })
-        .lean(),
-      readingStatuses.find().select('userId date status amount -_id').lean()
-    ]);
+    const usersData = await users.find(activeUserQuery())
+      .select('_id name profileImage authority visibility loginStreak lastLoginDate lastCongratulatedLeague')
+      .sort({ name: 1 })
+      .lean();
+    const activeUserIds = usersData.map(user => String(user._id));
+    const statsData = activeUserIds.length > 0
+      ? await readingStatuses.find({ userId: { $in: activeUserIds } })
+        .select('userId date status amount -_id')
+        .lean()
+      : [];
 
     res.json({
       users: usersData.map(user => safeUser(user)),
@@ -2665,7 +2840,15 @@ app.get('/api/user-stats/:groupId/:userId', requireReadableGroup, async (req, re
     }
 
     // Dinamik koleksiyonu al
-    const { readingStatuses } = getGroupCollections(groupId);
+    const { users, readingStatuses } = getGroupCollections(groupId);
+
+    const activeUser = await users.findOne({
+      _id: userId,
+      ...activeUserQuery()
+    }).select('_id').lean();
+    if (!activeUser) {
+      return res.status(404).json({ error: 'Aktif kullanıcı bulunamadı' });
+    }
 
     // Sadece belirli kullanıcının istatistiklerini getir
     const userStats = await readingStatuses.find({ userId }).sort({ date: 1 }).lean();
@@ -2691,8 +2874,11 @@ app.get('/api/reading-stats/:groupId', requireReadableGroup, async (req, res) =>
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
-    const usersData = await users.find().sort({ name: 1 }).lean();
-    const statsData = await readingStatuses.find().lean();
+    const usersData = await users.find(activeUserQuery()).sort({ name: 1 }).lean();
+    const activeUserIds = usersData.map(user => String(user._id));
+    const statsData = activeUserIds.length > 0
+      ? await readingStatuses.find({ userId: { $in: activeUserIds } }).lean()
+      : [];
 
     const userStats = usersData.map(user => {
       const userReadings = statsData.filter(stat =>
@@ -2728,8 +2914,11 @@ app.get('/api/longest-streaks/:groupId', requireReadableGroup, async (req, res) 
     // Dinamik koleksiyonları al
     const { users, readingStatuses } = getGroupCollections(groupId);
 
-    const usersData = await users.find().lean();
-    const statsData = await readingStatuses.find().lean();
+    const usersData = await users.find(activeUserQuery()).lean();
+    const activeUserIds = usersData.map(user => String(user._id));
+    const statsData = activeUserIds.length > 0
+      ? await readingStatuses.find({ userId: { $in: activeUserIds } }).lean()
+      : [];
 
     const results = usersData.map(user => {
       // Kullanıcının okuma kayıtlarını tarihe göre sırala
@@ -2864,7 +3053,7 @@ app.post('/api/create-invite/:groupId', requireGroupAdmin, async (req, res) => {
 
     // Kullanıcı var mı kontrol et
     const { users } = getGroupCollections(groupId);
-    const user = await users.findById(userId).lean();
+    const user = await users.findOne({ _id: userId, ...activeUserQuery() }).lean();
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
@@ -2927,7 +3116,10 @@ app.get('/api/verify-invite/:groupId', async (req, res) => {
 
     // Kullanıcı bilgilerini al
     const { users } = getGroupCollections(decodedGroupId);
-    const user = await users.findById(inviteRecord.userId).lean();
+    const user = await users.findOne({
+      _id: inviteRecord.userId,
+      ...activeUserQuery()
+    }).lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
@@ -2986,7 +3178,10 @@ app.post('/api/update-user-via-invite/:groupId', accountCreationLimiter, upload.
 
     // Kullanıcı bilgilerini al
     const { users } = getGroupCollections(groupId);
-    const user = await users.findById(invite.userId).lean();
+    const user = await users.findOne({
+      _id: invite.userId,
+      ...activeUserQuery()
+    }).lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
@@ -3100,7 +3295,8 @@ app.post('/api/admin-login', loginLimiter, async (req, res) => {
     const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) return res.json({ success: false });
 
-    // Users koleksiyonundan kullanıcıyı bul (admin veya member)
+    // Kullanıcıyı önce şifresiyle doğrula. Pasiflik bilgisini yalnızca doğru
+    // şifre girildiğinde açıklayarak kullanıcı adı sorgulamasını önle.
     const { users } = getGroupCollections(groupId);
     const user = await users.findOne({ username }).lean();
 
@@ -3109,6 +3305,14 @@ app.post('/api/admin-login', loginLimiter, async (req, res) => {
       const isPasswordValid = await bcrypt.compare(password, user.userpassword);
 
       if (isPasswordValid) {
+        if (!isActiveUser(user)) {
+          return res.json({
+            success: false,
+            code: 'USER_PASSIVE',
+            error: 'Bu kullanıcı hesabı pasif durumda. Grup yöneticinizle iletişime geçin.'
+          });
+        }
+
         // Eksik alanları ekle (migration)
         if (user.loginStreak === undefined || user.lastLoginDate === undefined) {
           const today = istanbulDateKey();
@@ -4125,6 +4329,7 @@ app.post('/api/accept-join-request/:requestId', requireJoinRequestAdmin, async (
       userpassword: joinRequest.password,
       profileImage: joinRequest.profileImage,
       authority: 'member',
+      visibility: USER_VISIBILITY_ACTIVE,
       loginStreak: 1,
       lastLoginDate: today
     };
@@ -4675,8 +4880,8 @@ async function seedFakeReadingDataForTestGroups() {
       // Grubun koleksiyonlarını al
       const { users, readingStatuses } = getGroupCollections(groupId);
 
-      // Gruptaki tüm kullanıcıları çek
-      const allUsers = await users.find().lean();
+      // Pasif kullanıcılar otomatik okuma verisine dahil edilmez.
+      const allUsers = await users.find(activeUserQuery()).lean();
 
       if (!allUsers || allUsers.length === 0) {
         console.log(`⚠️  [TestSeeder] ${groupId}: Kullanıcı bulunamadı, atlanıyor.`);
@@ -4752,7 +4957,7 @@ async function processMissingReadingStatusesForRealGroups() {
 
       try {
         const { users, readingStatuses } = getGroupCollections(group.groupId);
-        const allUsers = await users.find().lean();
+        const allUsers = await users.find(activeUserQuery()).lean();
 
         if (!allUsers || allUsers.length === 0) continue;
 

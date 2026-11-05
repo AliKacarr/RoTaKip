@@ -1128,66 +1128,16 @@ async function logPageVisit() {
 
 // Kayarak gelme animasyonu (IntersectionObserver)
 const scrollFadeInObserved = new WeakSet();
-const scrollFadeInTargets = new Set();
 let scrollFadeInObserver = null;
-let scrollFadeInUpdateFrame = null;
-
-function getScrollFadeInTranslateY(target) {
-  const transform = window.getComputedStyle(target).transform;
-  if (!transform || transform === 'none') return 0;
-
-  const matrix3d = transform.match(/^matrix3d\((.+)\)$/);
-  if (matrix3d) {
-    const values = matrix3d[1].split(',').map(Number);
-    return Number.isFinite(values[13]) ? values[13] : 0;
-  }
-
-  const matrix2d = transform.match(/^matrix\((.+)\)$/);
-  if (matrix2d) {
-    const values = matrix2d[1].split(',').map(Number);
-    return Number.isFinite(values[5]) ? values[5] : 0;
-  }
-
-  return 0;
-}
-
-function updateScrollFadeInTargets() {
-  scrollFadeInUpdateFrame = null;
-  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-  const boundaryTolerance = 2;
-
-  scrollFadeInTargets.forEach(target => {
-    if (!target.isConnected) {
-      scrollFadeInTargets.delete(target);
-      if (scrollFadeInObserver) scrollFadeInObserver.unobserve(target);
-      return;
-    }
-
-    const rect = target.getBoundingClientRect();
-    const translateY = getScrollFadeInTranslateY(target);
-    const naturalTop = rect.top - translateY;
-    const naturalBottom = rect.bottom - translateY;
-    const isVisible = target.classList.contains('visible');
-
-    // Ufak tolerans, öğe tam ekran sınırındayken piksel yuvarlamalarının
-    // görünür sınıfını art arda ekleyip kaldırmasını önler.
-    const shouldBeVisible = isVisible
-      ? naturalBottom > -boundaryTolerance && naturalTop < viewportHeight + boundaryTolerance
-      : naturalBottom > boundaryTolerance && naturalTop < viewportHeight - boundaryTolerance;
-
-    target.classList.toggle('visible', shouldBeVisible);
-  });
-}
-
-function scheduleScrollFadeInUpdate() {
-  if (scrollFadeInUpdateFrame !== null) return;
-  scrollFadeInUpdateFrame = requestAnimationFrame(updateScrollFadeInTargets);
-}
 
 function getScrollFadeInObserver() {
   if (!('IntersectionObserver' in window)) return null;
   if (!scrollFadeInObserver) {
-    scrollFadeInObserver = new IntersectionObserver(scheduleScrollFadeInUpdate, {
+    scrollFadeInObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        entry.target.classList.toggle('visible', entry.isIntersecting);
+      });
+    }, {
       threshold: 0,
       rootMargin: '60px 0px'
     });
@@ -1200,10 +1150,12 @@ function attachScrollFadeInObserver(target) {
   scrollFadeInObserved.add(target);
 
   target.classList.add('scroll-fade-in');
-  scrollFadeInTargets.add(target);
   const observer = getScrollFadeInObserver();
-  if (observer) observer.observe(target);
-  scheduleScrollFadeInUpdate();
+  if (observer) {
+    observer.observe(target);
+  } else {
+    target.classList.add('visible');
+  }
 }
 
 window.observeScrollFadeIn = function observeScrollFadeInSelector(selector) {
@@ -1229,12 +1181,9 @@ window.initScrollFadeInElements = function initScrollFadeInElements() {
     '.video-card:not(.loading-card)'
   ].forEach(window.observeScrollFadeIn);
 
-  scheduleScrollFadeInUpdate();
 };
 
 document.addEventListener('DOMContentLoaded', window.initScrollFadeInElements);
-document.addEventListener('scroll', scheduleScrollFadeInUpdate, { passive: true, capture: true });
-window.addEventListener('resize', scheduleScrollFadeInUpdate, { passive: true });
 
 // Yukarı Çık Butonu Fonksiyonalitesi
 document.addEventListener('DOMContentLoaded', function() {

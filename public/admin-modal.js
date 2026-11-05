@@ -1300,7 +1300,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 
             } else {
-                showError(groupsAuthLoginError, 'Geçersiz kullanıcı adı veya şifre');
+                const loginErrorMessage = data.code === 'USER_PASSIVE'
+                    ? 'Bu kullanıcı hesabı pasif durumda. Grup yöneticinizle iletişime geçin.'
+                    : 'Geçersiz kullanıcı adı veya şifre';
+                showError(groupsAuthLoginError, loginErrorMessage);
                 if (typeof logUnauthorizedAccess === 'function') {
                 logUnauthorizedAccess('Başarısız Yönetici girişi denemesi');
                 }
@@ -1864,7 +1867,7 @@ async function deleteAccount() {
         window.logActionForAudit('profilden_kendi_hesabini_silme');
     }
 
-    // Son yönetici, gruptaki kullanıcı sayısından bağımsız olarak kendi hesabını silemez.
+    // Son aktif yönetici, gruptaki kullanıcı sayısından bağımsız olarak kendi hesabını silemez.
     // Genel onayı göstermeden önce güncel sunucu verisiyle kontrol et.
     if (userInfo.userAuthority === 'admin') {
         try {
@@ -1875,10 +1878,12 @@ async function deleteAccount() {
             }
             const usersData = await usersResponse.json();
             const users = Array.isArray(usersData.users) ? usersData.users : [];
-            const adminCount = users.filter(user => user.authority === 'admin').length;
-            if (adminCount <= 1) {
+            const activeAdminCount = users.filter(user =>
+                user.authority === 'admin' && user.visibility !== 'pasif'
+            ).length;
+            if (activeAdminCount <= 1) {
                 showToast(
-                    'Gruptaki son yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.',
+                    'Gruptaki son aktif yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.',
                     'error',
                     'profile-settings-toast'
                 );

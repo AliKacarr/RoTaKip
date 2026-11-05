@@ -13,6 +13,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const schedule = require('node-schedule');
 const { ObjectId } = require('mongodb');
+const { USER_VISIBILITY_ACTIVE } = require('../userVisibility');
 require('dotenv').config({ path: path.join(__dirname, '../.env'), quiet: true });
 
 const {
@@ -467,6 +468,7 @@ async function addUser(db, addition, rows, today) {
       username,
       userpassword: passwordHash,
       authority: 'member',
+      visibility: USER_VISIBILITY_ACTIVE,
       loginStreak: 0,
       lastLoginDate: null,
       lastCongratulatedLeague: 'Bronz',
