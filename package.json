@@ -31,7 +31,7 @@
     "express-rate-limit": "^8.7.3",
     "express-session": "^1.19.0",
     "moment": "^2.30.1",
-    "mongodb": "^7.6.0",
+    "mongodb": "^7.8.0",
     "mongoose": "^9.11.4",
     "multer": "^2.5.0",
     "node-schedule": "^2.1.2",
