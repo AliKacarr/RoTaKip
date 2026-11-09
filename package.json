@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Book reading tracker application",
   "main": "server.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node server.js",
     "build:assets": "node scripts/build-assets.js",

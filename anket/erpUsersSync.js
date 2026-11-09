@@ -75,8 +75,7 @@ async function fetchTextWithRetry(url) {
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'user-agent':
-            'Mozilla/5.0 (compatible; RoTaKip ERP user sync; +https://rotakip.onrender.com)'
+          'user-agent': 'Mozilla/5.0 (compatible; RoTaKip ERP user sync)'
         }
       });
       if (!response.ok) throw new Error(`Form HTTP ${response.status}`);

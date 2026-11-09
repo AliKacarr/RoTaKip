@@ -304,7 +304,7 @@ async function doldurAnket(isHeadless = true) {
         try {
             browser = await chromium.launch(launchOptions);
         } catch (launchErr) {
-            console.log('  [BİLGİ] Playwright chromium bulunamadı. Render/Sunucuda otomatik indiriliyor...');
+            console.log('  [BİLGİ] Playwright chromium bulunamadı. Sunucuda otomatik indiriliyor...');
             try {
                 execSync('npx playwright install chromium', { stdio: 'inherit' });
                 browser = await chromium.launch(launchOptions);

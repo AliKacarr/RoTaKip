@@ -171,7 +171,7 @@ function createStaticOptions(isMedia = false) {
 
 app.use(express.json({ limit: '100kb' }));
 
-const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const isProduction = process.env.NODE_ENV === 'production';
 if (isProduction && !process.env.SESSION_SECRET) {
   throw new Error('Üretimde SESSION_SECRET tanımlanmalıdır.');
 }
@@ -5323,6 +5323,6 @@ app.use((error, req, res, next) => {
 // G. SERVER BAŞLATMA
 // ============================================================================
 
-app.listen(port, () => {
-  console.log(`Uygulama http://localhost:${port} adresinde çalışıyor`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Uygulama 0.0.0.0:${port} adresinde çalışıyor`);
 });
