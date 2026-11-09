@@ -4850,54 +4850,6 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, timestamp: Date.now() });
 });
 
-// Render'ı uyanık tutmak için ping sistemi
-function schedulePing() {
-  // Her 2 dakikada bir ping gönder
-  const pingJob = schedule.scheduleJob('*/2 * * * *', async () => {
-    try {
-      const response = await fetch('https://rotakip.onrender.com/api/health', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        // Başarısız response'u text olarak oku
-        const errorText = await response.text().catch(() => 'Unknown error');
-        console.warn(`⚠️ Ping başarısız: ${response.status} ${response.statusText} - ${errorText.trim()}`);
-        return;
-      }
-
-      // Sadece başarılı response'ları JSON olarak parse et
-      const contentType = response.headers.get('content-type');
-      if (!(contentType && contentType.includes('application/json'))) {
-        const text = await response.text();
-        console.warn(`⚠️ Ping yanıtı JSON değil: ${text.substring(0, 100)}`);
-      }
-    } catch (error) {
-      // Network hatalarını sessizce handle et
-      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
-        console.warn('⚠️ Ping bağlantı hatası (network). Bir sonraki ping\'de tekrar denenecek.');
-      } else if (error.message && error.message.includes('JSON')) {
-        console.warn('⚠️ Ping JSON parse hatası:', error.message);
-      } else {
-        console.warn('⚠️ Ping hatası:', error.message || error);
-      }
-    }
-  });
-
-  console.log("Ping scheduler started.");
-
-  // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('Ping service shutting down...');
-    pingJob.cancel();
-  });
-
-  return pingJob;
-}
-
 // Dropbox token yenileme sistemi
 function scheduleTokenRefresh() {
   // Her 1 saatte bir token'ı yenile
@@ -5226,7 +5178,6 @@ function scheduleTestGroupSeeder() {
 
 // Start the schedulers
 scheduleBackup();
-schedulePing();
 scheduleTokenRefresh();
 scheduleDailyNotifications();
 scheduleTestGroupSeeder();
