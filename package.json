@@ -11,13 +11,11 @@
     "build:assets": "node scripts/build-assets.js",
     "predev": "npm run build:assets",
     "dev": "node --watch server.js",
-    "test": "node --test tests/erpUsersSync.test.js tests/erpReadingsSync.test.js tests/userVisibility.test.js tests/inactiveMemberPolicy.test.js tests/groupUserLifecycle.test.js tests/dailyReadingMaintenance.test.js",
-    "sync:erp-users": "node anket/erpUsersSync.js",
-    "sync:erp-users:dry-run": "node anket/erpUsersSync.js --dry-run",
+    "test": "node --test tests/erpReadingsSync.test.js tests/userVisibility.test.js tests/inactiveMemberPolicy.test.js tests/groupUserLifecycle.test.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build": "npm run build:assets",
-    "postinstall": "npm run build:assets && npx playwright install chromium",
+    "postinstall": "npm run build:assets",
     "docker:build": "docker build -t reading-tracker .",
     "docker:run": "docker run --rm -p 3001:3000 --env-file .env reading-tracker",
     "docker:dev": "docker build -t reading-tracker . && docker run --rm -p 3001:3000 --env-file .env reading-tracker"
@@ -39,7 +37,6 @@
     "multer": "^2.5.0",
     "node-schedule": "^2.1.2",
     "pino": "^10.4.0",
-    "playwright": "^1.64.1",
     "sharp": "^0.35.4",
     "terser": "^5.51.2"
   },

@@ -4,7 +4,6 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
-const { MongoClient } = require('mongodb');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -20,34 +19,26 @@ const session = require('express-session');
 const { MongoStore } = require('connect-mongo');
 const { rateLimit } = require('express-rate-limit');
 const crypto = require('crypto');
-const { scheduleAnketJob } = require('./anket/anketService');
 const {
   ERP_SKO_GROUPS,
   getErpReadingsChangeVersion,
-  scheduleErpReadingsSync,
   syncErpReadingsOnDemand
 } = require('./anket/erpReadingsSync');
-const { scheduleErpUsersSync } = require('./anket/erpUsersSync');
 const {
   USER_VISIBILITY_ACTIVE,
   USER_VISIBILITY_PASSIVE,
   VALID_USER_VISIBILITIES,
   activeAdminQuery,
-  activeMemberQuery,
   activeUserQuery,
   isActiveUser,
   normalizeUserVisibility
 } = require('./userVisibility');
 const {
-  INACTIVE_MEMBER_ACTION_DELETE,
   INACTIVE_MEMBER_ACTION_NONE,
-  INACTIVE_MEMBER_ACTION_PASSIVE,
   VALID_INACTIVE_MEMBER_ACTIONS,
-  calculateConsecutiveMissedDays,
   normalizeInactiveMemberAction
 } = require('./inactiveMemberPolicy');
 const { deleteGroupUser, passivateGroupUser } = require('./groupUserLifecycle');
-const { runDailyReadingMaintenance } = require('./dailyReadingMaintenance');
 const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 
 const app = express();
@@ -75,19 +66,6 @@ function shiftDateKey(dateKey, dayCount) {
 
 function istanbulYesterdayKey(at = new Date()) {
   return shiftDateKey(istanbulDateKey(at), -1);
-}
-
-function formatIstanbulDateTime(at = new Date()) {
-  return new Intl.DateTimeFormat('tr-TR', {
-    timeZone: ISTANBUL_TIME_ZONE,
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).format(at);
 }
 
 // Giriş serisi hesaplama fonksiyonu
@@ -4605,102 +4583,6 @@ app.get('/api/check-user-in-group/:groupId/:objectId', requireGroupAuth, async (
 });
 
 
-// F. YEDEKLEME HİZMETİ
-// ============================================================================
-
-const backupSourceUri = process.env.MONGO_URI;
-const backupTargetUri = process.env.BACKUP_MONGO_URI;
-const backupSourceDbName = process.env.DB_NAME;
-const backupDbName = process.env.BACKUP_DB_NAME;
-
-async function cleanupOldBackups(db, prefix, keepCount) {
-  const collections = await db.listCollections({}, { nameOnly: true }).toArray();
-  const backupCollections = collections
-    .map(collection => collection.name)
-    .filter(name => name.startsWith(prefix))
-    .sort((a, b) => b.localeCompare(a));
-
-  for (const collectionName of backupCollections.slice(keepCount)) {
-    await db.collection(collectionName).drop();
-    console.log(`✅ Eski yedek silindi: ${collectionName}`);
-  }
-}
-
-async function backupCollection(sourceDb, backupDb, collectionName, timestamp) {
-  const backupCollectionName = `${collectionName}_backup_${timestamp}`;
-  try {
-    await backupDb.createCollection(backupCollectionName);
-  } catch (error) {
-    if (error.code !== 48) throw error;
-  }
-  const target = backupDb.collection(backupCollectionName);
-  await target.deleteMany({});
-
-  let documentsCopied = 0;
-  let batch = [];
-  for await (const document of sourceDb.collection(collectionName).find({})) {
-    batch.push(document);
-    if (batch.length === 1000) {
-      await target.insertMany(batch);
-      documentsCopied += batch.length;
-      batch = [];
-    }
-  }
-  if (batch.length > 0) {
-    await target.insertMany(batch);
-    documentsCopied += batch.length;
-  }
-
-  console.log(`✅ ${collectionName}: ${documentsCopied} belge ${backupCollectionName} koleksiyonuna yedeklendi`);
-  await cleanupOldBackups(backupDb, `${collectionName}_backup_`, 10);
-}
-
-async function performBackup() {
-  if (!backupSourceUri || !backupSourceDbName || !backupTargetUri || !backupDbName) {
-    throw new Error(
-      'MONGO_URI, DB_NAME, BACKUP_MONGO_URI ve BACKUP_DB_NAME tanımlı olmalıdır.'
-    );
-  }
-
-  console.log('Backup: Starting...');
-  const sourceClient = new MongoClient(backupSourceUri);
-  const backupClient = new MongoClient(backupTargetUri);
-  try {
-    await Promise.all([sourceClient.connect(), backupClient.connect()]);
-    const sourceDb = sourceClient.db(backupSourceDbName);
-    const backupDb = backupClient.db(backupDbName);
-    const now = new Date();
-    const timestamp = istanbulDateKey(now);
-    const collectionNames = (await sourceDb.listCollections({}, { nameOnly: true }).toArray())
-      .map(collection => collection.name)
-      .filter(name => name === 'usergroups' || name.startsWith('users_') || name.startsWith('readingstatuses_'));
-
-    for (const collectionName of collectionNames) {
-      await backupCollection(sourceDb, backupDb, collectionName, timestamp);
-    }
-
-    console.log(`Backup completed at ${formatIstanbulDateTime(now)} (${ISTANBUL_TIME_ZONE})`);
-  } finally {
-    await Promise.allSettled([sourceClient.close(), backupClient.close()]);
-  }
-}
-
-function scheduleBackup() {
-  // Schedule backups to run every 1440 minutes (24 hours)
-  const backupJob = schedule.scheduleJob({ rule: '0 23 * * *', tz: ISTANBUL_TIME_ZONE }, () => {
-    performBackup().catch(error => console.error('Error during backup:', error));
-  });
-
-  // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('Backup service shutting down...');
-    backupJob.cancel();
-    process.exit(0);
-  });
-
-  return backupJob;
-}
-
 // Hatırlatmalar şeması
 const hatirlatmaSchema = new mongoose.Schema({
   sentence: String
@@ -4871,316 +4753,9 @@ function scheduleTokenRefresh() {
   return tokenJob;
 }
 
-// Anket zamanlayıcısını başlat (Her gün saat 22:00 TSİ)
-scheduleAnketJob();
-
-// ERP Form → kullanıcı/grup senkronu (Her gece 00:30 TSİ)
-scheduleErpUsersSync(() => mongoose.connection.db);
-
-// ERP Sheets → okudum senkronu (01–19: 30 dk, 20–23: 15 dk; dün+bugün)
-scheduleErpReadingsSync(() => mongoose.connection.db);
-
-// ==================== TEST GRUPLARI İÇİN SAHTE OKUMA VERİSİ EKLEYICI ====================
-
-// Test grubu ID'leri
-const TEST_GROUP_IDS = [
-  'ali-kacar',
-  'maksat114',
-  'ısık-hızı',
-  'yozgatlılar',
-  'bilimin-ısıgında',
-  'bozok-universitesi',
-  'firat-genclik',
-  'yozgat-gobelleri',
-  'kece-kulahlilar'
-];
-
-function typicalTestAmountForUser(userId) {
-  let h = 0;
-  const s = String(userId);
-  for (let i = 0; i < s.length; i++) {
-    h = ((h << 5) - h) + s.charCodeAt(i);
-    h |= 0;
-  }
-  const bases = [10, 15, 20, 30, 50, 80];
-  return bases[Math.abs(h) % bases.length];
-}
-
-function jitterTestAmount(base) {
-  const r = Math.random();
-  if (r < 0.55) return base;
-  if (r < 0.75) return Math.max(5, base - 5);
-  if (r < 0.92) return base + 10;
-  return base + 20;
-}
-
-async function seedFakeReadingDataForTestGroups() {
-  console.log('🤖 [TestSeeder] Sahte okuma verisi ekleme başladı...');
-
-  // Dünün tarihini Europe/Istanbul saat dilimiyle hesapla
-  const yesterday = istanbulYesterdayKey();
-  console.log(`📅 [TestSeeder] Hedef tarih: ${yesterday}`);
-
-  let totalInserted = 0;
-  let totalSkipped = 0;
-  let totalErrors = 0;
-
-  for (const groupId of TEST_GROUP_IDS) {
-    try {
-      // Grubun koleksiyonlarını al
-      const { users, readingStatuses } = getGroupCollections(groupId);
-
-      // Pasif kullanıcılar otomatik okuma verisine dahil edilmez.
-      const allUsers = await users.find(activeUserQuery()).lean();
-
-      if (!allUsers || allUsers.length === 0) {
-        console.log(`⚠️  [TestSeeder] ${groupId}: Kullanıcı bulunamadı, atlanıyor.`);
-        continue;
-      }
-
-      console.log(`👥 [TestSeeder] ${groupId}: ${allUsers.length} kullanıcı işlenecek.`);
-
-      for (const user of allUsers) {
-        try {
-          const userId = user._id.toString();
-
-          // Zaten bu tarih için kayıt var mı kontrol et
-          const existing = await readingStatuses.findOne({ userId, date: yesterday }).lean();
-          if (existing) {
-            // Kayıt zaten mevcutsa dokunma
-            totalSkipped++;
-            continue;
-          }
-
-          // %90 ihtimalle "okudum", %10 ihtimalle "okumadım"
-          const rand = Math.random();
-          const status = rand < 0.90 ? 'okudum' : 'okumadım';
-          const doc = {
-            userId,
-            date: yesterday,
-            status
-          };
-          if (status === 'okudum') {
-            doc.amount = jitterTestAmount(typicalTestAmountForUser(userId));
-          }
-          await readingStatuses.create(doc);
-          totalInserted++;
-        } catch (userErr) {
-          console.error(`❌ [TestSeeder] ${groupId} kullanıcı hatası (${user._id}):`, userErr.message);
-          totalErrors++;
-        }
-      }
-
-      console.log(`✅ [TestSeeder] ${groupId}: Tamamlandı.`);
-    } catch (groupErr) {
-      console.error(`❌ [TestSeeder] ${groupId} grup hatası:`, groupErr.message);
-      totalErrors++;
-    }
-  }
-
-  console.log(`🏁 [TestSeeder] Tamamlandı! Eklenen: ${totalInserted}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`);
-
-}
-
-// Gerçek gruplarda düne ait okuma kaydı olmayan aktif kullanıcılara 'okumadım' ekleyen fonksiyon
-async function processMissingReadingStatusesForRealGroups() {
-  console.log('🔄 [AutoUnreadProcessor] Gerçek gruplar için eksik "okumadım" kayıtları işleniyor...');
-
-  const yesterday = istanbulYesterdayKey();
-  console.log(`📅 [AutoUnreadProcessor] Hedef tarih: ${yesterday}`);
-
-  let totalInserted = 0;
-  let totalSkipped = 0;
-  let totalErrors = 0;
-
-  try {
-    const realGroups = await UserGroup.find({ groupId: { $nin: TEST_GROUP_IDS } }).lean();
-
-    for (const group of realGroups) {
-      // Grup seviyesinde otomatik işaretleme pasifse atla
-      if (group.autoMarkUnread === false) {
-        console.log(`⏸️  [AutoUnreadProcessor] ${group.groupId}: Otomatik okumadım kaydı pasif, atlanıyor.`);
-        continue;
-      }
-
-      try {
-        const { users, readingStatuses } = getGroupCollections(group.groupId);
-        const allUsers = await users.find(activeUserQuery()).lean();
-
-        if (!allUsers || allUsers.length === 0) continue;
-
-        for (const user of allUsers) {
-          try {
-            const userId = user._id.toString();
-
-            // Şart: Bir kişinin en az 1 okuma verisi olmalı
-            const hasAnyReadingStatus = await readingStatuses.exists({ userId });
-            if (!hasAnyReadingStatus) {
-              totalSkipped++;
-              continue;
-            }
-
-            // Dün tarihli bir kaydı var mı?
-            const yesterdayRecord = await readingStatuses.findOne({ userId, date: yesterday }).lean();
-            if (!yesterdayRecord) {
-              await readingStatuses.create({
-                userId,
-                date: yesterday,
-                status: 'okumadım'
-              });
-              totalInserted++;
-            } else {
-              totalSkipped++;
-            }
-          } catch (userErr) {
-            console.error(`❌ [AutoUnreadProcessor] ${group.groupId} kullanıcı hatası (${user._id}):`, userErr.message);
-            totalErrors++;
-          }
-        }
-      } catch (groupErr) {
-        console.error(`❌ [AutoUnreadProcessor] ${group.groupId} grup hatası:`, groupErr.message);
-        totalErrors++;
-      }
-    }
-  } catch (err) {
-    console.error('❌ [AutoUnreadProcessor] Grupları çekme hatası:', err.message);
-  }
-
-  console.log(`🏁 [AutoUnreadProcessor] Tamamlandı! Eklenen: ${totalInserted}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`);
-}
-
-async function processInactiveMembers() {
-  console.log('🔎 [InactiveMemberProcessor] 15 gündür okumayan aktif üyeler denetleniyor...');
-
-  const today = istanbulDateKey();
-  const threshold = 15;
-  let totalDeleted = 0;
-  let totalPassivated = 0;
-  let totalSkipped = 0;
-  let totalErrors = 0;
-
-  try {
-    const configuredGroups = await UserGroup.find({
-      inactiveMemberAction: {
-        $in: [INACTIVE_MEMBER_ACTION_DELETE, INACTIVE_MEMBER_ACTION_PASSIVE]
-      }
-    }).lean();
-
-    for (const group of configuredGroups) {
-      const action = normalizeInactiveMemberAction(group.inactiveMemberAction);
-
-      try {
-        const { users, readingStatuses } = getGroupCollections(group.groupId);
-        const activeMembers = await users.find(activeMemberQuery()).lean();
-
-        for (const user of activeMembers) {
-          let releaseUserMutationLock;
-          try {
-            const readingHistory = await readingStatuses
-              .find({ userId: String(user._id), date: { $lte: today } })
-              .select('date status -_id')
-              .lean();
-            const missedDays = calculateConsecutiveMissedDays(readingHistory, today);
-
-            if (missedDays < threshold) {
-              totalSkipped++;
-              continue;
-            }
-
-            releaseUserMutationLock = await acquireGroupUserMutationLock(group.groupId);
-            const userFilter = {
-              _id: user._id,
-              ...activeMemberQuery()
-            };
-
-            if (action === INACTIVE_MEMBER_ACTION_DELETE) {
-              const result = await deleteUserWithRelatedData({
-                groupId: group.groupId,
-                user,
-                users,
-                readingStatuses,
-                userFilter
-              });
-              if (!result.applied) {
-                totalSkipped++;
-                continue;
-              }
-              totalDeleted++;
-              totalErrors += result.cleanupErrors.length;
-              logUserCleanupErrors(
-                `[InactiveMemberProcessor] ${group.groupId}/${user._id} silme temizliği tamamlanamadı`,
-                result.cleanupErrors
-              );
-            } else if (action === INACTIVE_MEMBER_ACTION_PASSIVE) {
-              const result = await passivateUserWithAccessCleanup({
-                groupId: group.groupId,
-                user,
-                users,
-                userFilter
-              });
-              if (!result.applied) {
-                totalSkipped++;
-                continue;
-              }
-              totalPassivated++;
-              totalErrors += result.cleanupErrors.length;
-              logUserCleanupErrors(
-                `[InactiveMemberProcessor] ${group.groupId}/${user._id} pasife alma temizliği tamamlanamadı`,
-                result.cleanupErrors
-              );
-            }
-          } catch (userError) {
-            totalErrors++;
-            console.error(
-              `❌ [InactiveMemberProcessor] ${group.groupId} kullanıcı hatası (${user._id}):`,
-              userError.message
-            );
-          } finally {
-            releaseUserMutationLock?.();
-          }
-        }
-      } catch (groupError) {
-        totalErrors++;
-        console.error(`❌ [InactiveMemberProcessor] ${group.groupId} grup hatası:`, groupError.message);
-      }
-    }
-  } catch (error) {
-    totalErrors++;
-    console.error('❌ [InactiveMemberProcessor] Grupları çekme hatası:', error.message);
-  }
-
-  console.log(
-    `🏁 [InactiveMemberProcessor] Tamamlandı! Silinen: ${totalDeleted}, ` +
-    `Pasife alınan: ${totalPassivated}, Atlanan: ${totalSkipped}, Hata: ${totalErrors}`
-  );
-}
-
-// Test grubu sahte veri zamanlayıcısını başlat
-function scheduleTestGroupSeeder() {
-  // Her gün saat 06:00'da çalış (Europe/Istanbul)
-  const seederJob = schedule.scheduleJob({ rule: '0 6 * * *', tz: 'Europe/Istanbul' }, async () => {
-    console.log('⏰ [TestSeeder] 06:00 - Sahte okuma verisi ekleme tetiklendi.');
-    await runDailyReadingMaintenance({
-      seedTestData: seedFakeReadingDataForTestGroups,
-      processMissingStatuses: processMissingReadingStatusesForRealGroups,
-      processInactiveMembers
-    });
-  });
-
-  console.log('✅ Test grubu sahte veri zamanlayıcısı başlatıldı (Her gün 06:00, Europe/Istanbul).');
-
-  process.on('SIGINT', () => {
-    seederJob && seederJob.cancel();
-  });
-
-  return seederJob;
-}
-
 // Start the schedulers
-scheduleBackup();
 scheduleTokenRefresh();
 scheduleDailyNotifications();
-scheduleTestGroupSeeder();
 
 // ==================== Profile Management API Endpoints ====================
 
