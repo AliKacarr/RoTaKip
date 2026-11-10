@@ -87,9 +87,17 @@ body {
 }
 
 .main-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
     max-width: 1200px;
     margin: 0 auto;
     padding: var(--spacing-lg);
+}
+
+.main-container > .site-footer {
+    margin-top: auto;
 }
 
 /* ==================== Header Section ==================== */
@@ -277,6 +285,10 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 28px;
     margin-bottom: 40px;
+}
+
+.groups-grid:not(:has(.group-card)) {
+    margin-bottom: 0;
 }
 
 .group-card {
