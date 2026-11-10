@@ -1115,6 +1115,121 @@ ${quickLoginUrl}`;
 }
 
 // renderUserList için debounce mekanizması
+function getIstanbulDateParts(date = new Date()) {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Istanbul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    return Object.fromEntries(
+        formatter.formatToParts(date)
+            .filter(part => part.type !== 'literal')
+            .map(part => [part.type, Number(part.value)])
+    );
+}
+
+function addUtcMonthsClamped(date, monthCount) {
+    const targetMonthStart = new Date(Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth() + monthCount,
+        1
+    ));
+    const targetMonthLastDay = new Date(Date.UTC(
+        targetMonthStart.getUTCFullYear(),
+        targetMonthStart.getUTCMonth() + 1,
+        0
+    )).getUTCDate();
+
+    return new Date(Date.UTC(
+        targetMonthStart.getUTCFullYear(),
+        targetMonthStart.getUTCMonth(),
+        Math.min(date.getUTCDate(), targetMonthLastDay)
+    ));
+}
+
+function getLastLoginDisplay(lastLoginDate, now = new Date()) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(lastLoginDate || ''));
+    if (!match) {
+        return {
+            text: 'Son görülme: -',
+            title: 'Son giriş bilgisi bulunmuyor',
+            isEmpty: true
+        };
+    }
+
+    const [, yearText, monthText, dayText] = match;
+    const year = Number(yearText);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const loginDate = new Date(Date.UTC(year, month - 1, day));
+    const isValidDate = loginDate.getUTCFullYear() === year
+        && loginDate.getUTCMonth() === month - 1
+        && loginDate.getUTCDate() === day;
+
+    if (!isValidDate) {
+        return {
+            text: 'Son görülme: -',
+            title: 'Son giriş tarihi geçersiz',
+            isEmpty: true
+        };
+    }
+
+    const todayParts = getIstanbulDateParts(now);
+    const today = new Date(Date.UTC(todayParts.year, todayParts.month - 1, todayParts.day));
+    const dayMs = 24 * 60 * 60 * 1000;
+    const differenceInDays = Math.floor((today - loginDate) / dayMs);
+    const formattedDate = loginDate.toLocaleDateString('tr-TR', {
+        timeZone: 'UTC',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+    if (differenceInDays <= 0) {
+        return {
+            text: 'Son görülme: Bugün',
+            title: `Son görülme: ${formattedDate}`,
+            isEmpty: false
+        };
+    }
+    if (differenceInDays === 1) {
+        return {
+            text: 'Son görülme: Dün',
+            title: `Son görülme: ${formattedDate}`,
+            isEmpty: false
+        };
+    }
+    if (differenceInDays < 30) {
+        return {
+            text: `Son görülme: ${differenceInDays} gün önce`,
+            title: `Son görülme: ${formattedDate}`,
+            isEmpty: false
+        };
+    }
+
+    let totalMonths = (today.getUTCFullYear() - loginDate.getUTCFullYear()) * 12
+        + today.getUTCMonth() - loginDate.getUTCMonth();
+    let monthAnchor = addUtcMonthsClamped(loginDate, totalMonths);
+    if (monthAnchor > today) {
+        totalMonths -= 1;
+        monthAnchor = addUtcMonthsClamped(loginDate, totalMonths);
+    }
+
+    const remainingDays = Math.floor((today - monthAnchor) / dayMs);
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    const parts = [];
+    if (years > 0) parts.push(`${years} yıl`);
+    if (months > 0) parts.push(`${months} ay`);
+    if (remainingDays > 0) parts.push(`${remainingDays} gün`);
+
+    return {
+        text: `Son görülme: ${parts.join(' ')} önce`,
+        title: `Son görülme: ${formattedDate}`,
+        isEmpty: false
+    };
+}
+
 function renderUserList() {
     // Sadece admin yetkisi kontrolü
     if (!LocalStorageManager.isAdmin()) {
@@ -1160,6 +1275,8 @@ function performRenderUserList() {
             users.forEach((user) => {
                 const userProfileImage = window.safeImageSrc(user.profileImage);
                 const safeUserName = window.escapeHtml(user.name);
+                const lastLogin = getLastLoginDisplay(user.lastLoginDate);
+                const lastLoginClass = lastLogin.isEmpty ? ' is-empty' : '';
                 const liHTML = `<div class="kullanıcı-item"><img src="${window.escapeHtml(userProfileImage)}" alt="${safeUserName}" class="user-profile-image user-profile-image-loading" loading="lazy" decoding="async" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${safeUserName}</span><input type="text" class="edit-name-input" value="${safeUserName}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
 
                 // Kullanıcı container'ı oluştur
@@ -1178,7 +1295,16 @@ function performRenderUserList() {
                 }
 
                 li.innerHTML = liHTML;
-                userContainer.appendChild(li);
+                const userCardColumn = document.createElement('div');
+                userCardColumn.className = 'managed-user-card-column';
+                userCardColumn.appendChild(li);
+
+                const lastLoginElement = document.createElement('div');
+                lastLoginElement.className = `user-last-login${lastLoginClass}`;
+                lastLoginElement.title = lastLogin.title;
+                lastLoginElement.innerHTML = `<i class="fa-regular fa-clock" aria-hidden="true"></i><span>${window.escapeHtml(lastLogin.text)}</span>`;
+                userCardColumn.appendChild(lastLoginElement);
+                userContainer.appendChild(userCardColumn);
 
                 const selectGroup = document.createElement('div');
                 selectGroup.className = 'user-selects';

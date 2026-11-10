@@ -3,7 +3,7 @@
     flex-direction: column;
     gap: 40px;
     padding: 20px;
-    margin-top: 20px;
+    margin-bottom: 20px;
     position: relative;
 }
 
@@ -87,7 +87,7 @@ ul#passiveUserList[hidden] {
 
 .user-container {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 15px;
 }
 
@@ -173,6 +173,58 @@ ul#passiveUserList li span {
     max-width: 260px;
 }
 
+.managed-user-card-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 286px;
+}
+
+.managed-user-card-column > li {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.user-last-login {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: calc(100% - 14px);
+    margin: 6px 0 0 10px;
+    color: #3f4d5a;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-last-login span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-last-login i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    width: 14px;
+    height: 14px;
+    color: inherit;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.user-last-login.is-empty {
+    font-style: normal;
+}
+
 .user-profile-image {
     cursor: pointer;
     transition: opacity 0.2s;
@@ -222,6 +274,7 @@ ul#passiveUserList li span {
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
+    min-width: 0;
 }
 
 .edit-name-input {
@@ -243,6 +296,7 @@ ul#passiveUserList li span {
 .user-selects {
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     gap: 6px;
     min-width: 110px;
 }

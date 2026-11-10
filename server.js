@@ -614,11 +614,77 @@ function generateGroupId(groupName) {
   return id;
 }
 
-// Video API Konfigürasyon endpoint'i
-app.get('/api/config', (req, res) => {
-  res.json({
-    youtubeApiKey: process.env.YOUTUBE_API_KEY || 'YOUR_DEFAULT_API_KEY'
-  });
+const VIDEO_LIST_TYPES = new Set(['random', 'latest', 'most-viewed']);
+const DEFAULT_VIDEO_LIMIT = 6;
+const MAX_VIDEO_LIMIT = 24;
+
+// Video kartları için YouTube API yerine yerel `videolar` koleksiyonunu kullan.
+app.get('/api/videos', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const type = String(req.query.type || 'random');
+  const requestedLimit = Number.parseInt(req.query.limit, 10);
+  const limit = Number.isInteger(requestedLimit)
+    ? Math.min(Math.max(requestedLimit, 1), MAX_VIDEO_LIMIT)
+    : DEFAULT_VIDEO_LIMIT;
+
+  if (!VIDEO_LIST_TYPES.has(type)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Geçersiz video liste türü'
+    });
+  }
+
+  if (!mongoose.connection.db || mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Veritabanı hazır değil, lütfen tekrar deneyin.'
+    });
+  }
+
+  try {
+    const videosCollection = mongoose.connection.db.collection('videolar');
+    const validVideoQuery = { videoId: { $type: 'string', $ne: '' } };
+    const projection = {
+      _id: 0,
+      videoId: 1,
+      baslik: 1,
+      createdAt: 1,
+      izlenmeSayisi: 1,
+      kanalAdi: 1,
+      kanalId: 1,
+      link: 1,
+      sureSaniye: 1,
+      videoTuru: 1,
+      yuklenmeTarihi: 1
+    };
+
+    let videos;
+    if (type === 'random') {
+      videos = await videosCollection.aggregate([
+        { $match: validVideoQuery },
+        { $sample: { size: limit } },
+        { $project: projection }
+      ]).toArray();
+    } else {
+      const sort = type === 'latest'
+        ? { yuklenmeTarihi: -1, createdAt: -1, _id: -1 }
+        : { izlenmeSayisi: -1, yuklenmeTarihi: -1, _id: -1 };
+
+      videos = await videosCollection
+        .find(validVideoQuery, { projection })
+        .sort(sort)
+        .limit(limit)
+        .toArray();
+    }
+
+    return res.json({ success: true, videos });
+  } catch (error) {
+    console.error('Videolar yüklenirken hata:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Videolar yüklenemedi'
+    });
+  }
 });
 
 // Articles API endpoint

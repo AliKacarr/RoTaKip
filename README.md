@@ -89,7 +89,7 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 **Frontend:** Vanilla JavaScript, CSS3, Font Awesome  
 
-**Entegrasyonlar:** Whatsapp; Dropbox, OneSignal, YouTube Data API, Google Analytics, Tawk.to canlı destek 
+**Entegrasyonlar:** Whatsapp; Dropbox, OneSignal, YouTube, Google Analytics, Tawk.to canlı destek
 
 ---
 
@@ -115,9 +115,6 @@ Kök dizinde `.env` oluşturup değerleri doldurun:
 MONGO_URI=mongodb://localhost:27017/reading-tracker
 DB_NAME=readingTracker
 SESSION_SECRET=uzun-rastgele-bir-deger
-
-# YouTube
-YOUTUBE_API_KEY=
 
 # Dropbox — yükleme için erişim jetonu; yenileme için uygulama anahtarları
 DROPBOX_APP_KEY=
