@@ -193,7 +193,38 @@
   justify-content: center;
   text-align: center;
   font-size: 15px;
-  color: #666;
+  color: #333;
   border-top: none;
   background: transparent;
+}
+
+@media (max-width: 768px) {
+  .footer-bottom {
+    margin-top: 15px;
+  }
+
+  .footer-section.social-media {
+    order: 1;
+  }
+
+  .footer-section.app-download {
+    order: 2;
+  }
+
+  .footer-section.kurumsal {
+    order: 3;
+  }
+
+  .footer-section.kurumsal ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    width: 100%;
+    max-width: 380px;
+    padding: 0 12px;
+  }
+
+  .footer-section.kurumsal ul li {
+    margin-bottom: 0;
+  }
 }

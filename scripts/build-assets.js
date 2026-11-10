@@ -9,7 +9,7 @@ const publicPath = path.join(projectRoot, 'public');
 
 const bundles = {
   index: {
-    css: ['index.css'],
+    css: ['index.css', 'footer.css'],
     js: ['third-party.js', 'index.js']
   },
   groups: {

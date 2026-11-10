@@ -276,8 +276,13 @@ class GroupsPage {
     async loadGroups(reset = false) {
         if (this.isLoading) return;
 
+        // Spinner yalnızca sayfanın ilk, boş yüklenişinde gösterilir. Sonsuz
+        // kaydırma istekleri mevcut kartları ve footer konumunu oynatmamalıdır.
+        const isInitialLoad = reset && this.currentPage === 0 && this.groups.length === 0;
         this.isLoading = true;
-        this.showLoading(true);
+        if (isInitialLoad) {
+            this.showLoading(true);
+        }
 
         try {
             // İlk yükleme ise önce kullanıcının gruplarını yükle
@@ -341,7 +346,9 @@ class GroupsPage {
             return { groups: [], hasMore: false };
         } finally {
             this.isLoading = false;
-            this.showLoading(false);
+            if (isInitialLoad) {
+                this.showLoading(false);
+            }
             this.renderGroups();
         }
     }
