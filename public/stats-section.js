@@ -91,11 +91,11 @@ window.loadReadingStats = async function loadReadingStats() {
             return;
         }
 
-        // Kullanıcı sayısına göre yükseklik ayarla (ör: her kullanıcı için 45px)
+        // Kalın çubukların ve eksen başlıklarının rahat görünmesi için kullanıcı başına geniş bir satır ayır.
         const chartContainer = ctx.parentElement;
         if (chartContainer) {
-            const userHeight = 44;
-            const dynamicHeight = Math.max(enhancedUserStats.length * userHeight+120);
+            const userHeight = 60;
+            const dynamicHeight = Math.max(enhancedUserStats.length * userHeight + 150, 360);
             chartContainer.style.height = dynamicHeight + 'px';
         }
 
@@ -163,6 +163,9 @@ window.loadReadingStats = async function loadReadingStats() {
                         borderWidth: enhancedUserStats.map((user, index) =>
                             successRates[index] === highestSuccessRate ? 2 : 1
                         ),
+                        barThickness: 44,
+                        borderRadius: 4,
+                        borderSkipped: false,
                         hoverBackgroundColor: 'rgba(63, 194, 63, 0.9)'
                     },
                     {
@@ -171,6 +174,9 @@ window.loadReadingStats = async function loadReadingStats() {
                         backgroundColor: 'rgba(255, 100, 60, 0.7)',
                         borderColor: 'rgba(255, 100, 60, 1)',
                         borderWidth: 1,
+                        barThickness: 44,
+                        borderRadius: 4,
+                        borderSkipped: false,
                         hoverBackgroundColor: 'rgba(255, 100, 60, 0.9)'
                     }
                 ]
@@ -200,7 +206,7 @@ window.loadReadingStats = async function loadReadingStats() {
                             color: '#000000',
                             font: {
                                 weight: 'bold',
-                                size: 16  //Okuma yüzdesi için
+                                size: 21  //Okuma yüzdesi için
                             },
                             padding: {
                                 top: 18
@@ -209,7 +215,7 @@ window.loadReadingStats = async function loadReadingStats() {
                         ticks: {
                             color: '#000000',
                             font: {
-                                size: 16
+                                size: 21
                             }
                         },
                         grid: {
@@ -224,7 +230,7 @@ window.loadReadingStats = async function loadReadingStats() {
                             color: '#000000',
                             font: {
                                 weight: 'bold',
-                                size: 16
+                                size: 21
                             },
                             padding: {
                                 bottom: 15
@@ -233,7 +239,7 @@ window.loadReadingStats = async function loadReadingStats() {
                         ticks: {
                             color: '#000000',
                             font: {
-                                size: 18  //Kullanıcı isimleri için
+                                size: 23  //Kullanıcı isimleri için
                             },
                             callback: function (value) {
                                 const label = this.getLabelForValue(value);
@@ -247,7 +253,17 @@ window.loadReadingStats = async function loadReadingStats() {
                 },
                 plugins: {
                     tooltip: {
+                        mode: 'nearest',
+                        intersect: true,
+                        displayColors: false,
                         callbacks: {
+                            label: function (context) {
+                                const index = context.dataIndex;
+                                return [
+                                    `Okunan gün: ${okudumData[index]}`,
+                                    `Okunmayan gün: ${okumadimData[index]}`
+                                ];
+                            },
                             afterBody: function (context) {
                                 const index = context[0].dataIndex;
                                 return `Başarı Oranı: %${successRates[index]}`;
@@ -257,7 +273,21 @@ window.loadReadingStats = async function loadReadingStats() {
                         bodyColor: '#000000',
                         backgroundColor: 'rgba(255, 255, 255, 0.9)',
                         borderColor: 'rgba(0, 0, 0, 0.2)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        cornerRadius: 7,
+                        padding: 12,
+                        caretSize: 7,
+                        boxWidth: 16,
+                        boxHeight: 16,
+                        titleSpacing: 5,
+                        bodySpacing: 5,
+                        titleFont: {
+                            size: 19,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 18
+                        }
                     },
                     legend: {
                         position: 'top',
@@ -265,7 +295,7 @@ window.loadReadingStats = async function loadReadingStats() {
                             color: '#000000',
                             font: {
                                 weight: 'bold',
-                                size: 16 //Okudum Okumadım yazısı için
+                                size: 21 //Okudum Okumadım yazısı için
                             }
                         }
                     },
@@ -300,13 +330,13 @@ window.loadReadingStats = async function loadReadingStats() {
                         borderRadius: 4,
                         font: {
                             weight: 'bold',
-                            size: 15   //Okuma yüzdesi için
+                            size: 22   //Okuma yüzdesi için
                         },
                         padding: {
-                            top: 4,
-                            bottom: 4,
-                            left: 6,
-                            right: 6
+                            top: 5,
+                            bottom: 5,
+                            left: 8,
+                            right: 8
                         },
                         z: 100
                     }

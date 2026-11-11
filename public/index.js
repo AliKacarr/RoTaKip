@@ -89,6 +89,7 @@ class GroupsPage {
         this.filteredGroups = [];
         this.memberCounts = new Map();
         this.joinRequestStatuses = new Map();
+        this.pendingCardRemovals = new Map();
         
         // Pagination
         this.currentPage = 0;
@@ -281,7 +282,7 @@ class GroupsPage {
         const isInitialLoad = reset && this.currentPage === 0 && this.groups.length === 0;
         this.isLoading = true;
         if (isInitialLoad) {
-            this.showLoading(true);
+            this.showLoading(true, true);
         }
 
         try {
@@ -431,27 +432,58 @@ class GroupsPage {
         // Grupları sırala: 1) Yetki sahibi olduğumuz gruplar, 2) Katılma isteği gönderdiğimiz gruplar, 3) Rastgele gruplar
         const sortedGroups = this.sortGroupsByPriority(this.filteredGroups);
         
-        const existingCardIds = new Set(Array.from(groupsGrid.querySelectorAll('.group-card')).map(card => card.getAttribute('data-group-id')));
-        const resultsCardIds = new Set(sortedGroups.map(g => g.groupId));
+        const cardsById = new Map(
+            Array.from(groupsGrid.querySelectorAll('.group-card'))
+                .map(card => [String(card.getAttribute('data-group-id')), card])
+        );
+        const resultsCardIds = new Set(sortedGroups.map(group => String(group.groupId)));
 
         // Remove cards that are no longer in the results
-        existingCardIds.forEach(id => {
-            if (!resultsCardIds.has(id)) {
-                const card = groupsGrid.querySelector(`[data-group-id="${id}"]`);
-                if (card) {
-                    card.classList.add('hide');
-                    setTimeout(() => card.remove(), 300);
+        cardsById.forEach((card, id) => {
+            const isPersistentUserCard = this.searchQuery === '' && (
+                card.classList.contains('user-group') ||
+                Object.hasOwn(LocalStorageManager.getGroups(), id)
+            );
+
+            if (resultsCardIds.has(id) || isPersistentUserCard) {
+                const pendingRemoval = this.pendingCardRemovals.get(id);
+                if (pendingRemoval) {
+                    clearTimeout(pendingRemoval);
+                    this.pendingCardRemovals.delete(id);
                 }
+                card.classList.remove('hide');
+                return;
             }
+
+            if (this.pendingCardRemovals.has(id)) return;
+
+            card.classList.add('hide');
+            const removalTimer = setTimeout(() => {
+                this.pendingCardRemovals.delete(id);
+
+                const isStillInResults = this.filteredGroups.some(group => String(group.groupId) === id);
+                if (isStillInResults) {
+                    card.classList.remove('hide');
+                    return;
+                }
+
+                card.remove();
+            }, 300);
+            this.pendingCardRemovals.set(id, removalTimer);
         });
 
         // Add new cards
         sortedGroups.forEach(group => {
-            if (!existingCardIds.has(group.groupId)) {
+            const groupId = String(group.groupId);
+            if (!cardsById.has(groupId)) {
                 const groupCard = this.createGroupCard(group);
-                groupCard.classList.add('hide');
+                const animateEntrance = !groupCard.classList.contains('user-group');
+                if (animateEntrance) groupCard.classList.add('hide');
                 groupsGrid.appendChild(groupCard);
-                setTimeout(() => groupCard.classList.remove('hide'), 50);
+                cardsById.set(groupId, groupCard);
+                if (animateEntrance) {
+                    setTimeout(() => groupCard.classList.remove('hide'), 50);
+                }
             }
         });
 
@@ -941,7 +973,6 @@ class GroupsPage {
         } else {
             card.className = isPrivate ? 'group-card private-group' : 'group-card';
         }
-        card.setAttribute('data-group-id', group.groupId);
 
         card.innerHTML = `
             <div class="group-header">
@@ -984,21 +1015,15 @@ class GroupsPage {
             window.location.href = `/groupid=${group.groupId}`;
         });
 
-        // Hover efekti
-        card.addEventListener('mouseenter', () => {
-            card.style.transform = 'translateY(-5px)';
-        });
-
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = 'translateY(0)';
-        });
-
         return card;
     }
 
-    showLoading(show) {
+    showLoading(show, reservePageSpace = false) {
         const loadingSpinner = document.getElementById('loadingSpinner');
+        const groupsSection = loadingSpinner.closest('.groups-section');
+
         loadingSpinner.style.display = show ? 'block' : 'none';
+        groupsSection?.classList.toggle('is-initial-loading', show && reservePageSpace);
     }
 
     showError(message) {

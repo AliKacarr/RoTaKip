@@ -27,6 +27,8 @@
   animation: profileModalSlideIn 0.4s ease-out;
   display: flex;
   flex-direction: column;
+  max-height: calc(100vh - 32px);
+  box-sizing: border-box;
 }
 
 @keyframes profileModalSlideIn {
@@ -90,6 +92,8 @@ to {
 
 .profile-modal-body {
   padding: 30px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* ==================== Profile Image Section ==================== */
@@ -105,9 +109,12 @@ to {
 
 .profile-modal-image-container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  flex-shrink: 0;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
 }
 
 .profile-modal-image {
@@ -172,23 +179,29 @@ to {
   background: #f3f3f3;
   padding: 8px;
   border-radius: 25px;
-  flex-shrink: 0;
-  margin-left: 7px;
+  width: 100%;
+  min-width: 0;
+  margin-left: 0;
+  box-sizing: border-box;
 }
 
 .profile-modal-image-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 10px 14px;
+  padding: 13px 18px;
   border-radius: 15px;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .profile-modal-image-btn:hover {
@@ -224,13 +237,13 @@ to {
   gap: 10px;
   font-weight: 600;
   color: #495057;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .profile-info-value {
   font-weight: 500;
   color: #212529;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .profile-score {
@@ -246,19 +259,19 @@ to {
 }
 
 .score-number {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: #ff9300;
 }
 
 .streak-number {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: red;
 }
 
 .score-star {
-  font-size: 20px;
+  font-size: 22px;
   text-shadow: 0 0 1px #f55,0 0 1px #ff4500;
   animation: weekly-fire-emoji-flame 4s infinite;
 }
@@ -272,10 +285,10 @@ to {
 }
 
 .profile-action-btn {
-  padding: 15px 20px;
+  padding: 19px 16px;
   border: none;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -284,6 +297,8 @@ to {
   justify-content: center;
   gap: 10px;
   flex: 1;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .profile-settings-btn {
@@ -387,7 +402,7 @@ to {
 
 .private-group-logout-intro {
   margin: 0;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.7;
   color: #334155;
   align-items: flex-start;
@@ -414,8 +429,8 @@ to {
 
 .private-group-logout-note {
   margin: 0;
-  padding: 14px 16px;
-  font-size: 16px;
+  padding: 18px 20px;
+  font-size: 20px;
   line-height: 1.6;
   color: #475569;
   background: #f8fafc;
@@ -436,7 +451,7 @@ to {
 
 .private-group-logout-url-label {
   display: block;
-  font-size: 17px;
+  font-size: 21px;
   font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
@@ -445,7 +460,7 @@ to {
 }
 
 .private-group-logout-url-row {
-  --private-logout-control-h: 46px;
+  --private-logout-control-h: 54px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -457,8 +472,8 @@ to {
   width: 100%;
   min-height: var(--private-logout-control-h);
   height: auto;
-  padding: 10px 12px;
-  font-size: 15px;
+  padding: 14px 16px;
+  font-size: 20px;
   line-height: 1.4;
   border: 1px solid #b3c0d1;
   border-radius: 10px;
@@ -481,11 +496,11 @@ to {
   gap: 8px;
   width: 100%;
   min-height: var(--private-logout-control-h);
-  padding: 10px 16px;
+  padding: 14px 20px;
   box-sizing: border-box;
   border: none;
   border-radius: 10px;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
@@ -513,10 +528,10 @@ to {
 .private-group-logout-primary {
   flex: 1 1 0;
   min-width: 0;
-  min-height: 48px;
-  padding: 12px 14px;
+  min-height: 56px;
+  padding: 16px 18px;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
@@ -762,15 +777,15 @@ to {
   gap: 8px;
   font-weight: 600;
   color: #495057;
-  font-size: 16px;
+  font-size: 20px;
   margin-left: 5px;
 }
 
 .profile-settings-field {
-  padding: 12px 15px;
+  padding: 16px 19px;
   border: 2px solid #d6dce3;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 19px;
   transition: border-color 0.3s ease;
 }
 
@@ -787,10 +802,10 @@ to {
 }
 
 .profile-settings-btn {
-  padding: 15px 20px;
+  padding: 19px 24px;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -819,19 +834,6 @@ to {
 .profile-settings-delete:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-}
-
-/* ==================== Toast Animations ==================== */
-
-@keyframes profileToastSlideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
 }
 
 @media (max-width: 1023px) {

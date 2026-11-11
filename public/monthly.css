@@ -1,6 +1,6 @@
 .monthly-calendar-section {
   border-radius: 10px;
-  padding: 10px 20px;
+  padding: 12px 22px;
   width: 100%;
   max-width: 95%;
   overflow: hidden;
@@ -32,9 +32,9 @@
   background-color: #9cf2ff;
   border: 1px solid #c5c4d5;
   border-radius: 8px;
-  padding: 14px 22px;
+  padding: 16px 24px;
   cursor: pointer;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: bold;
   color: #555;
   display: flex;
@@ -55,16 +55,16 @@
 
 .month-arrow-icon {
   display: inline-block;
-  padding: 10px;
+  padding: 11px;
   background-image: url('images/arrow-icon.webp');
   background-size: contain;
   background-repeat: no-repeat;
-  margin-inline: 10px;
+  margin-inline: 11px;
 }
 
 .monthly-calendar td {
   width: 14.28%;
-  height: 79px;
+  height: 85px;
   background-color: aliceblue;
   text-align: center;
   vertical-align: middle;
@@ -72,7 +72,7 @@
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
-  padding: 5px;
+  padding: 6px;
 }
 
 .monthly-calendar-container table {
@@ -87,7 +87,7 @@
   background-color: #d4e8ed !important;
   color: #1f7a38 !important;
   font-weight: bold;
-  height: 90px;
+  height: 96px;
   border: 2px solid #4c7baf !important;
   transition: all 0.3s ease;
 }
@@ -101,25 +101,13 @@
   box-shadow: 0 0 8px rgba(220, 53, 69, 0.5);
   background-color: #f8d7da !important;
   color: #721c24 !important;
-  height: 80px;
+  height: 86px;
   border: 2px solid #dc3545 !important;
   transition: all 0.3s ease;
 }
 
 .monthly-calendar td.not-read:hover {
   box-shadow: 0 0 12px rgba(220, 53, 69, 0.7);
-  transform: scale(1.05);
-}
-
-.monthly-calendar td.not-applicable {
-  background-color: #e2e3e5 !important;
-  color: #383d41 !important;
-  border: 2px solid #6c757d !important;
-  transition: all 0.3s ease;
-}
-
-.monthly-calendar td.not-applicable:hover {
-  box-shadow: 0 0 12px rgba(108, 117, 125, 0.5);
   transform: scale(1.05);
 }
 
@@ -142,15 +130,11 @@
   border: 3px solid #c0392b !important;
 }
 
-.monthly-calendar td.today.not-applicable {
-  border: 3px solid #5a646e !important;
-}
-
 .monthly-day-number {
   position: absolute;
   top: 5px;
   left: 7px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 1;
   z-index: 1;
@@ -165,17 +149,13 @@
   color: #721c24;
 }
 
-.monthly-calendar td.not-applicable .monthly-day-number {
-  color: #383d41;
-}
-
 .monthly-calendar td.other-month .monthly-day-number {
   color: #999;
 }
 
 .monthly-reading-status {
   color: #1f7a38;
-  font-size: 22px;
+  font-size: 24px;
   margin-top: 2px;
   display: block;
   text-align: center;
@@ -193,14 +173,14 @@
 }
 
 .monthly-reading-amount-count {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: #1f7a38;
   letter-spacing: -0.02em;
 }
 
 .monthly-reading-amount-mark {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: #208a3c;
 }
@@ -245,7 +225,7 @@
 
 .calendar-loading p {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   color: #333;
 }
@@ -257,17 +237,17 @@
 
 .user-selector-container {
   margin-bottom: 15px;
-  font-size: 22px;
+  font-size: 24px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .user-selector {
-  padding: 8px;
+  padding: 10px;
   border-radius: 4px;
   border: 1px solid #ddd;
-  font-size: 22px;
+  font-size: 24px;
   min-width: 200px;
   cursor: pointer;
   background-color: white;
@@ -289,11 +269,12 @@
 
 .weekday-header th {
   width: 14.28%;
-  padding: 8px;
+  padding: 10px;
   text-align: center;
   background-color: #3498db;
   color: white;
   font-weight: 600;
+  font-size: 20px;
   box-sizing: border-box;
   border: 2px solid #2980b9;
 }
@@ -303,9 +284,9 @@
 }
 
 .month-header th {
-  padding: 10px;
+  padding: 12px;
   text-align: center;
-  font-size: 18px;
+  font-size: 20px;
   color: #2c3e50;
   border: 2px solid #3498db;
   background-color: #ebf5fb;
@@ -328,13 +309,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
 }
 
 .month-share-btn img {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
   transition: transform 0.2s ease;
 }
@@ -344,6 +325,6 @@
 }
 
 .month-header-spacer {
-  width: 36px;
+  width: 40px;
   flex-shrink: 0;
 }

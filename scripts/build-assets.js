@@ -28,12 +28,14 @@ const bundles = {
       'preferences.css',
       'articles.css',
       'footer.css',
+      'groups-footer.css',
       'profile-modal.css',
       'cookies.css',
       'share-modal.css'
     ],
     js: [
       'third-party.js',
+      'league-config.js',
       'script.js',
       'admin-modal.js',
       'reading-edit-mode.js',
@@ -103,7 +105,12 @@ async function buildBundle(bundleName, config) {
 
   const jsSource = readRequiredFiles(config.js);
   if (jsSource) {
-    const jsResult = await minify(jsSource, { compress: true, mangle: true });
+    const jsResult = await minify(jsSource, {
+      compress: {
+        pure_funcs: ['console.log', 'console.debug', 'console.info']
+      },
+      mangle: true
+    });
     if (!jsResult.code) {
       throw new Error(`${bundleName} JS minify çıktısı boş`);
     }

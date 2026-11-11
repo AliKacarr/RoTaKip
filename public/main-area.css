@@ -21,8 +21,8 @@
     flex-direction: row;
     align-items: flex-start;
     flex-wrap: nowrap;
-    justify-content: space-around;
-    gap: 20px;
+    justify-content: space-between;
+    gap: 24px;
 }
 
 .group-settings {
@@ -40,18 +40,23 @@
 .left-column {
     display: flex;
     flex-direction: column;
-    min-width: 300px;
+    flex: 1.1 1 0;
+    min-width: 0;
 }
 
 .right-column {
     display: flex;
     flex-direction: column;
-    min-width: 300px;
+    flex: 0.9 1 0;
+    min-width: 0;
+    gap: 24px;
 }
 
 .user-list {
+    box-sizing: border-box;
+    width: 100%;
     padding: 24px;
-    margin: 0 auto;
+    margin: 0;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border-radius: 12px;
     border: 1px solid #e1e8ed;
@@ -65,7 +70,6 @@
     font-weight: 600;
     padding-bottom: 12px;
     border-bottom: 2px solid #3498db;
-    width: 294px;
 }
 
 ul#userList,
@@ -96,7 +100,7 @@ ul#passiveUserList[hidden] {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 16px;
+    font-size: 18px;
     background: aliceblue;
     padding: 8px 12px;
     border-radius: 12px;
@@ -168,7 +172,8 @@ ul#passiveUserList li span {
 .kullanıcı-item {
     display: flex;
     align-items: center;
-    flex-grow: 1;
+    flex: 1 1 auto;
+    gap: 8px;
     min-width: 0;
     max-width: 260px;
 }
@@ -177,24 +182,28 @@ ul#passiveUserList li span {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    flex: 1 1 auto;
+    flex: 0 0 300px;
+    width: 300px;
     min-width: 0;
-    max-width: 286px;
+    max-width: 300px;
 }
 
 .managed-user-card-column > li {
     box-sizing: border-box;
     width: 100%;
+    min-height: 58px;
+    height: 58px;
+    max-height: 58px;
 }
 
 .user-last-login {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     max-width: calc(100% - 14px);
-    margin: 6px 0 0 10px;
+    margin: 8px 0 0 10px;
     color: #3f4d5a;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 600;
     line-height: 1.35;
     white-space: nowrap;
@@ -213,11 +222,11 @@ ul#passiveUserList li span {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    margin-top: 2px;
-    width: 14px;
-    height: 14px;
+    margin-top: 1px;
+    width: 18px;
+    height: 18px;
     color: inherit;
-    font-size: 12px;
+    font-size: 16px;
     line-height: 1;
 }
 
@@ -233,7 +242,6 @@ ul#passiveUserList li span {
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
-    margin-right: 10px;
     border: 1px solid #b6afff;
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
@@ -289,6 +297,8 @@ ul#passiveUserList li span {
 .user-actions {
     display: flex;
     align-items: center;
+    align-self: center;
+    flex: 0 0 auto;
     gap: 8px;
 }
 
@@ -296,8 +306,9 @@ ul#passiveUserList li span {
 .user-selects {
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
+    flex: 0 0 110px;
     gap: 6px;
+    width: 110px;
     min-width: 110px;
 }
 
@@ -375,15 +386,16 @@ ul#passiveUserList li span {
 }
 
 .settings-button {
-    margin-left: 10px;
+    margin-left: 6px;
     background: #e3dede;
     border: none;
     color: #555;
     border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -399,11 +411,11 @@ ul#passiveUserList li span {
     color: white;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     flex-shrink: 0;
     transition: background-color 0.2s;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -421,8 +433,8 @@ ul#passiveUserList li span {
     cursor: pointer;
     font-size: 16px;
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -433,7 +445,7 @@ ul#passiveUserList li span {
 }
 
 .cancel-edit-button {
-    margin-left: 8px;
+    margin-left: 6px;
     background: #ff6b6b;
     border: none;
     color: white;
@@ -442,8 +454,8 @@ ul#passiveUserList li span {
     font-size: 15px;
     flex-shrink: 0;
     transition: background-color 0.2s;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -462,8 +474,8 @@ ul#passiveUserList li span {
     font-size: 15px;
     flex-shrink: 0;
     transition: background-color 0.2s;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -485,28 +497,56 @@ ul#passiveUserList li span {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
 }
 
 .delete-button:hover {
     background-color: #d9363e;
 }
 
+/* Kullanıcı satırındaki ikon aksiyonlarını her durumda gerçek kare tut. */
+.edit-name-button,
+.settings-button,
+.save-name-button,
+.cancel-edit-button,
+.cancel-settings-button,
+.delete-button {
+    box-sizing: border-box;
+    inline-size: 40px;
+    block-size: 40px;
+    min-inline-size: 40px;
+    max-inline-size: 40px;
+    min-block-size: 40px;
+    max-block-size: 40px;
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    flex: 0 0 40px;
+    align-self: center;
+    aspect-ratio: 1 / 1;
+    line-height: 1;
+}
+
 .member-records-form {
     box-sizing: border-box;
     width: 100%;
-    margin-bottom: 25px;
-    padding: 24px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border: 1px solid #e1e8ed;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-self: stretch;
 }
 
 .member-records-form .form-group-label {
+    grid-column: 1 / -1;
     color: #34495e;
-    margin-bottom: 12px;
+    margin-bottom: 0;
     padding-bottom: 12px;
     border-bottom: 2px solid #3498db;
     font-size: 20px;
@@ -516,17 +556,18 @@ ul#passiveUserList li span {
 /* Kullanıcı Ekleme Formu - Site Temasına Uygun */
 #newUserForm {
     position: relative;
-    padding: 24px;
-    padding-bottom: 28px;
+    padding: 20px;
+    padding-bottom: 24px;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border-radius: 12px;
     border: 1px solid #e1e8ed;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    margin-bottom: 25px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
     display: flex;
     flex-direction: column;
-    margin-bottom: 4px;
-    align-items: center;
+    align-items: stretch;
     max-width: 100%;
 }
 
@@ -537,13 +578,12 @@ ul#passiveUserList li span {
     font-weight: 600;
     padding-bottom: 12px;
     border-bottom: 2px solid #27ae60;
-    width: 301px;
 }
 
 .form-left-column {
-    width: 301px;
-    min-width: 301px;
-    max-width: 301px;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -551,9 +591,9 @@ ul#passiveUserList li span {
 }
 
 .form-right-column {
-    width: 301px;
-    min-width: 301px;
-    max-width: 301px;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
     box-sizing: border-box;
     display: none;
     flex-direction: column;
@@ -578,6 +618,10 @@ ul#passiveUserList li span {
 .add-user-form-group {
     width: 100%;
     box-sizing: border-box;
+}
+
+.add-user-form-group {
+    margin-bottom: 18px;
 }
 
 .add-user-input-container {
@@ -650,7 +694,7 @@ ul#passiveUserList li span {
 
 #newUserInput {
     flex: 1;
-    font-size: 16px;
+    font-size: 18px;
     padding: 12px 10px;
     border: none;
     background: #f2f8ff;
@@ -680,7 +724,7 @@ ul#passiveUserList li span {
 .new-user-option-select {
     width: 100%;
     min-width: 0;
-    height: 40px;
+    height: 44px;
     box-sizing: border-box;
     padding: 0 24px 0 10px;
     border: 1px solid #b8c2cc;
@@ -688,7 +732,7 @@ ul#passiveUserList li span {
     background: #fff;
     color: #34495e;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 20px;
     font-weight: 600;
     cursor: pointer;
@@ -696,14 +740,15 @@ ul#passiveUserList li span {
 
 .new-user-option-select option {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .add-user-options-row .submit-button {
     margin-left: 0;
     height: 100%;
-    padding-right: 14px;
-    padding-left: 14px;
+    min-height: 44px;
+    padding-right: 16px;
+    padding-left: 16px;
 }
 
 .submit-button {
@@ -713,7 +758,7 @@ ul#passiveUserList li span {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     margin-left: 8px;
     transition: all 0.3s ease;
@@ -790,10 +835,11 @@ input[type="file"] {
     background: linear-gradient(135deg, #29a55e, #29a55e);
     color: white !important;
     width: 100%;
-    padding: 8px 6px;
+    min-height: 44px;
+    padding: 9px 8px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -821,10 +867,11 @@ input[type="file"] {
     background: linear-gradient(135deg, #4B8EF5 0%, #2563EB 100%);
     color: white !important;
     width: 100%;
-    padding: 8px 6px;
+    min-height: 44px;
+    padding: 9px 8px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -852,10 +899,11 @@ input[type="file"] {
     background: linear-gradient(135deg, #F87171, #EF4444);
     color: white !important;
     width: 100%;
-    padding: 8px 6px;
+    min-height: 44px;
+    padding: 9px 8px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -934,16 +982,6 @@ input[type="file"] {
     color: white;
 }
 
-/* Grup Ayarları Stilleri */
-.group-settings {
-    padding: 24px;
-    margin: 0 auto;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 12px;
-    border: 1px solid #e1e8ed;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
 .group-settings h3 {
     color: #34495e;
     margin: 0 0 24px 0;
@@ -951,19 +989,21 @@ input[type="file"] {
     font-weight: 600;
     padding-bottom: 12px;
     border-bottom: 2px solid #e74c3c;
-    width: 302px;
 }
 
 .group-info-section {
     display: flex;
-    flex-direction: row;
-    gap: 30px;
+    flex-direction: column;
+    gap: 28px;
     align-items: flex-start;
 }
 
 /* Sol Sütun: Grup Bilgileri */
 .group-left-column {
     flex: 1;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -993,30 +1033,91 @@ input[type="file"] {
     gap: 20px;
 }
 
-/* Sağ Sütun: Butonlar */
-.group-right-column {
+.automation-section {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.group-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.automation-settings {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+}
+
+.automation-settings h3.automation-section-title {
+    color: #34495e;
+    margin: 0 0 24px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f39c12;
+    font-weight: 600;
+}
+
+.automation-section-title i {
+    margin-right: 10px;
+}
+
+/* Otomasyon Ayarları ve İşlemler */
+.group-right-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+    gap: 24px 20px;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+.automation-settings-column,
+.automation-actions-column {
+    display: contents;
 }
 
 .group-action-buttons {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     width: 100%;
-    padding: 15px 0;
-    border-top: 1px solid #cfcfcf;
+    padding: 0;
+    border-top: none;
 }
 
 .group-action-buttons .danger-toggle-btn,
 .group-action-buttons .share-group-btn {
     flex: 1;
+}
+
+.group-management-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+}
+
+.automation-column-heading {
+    color: #34495e;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #3498db;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.automation-column-heading i {
+    margin-right: 5px;
 }
 
 .group-image-section {
@@ -1043,8 +1144,8 @@ input[type="file"] {
 }
 
 .group-image-preview {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 8px;
     object-fit: fill;
     transition: all 0.3s ease;
@@ -1085,8 +1186,8 @@ input[type="file"] {
     flex-direction: column;
     gap: 8px;
     flex: 1;
-    height: 80px;
-    width: 170px;
+    height: 100px;
+    width: 190px;
     justify-content: space-between;
 }
 
@@ -1101,8 +1202,8 @@ input[type="file"] {
     color: white !important;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1110,8 +1211,8 @@ input[type="file"] {
     transition: all 0.3s;
     border: none;
     text-decoration: none;
-    height: 36px;
-    padding: 8px 12px;
+    height: 48px;
+    padding: 9px 14px;
     box-sizing: border-box;
     flex: 1;
 }
@@ -1126,16 +1227,17 @@ input[type="file"] {
     color: white;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     border: none;
     transition: all 0.3s;
-    height: 36px;
-    width: 36px;
-    padding: 0;
+    height: 48px;
+    width: auto;
+    padding: 9px 14px;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     box-sizing: border-box;
     flex-shrink: 0;
 }
@@ -1159,7 +1261,7 @@ input[type="file"] {
     justify-content: center;
     gap: 10px;
     transition: all 0.3s ease;
-    height: 36px;
+    height: 44px;
     width: 100%;
     box-sizing: border-box;
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
@@ -1262,7 +1364,7 @@ input[type="file"] {
 
 .ready-images-modal-content .modal-header h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     color: #495057;
     display: flex;
@@ -1438,12 +1540,6 @@ input[type="file"] {
     display: none;
 }
 
-.group-details-section {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
 .form-group {
     display: flex;
     flex-direction: column;
@@ -1516,7 +1612,8 @@ input[type="file"] {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
+    min-height: 48px;
+    font-size: 17px;
     font-weight: 600;
     transition: all 0.3s ease;
     display: flex;
@@ -1544,37 +1641,6 @@ input[type="file"] {
 .save-group-btn:active {
     transform: scale(0.98);
     background-color: #229954;
-    color: #ffffff;
-}
-
-.delete-group-btn {
-    background-color: #e74c3c;
-    color: white;
-    padding: 12px 24px;
-    width: 100%;
-    border: none;
-    border-top: 1px solid #c0392b;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: none;
-    /* Varsayılan olarak gizli */
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.delete-group-btn:hover {
-    background-color: #c0392b;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-}
-
-.delete-group-btn:active {
-    transform: scale(0.98);
-    background-color: #c0392b;
     color: #ffffff;
 }
 
@@ -1613,45 +1679,24 @@ input[type="file"] {
     font-size: 16px;
 }
 
-.group-danger-zone {
-    margin-top: 30px;
-    padding: 20px;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 8px;
-}
-
-.group-danger-zone h4 {
-    color: #dc2626;
-    margin: 0 0 15px 0;
-    font-size: 16px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.danger-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
 .danger-toggle-btn {
     background-color: rgb(149, 165, 166);
     color: white;
-    height: 38px;
-    width: 130px;
+    min-height: 46px;
+    width: 100%;
+    padding: 10px 14px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .danger-toggle-btn:hover {
@@ -1659,29 +1704,24 @@ input[type="file"] {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.danger-toggle-btn.active {
-    background-color: #e74c3c;
-}
-
-.danger-toggle-btn.active:hover {
-    background-color: #c0392b;
-}
-
 .share-group-btn {
     background-color: #27ae60;
     color: white;
-    height: 38px;
-    width: 130px;
+    min-height: 46px;
+    width: 100%;
+    padding: 10px 14px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .share-group-btn:hover {
@@ -1763,18 +1803,29 @@ input[type="file"] {
     color: #dc3545;
 }
 
-.invite-section {
-    margin-bottom: 35px;
+.new-user-invite-section {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 0 40px;
+}
+
+.new-user-invite-section h3 {
+    color: #34495e;
+    margin: 0 0 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #3498db;
 }
 
 .invite-controls {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     align-items: center;
 }
 
 .user-select-dropdown {
-    width: 250px;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
     padding: 16px;
     border: 1px solid #b0b0b0;
     border-radius: 10px;
@@ -1822,7 +1873,8 @@ input[type="file"] {
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     position: relative;
     overflow: hidden;
-    width: 145px;
+    width: 140px;
+    flex: 0 0 140px;
     height: 50px;
 }
 
@@ -1856,7 +1908,11 @@ input[type="file"] {
 
 /* Katılma İstekleri Bölümü */
 .join-requests-section {
-    margin-top: 30px;
+    margin: 0 0 40px;
+}
+
+.join-requests-section h3 {
+    border-bottom-color: #8e6bc4;
 }
 
 .join-requests-list {
@@ -1866,9 +1922,10 @@ input[type="file"] {
 }
 
 .join-request-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: 45px minmax(64px, 1fr) auto;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     padding: 10px;
     background: #dcefff;
     border-radius: 8px;
@@ -1895,23 +1952,20 @@ input[type="file"] {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
-
-.join-request-name {
-    font-weight: bold;
-    color: #212529;
-    font-size: 16px;
+    min-width: 0;
 }
 
 .join-request-date {
-    font-size: 14px;
-    color: #6c757d;
+    font-size: 17px;
+    line-height: 1.3;
+    color: #3b4146;
     font-weight: 600;
 }
 
 .join-request-actions {
     display: flex;
     gap: 10px;
+    min-width: 0;
 }
 
 .join-request-btn {
@@ -1919,7 +1973,6 @@ input[type="file"] {
     border: none;
     border-radius: 6px;
     font-size: 14px;
-    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -1948,20 +2001,121 @@ input[type="file"] {
 }
 
 .join-request-btn i {
-    font-size: 10px;
+    font-size: 16px;
 }
 
 .no-join-requests {
-    color: #515961;
-    font-size: 16px;
+    color: #3b4146;
+    font-size: 18px;
     font-style: italic;
     margin-left: 8px;
+}
+
+/* Grup yönetimi kontrollerinde okunabilir ve tutarlı alt sınır. */
+.main-area input:not([type="file"]),
+.main-area textarea,
+.main-area select,
+.main-area button:not([class*="close"]) {
+    font-size: 18px;
+}
+
+.main-area label {
+    font-size: 20px;
+    line-height: 1.35;
+}
+
+.main-area .form-group-label {
+    font-size: 20px;
+    line-height: 1.35;
+}
+
+/* Main area içindeki bütün alt çizgili başlıklar aynı genişliği kullanır. */
+.main-area .user-list h3,
+.main-area #newUserForm h3,
+.main-area .group-settings h3,
+.main-area .automation-settings h3.automation-section-title,
+.main-area .member-records-form .form-group-label,
+.main-area .automation-column-heading,
+.main-area .new-user-invite-section h3,
+.main-area .join-requests-section h3 {
+    width: 302px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.main-area input:not([type="file"]),
+.main-area select,
+.main-area button:not([class*="close"]):not(.edit-name-button):not(.settings-button):not(.save-name-button):not(.cancel-edit-button):not(.cancel-settings-button):not(.delete-button) {
+    min-height: 48px;
+}
+
+.main-area .visibility-info {
+    font-size: 18px;
+    line-height: 1.4;
+}
+
+.main-area .group-link-btn i,
+.main-area .visibility-info i {
+    font-size: 18px;
+}
+
+.main-area .user-container li {
+    font-size: 19px;
+}
+
+/* Yoğun yönetim satırlarında ölçüleri sabit ve taşmasız tut. */
+#userManagementLists .profil-image-user-name {
+    font-size: 18px;
+}
+
+#userManagementLists .user-last-login {
+    width: calc(100% - 14px);
+    font-size: 17px;
+}
+
+.main-area #userManagementLists .authority-select,
+.main-area #userManagementLists .visibility-select {
+    font-size: 17px;
+}
+
+.main-area .file-input-container button {
+    min-width: 0;
+    padding-right: 6px;
+    padding-left: 6px;
+    gap: 5px;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.main-area .new-user-option-select,
+.main-area .user-select-dropdown {
+    font-size: 18px;
+}
+
+.main-area .add-user-options-row button.submit-button,
+.main-area button.invite-selected-btn {
+    font-size: 17px;
+    white-space: nowrap;
+}
+
+.main-area .join-request-name {
+    font-weight: bold;
+    color: #212529;
+    font-size: 18px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.main-area button.join-request-btn {
+    padding: 10px 8px;
+    gap: 4px;
+    font-size: 16px;
+    white-space: nowrap;
 }
 
 #passiveUserListEmpty {
     box-sizing: border-box;
     width: 100%;
-    max-width: 400px;
     min-width: 0;
     margin-left: 0;
     padding: 0 8px;

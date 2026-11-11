@@ -39,6 +39,18 @@ function getVideoUrl(video) {
         || `https://www.youtube.com/watch?v=${encodeURIComponent(video.videoId)}`;
 }
 
+function preloadVideoThumbnails(videos) {
+    const imageLoads = videos.map(video => new Promise(resolve => {
+        const image = new Image();
+        image.onload = resolve;
+        image.onerror = resolve;
+        image.src = getVideoThumbnail(String(video.videoId || ''));
+    }));
+
+    const timeout = new Promise(resolve => setTimeout(resolve, 5000));
+    return Promise.race([Promise.all(imageLoads), timeout]);
+}
+
 function lockVideosContainerHeight() {
     const currentHeight = videosContainer.getBoundingClientRect().height;
 
@@ -72,6 +84,9 @@ function waitForVideoThumbnails() {
 }
 
 async function renderVideos(videos) {
+    // Mevcut kartları ekranda tut; yeni görseller hazır olduğunda içeriği tek seferde değiştir.
+    await preloadVideoThumbnails(videos);
+
     const previousVisibility = Array.from(
         videosContainer.querySelectorAll('.video-card:not(.loading-card)'),
         card => card.classList.contains('visible')
@@ -99,14 +114,13 @@ async function renderVideos(videos) {
         const videoCard = document.createElement('div');
         videoCard.className = 'video-card scroll-fade-in';
         if (previousVisibility[index]) {
-            videoCard.classList.add('visible', 'video-card-refresh-enter');
-            videoCard.addEventListener('animationend', () => {
-                videoCard.classList.remove('video-card-refresh-enter');
-            }, { once: true });
+            videoCard.classList.add('visible');
         }
         videoCard.innerHTML = `
-                <img src="${window.escapeHtml(thumbnail)}" alt="${window.escapeHtml(title)}" class="thumbnail">
-                <span class="play-icon"><i class="fa-solid fa-play"></i></span>
+                <div class="video-thumbnail-wrapper">
+                    <img src="${window.escapeHtml(thumbnail)}" alt="${window.escapeHtml(title)}" class="thumbnail">
+                    <span class="play-icon"><i class="fa-solid fa-play"></i></span>
+                </div>
                 <div class="video-title">
                     <div class="title-text">${window.escapeHtml(title)}</div>
                     <div class="video-bottom-bar">
@@ -149,7 +163,7 @@ function shareVideo(title, videoUrl) {
     const shareText = `${title} - ${videoUrl}`;
     if (navigator.share) {
         navigator.share({ title, text: shareText })
-            .catch(error => console.log('Paylaşım iptal edildi:', error));
+            .catch(() => {});
         return;
     }
 

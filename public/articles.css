@@ -38,12 +38,12 @@
 }
 
 .category-btn {
-  padding: 8px 16px;
+  padding: 13px 22px;
   border: 2px solid #d0d0d0;
   background: #ffffff;
   color: #6c757d;
   border-radius: 20px;
-  font-size: 16px;
+  font-size: 21px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -65,12 +65,12 @@
 }
 
 .load-more-btn {
-  padding: 10px 20px;
+  padding: 15px 26px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #ffffff;
   border: none;
   border-radius: 25px;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -116,6 +116,8 @@
   transition: all 0.3s ease, opacity 0.4s ease, transform 0.4s ease;
   display: flex;
   flex-direction: column;
+  min-height: 320px;
+  box-sizing: border-box;
   cursor: pointer;
 }
 
@@ -125,22 +127,30 @@
 
 .article-content-wrapper {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex: 1;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.article-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  width: 100%;
 }
 
 .article-image {
-  flex: 0 0 210px;
+  flex: 0 0 175px;
   position: relative;
-  padding: 10px 10px 20px 20px;
+  padding: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
 .article-image img {
   width: 100%;
-  height: 200px;
   object-fit: cover;
   transition: transform 0.3s ease, opacity 0.4s ease;
   display: block;
@@ -155,18 +165,27 @@
 
 .article-content {
   flex: 1;
-  padding: 20px 20px 0 0;
+  min-width: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+}
+
+.article-meta-row {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  width: 100%;
 }
 
 .article-category {
   color: #626262;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.8px;
-  margin-bottom: 8px;
+  margin: 0;
   cursor: pointer;
   transition: color 0.3s ease;
 }
@@ -175,24 +194,17 @@
   color: #4a90e2;
 }
 
-.article-date {
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 15px;
-}
-
 .article-title {
   color: #3b4557;
-  font-size: 19px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.4;
-  margin-bottom: 0;
-  padding: 20px 20px 0 30px;
+  margin: 10px 0 0;
+  padding: 0;
   cursor: pointer;
   transition: color 0.3s ease;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -203,23 +215,31 @@
 
 .article-text {
   color: #4b5563;
-  font-size: 16px;
+  font-size: 21px;
   line-height: 1.5;
-  flex: 1;
+  width: 100%;
+  margin-top: 18px;
 }
 
 .article-share {
-  margin-bottom: 20px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
   display: flex;
   justify-content: flex-end;
 }
 
+.article-loading-card .article-content-wrapper {
+  flex-direction: row;
+  padding: 0;
+}
+
 .article-share-icon {
-  width: 17px;
-  height: 17px;
+  width: 22px;
+  height: 22px;
   opacity: 0.6;
   cursor: pointer;
-  padding: 5px;
+  padding: 8px;
   border-radius: 50%;
   transition: all 0.1s ease;
 }

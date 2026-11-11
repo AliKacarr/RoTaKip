@@ -4,7 +4,6 @@
     --primary-blue: #3B82F6;
     --primary-blue-light: #60A5FA;
     --primary-blue-dark: #2563EB;
-    --secondary-blue: #38BDF8;
     --accent-orange: #FF6B35;
     --accent-gold: #F7931E;
     
@@ -13,12 +12,10 @@
     --gray-100: #f8f9ff;
     --gray-200: #e5e7eb;
     --gray-300: #d1d5db;
-    --gray-400: #a0aec0;
     --gray-500: #6c757d;
     --gray-600: #4a5568;
     --gray-700: #374151;
     --gray-800: #2d3748;
-    --gray-900: #1f2937;
     
     /* Status Colors */
     --success-color: #28a745;
@@ -38,7 +35,6 @@
     --gap-xs: 8px;
     --gap-sm: 10px;
     --gap-md: 15px;
-    --gap-lg: 20px;
     
     /* Font Sizes */
     --font-xs: 0.75rem;    /* 12px */
@@ -54,7 +50,6 @@
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
-    --radius-xl: 20px;
     --radius-2xl: 24px;
     --radius-full: 50%;
     
@@ -67,7 +62,6 @@
     /* Transitions */
     --transition-fast: 0.2s ease;
     --transition-base: 0.3s ease;
-    --transition-slow: 0.5s ease;
 }
 
 /* ==================== Base Styles ==================== */
@@ -305,7 +299,6 @@ body {
     flex-direction: column;
     gap: var(--spacing-md);
     cursor: pointer;
-    backdrop-filter: blur(5px);
 }
 
 .group-card.hide {
@@ -629,6 +622,10 @@ body {
 }
 
 /* Loading & No Results */
+.groups-section.is-initial-loading {
+    min-height: clamp(340px, 42dvh, 520px);
+}
+
 .group-loading-spinner {
     text-align: center;
     padding: 40px 20px;
@@ -667,12 +664,6 @@ body {
     max-width: 420px;
     margin: 0 auto;
     line-height: 1.5;
-}
-
-/* Grup kartı açıklaması: mobilde .group-desc ile hizalanır */
-.group-desc {
-    width: 100%;
-    min-width: 0;
 }
 
 /* ==================== Modal Base Styles ==================== */
@@ -1830,12 +1821,6 @@ body {
 
     .group-card {
         padding: 22px;
-    }
-
-    .group-desc {
-        width: 100%;
-        margin-top: -10px;
-        margin-bottom: 10px;
     }
 
     .groupDescription {

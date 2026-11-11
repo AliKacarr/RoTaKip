@@ -4,9 +4,9 @@
 .col-user-count {
     color: #333;
     display: inline-block;
-    font-size: 18px;
+    font-size: 23px;
     font-weight: 600;
-    padding: 12px 8px;
+    padding: 16px 12px;
     letter-spacing: .3px;
 }
 
@@ -15,7 +15,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 19px;
     font-weight: 600;
     line-height: 1;
 }
@@ -34,10 +34,10 @@
     background-color: #f7f7f7;
     color: #333;
     border: 2px solid #c7c7c7;
-    padding: 22px 10px;
+    padding: 28px 14px;
     text-align: center;
     font-weight: 600;
-    font-size: 17px;
+    font-size: 22px;
     vertical-align: middle;
     line-height: 1;
 }
@@ -46,10 +46,10 @@
     background-color: #f0f0f0;
     color: #888;
     border: 2px solid #c7c7c7;
-    padding: 20px 10px;
+    padding: 26px 14px;
     text-align: center;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 19px;
     cursor: default;
     user-select: none;
     vertical-align: middle;
@@ -59,7 +59,7 @@
     color: #208a3c;
     background: transparent;
     font-weight: 600;
-    font-size: 17px;
+    font-size: 22px;
 }
 
 #trackerTable thead .stats-footer-row .stats-footer-check-icon,
@@ -69,18 +69,18 @@
 
 #trackerTable thead .stats-footer-row th.stats-footer-cell.today-column .col-read {
     color: #208a3c;
-    font-size: 18px;
+    font-size: 23px;
     font-weight: 600;
 }
 
 #trackerUsersTable thead > tr:first-child .col-user-count {
-    font-size: 17px;
-    padding: 4px 0;
+    font-size: 22px;
+    padding: 8px 0;
 }
 
 #trackerUsersTable thead .stats-footer-row th.stats-footer-label .col-read {
     color: #208a3c;
-    font-size: 18px;
+    font-size: 23px;
     font-weight: 700;
 }
 
@@ -93,7 +93,7 @@
 
 .tracker-table-layout {
     display: grid;
-    grid-template-columns: 194px minmax(52px, 1fr) auto;
+    grid-template-columns: 245px minmax(62px, 1fr) auto;
     align-items: start;
     position: relative;
     z-index: 2;
@@ -209,16 +209,15 @@
 
 .timeline-swipe-label {
     display: block;
-    max-width: calc(100% - 16px);
     margin-top: 8px;
-    padding: 9px 19px 10px;
+    padding: 13px 24px 14px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 999px;
     box-sizing: border-box;
     background: rgba(43, 49, 55, 0.9);
     color: #fff;
     font-family: inherit;
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 500;
     line-height: 1.25;
     letter-spacing: 0;
@@ -240,10 +239,6 @@
 
 .timeline-scroll-hint.is-visible .timeline-swipe-arrow-right {
     animation: timeline-arrow-right 1.35s ease-in-out 3 both;
-}
-
-.tracker-table-layout.is-share-capture .timeline-scroll-hint {
-    display: none !important;
 }
 
 @keyframes timeline-arrow-left {
@@ -283,8 +278,8 @@
 
     .timeline-swipe-label {
         margin-top: 6px;
-        padding: 8px 14px 9px;
-        font-size: 14px;
+        padding: 12px 19px 13px;
+        font-size: 19px;
     }
 }
 
@@ -390,9 +385,9 @@
     appearance: none;
     border: none;
     margin: 0;
-    min-width: 120px;
-    padding: 12px 24px;
-    font-size: 17px;
+    min-width: 142px;
+    padding: 14px 20px;
+    font-size: 21px;
     font-weight: 600;
     font-family: inherit;
     color: #2a5a8f;
@@ -408,7 +403,7 @@
 }
 
 .reading-edit-mode-icon {
-    font-size: 16px;
+    font-size: 21px;
     line-height: 1;
     width: 1em;
     text-align: center;
@@ -445,7 +440,7 @@
 .reading-edit-mode-hint {
     margin: 0;
     flex: 1 1 200px;
-    font-size: 17px;
+    font-size: 21px;
     color: #5f5f5f;
     line-height: 1.35;
     font-weight: 600;
@@ -468,7 +463,7 @@
     color: indigo;
     text-align: center;
     font-family: inherit;
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 500;
     padding: 0;
     overflow: hidden;
@@ -504,7 +499,7 @@
 /* Week loading overlay styles removed */
 
 #trackerSummaryTable td.col-streak {
-    font-size: 21px;
+    font-size: 24px;
     color: #ff1717;
     font-weight: bold;
     border: 2px solid #c7c7c7;
@@ -514,29 +509,29 @@
 
 /* Okuma serisi sütun başlığı (yalnızca ilk thead satırı; istatistik satırını hariç tut) */
 #trackerSummaryTable thead > tr:first-child th.col-streak-heading {
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 600;
     color: red;
 }
 
 /* Ay okuması sütunu (Okuma Serisi'nin solu) */
 #trackerSummaryTable thead > tr:first-child th.col-total-amount {
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 600;
     color: #208a3c;
     white-space: nowrap;
 }
 
 #trackerSummaryTable thead > tr:first-child th.col-total-amount .col-season-month {
-    font-size: 17px;
+    font-size: 22px;
 }
 
 #trackerSummaryTable thead > tr:first-child th.col-total-amount .col-season-suffix {
-    font-size: 16px;
+    font-size: 21px;
 }
 
 #trackerSummaryTable td.col-total-amount {
-    font-size: 20px;
+    font-size: 23px;
     font-weight: 700;
     color: #208a3c;
     background: #f3faf5;
@@ -548,7 +543,7 @@
 
 #trackerSummaryTable thead .stats-footer-row th.stats-footer-amount .col-read {
     color: #208a3c;
-    font-size: 18px;
+    font-size: 23px;
     font-weight: 700;
     white-space: nowrap;
 }
@@ -564,7 +559,7 @@
     pointer-events: none;
     font-family: inherit;
     font-weight: 800;
-    font-size: 22px;
+    font-size: 27px;
     line-height: 1;
     color: #0d7a32;
     letter-spacing: -0.02em;
@@ -588,8 +583,8 @@
 }
 
 .tracker-profile-image {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     object-fit: cover;
     margin-right: 10px;
@@ -643,14 +638,6 @@
     color: indigo;
 }
 
-.pink {
-    background-color: rgb(255, 220, 90);
-}
-
-.lila {
-    background-color: rgb(255, 170, 60);
-}
-
 .red {
     background-color: rgb(255, 100, 60);
     color: darkred;
@@ -663,14 +650,6 @@
         background-color: rgb(56, 197, 80) !important;
     }
 
-    .pink:hover {
-        background-color: rgb(255, 200, 70) !important;
-    }
-
-    .lila:hover {
-        background-color: rgb(255, 150, 40) !important;
-    }
-
     .red:hover {
         background-color: #ff451a !important;
     }
@@ -681,14 +660,6 @@
 @media (any-pointer: coarse) {
     #trackerTable td.green:hover {
         background-color: rgb(76, 217, 100) !important;
-    }
-
-    #trackerTable td.pink:hover {
-        background-color: rgb(255, 220, 90) !important;
-    }
-
-    #trackerTable td.lila:hover {
-        background-color: rgb(255, 170, 60) !important;
     }
 
     #trackerTable td.red:hover {
@@ -734,18 +705,21 @@
     font-weight: 600;
     color: #888;
     border: 2px solid #c7c7c7;
-    padding: 10px;
+    padding: 18px 14px;
     text-align: center;
-    font-size: 14px;
+    font-size: 20px;
     white-space: nowrap;
     transition: background-color 0.2s ease;
 }
 
 #trackerTable td {
     border: 2px solid #f0f0f0;
-    padding: 10px;
+    height: 90px;
+    box-sizing: border-box;
+    padding: 20px 14px;
     text-align: center;
-    font-size: 16px;
+    font-size: 21px;
+    line-height: 1.25;
     cursor: default;
     transition: background-color 0.2s ease;
     user-select: none;
@@ -761,13 +735,13 @@
 .tracker-users-area {
     position: relative;
     z-index: 8;
-    width: 194px;
+    width: 245px;
     overflow: hidden;
     background: #fff;
 }
 
 #trackerUsersTable {
-    width: 194px;
+    width: 245px;
     border-collapse: collapse;
     table-layout: fixed;
 }
@@ -775,15 +749,16 @@
 #trackerUsersTable th,
 #trackerUsersTable td {
     box-sizing: border-box;
-    width: 194px;
-    min-width: 194px;
-    max-width: 194px;
-    padding: 10px;
+    width: 245px;
+    min-width: 245px;
+    max-width: 245px;
+    padding: 18px 14px;
     border: 2px solid #c7c7c7;
 }
 
 #trackerUsersTable td {
-    font-size: 18px;
+    height: 90px;
+    font-size: 23px;
     font-weight: 500;
     border-color: #f0f0f0 #c7c7c7;
     text-align: left;
@@ -800,12 +775,12 @@
 #trackerUsersTable th {
     background-color: #f7f7f7;
     color: #333;
-    font-size: 17px;
+    font-size: 23px;
     box-shadow: inset -2px 0 0 #c7c7c7;
 }
 
 #trackerTable .day-column {
-    width: 80px;
+    width: 100px;
     box-sizing: border-box;
     scroll-snap-align: end;
     touch-action: pan-x pan-y;
@@ -834,7 +809,7 @@
 #trackerSummaryTable td {
     box-sizing: border-box;
     border: 2px solid #c7c7c7;
-    padding: 10px;
+    padding: 18px 14px;
     text-align: center;
     white-space: nowrap;
     overflow: visible;
@@ -846,8 +821,12 @@
 #trackerSummaryTable th {
     background-color: #f0f0f0;
     color: #888;
-    font-size: 14px;
+    font-size: 20px;
     font-weight: 600;
+}
+
+#trackerSummaryTable tbody td {
+    height: 90px;
 }
 
 #trackerSummaryTable .col-total-amount {
@@ -865,7 +844,7 @@
 }
 
 #trackerSummaryTable .stats-footer-row th {
-    padding: 20px 10px;
+    padding: 26px 14px;
     background-color: #f0f0f0;
 }
 
@@ -879,31 +858,31 @@
 #trackerSummaryTable .stats-footer-row th.stats-footer-total,
 #trackerSummaryTable .stats-footer-row th.stats-footer-total #tfoot-total-streak {
     color: #ff1717;
-    font-size: 21px;
+    font-size: 24px;
     font-weight: bold;
     white-space: nowrap;
 }
 
 .date-text {
-    font-size: 15px;
+    font-size: 21px;
     font-weight: 600;
     color: #505050;
 }
 
 .date-text .date-day {
-    font-size: 15px;
+    font-size: 21px;
     font-weight: 600;
     color: #505050;
 }
 
 .date-text .date-month {
-    font-size: 13px;
+    font-size: 19px;
     font-weight: 500;
     color: #5d5d5d;
 }
 
 .day-of-week {
-    font-size: 19px;
+    font-size: 25px;
     font-weight: 600;
     color: #5b9bd5;
     display: block;
@@ -947,7 +926,7 @@
 
 .user-item-meta {
     display: block;
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 500;
     color: rgba(0, 0, 0, 0.8);
     white-space: nowrap;
@@ -960,7 +939,7 @@
     justify-content: space-between;
     position: relative;
     z-index: 1;
-    min-height: 91px;
+    min-height: 112px;
     box-sizing: border-box;
     margin-top: 25px;
     margin-inline: 3px;
@@ -985,10 +964,10 @@
     background-color: #9cf2ff;
     border: 1px solid #c5c4d5;
     border-radius: 8px;
-    padding: 10px 15px;
-    height: 43px;
+    padding: 14px 20px;
+    height: 54px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 21px;
     font-weight: bold;
     color: #555;
     display: flex;
@@ -1013,10 +992,10 @@
     color: white;
     border: 1px solid #408fd9;
     box-sizing: border-box;
-    height: 43px;
-    max-height: 43px;
+    height: 54px;
+    max-height: 54px;
     margin-top: 5px;
-    padding: 10px 15px;
+    padding: 14px 20px;
     opacity: 0;
     overflow: hidden;
     visibility: hidden;
@@ -1049,11 +1028,11 @@
 }
 
 .current-week {
-    font-size: 16px;
+    font-size: 21px;
     font-weight: bold;
     color: #4785bd;
-    padding: 10px 15px;
-    height: 43px;
+    padding: 14px 20px;
+    height: 54px;
     border-radius: 10px;
     background-color: #caf8ff;
     border: 1px solid #decfe8;
@@ -1081,9 +1060,9 @@
     background-color: #caf8ff;
     border: 1px solid #decfe8;
     border-radius: 10px;
-    padding: 10px 15px;
-    height: 43px;
-    font-size: 16px;
+    padding: 14px 20px;
+    height: 54px;
+    font-size: 21px;
     font-weight: 700;
     color: #4785bd;
     cursor: pointer;
@@ -1154,16 +1133,8 @@
 
 /* Ensure colored cells still show their colors when they're also today's column */
 .green.today-column {
-    font-size: 16px !important;
+    font-size: 21px !important;
     background-color: rgb(76, 217, 100);
-}
-
-.pink.today-column {
-    background-color: rgb(255, 220, 90);
-}
-
-.lila.today-column {
-    background-color: rgb(255, 170, 60);
 }
 
 .red.today-column {
@@ -1249,13 +1220,6 @@
     height: 100%;
     background: linear-gradient(135deg, #3498db 0, #2980b9 100%);
     z-index: 1;
-}
-
-/* html2canvas pseudo öğeyi onclone'dan önce gerçek bir elemana dönüştürür.
-   Paylaşım yakalamasında mavi mevcut-kullanıcı şeridini baştan devre dışı bırak. */
-.tracker-table-layout.is-share-capture #trackerUsersTable .user-row.current-user-row .user-item::before {
-    content: none !important;
-    display: none !important;
 }
 
 #trackerTable .user-row.current-user-row td {

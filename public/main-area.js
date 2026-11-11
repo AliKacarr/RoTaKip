@@ -1152,8 +1152,8 @@ function getLastLoginDisplay(lastLoginDate, now = new Date()) {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(lastLoginDate || ''));
     if (!match) {
         return {
-            text: 'Son görülme: -',
-            title: 'Son giriş bilgisi bulunmuyor',
+            text: 'Son giriş bilgisi yok',
+            title: 'Son giriş bilgisi yok',
             isEmpty: true
         };
     }
@@ -1169,7 +1169,7 @@ function getLastLoginDisplay(lastLoginDate, now = new Date()) {
 
     if (!isValidDate) {
         return {
-            text: 'Son görülme: -',
+            text: 'Son giriş bilgisi yok',
             title: 'Son giriş tarihi geçersiz',
             isEmpty: true
         };
@@ -1187,22 +1187,22 @@ function getLastLoginDisplay(lastLoginDate, now = new Date()) {
     });
     if (differenceInDays <= 0) {
         return {
-            text: 'Son görülme: Bugün',
-            title: `Son görülme: ${formattedDate}`,
+            text: 'Bugün',
+            title: formattedDate,
             isEmpty: false
         };
     }
     if (differenceInDays === 1) {
         return {
-            text: 'Son görülme: Dün',
-            title: `Son görülme: ${formattedDate}`,
+            text: 'Dün',
+            title: formattedDate,
             isEmpty: false
         };
     }
     if (differenceInDays < 30) {
         return {
-            text: `Son görülme: ${differenceInDays} gün önce`,
-            title: `Son görülme: ${formattedDate}`,
+            text: `${differenceInDays} gün önce`,
+            title: formattedDate,
             isEmpty: false
         };
     }
@@ -1224,8 +1224,8 @@ function getLastLoginDisplay(lastLoginDate, now = new Date()) {
     if (remainingDays > 0) parts.push(`${remainingDays} gün`);
 
     return {
-        text: `Son görülme: ${parts.join(' ')} önce`,
-        title: `Son görülme: ${formattedDate}`,
+        text: `${parts.join(' ')} önce`,
+        title: formattedDate,
         isEmpty: false
     };
 }
@@ -1929,25 +1929,6 @@ async function removeGroupImage() {
     }
 }
 
-// Grup silme butonunu göster/gizle
-function toggleDeleteGroupButton() {
-    const deleteBtn = document.querySelector('.delete-group-btn');
-    const toggleBtn = document.querySelector('.danger-toggle-btn');
-    const dangerText = toggleBtn.querySelector('.danger-text');
-
-    if (deleteBtn.style.display === 'none' || deleteBtn.style.display === '') {
-        deleteBtn.style.display = 'flex';
-        toggleBtn.classList.add('active');
-        dangerText.textContent = 'İptal Et';
-        toggleBtn.style.backgroundColor = '#27ae60'; // yeşil yap
-    } else {
-        deleteBtn.style.display = 'none';
-        toggleBtn.classList.remove('active');
-        dangerText.textContent = 'Grubu Sil';
-        toggleBtn.style.backgroundColor = '#95a5a6'; // Gri yap
-    }
-}
-
 // Grubu paylaş
 async function shareGroup() {
     try {
@@ -2006,7 +1987,7 @@ async function deleteGroup() {
         return;
     }
 
-    const deleteBtn = document.querySelector('.delete-group-btn');
+    const deleteBtn = document.querySelector('.danger-toggle-btn');
     if (!deleteBtn) {
         showErrorMessage('Sil butonu bulunamadı!');
         return;
@@ -2069,8 +2050,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveGroupBtn = document.querySelector('.save-group-btn');
     const changeImageBtn = document.querySelector('.change-image-btn');
     const removeImageBtn = document.querySelector('.group-image-remove-btn');
-    const toggleDeleteBtn = document.querySelector('.danger-toggle-btn');
-    const deleteGroupBtn = document.querySelector('.delete-group-btn');
+    const deleteGroupBtn = document.querySelector('.danger-toggle-btn');
     const groupImageInput = document.getElementById('groupImage');
 
     if (saveGroupBtn) {
@@ -2091,10 +2071,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (removeImageBtn) {
         removeImageBtn.addEventListener('click', removeGroupImage);
-    }
-
-    if (toggleDeleteBtn) {
-        toggleDeleteBtn.addEventListener('click', toggleDeleteGroupButton);
     }
 
     const shareGroupBtn = document.querySelector('.share-group-btn');

@@ -530,7 +530,7 @@ async function updatePageTitle() {
         
         secretAdminLogin.innerHTML = `
           <img src="${window.escapeHtml(imgSrc)}" class="secretAdminLoginImage" alt="Grup Resmi" style="border-radius: 6px;" onerror="this.src='/images/open-book.webp'">
-          <h2 style="margin: 0; font-size: inherit; font-weight: inherit;">${window.escapeHtml(groupName)} Okuma Grubu</h2>
+          <h2 style="margin: 0; font-size: inherit; font-weight: inherit;">${window.escapeHtml(groupName)}</h2>
         `;
       }
     }
@@ -1129,6 +1129,7 @@ async function logPageVisit() {
 // Kayarak gelme animasyonu (IntersectionObserver)
 const scrollFadeInObserved = new WeakSet();
 let scrollFadeInObserver = null;
+let mainAreaScrollFadeInObserver = null;
 
 function getScrollFadeInObserver() {
   if (!('IntersectionObserver' in window)) return null;
@@ -1145,12 +1146,33 @@ function getScrollFadeInObserver() {
   return scrollFadeInObserver;
 }
 
+function getMainAreaScrollFadeInObserver() {
+  if (!('IntersectionObserver' in window)) return null;
+  if (!mainAreaScrollFadeInObserver) {
+    mainAreaScrollFadeInObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.1) {
+          entry.target.classList.add('visible');
+        } else if (!entry.isIntersecting) {
+          entry.target.classList.remove('visible');
+        }
+      });
+    }, {
+      threshold: [0, 0.1],
+      rootMargin: '60px 0px'
+    });
+  }
+  return mainAreaScrollFadeInObserver;
+}
+
 function attachScrollFadeInObserver(target) {
   if (!target || scrollFadeInObserved.has(target)) return;
   scrollFadeInObserved.add(target);
 
   target.classList.add('scroll-fade-in');
-  const observer = getScrollFadeInObserver();
+  const observer = target.closest('.main-area')
+    ? getMainAreaScrollFadeInObserver()
+    : getScrollFadeInObserver();
   if (observer) {
     observer.observe(target);
   } else {
@@ -1172,6 +1194,7 @@ window.initScrollFadeInElements = function initScrollFadeInElements() {
   [
     '#articlesContainer',
     '.group-settings',
+    '.automation-section',
     '.bottom-section',
     '#longestSeriesChart',
     '.monthly-calendar-share-container',

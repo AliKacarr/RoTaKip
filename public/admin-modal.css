@@ -4,7 +4,7 @@
     min-height: 55px;
     margin: auto;
     text-align: center;
-    padding: 17px;
+    padding: 19px;
     margin: 0 auto;
     font-size: 1.9rem;
     font-weight: 700;
@@ -38,13 +38,13 @@
     background: #b1e5f1;
     border: 1px solid #c9c9c9;
     border-radius: 8px;
-    padding: 9px 17px;
+    padding: 13px 22px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     cursor: pointer;
-    font-size: 19px;
+    font-size: 24px;
     font-weight: 600;
     color: #4e54c8;
     box-shadow: 0 2px 8px rgba(78, 84, 200, 0.08);
@@ -72,22 +72,22 @@
     background: #e1cff7;
     border: 1px solid #d4bfed;
     border-radius: 8px;
-    padding: 9px 17px;
+    padding: 13px 22px;
     display: flex;
     align-items: center;
     gap: 5px;
     justify-content: center;
     cursor: pointer;
-    font-size: 19px;
+    font-size: 24px;
     font-weight: 600;
     color: #373fd6;
     box-shadow: 0 2px 8px rgba(78, 84, 200, 0.08);
     margin-top: 5px;
     margin-right: 20px;
     max-width: 200px;
-    height: 42px;
-    min-height: 42px;
-    max-height: 42px;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
     flex-shrink: 0;
     letter-spacing: 0.4px;
     transition: all 0.3s ease;
@@ -118,261 +118,27 @@
     flex-shrink: 1 !important;
 }
 
-.admin-modal {
-    display: none;
-    position: fixed;
-    z-index: 100;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    overflow: auto;
-    justify-content: center;
-    align-items: center;
-}
-
-.admin-modal h2 {
-    margin-top: 0;
-    color: #333;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-}
-
-.admin-modal label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-
-.admin-modal input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s;
-}
-
-.admin-modal input:focus {
-    border-color: #4a90e2;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-}
-
-.modal-content-admin {
-    background-color: #fff;
-    margin: 10% auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    padding: 40px 65px 30px 65px;
-    width: 400px;
-    max-width: 98%;
-    animation: adminModalFadeIn 0.3s;
-}
-
-.modal-content-admin h2 {
-    font-size: 2.1rem;
-}
-
-.modal-content-admin label {
-    font-size: 1.15rem;
-}
-
-.modal-content-admin input {
-    font-size: 1.15rem;
-    padding: 14px;
-    margin-bottom: 22px;
-    /* Kullanıcı adı ile şifre arasına mesafe eklendi */
-}
-
-.form-actions button {
-    display: flex;
-    margin: auto;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 1.35rem;
-    /* Buton büyütüldü */
-    padding: 18px 38px;
-    /* Buton büyütüldü */
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-@keyframes adminModalFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.form-actions {
-    text-align: right;
-}
-
-.form-actions button {
-    display: flex;
-    margin: auto;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 1.18rem;
-    padding: 13px 28px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.form-actions button:hover {
-    background-color: #45a049;
-}
-
-.admin-info-panel {
-    padding: 25px;
-    font-size: 1.18rem;
-    background-color: #f9f9f9;
-    border-radius: 6px;
-    margin-top: 15px;
-    border: 2px solid #eee;
-}
-
-.admin-info-item {
-    display: flex;
-    margin-bottom: 10px;
-}
-
-.admin-info-label {
-    font-size: 1.18rem;
-    padding: 2px;
-    font-weight: 500;
-    width: 125px;
-    color: #1e1717;
-    display: flex;
-    align-items: center;
-    vertical-align: top;
-}
-
-.admin-info-value {
-    font-size: 1.25rem;
-    color: rgb(0, 0, 0);
-    display: flex;
-    align-items: center;
-    vertical-align: top;
-}
-
-.logout-button {
-    background-color: #f44336;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    padding: 11px 22px;
-    margin-top: 35px;
-    transition: background-color 0.3s;
-}
-
-.logout-button:hover {
-    background-color: #d32f2f;
+.showGroups > i,
+.profileButton > i {
+    font-size: 24px !important;
 }
 
 .error-message {
     color: #e74c3c;
     margin-top: 15px;
-    font-size: 14px;
+    font-size: 18px;
     text-align: center;
     min-height: 20px;
 }
 
-
-.close-button {
-    color: #7f7e7e;
-    float: right;
-    font-size: 35px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.close-button:hover {
-    color: #333;
-}
-
-
-
-.admin-logs-button {
-    bottom: 65px;
-    right: 20px;
-    background-color: #ff9800;
-}
-
-.admin-logs-button:hover {
-    background-color: #e68900;
-}
-
-.login-logs-button {
-    bottom: 108px;
-    right: 20px;
-    background-color: #43b581;
-}
-
-.login-logs-button:hover {
-    background-color: #36996a;
-}
-
-.admin-logs-button,
-.login-logs-button {
-    position: fixed;
-    width: 160px;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-weight: 500;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
-    border: none;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: white;
-    cursor: pointer;
-    z-index: 100;
-}
-
-.admin-logs-button:hover,
-.login-logs-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.admin-logs-button svg,
-.login-logs-button svg {
-    margin-right: 6px;
-}
-
-.admin-logs-button:active,
-.login-logs-button:active {
-    transform: translateY(0);
-}
 
 /* Yukarı Çık Butonu */
 .scroll-to-top-btn {
     position: fixed;
     bottom: 30px;
     right: 40px;
-    width: 72px;
-    height: 72px;
+    width: 88px;
+    height: 88px;
     background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
     color: white;
     border: none;
@@ -407,8 +173,8 @@
 }
 
 .scroll-to-top-btn svg {
-    width: 29px;
-    height: 29px;
+    width: 35px;
+    height: 35px;
     transition: transform 0.3s ease;
 }
 
@@ -973,7 +739,7 @@
     width: 90%;
     max-width: 460px;
     position: relative;
-    overflow: hidden;
+    overflow: auto;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.2);
     animation: groupsAuthModalSlideIn 0.4s ease-out;
@@ -1760,45 +1526,6 @@
 }
 
 
-.welcome-invite-message {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 30px;
-  border-radius: 20px;
-  margin-bottom: 30px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.welcome-invite-icon {
-  width: 70px;
-  height: 70px;
-  background: linear-gradient(135deg, #4e54c8, #8f94fb);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 32px;
-  margin: 0 auto 20px;
-  box-shadow: 0 8px 25px rgba(78, 84, 200, 0.4);
-  animation: bounce 2s infinite;
-}
-
-.welcome-invite-message h4 {
-  color: white;
-  margin: 0 0 15px 0;
-  font-size: 22px;
-  font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.welcome-invite-message p {
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
-}
-
 /* Welcome Form Styles */
 .welcome-invite-form {
   background: rgba(255, 255, 255, 0.4);
@@ -1817,7 +1544,7 @@
 
 .welcome-form-group label {
   color: #555;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
   margin-bottom: 8px;
   margin-left: 5px;
@@ -1827,7 +1554,7 @@
 
 .welcome-form-label {
   color: #555;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
   margin-bottom: 8px;
   margin-left: 5px;
@@ -1846,7 +1573,7 @@
 
 .welcome-info-icon {
   color: #666;
-  font-size: 12px;
+  font-size: 16px;
   flex-shrink: 0;
   margin-left: 5px;
 }
@@ -1854,7 +1581,7 @@
 .welcome-info-text p {
   margin: 0;
   color: #666;
-  font-size: 13px;
+  font-size: 17px;
   line-height: 1.3;
   font-weight: 400;
   font-style: italic;
@@ -1870,18 +1597,18 @@
   position: absolute;
   left: 16px;
   color: #666;
-  font-size: 16px;
+  font-size: 20px;
   z-index: 2;
 }
 
 .welcome-form-input {
   width: 100%;
-  padding: 12px 18px 12px 48px;
+  padding: 16px 22px 16px 52px;
   border: 2px solid #cbcbcb;
   border-radius: 16px;
   background: #fff;
   color: #333;
-  font-size: 15px;
+  font-size: 19px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -1904,7 +1631,7 @@
   border: none;
   color: #666;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px;
   padding: 8px;
   border-radius: 50%;
   transition: all 0.3s ease;
@@ -1955,10 +1682,10 @@
   background: linear-gradient(135deg, #10B981, #059669);
   color: white;
   border: 1px solid rgb(51 129 12 / 30%);
-  padding: 10px 20px;
+  padding: 14px 24px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   transition: all 0.3s ease;
   display: flex;
@@ -1973,10 +1700,10 @@
   background: linear-gradient(135deg, #F87171, #EF4444);
   color: white;
   border: 1px solid rgb(248 113 113 / 30%);
-  padding: 10px 20px;
+  padding: 14px 24px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   transition: all 0.3s ease;
   display: flex;
@@ -1991,10 +1718,10 @@
   background: #3B82F6;
   color: white;
   border: 1px solid rgb(37 99 235 / 30%);
-  padding: 10px 20px;
+  padding: 14px 24px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   transition: all 0.3s ease;
   display: flex;
@@ -2033,11 +1760,11 @@
 
 .welcome-invite-join-btn,
 .welcome-invite-cancel-btn {
-  padding: 14px 28px;
+  padding: 18px 32px;
   border: none;
   border-radius: 16px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   transition: all 0.3s ease;
   display: flex;
@@ -2103,27 +1830,6 @@
     }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
-
 /* User Avatar Modal - Higher z-index */
 #userAvatarModal,
 #addUserAvatarModal {
@@ -2135,21 +1841,6 @@
   .welcome-invite-modal-content {
     width: 95%;
     margin: 20px;
-  }
-  
-  .welcome-invite-modal-header {
-    padding: 20px;
-    gap: 15px;
-  }
-  
-  .welcome-invite-modal-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-  }
-  
-  .welcome-invite-modal-title {
-    font-size: 24px;
   }
   
   .welcome-invite-modal-body {
@@ -2188,11 +1879,11 @@
   
   /* Bilgi mesajları mobil uyumluluk */
   .welcome-info-text p {
-    font-size: 10px;
+    font-size: 16px;
   }
   
   .welcome-info-icon {
-    font-size: 10px;
+    font-size: 16px;
   }
 }
 
@@ -2202,16 +1893,16 @@
   color: #1976d2;
   border: 2px solid #bccfdf;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 12px 16px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0;
   transition: all 0.3s ease;
-  height: 40px;
+  height: 48px;
   box-shadow: 0 2px 8px rgba(100, 181, 246, 0.3);
   position: absolute;
   right: 10px;
@@ -2268,16 +1959,17 @@
 /* Admin Indicator Styles */
 .admin-indicator {
     position: fixed;
+    bottom: 243px;
     left: 40px;
     background: linear-gradient(135deg, #6366f1, #7681ed);
     color: white;
-    height: 50px;
-    width: 160px;
-    padding-left: 20px;
-    padding-right: 20px;
+    height: 61px;
+    width: 184px;
+    padding-left: 26px;
+    padding-right: 26px;
     border-radius: 30px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 700;
     box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
     display: flex;
@@ -2313,17 +2005,17 @@
 /* Scroll to Main Button Styles */
 .scroll-to-main-button {
     position: fixed;
-    bottom: 210px;
+    bottom: 243px;
     left: 40px;
     background: linear-gradient(135deg, #dc2626, #f26363);
     color: white;
-    height: 50px;
-    width: 160px;
-    padding-left: 20px;
-    padding-right: 20px;
+    height: 61px;
+    width: 184px;
+    padding-left: 26px;
+    padding-right: 26px;
     border-radius: 30px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 700;
     box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
     transition: opacity 0.5s ease, transform 0.5s ease;
@@ -2350,17 +2042,17 @@
 /* Quotes Button Styles */
 .quotes-button {
     position: fixed;
-    bottom: 150px;
+    bottom: 172px;
     left: 40px;
     background: linear-gradient(135deg, #f59e0b, #e6ac16);
     color: white;
-    height: 50px;
-    width: 160px;
-    padding-left: 20px;
-    padding-right: 20px;
+    height: 61px;
+    width: 184px;
+    padding-left: 26px;
+    padding-right: 26px;
     border-radius: 30px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 700;
     box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
     transition: opacity 0.5s ease, transform 0.5s ease;
@@ -2387,17 +2079,17 @@
 /* Videos Button Styles */
 .videos-button {
     position: fixed;
-    bottom: 90px;
+    bottom: 101px;
     left: 40px;
     background: linear-gradient(135deg, #f97316, #ea8330);
     color: white;
-    height: 50px;
-    width: 160px;
-    padding-left: 20px;
-    padding-right: 20px;
+    height: 61px;
+    width: 184px;
+    padding-left: 26px;
+    padding-right: 26px;
     border-radius: 30px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 700;
     box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
     transition: opacity 0.5s ease, transform 0.5s ease;
@@ -2429,13 +2121,13 @@
     left: 40px;
     background: linear-gradient(135deg, #0284c7, #25a1d8);
     color: white;
-    height: 50px;
-    width: 160px;
-    padding-left: 20px;
-    padding-right: 20px;
+    height: 61px;
+    width: 184px;
+    padding-left: 26px;
+    padding-right: 26px;
     border-radius: 30px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 700;
     box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
     transition: opacity 0.5s ease, transform 0.5s ease;
@@ -2459,6 +2151,34 @@
     transform: translateX(0) scale(1);
 }
 
+/* Görünmeyen sabit gezinme öğeleri tıklama alanı bırakmaz. */
+.scroll-to-top-btn,
+.admin-indicator,
+.scroll-to-main-button,
+.quotes-button,
+.videos-button,
+.articles-button {
+    pointer-events: none;
+}
+
+.scroll-to-top-btn.show,
+.admin-indicator.show,
+.scroll-to-main-button.show,
+.quotes-button.show,
+.videos-button.show,
+.articles-button.show {
+    pointer-events: auto;
+}
+
+.scroll-to-top-btn.hidden,
+.admin-indicator.hidden,
+.scroll-to-main-button.hidden,
+.quotes-button.hidden,
+.videos-button.hidden,
+.articles-button.hidden {
+    pointer-events: none !important;
+}
+
 /* Button Hover Effects */
 .admin-indicator:hover,
 .scroll-to-main-button:hover,
@@ -2478,22 +2198,6 @@
     transform: translateY(0);
 }
 
-/* Button Animation Keyframes */
-@keyframes slideInFromLeft {
-    0% {
-        opacity: 0;
-        transform: translateX(-100px) scale(0.8);
-    }
-    50% {
-        opacity: 0.8;
-        transform: translateX(-20px) scale(0.9);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-}
-
 /* Kullanıcı İstatistik Bilgi Alanı Stilleri */
 .user-stats-info-area {
     width: 100%;
@@ -2505,7 +2209,7 @@
 }
 
 .user-stats-title {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
     color: #1e40af;
     display: flex;
@@ -2514,7 +2218,7 @@
 }
 
 .user-stats-title i {
-    font-size: 26px;
+    font-size: 30px;
     color: #3b82f6;
 }
 
@@ -2522,7 +2226,7 @@
     width: 90%;
     background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
     border-radius: 15px;
-    padding: 25px 30px;
+    padding: 30px 35px;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.10);
     border: 3px solid rgba(59, 130, 246, 0.35);
     backdrop-filter: blur(10px);
@@ -2589,8 +2293,8 @@
 }
 
 .user-stats-streak-icon {
-    width: 35px;
-    height: 35px;
+    width: 42px;
+    height: 42px;
     filter: drop-shadow(0 2px 4px rgba(255, 69, 0, 0.4));
     animation: userStatsStreakPulse 4s ease-in-out infinite;
 }
@@ -2609,7 +2313,7 @@
 }
 
 .user-stats-streak-number {
-    font-size: 28px;
+    font-size: 33px;
     font-weight: 700;
     line-height: 1;
     color: #dc2626;
@@ -2617,7 +2321,7 @@
 }
 
 .user-stats-streak-label {
-    font-size: 16px;
+    font-size: 22px;
     font-weight: 500;
     color: #242933;
     opacity: 0.8;
@@ -2650,15 +2354,15 @@
 }
 
 .user-stats-league-img {
-    width: 45px;
-    height: 45px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     object-fit: contain;
     transition: transform 0.3s ease;
 }
 
 .user-stats-league-name {
-    font-size: 17px;
+    font-size: 22px;
     font-weight: 600;
     color: #374151;
     text-align: center;
@@ -2677,25 +2381,14 @@
 }
 
 .user-stats-progress-info span {
-    font-size: 19px;
+    font-size: 23px;
     font-weight: 600;
     color: #374151;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
-.user-stats-progress-status {
-    text-align: center;
-}
-
-.user-stats-progress-status span {
-    font-size: 16px;
-    font-weight: 500;
-    color: #3e424a;
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-}
-
 .user-stats-progress-track {
-    height: 9px;
+    height: 11px;
     background: rgba(59, 130, 246, 0.3);
     border-radius: 4px;
     overflow: hidden;
@@ -2737,9 +2430,9 @@
 }
 
 .user-stats-reading-icon {
-    width: 45px;
-    height: 45px;
-    flex: 0 0 45px;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
     filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
     animation: userStatsReadingPulse 3s ease-in-out infinite;
 }
@@ -2758,7 +2451,7 @@
 }
 
 .user-stats-reading-number {
-    font-size: 28px;
+    font-size: 33px;
     font-weight: 700;
     line-height: 1;
     color: #1e40af;
@@ -2766,7 +2459,7 @@
 }
 
 .user-stats-reading-label {
-    font-size: 16px;
+    font-size: 22px;
     font-weight: 500;
     color: #242933;
     opacity: 0.8;
@@ -2774,17 +2467,6 @@
 }
 
 /* Animasyonlar */
-@keyframes userStatsFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 @keyframes userStatsGradientShift {
     0%, 100% { 
         background-position: 0% 50%; 

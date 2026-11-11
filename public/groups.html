@@ -11,7 +11,7 @@
   <link rel="icon" href="/images/favicon.webp" type="image/x-icon" />
   <title id="page-title">RoTaKip</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="groups.min.css?v=ccf43c076b30" />
+  <link rel="stylesheet" href="groups.min.css?v=1c83efdefd99" />
 
 </head>
 
@@ -508,7 +508,7 @@
             </div>
             <div class="user-stats-streak-info">
               <div class="user-stats-streak-number" id="userLoginStreak">0</div>
-              <div class="user-stats-streak-label">Günlük Giriş Serisi</div>
+              <div class="user-stats-streak-label">Giriş Serisi</div>
             </div>
           </div>
         </div>
@@ -530,9 +530,6 @@
               <div class="user-stats-progress-track">
                 <div class="user-stats-progress-fill" id="leagueProgressFill" style="width: 0%"></div>
               </div>
-              <div class="user-stats-progress-status">
-                <span id="leagueProgressStatus"></span>
-              </div>
             </div>
 
             <!-- Sonraki Lig -->
@@ -551,7 +548,7 @@
             </div>
             <div class="user-stats-reading-info">
               <div class="user-stats-reading-number" id="userTotalReading"></div>
-              <div class="user-stats-reading-label">Toplam Okunan Gün</div>
+              <div class="user-stats-reading-label">Toplam Okuma</div>
             </div>
           </div>
         </div>
@@ -794,6 +791,8 @@
 
     <!-- Kullanıcı Kartları Bölümü -->
     <div class="user-cards-section" style="display: none;">
+      <div class="user-cards-message-panels"></div>
+
       <div class="user-cards-header" style="display: none;">
         <h2 class="user-cards-title">
           <i class="fa-solid fa-trophy"></i>
@@ -806,47 +805,47 @@
         <span class="league-info-item" title="Bronz Ligi: 0 - 4 gün arası okuma">
           <img src="images/bronz.webp" alt="Bronz" class="league-info-img">
           <span class="league-info-name">Bronz</span>
-          <span class="league-info-range">0-4</span>
+          <span class="league-info-range">0+</span>
         </span>
         <span class="league-info-item" title="Gümüş Ligi: 5 - 9 gün arası okuma">
           <img src="images/gumus.webp" alt="Gümüş" class="league-info-img">
           <span class="league-info-name">Gümüş</span>
-          <span class="league-info-range">5-9</span>
+          <span class="league-info-range">5+</span>
         </span>
         <span class="league-info-item" title="Altın Ligi: 10 - 19 gün arası okuma">
           <img src="images/altin.webp" alt="Altın" class="league-info-img">
           <span class="league-info-name">Altın</span>
-          <span class="league-info-range">10-19</span>
+          <span class="league-info-range">10+</span>
         </span>
         <span class="league-info-item" title="İnci Ligi: 20 - 39 gün arası okuma">
           <img src="images/inci.webp" alt="İnci" class="league-info-img">
           <span class="league-info-name">İnci</span>
-          <span class="league-info-range">20-39</span>
+          <span class="league-info-range">20+</span>
         </span>
         <span class="league-info-item" title="Safir Ligi: 40 - 59 gün arası okuma">
           <img src="images/safir.webp" alt="Safir" class="league-info-img">
           <span class="league-info-name">Safir</span>
-          <span class="league-info-range">40-59</span>
+          <span class="league-info-range">40+</span>
         </span>
         <span class="league-info-item" title="Zümrüt Ligi: 60 - 99 gün arası okuma">
           <img src="images/zumrut.webp" alt="Zümrüt" class="league-info-img">
           <span class="league-info-name">Zümrüt</span>
-          <span class="league-info-range">60-99</span>
+          <span class="league-info-range">60+</span>
         </span>
         <span class="league-info-item" title="Elmas Ligi: 100 - 149 gün arası okuma">
           <img src="images/elmas.webp" alt="Elmas" class="league-info-img">
           <span class="league-info-name">Elmas</span>
-          <span class="league-info-range">100-149</span>
+          <span class="league-info-range">100+</span>
         </span>
-        <span class="league-info-item" title="Yakut Ligi: 150 - 199 gün arası okuma">
+        <span class="league-info-item" title="Yakut Ligi: 150+ gün okuma">
           <img src="images/yakut.webp" alt="Yakut" class="league-info-img">
           <span class="league-info-name">Yakut</span>
-          <span class="league-info-range">150-199</span>
+          <span class="league-info-range">150+</span>
         </span>
         <span class="league-info-item" title="Mercan Ligi: 200 - 364 gün arası okuma">
           <img src="images/mercan.webp" alt="Mercan" class="league-info-img">
           <span class="league-info-name">Mercan</span>
-          <span class="league-info-range">200-364</span>
+          <span class="league-info-range">200+</span>
         </span>
         <span class="league-info-item" title="Pırlanta Ligi: 365+ gün arası okuma">
           <img src="images/pirlanta.webp" alt="Pırlanta" class="league-info-img">
@@ -866,9 +865,7 @@
           <button type="button" class="leaderboard-sort-button" data-sort="promotion" aria-pressed="false"><i class="fa-solid fa-arrow-trend-up"></i> Yeni lige en yakın</button>
           <button type="button" class="leaderboard-sort-button" data-sort="total" aria-pressed="false"><i class="fa-solid fa-book-open"></i> Toplam okuma</button>
           <button type="button" class="leaderboard-sort-button" data-sort="month" aria-pressed="false"><i class="fa-regular fa-calendar"></i> <span class="leaderboard-current-month-label">Aylık okuma</span></button>
-          <button type="button" class="leaderboard-sort-button" data-sort="streak" aria-pressed="false"><i class="fa-solid fa-fire"></i> Okuma serisi</button>
           <button type="button" class="leaderboard-sort-button" data-sort="percentage" aria-pressed="false"><i class="fa-solid fa-percent"></i> Okuma yüzdesi</button>
-          <button type="button" class="leaderboard-sort-button" data-sort="longest" aria-pressed="false"><i class="fa-solid fa-bolt"></i> En uzun seri</button>
           <button type="button" class="leaderboard-sort-button" data-sort="name" aria-pressed="false"><i class="fa-solid fa-arrow-down-a-z"></i> İsim A-Z</button>
         </div>
       </div>
@@ -1063,13 +1060,13 @@
       </h3>
       <div class="top-bar">
         <button id="randomBtn">
-          <i class="fa-solid fa-shuffle"></i> Rastgele Videolar
+          <i class="fa-solid fa-shuffle"></i> Rastgele
         </button>
         <button id="latestBtn">
-          <i class="fa-solid fa-forward-fast"></i> En Son Eklenen Videolar
+          <i class="fa-solid fa-forward-fast"></i> Son Yüklenen
         </button>
         <button id="mostViewedBtn">
-          <i class="fa-solid fa-chart-line"></i> En Çok İzlenen Videolar
+          <i class="fa-solid fa-chart-line"></i> Popüler
         </button>
         <button id="refreshBtn">
           <i class="fa-solid fa-rotate"></i> Yenile
@@ -1293,6 +1290,7 @@
                           <button type="button" class="group-image-remove-btn" title="Resmi Kaldır"
                             style="display: none;">
                             <i class="fa-solid fa-trash"></i>
+                            <span>Kaldır</span>
                           </button>
                         </div>
                         <button type="button" class="ready-images-btn" onclick="toggleReadyImagesModal()">
@@ -1342,17 +1340,23 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Sağ Sütun: Butonlar -->
-            <div class="group-right-column">
-              <div class="group-buttons">
+      <section class="automation-section scroll-fade-in">
+        <div class="automation-settings">
+          <h3 class="automation-section-title"><i class="fa-solid fa-gears"></i> Otomasyonlar</h3>
+
+          <div class="group-right-column">
+            <div class="automation-settings-column">
                 <form class="form-group">
                   <div class="form-group-label">Otomatik "✖" İşaretleme:</div>
                   <div class="visibility-container">
                     <i class="fa-solid fa-user-clock visibility-icon public" id="autoMarkUnreadIcon"></i>
                     <select id="autoMarkUnreadSelect" class="group-select" style="width: 100%; cursor: pointer;">
                       <option value="true">Aktif</option>
-                      <option value="false">Pasif</option>
+                      <option value="false">Kapalı</option>
                     </select>
                   </div>
                   <div class="visibility-info public" id="autoMarkUnreadInfo">
@@ -1377,55 +1381,53 @@
                     <span>Okumayanlar için otomatik işlem kapalı.</span>
                   </div>
                 </div>
+            </div>
 
-                <div class="group-action-buttons">
-                  <button type="button" class="danger-toggle-btn">
-                    <i class="fa-solid fa-trash-can"></i>
-                    <span class="danger-text">Grubu Sil</span>
+            <div class="automation-actions-column">
+                <div class="member-records-form">
+                  <div class="form-group-label"><i class="fa-solid fa-clipboard-list"></i> Kullanıcı Etkinlikleri</div>
+                  <button type="button" class="group-link-btn" onclick="window.location.href='/access-logs.html?groupId=' + encodeURIComponent(window.groupid)">
+                    <i class="fa-solid fa-history"></i>
+                    <span>Son İşlemler</span>
                   </button>
-                  <button type="button" class="share-group-btn">
-                    <i class="fa-solid fa-share-nodes"></i>
-                    <span>Grubu Paylaş</span>
+                  <button type="button" class="group-link-btn" onclick="window.location.href='/login-logs.html?groupId=' + encodeURIComponent(window.groupid)">
+                    <i class="fa-solid fa-font-awesome"></i>
+                    <span>Giriş Kayıtları</span>
                   </button>
                 </div>
-                <button type="button" class="delete-group-btn" style="display: none;">
-                  <i class="fa-solid fa-trash"></i>
-                  <span>Grubu Silmeyi Onaylıyorum</span>
-                </button>
-              </div>
+
+                <div class="group-management-actions">
+                  <div class="automation-column-heading">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> Grup İşlemleri
+                  </div>
+                  <div class="group-action-buttons">
+                    <button type="button" class="danger-toggle-btn">
+                      <i class="fa-solid fa-trash-can"></i>
+                      <span class="danger-text">Grubu Sil</span>
+                    </button>
+                    <button type="button" class="share-group-btn">
+                      <i class="fa-solid fa-share-nodes"></i>
+                      <span>Grubu Paylaş</span>
+                    </button>
+                  </div>
+                </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Alt Bölüm: Kullanıcı Listesi ve Kullanıcı Ekleme Formu -->
       <div class="bottom-section scroll-fade-in">
         <div class="left-column">
           <div class="user-list">
-            <!-- Kullanıcı Davet Sistemi -->
-            <div class="invite-section">
-              <h3><i class="fas fa-paper-plane" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
-                Kullanıcı Davet Et</h3>
-              <div class="invite-controls">
-                <select id="userSelectForInvite" class="user-select-dropdown">
-                  <option value="">Kullanıcı seçiniz...</option>
-                </select>
-                <button type="button" class="invite-selected-btn" onclick="inviteSelectedUser()">
-                  <i class="fa-solid fa-share"></i>
-                  <span>Davet Et</span>
-                </button>
+            <div class="join-requests-section">
+              <h3><i class="fa-solid fa-envelope" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                Katılma İstekleri</h3>
+              <div id="joinRequestsList" class="join-requests-list">
+                <!-- Katılma istekleri buraya yüklenecek -->
               </div>
-
-              <!-- Katılma İstekleri Yönetimi -->
-              <div class="join-requests-section">
-                <h3><i class="fa-solid fa-envelope" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
-                  Katılma İstekleri</h3>
-                <div id="joinRequestsList" class="join-requests-list">
-                  <!-- Katılma istekleri buraya yüklenecek -->
-                </div>
-              </div>
-
             </div>
+
             <div id="userManagementLists">
               <section class="managed-user-section">
                 <h3><i class="fa-solid fa-users" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
@@ -1441,27 +1443,39 @@
                 </div>
               </section>
             </div>
-
           </div>
         </div>
 
         <div class="right-column">
-          <div class="form-group member-records-form">
-            <div class="form-group-label"><i class="fa-solid fa-clipboard-list"></i> Kullanıcı Etkinlikleri:</div>
-            <button type="button" class="group-link-btn" onclick="window.location.href='/access-logs.html?groupId=' + encodeURIComponent(window.groupid)">
-              <i class="fa-solid fa-history"></i>
-              <span>Son İşlemler</span>
-            </button>
-            <button type="button" class="group-link-btn" onclick="window.location.href='/login-logs.html?groupId=' + encodeURIComponent(window.groupid)">
-              <i class="fa-solid fa-font-awesome"></i>
-              <span>Giriş Kayıtları</span>
-            </button>
-          </div>
           <!-- Add the Add User section -->
           <form id="newUserForm" enctype="multipart/form-data">
+            <div class="new-user-invite-section">
+              <h3><i class="fas fa-paper-plane" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                Kullanıcı Davet Et</h3>
+              <div class="invite-controls">
+                <select id="userSelectForInvite" class="user-select-dropdown">
+                  <option value="">Kullanıcı seçiniz...</option>
+                </select>
+                <button type="button" class="invite-selected-btn" onclick="inviteSelectedUser()">
+                  <i class="fa-solid fa-share"></i>
+                  <span>Davet Et</span>
+                </button>
+              </div>
+            </div>
+
             <div class="form-left-column">
               <h3><i class="fa-solid fa-user-plus" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
                 Kullanıcı Ekle</h3>
+              <div class="add-user-form-group">
+                <label for="newUserInput">Kullanıcı İsmi:</label>
+                <div class="add-user-input-container">
+                  <div class="add-user-input-icon-container">
+                    <img src="/images/default.png" alt="Varsayılan profil resmi" class="add-user-input-profile-image"
+                      id="addUserInputProfileImage">
+                  </div>
+                  <input type="text" id="newUserInput" placeholder="Kullanıcı ismi giriniz" maxlength="40" required />
+                </div>
+              </div>
               <div class="image-upload">
                 <label for="profileImage">Profil Resmi:</label>
                 <div class="file-input-container">
@@ -1480,26 +1494,16 @@
                   </button>
                 </div>
               </div>
-              <div class="add-user-form-group">
-                <label for="newUserInput">Kullanıcı İsmi:</label>
-                <div class="add-user-input-container">
-                  <div class="add-user-input-icon-container">
-                    <img src="/images/default.png" alt="Varsayılan profil resmi" class="add-user-input-profile-image"
-                      id="addUserInputProfileImage">
-                  </div>
-                  <input type="text" id="newUserInput" placeholder="Kullanıcı ismi giriniz" maxlength="40" required />
-                </div>
-                <div class="add-user-options-row">
-                  <select id="newUserAuthority" class="new-user-option-select" aria-label="Kullanıcı yetkisi">
-                    <option value="member" selected>Üye</option>
-                    <option value="admin">Yönetici</option>
-                  </select>
-                  <select id="newUserVisibility" class="new-user-option-select" aria-label="Kullanıcı görünürlüğü">
-                    <option value="aktif" selected>Aktif</option>
-                    <option value="pasif">Pasif</option>
-                  </select>
-                  <button type="submit" class="submit-button">Ekle</button>
-                </div>
+              <div class="add-user-options-row">
+                <select id="newUserAuthority" class="new-user-option-select" aria-label="Kullanıcı yetkisi">
+                  <option value="member" selected>Üye</option>
+                  <option value="admin">Yönetici</option>
+                </select>
+                <select id="newUserVisibility" class="new-user-option-select" aria-label="Kullanıcı görünürlüğü">
+                  <option value="aktif" selected>Aktif</option>
+                  <option value="pasif">Pasif</option>
+                </select>
+                <button type="submit" class="submit-button">Ekle</button>
               </div>
             </div>
             <div class="form-right-column">
@@ -1816,7 +1820,7 @@
           <div class="profile-info-item">
             <div class="profile-info-label">
               <i class="fa-solid fa-fire-flame-simple" style="color: red"></i>
-              Günlük Giriş Serisi
+              Giriş Serisi
             </div>
             <div id="profileLoginStreak" class="profile-info-value profile-streak">
               <span class="streak-number">0</span>
@@ -1973,7 +1977,7 @@
     </div>
   </div>
 
-  <script src="groups.min.js?v=0b51ab5c4fa2"></script>
+  <script src="groups.min.js?v=15c61f6832fc"></script>
 
 </body>
 

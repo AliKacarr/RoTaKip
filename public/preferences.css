@@ -3,7 +3,7 @@
 /* OneSignal custom link alanı tipografisini sabitle */
 .onesignal-customlink-container,
 .onesignal-customlink-container * {
-    font-size: 16px !important;
+    font-size: 21px !important;
     line-height: 1.4 !important;
     -webkit-text-size-adjust: 100% !important; /* iOS/Android otomatik büyütmeyi kapat */
     text-size-adjust: 100% !important;
@@ -14,8 +14,8 @@
 .onesignal-customlink-container .onesignal-customlink-notification-enable,
 .onesignal-customlink-container .onesignal-customlink-container-button {
     transform: none !important;
-    font-size: 15px !important;
-    padding: 6px 10px !important;
+    font-size: 20px !important;
+    padding: 11px 16px !important;
 }
 
 .settings-section {
@@ -25,37 +25,4 @@
 
 #ayarlar {
     margin-top: 10px;
-}
-
-.setting-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    position: relative;
-}
-
-.setting-item label {
-    margin-right: 15px;
-    font-weight: 500;
-    color: #3b3b3b;
-}
-
-.day-select {
-    padding: 8px 12px;
-    border: 1px solid #69a6a6;
-    border-radius: 4px;
-    background-color: rgba(255, 249, 248, 0.64);
-    font-size: 14px;
-    color: #131313;
-    cursor: pointer;
-}
-
-.day-select:hover {
-    border-color: #aaa;
-}
-
-.day-select:focus {
-    outline: none;
-    border-color: #5b9bd5;
-    box-shadow: 0 0 0 2px rgba(91, 155, 213, 0.2);
 }

@@ -14,7 +14,7 @@
 .daily-tasks-button {
   background: linear-gradient(135deg, #22c55e, #27d366);
   border-radius: 50px;
-  padding: 10px 16px;
+  padding: 14px 21px;
   cursor: pointer;
   display: flex;
   flex-direction: row;
@@ -36,7 +36,7 @@
 .daily-tasks-button .tasks-text {
   color: white;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 21px;
 }
 
 @keyframes tasksBounce {
@@ -49,7 +49,7 @@
   background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
   border: 2px solid #ff7777;
   border-radius: 50px;
-  padding: 10px 16px;
+  padding: 14px 21px;
   cursor: pointer;
   display: flex;
   flex-direction: row; /* Hediye solda, yazı sağda */
@@ -70,7 +70,7 @@
 .daily-gift-button .gift-text {
   color: white;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 21px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -295,7 +295,7 @@
 
 .daily-gift-quote {
   color: #475569;
-  font-size: 18px !important;
+  font-size: 22px !important;
   line-height: 1.7;
   text-align: center;
   margin: 0;
@@ -497,7 +497,7 @@
 
 .daily-task-check-label i {
   color: #ffffff;
-  font-size: 14px;
+  font-size: 18px;
   opacity: 0;
   transform: scale(0.5);
   transition: all 0.3s ease;
@@ -530,7 +530,7 @@
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .daily-task-item.completed .daily-task-icon {
@@ -578,10 +578,6 @@
   font-weight: 620;
   color: #1e293b;
   margin: 0;
-}
-
-.daily-task-status {
-  display: none;
 }
 
 /* Günün Videosu Bölümü */
@@ -704,17 +700,6 @@
   to {
     transform: translateX(0);
     opacity: 1;
-  }
-}
-
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
   }
 }
 

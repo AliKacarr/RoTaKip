@@ -1,3 +1,20 @@
+let userCardScrollObserver = null;
+
+function getUserCardScrollObserver() {
+  if (!('IntersectionObserver' in window)) return null;
+  if (!userCardScrollObserver) {
+    userCardScrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        entry.target.classList.toggle('card-fade-in', entry.isIntersecting);
+      });
+    }, {
+      threshold: 0.2,
+      rootMargin: '100px'
+    });
+  }
+  return userCardScrollObserver;
+}
+
 function isGroupAdminSession() {
   return (
     typeof LocalStorageManager !== 'undefined' &&
@@ -41,18 +58,7 @@ window.loadUserCards = async function loadUserCards() {
   const container = document.querySelector('.user-cards-container');
   if (!container) return;
 
-  const cardScrollObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('card-fade-in');
-      } else {
-        entry.target.classList.remove('card-fade-in');
-      }
-    });
-  }, {
-    threshold: 0.2,
-    rootMargin: '100px'
-  });
+  const cardScrollObserver = getUserCardScrollObserver();
 
   function observeRevealToggle(el) {
     if (!el || el.dataset.revealObserved === '1') return;
@@ -93,7 +99,7 @@ window.loadUserCards = async function loadUserCards() {
 
     const sortBar = document.querySelector('.leaderboard-sort-bar');
     const sortButtons = sortBar ? Array.from(sortBar.querySelectorAll('.leaderboard-sort-button')) : [];
-    const validSortModes = ['league', 'promotion', 'total', 'month', 'streak', 'percentage', 'longest', 'name'];
+    const validSortModes = ['league', 'promotion', 'total', 'month', 'percentage', 'name'];
     const groupSortKey = `leaderboardSort:${window.groupid || 'default'}`;
     let sortMode = localStorage.getItem(groupSortKey) || 'league';
     if (!validSortModes.includes(sortMode)) sortMode = 'league';
@@ -153,25 +159,15 @@ window.loadUserCards = async function loadUserCards() {
       const userStats = readingStatsByUser.get(String(user._id)) || [];
       return userStats.length > 0 ? getReadDayCount(user) / userStats.length : 0;
     };
-    const longestStreaksByUser = new Map();
     const longestStreakDetailsByUser = new Map();
     (streaks || []).forEach(item => {
       const userId = item.userId || item._id;
       if (userId != null) {
-        longestStreaksByUser.set(String(userId), Number(item.streak) || 0);
         longestStreakDetailsByUser.set(String(userId), item);
       }
     });
-    const getLongestStreak = user => longestStreaksByUser.get(String(user._id)) || 0;
-    const currentStreaks = new Map();
-    const getCurrentStreak = user => {
-      const userId = String(user._id);
-      if (!currentStreaks.has(userId)) {
-        currentStreaks.set(userId, calculateStreakForUser(readingStatsByUser.get(userId) || []));
-      }
-      return currentStreaks.get(userId);
-    };
-    const nextLeagueLimits = [5, 10, 20, 40, 60, 100, 150, 200, 365];
+    const leagues = window.ROTAKIP_LEAGUES;
+    const nextLeagueLimits = leagues.slice(1).map(league => league.min);
     const daysUntilNextLeague = user => {
       const count = getReadDayCount(user);
       const nextLimit = nextLeagueLimits.find(limit => count < limit);
@@ -200,18 +196,8 @@ window.loadUserCards = async function loadUserCards() {
           || getTotalReadAmount(user2) - getTotalReadAmount(user1)
           || compareByName(user1, user2);
       }
-      if (sortMode === 'streak') {
-        return getCurrentStreak(user2) - getCurrentStreak(user1)
-          || getReadDayCount(user2) - getReadDayCount(user1)
-          || compareByName(user1, user2);
-      }
       if (sortMode === 'percentage') {
         return getReadPercentage(user2) - getReadPercentage(user1)
-          || getReadDayCount(user2) - getReadDayCount(user1)
-          || compareByName(user1, user2);
-      }
-      if (sortMode === 'longest') {
-        return getLongestStreak(user2) - getLongestStreak(user1)
           || getReadDayCount(user2) - getReadDayCount(user1)
           || compareByName(user1, user2);
       }
@@ -230,70 +216,10 @@ window.loadUserCards = async function loadUserCards() {
     // Artık olmayan kullanıcıların kartlarını kaldır
     existingCards.forEach((card, userId) => {
       if (!currentUserIds.includes(userId)) {
+        if (cardScrollObserver) cardScrollObserver.unobserve(card);
         card.remove();
       }
     });
-
-    // Lig görselleri ve isimleri
-    const leagues = [
-      { min: 0, max: 5, name: 'Bronz', img: 'bronz.webp' },
-      { min: 5, max: 10, name: 'Gümüş', img: 'gumus.webp' },
-      { min: 10, max: 20, name: 'Altın', img: 'altin.webp' },
-      { min: 20, max: 40, name: 'İnci', img: 'inci.webp' },
-      { min: 40, max: 60, name: 'Safir', img: 'safir.webp' },
-      { min: 60, max: 100, name: 'Zümrüt', img: 'zumrut.webp' },
-      { min: 100, max: 150, name: 'Elmas', img: 'elmas.webp' },
-      { min: 150, max: 200, name: 'Yakut', img: 'yakut.webp' },
-      { min: 200, max: 365, name: 'Mercan', img: 'mercan.webp' },
-      { min: 365, max: 1001, name: 'Pırlanta', img: 'pirlanta.webp' }
-    ];
-
-    // Lig arka planları
-    const leagueBackgrounds = {
-      "Bronz": "linear-gradient(90deg, #e2b07a 60%, #ffe0b2 100%)",
-      "Gümüş": "linear-gradient(90deg, #d3d3d3 60%, #e0e0e0 100%)",
-      "Altın": "linear-gradient(90deg, #ffd700 60%, #ffe789 100%)",
-      "İnci": "linear-gradient(90deg, #b2dfdb 60%, #c8eef3 100%)",
-      "Safir": "linear-gradient(90deg, #49b7ff 60%, #bbdefb 100%)",
-      "Zümrüt": "linear-gradient(90deg, #58c089 60%, #a5d6a7 100%)",
-      "Elmas": "linear-gradient(90deg, #36e873 60%, #c4edb8 100%)",
-      "Yakut": "linear-gradient(90deg, #ffb199 60%, #ffe0b2 100%)",
-      "Mercan": "linear-gradient(90deg, #ff6f63 60%, #ffafb7 100%)",
-      "Pırlanta": "linear-gradient(90deg, #ffbf00 60%, #ffe789 100%)"
-    };
-
-    // Kartlar haftalık tablonun konumundan bağımsız olarak daima bugün dahil
-    // son yedi takvim gününü gösterir.
-    function getLastSevenDays() {
-      const dayNames = [
-        { key: 'P', label: 'Pazar' },
-        { key: 'P', label: 'Pazartesi' },
-        { key: 'S', label: 'Salı' },
-        { key: 'Ç', label: 'Çarşamba' },
-        { key: 'P', label: 'Perşembe' },
-        { key: 'C', label: 'Cuma' },
-        { key: 'C', label: 'Cumartesi' }
-      ];
-      const today = new Date();
-      today.setHours(12, 0, 0, 0);
-
-      const days = [];
-      for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - daysAgo);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        days.push({
-          ...dayNames[date.getDay()],
-          date: `${year}-${month}-${day}`
-        });
-      }
-      return days;
-    }
-
-    const recentDays = getLastSevenDays();
-    const weekDates = recentDays.map(day => day.date);
 
     /** Bugünden geriye ardışık "okudum" gün sayısı (kart ve lig tebriği için ortak) */
     function calculateStreakForUser(stats) {
@@ -393,13 +319,6 @@ window.loadUserCards = async function loadUserCards() {
       // Lig belirle
       const league = leagues.find(l => okudumDays >= l.min && okudumDays < l.max) || leagues[leagues.length - 1];
 
-      // Haftalık okuma durumu
-      const weekStatus = weekDates.map(date => {
-        const stat = userStats.find(s => s.date === date);
-        if (!stat) return 'empty';
-        return stat.status === 'okudum' ? 'ok' : 'not';
-      });
-
       const streak = calculateStreakForUser(userStats);
 
       // Seri > 0 ise activeStreaks listesine ekle
@@ -416,12 +335,12 @@ window.loadUserCards = async function loadUserCards() {
       if (userStreak && userStreak.streak > 0) {
         const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
         const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
-        longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span><span class="streak-range">${start} - ${end}</span> <span class="streak-days">(${userStreak.streak} gün)</span>`;
+        longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span><span class="streak-range">${start} - ${end}</span>`;
       }
 
       // Lig bilgisi için gösterim
       const leagueProgressText = `${okudumDays}/${league.max}`;
-      const headerBg = leagueBackgrounds[league.name] || "#fff";
+      const headerBg = league.bg || "#fff";
 
 
       // Section'ı göster
@@ -468,10 +387,9 @@ window.loadUserCards = async function loadUserCards() {
           card.classList.add('current-user-card');
         }
 
-        cardScrollObserver.observe(card);
+        if (cardScrollObserver) cardScrollObserver.observe(card);
+        else card.classList.add('card-fade-in');
       } else {
-        card.classList.remove('card-fade-in');
-
         // Giriş yapılan kullanıcı için özel class ekle
         if (currentUserInfo && currentUserInfo.userId === user._id) {
           card.classList.add('current-user-card');
@@ -479,7 +397,8 @@ window.loadUserCards = async function loadUserCards() {
           card.classList.remove('current-user-card');
         }
 
-        cardScrollObserver.observe(card);
+        if (cardScrollObserver) cardScrollObserver.observe(card);
+        else card.classList.add('card-fade-in');
       }
 
       // Kullanıcılar sıralandıktan sonra kartların DOM sırasını da güncelle.
@@ -505,30 +424,18 @@ window.loadUserCards = async function loadUserCards() {
           <div class="league-progress-text">${leagueProgressText}</div>
         </div>
       </div>
-      <div class="weekly-status-row">
-        <div class="weekly-status-days">
-          ${recentDays.map((day, i) => `
-            <div class="weekly-status-day-group"
-              data-user-id="${user._id}"
-              data-date="${day.date}"
-            >
-              <div class="day-label">${day.key}</div>
-              <div class="day-circle ${weekStatus[i]}" title="${day.label}"></div>
-            </div>
-          `).join('')}
+      <div class="progress-summary-row">
+        <div class="progress-summary-column">
+          ${amountSummaryHtml}
+          <span class="progress-summary progress-summary-days">
+            <span class="summary-count"><span class="progress-summary-okudum-count">${okudumDays}</span><span class="progress-summary-total-count">/${totalDays}</span></span>
+            <span class="summary-label"> Gün okuma</span>
+          </span>
         </div>
         <div class="streak-info">
           <span class="user-card-fire-emoji">⭐</span>
           <span class="user-card-fire-label">${streak}</span>
         </div>
-      </div>
-      <div class="divider"></div>
-      <div class="progress-summary-row">
-        ${amountSummaryHtml}
-        <span class="progress-summary progress-summary-days">
-          <span class="summary-count"><span class="progress-summary-okudum-count">${okudumDays}</span><span class="progress-summary-total-count">/${totalDays}</span></span>
-          <span class="summary-label"> Gün okuma</span>
-        </span>
       </div>
       <div class="progress-bar-container">
         <div class="progress-bar-bg">
@@ -536,22 +443,9 @@ window.loadUserCards = async function loadUserCards() {
         </div>
         <span class="progress-percent">%${percent}</span>
       </div>
-      <div class="user-card-last-read">📅 <span class="last-read-label">Son okuma:</span> ${lastReadDate ? `${formatDateTurkish(lastReadDate)} <span class="last-read-relative">(${getRelativeReadText(lastReadDate)})</span>` : '-'}</div>
+      <div class="user-card-last-read">📅 <span class="last-read-label">Son okuma:</span> ${lastReadDate ? formatDateTurkish(lastReadDate) : '-'}</div>
       <div class="user-card-longest-streak">${longestStreakText}</div>
     `;
-      // .weekly-status-day-group click event ekle
-      card.querySelectorAll('.weekly-status-day-group').forEach(group => {
-        group.addEventListener('click', function () {
-          const userId = this.getAttribute('data-user-id');
-          const date = this.getAttribute('data-date');
-          const userObj = users.find(u => u._id === userId);
-          if (userObj) {
-            const [year, month, day] = date.split('-');
-            toggleUserCardsReadingStatus(userObj.name, parseInt(day), parseInt(month), parseInt(year), this);
-          }
-        });
-      });
-
       // Paylaşım ikonu click event ekle
       const shareIconWrapper = card.querySelector('.share-icon-wrapper');
       if (shareIconWrapper) {
@@ -587,7 +481,7 @@ window.loadUserCards = async function loadUserCards() {
             navigator.share({
               title: 'Kullanıcının Okuma Bilgileri',
               text: shareMessage,
-            }).catch(err => console.log('Paylaşım iptal edildi:', err));
+            }).catch(() => {});
           } else {
             navigator.clipboard.writeText(shareMessage).then(() => {
               alert('Paylaşım metni panoya kopyalandı!');
@@ -609,6 +503,7 @@ window.loadUserCards = async function loadUserCards() {
     }
 
     // --- LİG ATLAMA BİLGİSİ (lastCongratulatedLeague) ---
+    const messagePanelsContainer = document.querySelector('.user-cards-message-panels');
     document
       .querySelectorAll('.league-promotion-message, .league-promotion-backlog')
       .forEach((el) => el.remove());
@@ -758,7 +653,13 @@ window.loadUserCards = async function loadUserCards() {
         insertBeforeNode ||
         document.querySelector('.user-cards-header') ||
         document.querySelector('.league-info-bar');
-      if (userCardsSection && ref) {
+      if (messagePanelsContainer) {
+        if (insertBeforeNode && insertBeforeNode.parentNode === messagePanelsContainer) {
+          messagePanelsContainer.insertBefore(panel, insertBeforeNode);
+        } else {
+          messagePanelsContainer.appendChild(panel);
+        }
+      } else if (userCardsSection && ref) {
         userCardsSection.insertBefore(panel, ref);
       }
 
@@ -808,7 +709,7 @@ window.loadUserCards = async function loadUserCards() {
 
     const leagueBarEl = document.querySelector('.league-info-bar');
     const userCardsHeaderEl = document.querySelector('.user-cards-header');
-    let insertAnchor = userCardsHeaderEl || leagueBarEl;
+    let insertAnchor = messagePanelsContainer ? null : userCardsHeaderEl || leagueBarEl;
 
     if (promotedBacklog.length > 0) {
       const bl = mountPromotionPanel(
@@ -971,6 +872,10 @@ window.loadUserCards = async function loadUserCards() {
     function insertMotivationPanel(panelEl) {
       const userCardsSection = document.querySelector('.user-cards-section');
       if (!userCardsSection || !panelEl) return;
+      if (messagePanelsContainer) {
+        messagePanelsContainer.appendChild(panelEl);
+        return;
+      }
       // Lig tebrik panellerinden sonra, başlıktan önce: okuma serisi → art arda okumayanlar
       const ref =
         userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
@@ -1131,7 +1036,9 @@ window.loadUserCards = async function loadUserCards() {
         everyoneReadMsg.appendChild(copyText);
 
         const userCardsSection = document.querySelector('.user-cards-section');
-        if (userCardsSection) {
+        if (messagePanelsContainer) {
+          messagePanelsContainer.appendChild(everyoneReadMsg);
+        } else if (userCardsSection) {
           const refBeforeHeader =
             userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
           if (refBeforeHeader) {
@@ -1162,148 +1069,5 @@ window.loadUserCards = async function loadUserCards() {
     }
   } catch (error) {
     console.error('Kullanıcı kartları yüklenirken hata oluştu:', error);
-  }
-}
-
-// Kullanıcı kartlarında okuma durumunu değiştiren fonksiyon
-toggleUserCardsReadingStatus = function (userName, day, month, year, clickedElement) {
-
-  const editMode = typeof window.getReadingEditMode === 'function'
-    ? window.getReadingEditMode()
-    : 'default';
-  if (editMode !== 'status') {
-    return;
-  }
-
-  if (!LocalStorageManager.isUserLoggedIn()) {
-    logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme');
-    return;
-  }
-
-  const userInfo = LocalStorageManager.getCurrentUserInfo();
-  if (!userInfo) {
-    logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme-kullanıcı bulunamadı');
-    return;
-  }
-
-  const targetUserId = clickedElement?.getAttribute('data-user-id') ||
-    (window.globalDataStore
-      ? window.globalDataStore.getUsers().find(user => user.name === userName)?._id
-      : null);
-  if (!targetUserId) {
-    console.error('Kullanıcı kartı kullanıcısı bulunamadı');
-    return;
-  }
-
-  // Session kontrolü
-  if (window.checkSessionTimeout && window.checkSessionTimeout()) {
-    return; // İşlemi durdur
-  }
-
-  // Member kullanıcıları sadece kendi verilerini güncelleyebilir
-  if (userInfo.userAuthority === 'member') {
-    if (String(targetUserId) !== String(userInfo.userId)) {
-      logUnauthorizedAccess('Kullanıcı kartlarında okuma durumu değiştirme-başka kullanıcı');
-      return;
-    }
-  }
-
-  // Admin kullanıcılar için direkt devam et
-  continueWithToggle();
-
-  function continueWithToggle() {
-    // Tarih formatını yyyy-mm-dd olarak hazırla
-    function formatDateForTable(day, month, year) {
-      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    }
-    const dateStr = formatDateForTable(day, month, year);
-    // Haftalık/aylık ile uyumlu: Türkiye saatine göre bugünden sonrası engelli.
-    const today = new Date();
-    today.setHours(today.getHours() + 3);
-    const todayString = today.toISOString().split('T')[0];
-    if (dateStr > todayString) {
-      return;
-    }
-
-    // 1. ÖNCE UI'YI GÜNCELLE (Anında görsel geri bildirim)
-    // Mevcut durumu tıklanan elementten tespit et
-    const dayCircle = clickedElement.querySelector('.day-circle');
-    let currentStatus = '';
-    if (dayCircle.classList.contains('ok')) {
-      currentStatus = 'okudum';
-    } else if (dayCircle.classList.contains('not')) {
-      currentStatus = 'okumadım';
-    } else {
-      currentStatus = '';
-    }
-
-    // Yeni durumu hesapla
-    let newStatus = '';
-    if (currentStatus === '') {
-      newStatus = 'okudum';
-    } else if (currentStatus === 'okudum') {
-      newStatus = 'okumadım';
-    } else if (currentStatus === 'okumadım') {
-      newStatus = '';
-    }
-
-    // UI'ı anında güncelle
-    updateDayCircleStatus(clickedElement, newStatus);
-
-    // 2. SONRA VERİTABANINI GÜNCELLE
-    fetch(`/api/update-status/${window.groupid}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: targetUserId,
-        date: dateStr,
-        status: newStatus
-      })
-    })
-      .then(response => {
-        if (response && response.ok) {
-          // Global store'u da güncelle
-          try {
-            if (window.globalDataStore && targetUserId) {
-              window.globalDataStore.applyLocalUpdate(targetUserId, dateStr, newStatus);
-            }
-          } catch (e) {
-            console.error('Global store senkronizasyon hatası:', e);
-          }
-          // Veritabanı güncellemesi başarılı olduktan sonra tüm bileşenleri güncelle
-          if (window.loadUserCards) window.loadUserCards(); // Kullanıcı kartlarını yeniden render et
-          if (window.loadTrackerTable) window.loadTrackerTable();
-          if (window.loadReadingStats) window.loadReadingStats();
-          if (window.renderLongestSeries) window.renderLongestSeries();
-        } else {
-          // Veritabanı güncellemesi başarısız olursa UI'ı eski haline döndür
-          console.error('Veritabanı güncellemesi başarısız');
-          if (window.loadUserCards) window.loadUserCards();
-        }
-      })
-      .catch(error => {
-        console.error('Kullanıcı kartlarında okuma durumu değiştirme-okuma durumu değiştirilirken hata oluştu:', error);
-        // Hata durumunda UI'ı eski haline döndür
-        if (window.loadUserCards) window.loadUserCards();
-      });
-  }
-}
-
-// Day-circle durumunu güncelleme yardımcı fonksiyonu
-function updateDayCircleStatus(clickedElement, newStatus) {
-  // Tıklanan element içindeki day-circle'ı bul
-  const dayCircle = clickedElement.querySelector('.day-circle');
-  if (!dayCircle) return;
-
-  // Mevcut sınıfları temizle
-  dayCircle.classList.remove('ok', 'not', 'empty');
-
-  // Yeni duruma göre sınıf ekle (CSS'deki sınıf isimlerini kullan)
-  if (newStatus === 'okudum') {
-    dayCircle.classList.add('ok');
-  } else if (newStatus === 'okumadım') {
-    dayCircle.classList.add('not');
-  } else {
-    dayCircle.classList.add('empty');
   }
 }

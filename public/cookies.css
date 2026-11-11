@@ -2,8 +2,8 @@
     position: fixed;
     bottom: 35px;
     left: 40px;
-    max-width: 450px;
-    min-width: 300px;
+    max-width: 500px;
+    min-width: 340px;
     background-color: #ffffff;
     box-shadow: 1px 4px 16px rgba(0, 0, 0, 0.30);
     border-radius: 14px;
@@ -13,7 +13,7 @@
 }
 
 .cookie-content {
-    padding: 30px 28px 22px 28px;
+    padding: 35px 33px 27px 33px;
 }
 
 .cookie-header {
@@ -23,7 +23,7 @@
 }
 
 .cookie-icon {
-    font-size: 30px;
+    font-size: 35px;
     margin-right: 13px;
 }
 
@@ -32,12 +32,12 @@
     padding: 0;
     border: none;
     color: #333;
-    font-size: 22px !important;
+    font-size: 26px !important;
 }
 
 .cookie-content p {
     margin: 0 0 17px 0;
-    font-size: 18px;
+    font-size: 22px;
     line-height: 1.55;
     color: #555;
 }
@@ -50,10 +50,10 @@
 }
 
 .cookie-button {
-    padding: 12px 24px;
+    padding: 16px 29px;
     border: none;
     border-radius: 6px;
-    font-size: 17px;
+    font-size: 21px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;

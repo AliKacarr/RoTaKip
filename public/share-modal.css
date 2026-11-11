@@ -72,7 +72,7 @@
 .month-share-modal-header,
 .longest-series-share-modal-header,
 .reading-stats-share-modal-header {
-    padding: 24px 30px;
+    padding: 26px 32px;
     border-bottom: 1px solid #e8e8e8;
     display: flex;
     align-items: center;
@@ -85,7 +85,7 @@
 .longest-series-share-modal-header .longest-series-share-modal-title,
 .reading-stats-share-modal-header .reading-stats-share-modal-title {
     color: #ffffff;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 700;
     margin: 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -98,9 +98,9 @@
     background: rgba(255, 255, 255, 0.2);
     border: none;
     color: #ffffff;
-    font-size: 32px;
-    width: 40px;
-    height: 40px;
+    font-size: 34px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
@@ -123,7 +123,7 @@
 .month-share-modal-body,
 .longest-series-share-modal-body,
 .reading-stats-share-modal-body {
-    padding: 30px;
+    padding: 32px;
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
@@ -161,23 +161,21 @@
 }
 
 /* Genel loading mesajı (hem table hem month için) */
-.share-loading-message,
-.table-share-loading-message {
+.share-loading-message {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 20px;
     color: #4785bd;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     min-height: 250px;
     width: 100%;
     position: relative;
 }
 
-.share-loading-message::before,
-.table-share-loading-message::before {
+.share-loading-message::before {
     content: '';
     width: 40px;
     height: 40px;
@@ -197,8 +195,7 @@
     }
 }
 
-.share-loading-message span,
-.table-share-loading-message span {
+.share-loading-message span {
     display: block;
     margin-top: 10px;
 }
@@ -207,7 +204,7 @@
 .month-share-modal-footer,
 .longest-series-share-modal-footer,
 .reading-stats-share-modal-footer {
-    padding: 30px;
+    padding: 32px;
     border-top: 1px solid #e8e8e8;
     display: flex;
     gap: 15px;
@@ -217,10 +214,10 @@
 
 .table-share-btn {
     flex: 1;
-    padding: 18px 24px;
+    padding: 20px 26px;
     border: none;
     border-radius: 12px;
-    font-size: 21px;
+    font-size: 23px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -232,7 +229,7 @@
 }
 
 .table-share-btn i {
-    font-size: 21px;
+    font-size: 23px;
 }
 
 .table-share-download-btn {
@@ -277,28 +274,28 @@
     .month-share-modal-header,
     .longest-series-share-modal-header,
     .reading-stats-share-modal-header {
-        padding: 20px;
+        padding: 22px;
     }
 
     .table-share-modal-header .table-share-modal-title,
     .month-share-modal-header .month-share-modal-title,
     .longest-series-share-modal-header .longest-series-share-modal-title,
     .reading-stats-share-modal-header .reading-stats-share-modal-title {
-        font-size: 20px;
+        font-size: 22px;
     }
 
     .table-share-modal-body,
     .month-share-modal-body,
     .longest-series-share-modal-body,
     .reading-stats-share-modal-body {
-        padding: 20px;
+        padding: 22px;
     }
 
     .table-share-modal-footer,
     .month-share-modal-footer,
     .longest-series-share-modal-footer,
     .reading-stats-share-modal-footer {
-        padding: 20px;
+        padding: 22px;
         flex-direction: column;
     }
 

@@ -1,3 +1,7 @@
+html {
+  font-size: 20px;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-image: url('../images/background.webp');
@@ -7,6 +11,7 @@ body {
   margin: 0;
   padding: 0;
   isolation: isolate;
+  font-size: 20px;
 }
 
 .groups-sparkle-overlay {
@@ -34,6 +39,12 @@ body {
   background-color: #fcfdfe;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
+  font-size: 21px;
+}
+
+/* Genel okunabilirlik artışı aylık takvimin mevcut ölçeğini değiştirmemeli. */
+.monthly-calendar-section {
+  font-size: 18px;
 }
 
 h1 {
@@ -47,11 +58,15 @@ h3 {
   align-items: center;
   margin-top: 30px;
   color: #444444;
-  font-size: 21px !important;
+  font-size: 26px !important;
   margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 1px solid #44444423;
   width: 98%;
+}
+
+.monthly-calendar-section h3 {
+  font-size: 24px !important;
 }
 
 /* Unified Toast/Notification Styles */
@@ -63,11 +78,11 @@ h3 {
     right: 20px;
     justify-content: center;
     align-items: center;
-    padding: 12px 20px;
+    padding: 15px 24px;
     border-radius: 10px;
     color: #fff;
     z-index: 10000;
-    font-size: 20px;
+    font-size: 23px;
     font-weight: 500;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     animation: slideInRight 0.3s ease;

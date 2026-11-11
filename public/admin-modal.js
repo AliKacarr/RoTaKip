@@ -198,9 +198,9 @@ async function showAdminIndicator() {
             scrollToMainButton &&
             scrollToMainButton.classList.contains('show')
         ) {
-            adminIndicator.style.bottom = '270px';
+            adminIndicator.style.bottom = '314px';
         } else {
-            adminIndicator.style.bottom = '210px';
+            adminIndicator.style.bottom = '243px';
         }
         adminIndicator.classList.add('show');
         adminIndicator.classList.remove('hidden');

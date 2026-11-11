@@ -113,7 +113,17 @@ function setTimelineTodayButtonVisibility(referenceDate) {
 
     states.forEach(function ([button, visible]) {
         if (!button) return;
+
+        if (!visible && document.activeElement === button) {
+            if (currentWeekDisplay) {
+                currentWeekDisplay.focus({ preventScroll: true });
+            } else {
+                button.blur();
+            }
+        }
+
         button.classList.toggle('is-visible', visible);
+        button.disabled = !visible;
         button.setAttribute('aria-hidden', visible ? 'false' : 'true');
         button.tabIndex = visible ? 0 : -1;
     });
@@ -350,9 +360,10 @@ function updateLeagueProgress(totalReading) {
     const promoted = lastUserStatsLeagueMin != null && currentLeague.min > lastUserStatsLeagueMin;
     lastUserStatsLeagueMin = currentLeague.min;
 
-    // Sonraki ligi bul
     const currentIndex = LEAGUES.indexOf(currentLeague);
-    const nextLeague = currentIndex < LEAGUES.length - 1 ? LEAGUES[currentIndex + 1] : currentLeague;
+    const nextLeague = currentIndex < LEAGUES.length - 1
+        ? LEAGUES[currentIndex + 1]
+        : currentLeague;
 
     // Mevcut lig bilgilerini güncelle
     const currentLeagueImg = document.getElementById('currentLeagueImg');
@@ -373,23 +384,19 @@ function updateLeagueProgress(totalReading) {
     // Progress bar'ı güncelle
     const progressText = document.getElementById('leagueProgressText');
     const progressFill = document.getElementById('leagueProgressFill');
-    const progressStatus = document.getElementById('leagueProgressStatus');
 
-    if (progressText && progressFill && progressStatus) {
+    if (progressText && progressFill) {
         const progress = totalReading - currentLeague.min;
         const totalNeeded = currentLeague.max - currentLeague.min;
         const percentage = Math.min((progress / totalNeeded) * 100, 100);
-        const remaining = totalNeeded - progress;
+        const isHighestLeagueComplete = currentIndex === LEAGUES.length - 1
+            && totalReading >= currentLeague.max;
 
-        // Üst kısım: "197 / 200⭐" formatı, renkli
-        progressText.innerHTML = `<span style="font-weight: 700; ">${totalReading}</span><span style="font-weight: 500;">/${currentLeague.max}</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>`;
+        // En üst lig tamamlandığında sayısal sınır yerine kutlama mesajı göster.
+        progressText.innerHTML = isHighestLeagueComplete
+            ? '<span style="font-weight: 700;">Harikasınız!</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>'
+            : `<span style="font-weight: 700; ">${totalReading}</span><span style="font-weight: 500;">/${currentLeague.max}</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>`;
 
-        // Alt kısım: "Mercan ligine 3 okuma kaldı" formatı
-        if (remaining > 0) {
-            progressStatus.innerHTML = `${nextLeague.name} ligine <span style="font-weight:bold;">${remaining}</span> okuma kaldı`;
-        } else {
-            progressStatus.innerHTML = `<span style="font-size:14px;font-weight:bold;">${nextLeague.name} ligindesiniz!</span>`;
-        }
         // Progress bar'ı animasyonlu olarak doldur
         setTimeout(() => {
             progressFill.style.width = `${percentage}%`;
@@ -451,19 +458,7 @@ function calculateStreakFromCache(userId) {
     return calculateStreak(userStats);
 }
 
-// Lig tanımları - global erişilebilir
-const LEAGUES = [
-    { min: 0, max: 5, name: 'Bronz', img: 'bronz.webp', bg: 'linear-gradient(90deg, #e2b07a 60%, #ffe0b2 100%)' },
-    { min: 5, max: 10, name: 'Gümüş', img: 'gumus.webp', bg: 'linear-gradient(90deg, #d3d3d3 60%, #e0e0e0 100%)' },
-    { min: 10, max: 20, name: 'Altın', img: 'altin.webp', bg: 'linear-gradient(90deg, #ffd700 60%, #ffe789 100%)' },
-    { min: 20, max: 40, name: 'İnci', img: 'inci.webp', bg: 'linear-gradient(90deg, #b2dfdb 60%, #c8eef3 100%)' },
-    { min: 40, max: 60, name: 'Safir', img: 'safir.webp', bg: 'linear-gradient(90deg, #49b7ff 60%, #bbdefb 100%)' },
-    { min: 60, max: 100, name: 'Zümrüt', img: 'zumrut.webp', bg: 'linear-gradient(90deg, #58c089 60%, #a5d6a7 100%)' },
-    { min: 100, max: 150, name: 'Elmas', img: 'elmas.webp', bg: 'linear-gradient(90deg, #36e873 60%, #c4edb8 100%)' },
-    { min: 150, max: 200, name: 'Yakut', img: 'yakut.webp', bg: 'linear-gradient(90deg, #ffb199 60%, #ffe0b2 100%)' },
-    { min: 200, max: 365, name: 'Mercan', img: 'mercan.webp', bg: 'linear-gradient(90deg, #ff6f63 60%, #ffafb7 100%)' },
-    { min: 365, max: 1001, name: 'Pırlanta', img: 'pirlanta.webp', bg: 'linear-gradient(90deg, #ffbf00 60%, #ffe789 100%)' }
-];
+const LEAGUES = window.ROTAKIP_LEAGUES;
 
 function getWeekSeasonKey(dates) {
     if (!dates || !dates.length) {
@@ -1512,7 +1507,7 @@ function restoreConfirmedStatus(userId, date, fallbackCell, failedSnapshot, conf
 
     if (cell) {
         cell.textContent = confirmedSnapshot.text;
-        cell.classList.remove('green', 'pink', 'lila', 'red', 'empty');
+        cell.classList.remove('green', 'red', 'empty');
         if (confirmedSnapshot.status === 'okudum') cell.classList.add('green');
         else if (confirmedSnapshot.status === 'okumadım') cell.classList.add('red');
         else cell.classList.add('empty');
@@ -1702,7 +1697,7 @@ window.toggleStatus = function toggleStatus(userId, date, clickedCell) {
 
     // Yalnızca değişen hücrenin durum sınıfını güncelle. Satırdaki diğer
     // 41 gün zaten doğru durumda olduğu için yeniden taranmalarına gerek yoktur.
-    cell.classList.remove('green', 'pink', 'lila', 'red', 'empty');
+    cell.classList.remove('green', 'red', 'empty');
     if (status === 'okudum') cell.classList.add('green');
     else if (status === 'okumadım') cell.classList.add('red');
     else cell.classList.add('empty');
