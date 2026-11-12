@@ -152,15 +152,6 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
             const label = enabled ? '🔕 Bildirimleri Kapat' : '🔔 Bildirimleri Aç';
 
             getNotificationButtons().forEach((button) => {
-              if (!button.dataset.notificationBaseAppearance) {
-                const buttonStyle = getComputedStyle(button);
-                button.style.setProperty('--notification-button-background', buttonStyle.backgroundColor);
-                button.style.setProperty('--notification-button-color', buttonStyle.color);
-                button.style.setProperty('--notification-button-shadow', buttonStyle.boxShadow);
-                button.style.setProperty('--notification-button-opacity', buttonStyle.opacity);
-                button.dataset.notificationBaseAppearance = 'true';
-              }
-
               if (button.textContent.trim() !== label) button.textContent = label;
               button.setAttribute('aria-pressed', String(enabled));
               button.setAttribute('aria-busy', String(notificationStateChanging));
@@ -191,7 +182,6 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
           event.preventDefault();
           event.stopPropagation();
           event.stopImmediatePropagation();
-          requestAnimationFrame(() => button.blur());
 
           if (notificationStateChanging) return;
 

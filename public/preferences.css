@@ -33,20 +33,6 @@
     pointer-events: none;
 }
 
-@media (hover: none), (pointer: coarse) {
-    .onesignal-customlink-container .onesignal-customlink-container-button:hover,
-    .onesignal-customlink-container .onesignal-customlink-container-button:focus,
-    .onesignal-customlink-container .onesignal-customlink-container-button:active {
-        background-color: var(--notification-button-background) !important;
-        background-image: none !important;
-        color: var(--notification-button-color) !important;
-        box-shadow: var(--notification-button-shadow) !important;
-        opacity: var(--notification-button-opacity) !important;
-        filter: none !important;
-        transform: none !important;
-    }
-}
-
 .settings-section {
     padding: 0 20px;
     position: relative;
