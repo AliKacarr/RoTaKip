@@ -16,7 +16,11 @@ function initializeOneSignalSettingsVisibility() {
         if (updateFrame !== null) cancelAnimationFrame(updateFrame);
         updateFrame = requestAnimationFrame(() => {
             updateFrame = null;
-            const hasContent = container.childElementCount > 0 || container.textContent.trim().length > 0;
+            const hasContent = (
+                container.classList.contains('is-syncing') ||
+                container.childElementCount > 0 ||
+                container.textContent.trim().length > 0
+            );
 
             if (hasContent) settingsSection.hidden = false;
             settingsSection.classList.toggle('is-visible', hasContent);
@@ -71,13 +75,16 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
           '.onesignal-customlink-subscribe',
           '.onesignal-customlink-unsubscribe',
           '.onesignal-reset',
-          '.onesignal-customlink-notification-enable',
           '.onesignal-customlink-container-button',
-          'button',
-          '[role="button"]'
+          'button'
         ].join(', ');
         let notificationStateUpdateFrame = null;
         let notificationStateChanging = false;
+        let notificationPlaceholder = null;
+        let notificationPlaceholderStartedAt = 0;
+        let notificationPlaceholderTimer = null;
+
+        const notificationPlaceholderMinDuration = 1100;
 
         const isNotificationEnabled = () => (
           OneSignal.Notifications.permission === true &&
@@ -95,6 +102,46 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
             const ancestorButton = button.parentElement?.closest(notificationButtonSelector);
             return !ancestorButton || !customLinkContainer.contains(ancestorButton);
           });
+        };
+
+        const removeNotificationPlaceholder = () => {
+          if (!notificationPlaceholder) return;
+
+          const elapsed = performance.now() - notificationPlaceholderStartedAt;
+          const hasRenderedButton = getNotificationButtons().length > 0;
+
+          if (
+            notificationStateChanging ||
+            elapsed < notificationPlaceholderMinDuration ||
+            (!hasRenderedButton && elapsed < 5000)
+          ) {
+            clearTimeout(notificationPlaceholderTimer);
+            notificationPlaceholderTimer = setTimeout(
+              removeNotificationPlaceholder,
+              Math.max(100, notificationPlaceholderMinDuration - elapsed)
+            );
+            return;
+          }
+
+          customLinkContainer?.classList.remove('is-syncing');
+          notificationPlaceholder.remove();
+          notificationPlaceholder = null;
+          notificationPlaceholderTimer = null;
+        };
+
+        const preserveNotificationControls = () => {
+          if (!customLinkContainer || notificationPlaceholder) return;
+
+          notificationPlaceholder = customLinkContainer.cloneNode(true);
+          notificationPlaceholder.className = 'onesignal-customlink-placeholder';
+          notificationPlaceholder.removeAttribute('id');
+          notificationPlaceholder.setAttribute('aria-hidden', 'true');
+          notificationPlaceholder.inert = true;
+          notificationPlaceholder.style.minHeight = `${customLinkContainer.offsetHeight}px`;
+
+          customLinkContainer.insertAdjacentElement('afterend', notificationPlaceholder);
+          customLinkContainer.classList.add('is-syncing');
+          notificationPlaceholderStartedAt = performance.now();
         };
 
         const updateNotificationButtonState = () => {
@@ -143,6 +190,7 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
 
           const enabled = isNotificationEnabled();
           notificationStateChanging = true;
+          preserveNotificationControls();
           logNotificationPreferenceChange(enabled);
           updateNotificationButtonState();
 
@@ -159,12 +207,16 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
           } finally {
             notificationStateChanging = false;
             updateNotificationButtonState();
+            removeNotificationPlaceholder();
           }
         };
 
         if (customLinkContainer) {
           customLinkContainer.addEventListener('click', handleNotificationToggle, true);
-          new MutationObserver(updateNotificationButtonState).observe(customLinkContainer, {
+          new MutationObserver(() => {
+            updateNotificationButtonState();
+            removeNotificationPlaceholder();
+          }).observe(customLinkContainer, {
             childList: true,
             subtree: true,
             characterData: true
