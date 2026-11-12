@@ -11,6 +11,7 @@ function initializeOneSignalSettingsVisibility() {
 
     let updateFrame = null;
     let isVisible = false;
+    let lockedVisibleHeight = 0;
 
     const updateVisibility = () => {
         if (updateFrame !== null) cancelAnimationFrame(updateFrame);
@@ -22,10 +23,19 @@ function initializeOneSignalSettingsVisibility() {
                 container.textContent.trim().length > 0
             );
 
-            if (hasContent) settingsSection.hidden = false;
-            settingsSection.classList.toggle('is-visible', hasContent);
-            settingsSection.style.height = hasContent ? `${settingsContent.scrollHeight}px` : '0px';
-            isVisible = hasContent;
+            if (hasContent) {
+                isVisible = true;
+                lockedVisibleHeight = Math.max(lockedVisibleHeight, settingsContent.scrollHeight);
+            }
+
+            if (isVisible) {
+                settingsSection.hidden = false;
+                settingsSection.classList.add('is-visible');
+                settingsSection.style.height = `${lockedVisibleHeight}px`;
+            } else {
+                settingsSection.classList.remove('is-visible');
+                settingsSection.style.height = '0px';
+            }
         });
     };
 
@@ -142,6 +152,15 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
             const label = enabled ? '🔕 Bildirimleri Kapat' : '🔔 Bildirimleri Aç';
 
             getNotificationButtons().forEach((button) => {
+              if (!button.dataset.notificationBaseAppearance) {
+                const buttonStyle = getComputedStyle(button);
+                button.style.setProperty('--notification-button-background', buttonStyle.backgroundColor);
+                button.style.setProperty('--notification-button-color', buttonStyle.color);
+                button.style.setProperty('--notification-button-shadow', buttonStyle.boxShadow);
+                button.style.setProperty('--notification-button-opacity', buttonStyle.opacity);
+                button.dataset.notificationBaseAppearance = 'true';
+              }
+
               if (button.textContent.trim() !== label) button.textContent = label;
               button.setAttribute('aria-pressed', String(enabled));
               button.setAttribute('aria-busy', String(notificationStateChanging));
@@ -172,6 +191,7 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
           event.preventDefault();
           event.stopPropagation();
           event.stopImmediatePropagation();
+          requestAnimationFrame(() => button.blur());
 
           if (notificationStateChanging) return;
 
