@@ -539,7 +539,7 @@ ul#passiveUserList li span {
     box-shadow: none;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 12px 10px;
     align-self: stretch;
 }
 

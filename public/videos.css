@@ -1,7 +1,7 @@
 .video-modal {
     display: none;
     position: fixed;
-    z-index: 100;
+    z-index: 102;
     left: 0;
     top: 0;
     width: 100%;
