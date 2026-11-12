@@ -363,6 +363,8 @@ class GroupsPage {
                 description: item.description,
                 groupImage: item.groupImage,
                 visibility: item.visibility,
+                amountType: item.amountType,
+                readingEditPolicy: item.readingEditPolicy,
                 autoMarkUnread: item.autoMarkUnread,
                 userAuthority: item.authority
             }));

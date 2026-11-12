@@ -599,6 +599,7 @@ to {
   position: relative;
   border-radius: 15px;
   width: 600px;
+  min-height: min(650px, 80vh);
   max-height: 90vh;
   max-width: 90vw;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -607,7 +608,7 @@ to {
 }
 
 .profile-avatar-modal-header {
-  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  background: linear-gradient(135deg,#667eea 0,#764ba2 100%);
   color: white;
   padding: 20px 25px;
   display: flex;
@@ -616,6 +617,7 @@ to {
 }
 
 .profile-avatar-modal-header h3 {
+  color: #fff;
   margin: 0;
   font-size: 1.3em;
   font-weight: 600;

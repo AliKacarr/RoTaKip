@@ -38,6 +38,12 @@ const {
   VALID_INACTIVE_MEMBER_ACTIONS,
   normalizeInactiveMemberAction
 } = require('./inactiveMemberPolicy');
+const {
+  READING_EDIT_POLICY_ALL,
+  VALID_READING_EDIT_POLICIES,
+  normalizeReadingEditPolicy,
+  isReadingDateAllowedByPolicy
+} = require('./readingEditPolicy');
 const { deleteGroupUser, passivateGroupUser } = require('./groupUserLifecycle');
 const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 
@@ -45,6 +51,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 const ISTANBUL_TIME_ZONE = 'Europe/Istanbul';
 const SITE_ACTIVITY_ADMIN_GROUP_ID = 'catikati23';
+const VALID_AMOUNT_TYPES = new Set(['sayfa', 'dakika']);
+
+function normalizeAmountType(value) {
+  return VALID_AMOUNT_TYPES.has(value) ? value : 'sayfa';
+}
 
 function istanbulDateKey(at = new Date()) {
   const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -1023,6 +1034,8 @@ const UserGroup = mongoose.model('UserGroup', {
   description: String,
   groupImage: { type: String, default: null },
   visibility: { type: String, default: 'public' },
+  amountType: { type: String, enum: [...VALID_AMOUNT_TYPES], default: 'sayfa' },
+  readingEditPolicy: { type: String, enum: [...VALID_READING_EDIT_POLICIES], default: READING_EDIT_POLICY_ALL },
   autoMarkUnread: { type: Boolean, default: true },
   inactiveMemberAction: {
     type: String,
@@ -1207,6 +1220,8 @@ app.get('/api/group/:groupId', async (req, res) => {
     res.json({
       group: {
         ...group,
+        amountType: normalizeAmountType(group.amountType),
+        readingEditPolicy: normalizeReadingEditPolicy(group.readingEditPolicy),
         inactiveMemberAction: normalizeInactiveMemberAction(group.inactiveMemberAction)
       }
     });
@@ -1285,6 +1300,7 @@ app.post('/api/groups', accountCreationLimiter, uploadGroupImage.fields([
       adminName,
       adminPassword,
       visibility,
+      amountType,
       selectedGroupAvatarPath,
       selectedAdminAvatarPath
     } = req.body;
@@ -1298,6 +1314,9 @@ app.post('/api/groups', accountCreationLimiter, uploadGroupImage.fields([
     }
     if (visibility && !['public', 'private'].includes(visibility)) {
       return res.status(400).json({ error: 'Geçersiz grup görünürlüğü' });
+    }
+    if (amountType !== undefined && !VALID_AMOUNT_TYPES.has(amountType)) {
+      return res.status(400).json({ error: 'Geçersiz okuma birimi' });
     }
     if (!isAllowedAvatarPath(selectedGroupAvatarPath, 'groupAvatars') ||
         !isAllowedAvatarPath(selectedAdminAvatarPath, 'userAvatars')) {
@@ -1384,6 +1403,8 @@ app.post('/api/groups', accountCreationLimiter, uploadGroupImage.fields([
       description: description || '',
       groupImage: groupImageUrl,
       visibility: visibility || 'public',
+      amountType: normalizeAmountType(amountType),
+      readingEditPolicy: READING_EDIT_POLICY_ALL,
       autoMarkUnread,
       inactiveMemberAction: INACTIVE_MEMBER_ACTION_NONE,
       createdAt: new Date()
@@ -1489,9 +1510,10 @@ app.get('/api/groups/:groupId/member-count', requireReadableGroup, async (req, r
 app.post('/api/update-group/:groupId', requireGroupAdmin, async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { groupName, description, visibility, autoMarkUnread, inactiveMemberAction } = req.body;
+    const { groupName, description, visibility, amountType, autoMarkUnread, inactiveMemberAction } = req.body;
     if (!isValidText(groupName, 40) || !isValidText(description || '', 200, { allowEmpty: true }) ||
         !['public', 'private'].includes(visibility) ||
+        (amountType !== undefined && !VALID_AMOUNT_TYPES.has(amountType)) ||
         (inactiveMemberAction !== undefined && !VALID_INACTIVE_MEMBER_ACTIONS.has(inactiveMemberAction))) {
       return res.status(400).json({ error: 'Grup bilgileri geçersiz' });
     }
@@ -1505,7 +1527,8 @@ app.post('/api/update-group/:groupId', requireGroupAdmin, async (req, res) => {
     const updateFields = {
       groupName: groupName || group.groupName,
       description: description || group.description,
-      visibility: visibility || group.visibility
+      visibility: visibility || group.visibility,
+      amountType: normalizeAmountType(amountType || group.amountType)
     };
     if (autoMarkUnread !== undefined) {
       updateFields.autoMarkUnread = (autoMarkUnread === 'true' || autoMarkUnread === true);
@@ -1525,6 +1548,56 @@ app.post('/api/update-group/:groupId', requireGroupAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating group:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Okuma birimini diğer grup ayarlarından bağımsız güncelle.
+app.post('/api/update-group-amount-type/:groupId', requireGroupAdmin, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { amountType } = req.body;
+    if (!VALID_AMOUNT_TYPES.has(amountType)) {
+      return res.status(400).json({ error: 'Geçersiz okuma birimi' });
+    }
+
+    const updatedGroup = await UserGroup.findOneAndUpdate(
+      { groupId },
+      { amountType },
+      { returnDocument: 'after' }
+    );
+    if (!updatedGroup) {
+      return res.status(404).json({ error: 'Grup bulunamadı' });
+    }
+
+    res.json({ success: true, group: updatedGroup });
+  } catch (error) {
+    console.error('Okuma birimi güncellenemedi:', error);
+    res.status(500).json({ error: 'Okuma birimi güncellenemedi' });
+  }
+});
+
+// Üyelerin haftalık tabloda düzenleyebileceği tarih aralığını güncelle.
+app.post('/api/update-reading-edit-policy/:groupId', requireGroupAdmin, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { readingEditPolicy } = req.body;
+    if (!VALID_READING_EDIT_POLICIES.has(readingEditPolicy)) {
+      return res.status(400).json({ error: 'Geçersiz düzenleme aralığı' });
+    }
+
+    const updatedGroup = await UserGroup.findOneAndUpdate(
+      { groupId },
+      { readingEditPolicy },
+      { returnDocument: 'after' }
+    );
+    if (!updatedGroup) {
+      return res.status(404).json({ error: 'Grup bulunamadı' });
+    }
+
+    res.json({ success: true, group: updatedGroup });
+  } catch (error) {
+    console.error('Okuma düzenleme aralığı güncellenemedi:', error);
+    res.status(500).json({ error: 'Okuma düzenleme aralığı güncellenemedi' });
   }
 });
 
@@ -2192,6 +2265,8 @@ app.get('/api/auth/memberships', async (req, res) => {
         description: group.description,
         groupImage: group.groupImage,
         visibility: group.visibility,
+        amountType: normalizeAmountType(group.amountType),
+        readingEditPolicy: normalizeReadingEditPolicy(group.readingEditPolicy),
         autoMarkUnread: group.autoMarkUnread,
         inactiveMemberAction: normalizeInactiveMemberAction(group.inactiveMemberAction),
         memberCount: await users.countDocuments(activeUserQuery())
@@ -2226,6 +2301,8 @@ app.get('/api/auth/me/:groupId', requireGroupAuth, async (req, res) => {
       user: safeUser(user, true),
       group: {
         ...group,
+        amountType: normalizeAmountType(group.amountType),
+        readingEditPolicy: normalizeReadingEditPolicy(group.readingEditPolicy),
         inactiveMemberAction: normalizeInactiveMemberAction(group.inactiveMemberAction)
       }
     });
@@ -3137,6 +3214,19 @@ app.post('/api/update-status/:groupId', requireSelfOrAdmin, async (req, res) => 
     const group = await UserGroup.findOne({ groupId }).lean();
     if (!group) {
       return res.status(404).json({ error: 'Grup bulunamadı' });
+    }
+    if (req.auth.authority !== 'admin' && !isReadingDateAllowedByPolicy(
+      date,
+      group.readingEditPolicy,
+      istanbulDateKey(),
+      istanbulYesterdayKey()
+    )) {
+      const readingEditPolicy = normalizeReadingEditPolicy(group.readingEditPolicy);
+      return res.status(403).json({
+        code: 'READING_EDIT_DATE_RESTRICTED',
+        error: 'Bu tarih grup düzenleme ayarlarına göre değiştirilemez',
+        readingEditPolicy
+      });
     }
 
     // Dinamik koleksiyonu al

@@ -226,6 +226,45 @@ window.erpSyncEnabled = false;
 window.erpSyncVersion = 0;
 let erpSyncRefreshStarted = false;
 
+window.normalizeAmountType = function normalizeAmountType(value) {
+  return value === 'dakika' ? 'dakika' : 'sayfa';
+};
+
+window.getCurrentAmountType = function getCurrentAmountType() {
+  return window.normalizeAmountType(window.currentGroupData && window.currentGroupData.amountType);
+};
+
+window.getCurrentAmountTypeLabel = function getCurrentAmountTypeLabel() {
+  const amountType = window.getCurrentAmountType();
+  return amountType.charAt(0).toUpperCase() + amountType.slice(1);
+};
+
+window.setCurrentAmountType = function setCurrentAmountType(value) {
+  const amountType = window.normalizeAmountType(value);
+  window.currentGroupData = { ...(window.currentGroupData || {}), amountType };
+  window.dispatchEvent(new CustomEvent('rotakip:amount-type-changed', {
+    detail: { amountType }
+  }));
+};
+
+window.normalizeReadingEditPolicy = function normalizeReadingEditPolicy(value) {
+  return value === 'today' || value === 'today_yesterday' ? value : 'all';
+};
+
+window.getCurrentReadingEditPolicy = function getCurrentReadingEditPolicy() {
+  return window.normalizeReadingEditPolicy(
+    window.currentGroupData && window.currentGroupData.readingEditPolicy
+  );
+};
+
+window.setCurrentReadingEditPolicy = function setCurrentReadingEditPolicy(value) {
+  const readingEditPolicy = window.normalizeReadingEditPolicy(value);
+  window.currentGroupData = { ...(window.currentGroupData || {}), readingEditPolicy };
+  window.dispatchEvent(new CustomEvent('rotakip:reading-edit-policy-changed', {
+    detail: { readingEditPolicy }
+  }));
+};
+
 async function initializeAuthSystem() {
   
   // Admin sayfaları için çerezleri silme

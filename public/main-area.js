@@ -1357,6 +1357,128 @@ function performRenderUserList() {
         });
 }
 
+function updateGroupAmountTypeInfo(amountType) {
+    const normalizedType = amountType === 'dakika' ? 'dakika' : 'sayfa';
+    const icon = document.getElementById('groupAmountTypeIcon');
+    const info = document.querySelector('#groupAmountTypeInfo span');
+    if (icon) {
+        icon.className = normalizedType === 'dakika'
+            ? 'fa-solid fa-clock visibility-icon public'
+            : 'fa-solid fa-file-lines visibility-icon public';
+    }
+    if (info) {
+        info.textContent = `Okuma miktarları ${normalizedType} olarak gösterilir.`;
+    }
+}
+
+let groupAmountTypeSaveQueue = Promise.resolve();
+
+async function saveGroupAmountType(amountType, previousAmountType) {
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    const select = document.getElementById('groupAmountTypeSelect');
+    const normalizedType = amountType === 'dakika' ? 'dakika' : 'sayfa';
+    updateGroupAmountTypeInfo(normalizedType);
+
+    try {
+        const response = await fetch(`/api/update-group-amount-type/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amountType: normalizedType })
+        });
+        const data = await response.json().catch(function () { return {}; });
+        if (!response.ok) {
+            throw new Error(data.error || 'Okuma birimi güncellenemedi');
+        }
+
+        if (typeof window.setCurrentAmountType === 'function') {
+            window.setCurrentAmountType(data.group && data.group.amountType);
+        } else {
+            window.currentGroupData = {
+                ...(window.currentGroupData || {}),
+                amountType: normalizedType
+            };
+        }
+        showSuccessMessage(`Okuma birimi ${normalizedType} olarak güncellendi.`);
+    } catch (error) {
+        console.error('Okuma birimi güncelleme hatası:', error);
+        const fallbackType = previousAmountType === 'dakika' ? 'dakika' : 'sayfa';
+        if (select) select.value = fallbackType;
+        updateGroupAmountTypeInfo(fallbackType);
+        showErrorMessage(error.message || 'Okuma birimi güncellenirken hata oluştu!');
+    }
+}
+
+function normalizeReadingEditPolicyValue(value) {
+    return value === 'today' || value === 'today_yesterday' ? value : 'all';
+}
+
+function updateReadingEditPolicyInfo(policy) {
+    const normalizedPolicy = normalizeReadingEditPolicyValue(policy);
+    const icon = document.getElementById('readingEditPolicyIcon');
+    const info = document.querySelector('#readingEditPolicyInfo span');
+    const config = {
+        all: {
+            icon: 'fa-solid fa-calendar-days visibility-icon public',
+            text: 'Bugün ve geçmişteki tüm kayıtlar düzenlenebilir.'
+        },
+        today: {
+            icon: 'fa-solid fa-calendar-day visibility-icon public',
+            text: 'Üyeler yalnızca bugünün kayıtlarını düzenleyebilir.'
+        },
+        today_yesterday: {
+            icon: 'fa-solid fa-calendar-week visibility-icon public',
+            text: 'Üyeler yalnızca bugünün ve dünün kayıtlarını düzenleyebilir.'
+        }
+    }[normalizedPolicy];
+    if (icon) icon.className = config.icon;
+    if (info) info.textContent = config.text;
+}
+
+let readingEditPolicySaveQueue = Promise.resolve();
+
+async function saveReadingEditPolicy(policy, previousPolicy) {
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    const select = document.getElementById('readingEditPolicySelect');
+    const normalizedPolicy = normalizeReadingEditPolicyValue(policy);
+    updateReadingEditPolicyInfo(normalizedPolicy);
+
+    try {
+        const response = await fetch(`/api/update-reading-edit-policy/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ readingEditPolicy: normalizedPolicy })
+        });
+        const data = await response.json().catch(function () { return {}; });
+        if (!response.ok) {
+            throw new Error(data.error || 'Düzenleme aralığı güncellenemedi');
+        }
+
+        if (typeof window.setCurrentReadingEditPolicy === 'function') {
+            window.setCurrentReadingEditPolicy(data.group && data.group.readingEditPolicy);
+        } else {
+            window.currentGroupData = {
+                ...(window.currentGroupData || {}),
+                readingEditPolicy: normalizedPolicy
+            };
+        }
+        showSuccessMessage('Düzenleme aralığı güncellendi.');
+    } catch (error) {
+        console.error('Düzenleme aralığı güncelleme hatası:', error);
+        const fallbackPolicy = normalizeReadingEditPolicyValue(previousPolicy);
+        if (select) select.value = fallbackPolicy;
+        updateReadingEditPolicyInfo(fallbackPolicy);
+        showErrorMessage(error.message || 'Düzenleme aralığı güncellenirken hata oluştu!');
+    }
+}
+
 // Grup bilgilerini yükle
 async function loadGroupSettings() {
     if (!LocalStorageManager.isUserLoggedIn()) {
@@ -1374,6 +1496,24 @@ async function loadGroupSettings() {
             document.getElementById('groupName').value = group.groupName || '';
             document.getElementById('groupDescription').value = group.description || '';
             document.getElementById('groupVisibility').value = group.visibility || 'public';
+            const amountType = group.amountType === 'dakika' ? 'dakika' : 'sayfa';
+            const readingEditPolicy = normalizeReadingEditPolicyValue(group.readingEditPolicy);
+            window.currentGroupData = {
+                ...(window.currentGroupData || {}),
+                ...group,
+                amountType,
+                readingEditPolicy
+            };
+            const groupAmountTypeSelect = document.getElementById('groupAmountTypeSelect');
+            if (groupAmountTypeSelect) {
+                groupAmountTypeSelect.value = amountType;
+            }
+            updateGroupAmountTypeInfo(amountType);
+            const readingEditPolicySelect = document.getElementById('readingEditPolicySelect');
+            if (readingEditPolicySelect) {
+                readingEditPolicySelect.value = readingEditPolicy;
+            }
+            updateReadingEditPolicyInfo(readingEditPolicy);
             const autoMarkUnreadSelect = document.getElementById('autoMarkUnreadSelect');
             if (autoMarkUnreadSelect) {
                 autoMarkUnreadSelect.value = group.autoMarkUnread !== false ? 'true' : 'false';
@@ -2108,6 +2248,32 @@ document.addEventListener('DOMContentLoaded', function () {
         inactiveMemberActionSelectEl.addEventListener('change', function () {
             updateInactiveMemberActionIcon(this.value);
             scheduleAutomationSettingsSave('inactiveMemberAction');
+        });
+    }
+
+    const groupAmountTypeSelectEl = document.getElementById('groupAmountTypeSelect');
+    if (groupAmountTypeSelectEl) {
+        groupAmountTypeSelectEl.addEventListener('change', function () {
+            const nextAmountType = this.value;
+            groupAmountTypeSaveQueue = groupAmountTypeSaveQueue.then(function () {
+                const previousAmountType = typeof window.getCurrentAmountType === 'function'
+                    ? window.getCurrentAmountType()
+                    : 'sayfa';
+                return saveGroupAmountType(nextAmountType, previousAmountType);
+            });
+        });
+    }
+
+    const readingEditPolicySelectEl = document.getElementById('readingEditPolicySelect');
+    if (readingEditPolicySelectEl) {
+        readingEditPolicySelectEl.addEventListener('change', function () {
+            const nextPolicy = this.value;
+            readingEditPolicySaveQueue = readingEditPolicySaveQueue.then(function () {
+                const previousPolicy = typeof window.getCurrentReadingEditPolicy === 'function'
+                    ? window.getCurrentReadingEditPolicy()
+                    : 'all';
+                return saveReadingEditPolicy(nextPolicy, previousPolicy);
+            });
         });
     }
 

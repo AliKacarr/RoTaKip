@@ -11,7 +11,7 @@
     "build:assets": "node scripts/build-assets.js",
     "predev": "npm run build:assets",
     "dev": "node --watch server.js",
-    "test": "node --test tests/erpReadingsSync.test.js tests/userVisibility.test.js tests/inactiveMemberPolicy.test.js tests/groupUserLifecycle.test.js",
+    "test": "node --test tests/erpReadingsSync.test.js tests/userVisibility.test.js tests/inactiveMemberPolicy.test.js tests/readingEditPolicy.test.js tests/groupUserLifecycle.test.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build": "npm run build:assets",

@@ -23,6 +23,12 @@ function isGroupAdminSession() {
   );
 }
 
+window.addEventListener('rotakip:amount-type-changed', function () {
+  if (typeof window.loadUserCards === 'function') {
+    window.loadUserCards();
+  }
+});
+
 async function postLastCongratulatedLeagues(items) {
   if (!items || !items.length) return;
   if (!isGroupAdminSession()) return;
@@ -92,6 +98,12 @@ window.loadUserCards = async function loadUserCards() {
     nowTr.setHours(nowTr.getHours() + 3);
     const currentMonthKey = nowTr.getFullYear() + '-' + String(nowTr.getMonth() + 1).padStart(2, '0');
     const currentMonthLabel = monthNamesTr[nowTr.getMonth()];
+    const amountType = typeof window.getCurrentAmountType === 'function'
+      ? window.getCurrentAmountType()
+      : 'sayfa';
+    const amountTypeLabel = typeof window.getCurrentAmountTypeLabel === 'function'
+      ? window.getCurrentAmountTypeLabel()
+      : 'Sayfa';
 
     // Giriş yapılan kullanıcı bilgisi
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
@@ -104,7 +116,9 @@ window.loadUserCards = async function loadUserCards() {
     let sortMode = localStorage.getItem(groupSortKey) || 'league';
     if (!validSortModes.includes(sortMode)) sortMode = 'league';
     const monthSortLabel = sortBar ? sortBar.querySelector('.leaderboard-current-month-label') : null;
-    if (monthSortLabel) monthSortLabel.textContent = `${currentMonthLabel} okuması`;
+    const totalSortLabel = sortBar ? sortBar.querySelector('.leaderboard-total-amount-label') : null;
+    if (totalSortLabel) totalSortLabel.textContent = `Toplam ${amountTypeLabel}`;
+    if (monthSortLabel) monthSortLabel.textContent = `${currentMonthLabel} ${amountTypeLabel}`;
 
     function applySortControlState(mode) {
       sortButtons.forEach(button => {
@@ -309,7 +323,7 @@ window.loadUserCards = async function loadUserCards() {
       const amountSummaryHtml = amountTotal > 0
         ? `<span class="progress-summary progress-summary-amount">
           <span class="summary-count"><span class="progress-summary-amount-count">${amountTotal}</span><span class="progress-summary-amount-mark">✔</span></span>
-          <span class="summary-label"> Toplam okuma</span>
+          <span class="summary-label"> Toplam ${amountType}</span>
         </span>`
         : '';
       const lastReadDate = okudumStats.length > 0
@@ -331,13 +345,13 @@ window.loadUserCards = async function loadUserCards() {
 
       // En uzun seri
       const userStreak = longestStreakDetailsByUser.get(userId);
+      const longestStreakDays = userStreak && userStreak.streak > 0 ? userStreak.streak : 0;
       let longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span>-`;
       if (userStreak && userStreak.streak > 0) {
         const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
         const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
         longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span><span class="streak-range">${start} - ${end}</span>`;
       }
-
       // Lig bilgisi için gösterim
       const leagueProgressText = `${okudumDays}/${league.max}`;
       const headerBg = league.bg || "#fff";
@@ -414,9 +428,9 @@ window.loadUserCards = async function loadUserCards() {
           <div class="user-card-user-name">${window.escapeHtml(user.name)}</div>
           <div class="user-league">${league.name}</div>
         </div>
-        <div class="share-icon-wrapper">
+        <button type="button" class="share-icon-wrapper" aria-label="${window.escapeHtml(user.name)} kullanıcısının okuma bilgilerini paylaş">
           <img class="share-icon" src="images/share.webp" alt="Paylaş">
-        </div>
+        </button>
         <div class="league-badge-group">
           <div class="league-badge" title="${league.name} Ligi:  ${league.min} - ${league.max - 1} gün arası okuma">
             <img src="images/${league.img}" alt="${league.name}">
@@ -428,7 +442,7 @@ window.loadUserCards = async function loadUserCards() {
         <div class="progress-summary-column">
           ${amountSummaryHtml}
           <span class="progress-summary progress-summary-days">
-            <span class="summary-count"><span class="progress-summary-okudum-count">${okudumDays}</span><span class="progress-summary-total-count">/${totalDays}</span></span>
+            <span class="summary-count"><span class="progress-summary-okudum-count">${okudumDays}</span><span class="progress-summary-total-count">/${totalDays}</span><span class="progress-summary-days-star" aria-hidden="true">🌟</span></span>
             <span class="summary-label"> Gün okuma</span>
           </span>
         </div>
@@ -451,26 +465,29 @@ window.loadUserCards = async function loadUserCards() {
       if (shareIconWrapper) {
         shareIconWrapper.addEventListener('click', function () {
           const okunmayanGun = totalDays - okudumDays;
-          const basariOrani = Math.round((okudumDays / totalDays) * 100);
+          const basariOrani = percent;
           let sonOkumaMetni = '-';
           if (lastReadDate) {
             sonOkumaMetni = `${formatDateTurkish(lastReadDate)} (${getRelativeReadText(lastReadDate)})`;
           }
-          // En uzun seri için raw datayı kullan
           let longestStreakShare = '-';
-          if (userStreak && userStreak.streak > 0) {
-            const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
-            const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
-            longestStreakShare = `${userStreak.streak} gün (${start} - ${end})`;
+          if (longestStreakDays > 0) {
+            const start = userStreak.startDate
+              ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
+              : '';
+            const end = userStreak.endDate
+              ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
+              : '';
+            longestStreakShare = `${longestStreakDays} gün${start && end ? ` (${start} - ${end})` : ''}`;
           }
           let amountShareBlock = '';
           if (amountThisMonth > 0 || amountTotal > 0) {
             const amountLines = [];
-            if (amountThisMonth > 0) {
-              amountLines.push(`*${currentMonthLabel} ayı okuması:* ${amountThisMonth},`);
-            }
             if (amountTotal > 0) {
-              amountLines.push(`*Toplam okumanız:* ${amountTotal},`);
+              amountLines.push(`*Toplam okumanız:* ${amountTotal} ${amountType},`);
+            }
+            if (amountThisMonth > 0) {
+              amountLines.push(`*${currentMonthLabel} ayı okumanız:* ${amountThisMonth} ${amountType},`);
             }
             amountShareBlock = amountLines.join('\n') + '\n\n';
           }

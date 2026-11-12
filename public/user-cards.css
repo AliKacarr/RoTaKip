@@ -288,6 +288,10 @@
     left: 10px;
     z-index: 10;
     cursor: pointer;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    line-height: 0;
 }
 
 .share-icon {
@@ -342,7 +346,6 @@
 }
 
 .user-card.current-user-card .user-card-header {
-    background: linear-gradient(90deg, #d4e6f1 60%, #e8f0f5 100%);
     border-bottom: 2px solid #3498db;
 }
 
@@ -367,7 +370,7 @@
 
 .user-card-fire-emoji {
     font-size: 23px;
-    margin-right: 3px;
+    margin-right: 4px;
     text-shadow: 0 0 1px #ff5555, 0 0 1px #ff4500;
     animation: user-card-fire-emoji-flame 4s infinite;
 }
@@ -411,13 +414,18 @@
 }
 
 .progress-summary-okudum-count {
-    font-size: 26px;
+    font-size: 25px;
     color: rgb(255 99 0);
     font-weight: bold;
 }
 
+.progress-summary-days-star {
+    margin-left: 4px;
+    font-size: 25px;
+}
+
 .progress-summary-total-count {
-    font-size: 1.3em;
+    font-size: 25px;
     color: rgb(240, 127, 22);
 }
 
@@ -428,13 +436,14 @@
 }
 
 .user-card .progress-summary-row .progress-summary-amount .progress-summary-amount-mark {
-    font-size: 1.2em;
+    margin-left: 4px;
+    font-size: 25px;
     color: #208a3c;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .user-card .progress-summary-row .progress-summary .summary-label {
-    font-size: 1.1em;
+    font-size: 23px;
     color: #222;
     font-weight: 500;
     margin-left: 3px;

@@ -427,7 +427,21 @@
 
   window.beginAmountCellEdit = function beginAmountCellEdit(userId, date, cell) {
     if (!cell) return;
-    if (cell.classList.contains('future-date')) return;
+    if (cell.classList.contains('future-date')) {
+      if (typeof window.showReadingEditRestrictionInfo === 'function') {
+        window.showReadingEditRestrictionInfo('future');
+      }
+      return;
+    }
+    if (
+      typeof window.isReadingDateEditableForCurrentUser === 'function' &&
+      !window.isReadingDateEditableForCurrentUser(date)
+    ) {
+      if (typeof window.showReadingEditRestrictionInfo === 'function') {
+        window.showReadingEditRestrictionInfo('date_restricted');
+      }
+      return;
+    }
 
     if (amountEditState) {
       if (amountEditState.cell === cell) {

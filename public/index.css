@@ -1484,10 +1484,12 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: var(--gap-md);
     padding: 5px;
+    min-height: min(480px, calc(60vh - 50px));
     transition: height 0.3s ease-out;
 }
 
 .avatar-item {
+    padding: 5px;
     position: relative;
     width: 80px;
     height: 80px;
@@ -1497,7 +1499,7 @@ body {
     border: 2px solid transparent;
     transition: all 0.3s ease;
     background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     justify-self: center;
 }
 

@@ -79,6 +79,101 @@ function getTodayDateKey() {
     return toLocalDateKey(new Date());
 }
 
+window.isReadingDateEditableForCurrentUser = function isReadingDateEditableForCurrentUser(dateKey) {
+    const userInfo = typeof LocalStorageManager !== 'undefined'
+        ? LocalStorageManager.getCurrentUserInfo()
+        : null;
+    if (!userInfo) return false;
+    const today = getTodayDateKey();
+    if (dateKey > today) return false;
+    if (userInfo.userAuthority === 'admin') return true;
+
+    const policy = typeof window.getCurrentReadingEditPolicy === 'function'
+        ? window.getCurrentReadingEditPolicy()
+        : 'all';
+    if (policy === 'today') return dateKey === today;
+    if (policy === 'today_yesterday') {
+        return dateKey === today || dateKey === addDaysToKey(today, -1);
+    }
+    return true;
+};
+
+let readingEditRestrictionPreviousFocus = null;
+
+window.showReadingEditRestrictionInfo = function showReadingEditRestrictionInfo(reason = 'date_restricted') {
+    const policy = typeof window.getCurrentReadingEditPolicy === 'function'
+        ? window.getCurrentReadingEditPolicy()
+        : 'all';
+    const panel = document.getElementById('readingEditRestrictionPanel');
+    const title = document.getElementById('readingEditRestrictionTitle');
+    const message = document.getElementById('readingEditRestrictionMessage');
+    const guidance = document.getElementById('readingEditRestrictionGuidance');
+    if (!panel || !title || !message || !guidance) return;
+
+    const configurations = {
+        future: {
+            title: 'Bu gün henüz gelmedi',
+            message: '<strong>Gelecek günlere</strong> okuma bilgisi eklenemez.',
+            guidance: '<strong>Gün geldiğinde</strong> okuma bilginizi ekleyebilirsiniz.'
+        },
+        other_user: {
+            title: 'Bu kayıt size ait değil',
+            message: 'Yalnızca <strong>kendi okuma bilgilerinizi</strong> değiştirebilirsiniz.',
+            guidance: 'Bir düzeltme gerekiyorsa <strong>grup yöneticinizle</strong> iletişime geçin.'
+        },
+        date_restricted: {
+            title: 'Bu tarih düzenlemeye kapalı',
+            message: policy === 'today'
+                ? 'Bu grupta yalnızca <strong>bugünün</strong> okuma bilgileri düzenlenebilir.'
+                : 'Bu grupta yalnızca <strong>bugünün ve dünün</strong> okuma bilgileri düzenlenebilir.',
+            guidance: 'Geçmiş bir kaydı değiştirmeniz gerekiyorsa <strong>grup yöneticinizle</strong> iletişime geçin.'
+        }
+    };
+    const content = configurations[reason] || configurations.date_restricted;
+    title.textContent = content.title;
+    message.innerHTML = content.message;
+    guidance.innerHTML = content.guidance;
+    if (panel.hidden) readingEditRestrictionPreviousFocus = document.activeElement;
+    panel.hidden = false;
+    document.body.style.overflow = 'hidden';
+    const closeButton = panel.querySelector('.reading-edit-restriction-close');
+    if (closeButton) closeButton.focus();
+};
+
+window.closeReadingEditRestrictionInfo = function closeReadingEditRestrictionInfo() {
+    const panel = document.getElementById('readingEditRestrictionPanel');
+    if (!panel || panel.hidden) return;
+    const activeElement = document.activeElement;
+    if (activeElement && panel.contains(activeElement) && typeof activeElement.blur === 'function') {
+        activeElement.blur();
+    }
+    panel.hidden = true;
+    document.body.style.overflow = 'auto';
+    if (readingEditRestrictionPreviousFocus
+        && readingEditRestrictionPreviousFocus !== document.body
+        && document.contains(readingEditRestrictionPreviousFocus)
+        && typeof readingEditRestrictionPreviousFocus.focus === 'function') {
+        readingEditRestrictionPreviousFocus.focus({ preventScroll: true });
+    }
+    readingEditRestrictionPreviousFocus = null;
+};
+
+document.addEventListener('DOMContentLoaded', function () {
+    const panel = document.getElementById('readingEditRestrictionPanel');
+    if (!panel) return;
+    const closeButton = panel.querySelector('.reading-edit-restriction-close');
+    const xButton = panel.querySelector('.reading-edit-restriction-x');
+    const overlay = panel.querySelector('.reading-edit-restriction-overlay');
+    if (closeButton) closeButton.addEventListener('click', window.closeReadingEditRestrictionInfo);
+    if (xButton) xButton.addEventListener('click', window.closeReadingEditRestrictionInfo);
+    if (overlay) overlay.addEventListener('click', window.closeReadingEditRestrictionInfo);
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !panel.hidden) {
+            window.closeReadingEditRestrictionInfo();
+        }
+    });
+});
+
 function getSevenDaysEndingAt(dateKey) {
     const dates = [];
     for (let i = 6; i >= 0; i--) dates.push(addDaysToKey(dateKey, -i));
@@ -478,10 +573,13 @@ function getWeekSeasonLabel(dates) {
         'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
     ];
     const seasonMonth = parseInt(getWeekSeasonKey(dates).slice(5, 7), 10);
+    const amountTypeLabel = typeof window.getCurrentAmountTypeLabel === 'function'
+        ? window.getCurrentAmountTypeLabel()
+        : 'Sayfa';
     if (!(seasonMonth >= 1 && seasonMonth <= 12)) {
-        return `${months[new Date().getMonth()]} Okuması`;
+        return `${months[new Date().getMonth()]} ${amountTypeLabel}`;
     }
-    return `${months[seasonMonth - 1]} Okuması`;
+    return `${months[seasonMonth - 1]} ${amountTypeLabel}`;
 }
 
 function isMonthBoundaryColumn(dates, index) {
@@ -793,7 +891,7 @@ async function loadTrackerTable(options = {}) {
             if (isMonthBoundaryColumn(dates, dateIndex)) {
                 className += ' month-start';
             }
-            const onclickAttr = isFutureDate ? '' : `onclick="toggleStatus('${user._id}', '${date}', this)"`;
+            const onclickAttr = `onclick="toggleStatus('${user._id}', '${date}', this)"`;
             row += `<td class="day-column ${className}" data-date="${date}" ${onclickAttr}>${symbol}</td>`;
         }
         const streak = calculateStreak(userStats);
@@ -1022,6 +1120,15 @@ function buildSeasonHeaderHtml(dates) {
         : label;
 }
 
+window.addEventListener('rotakip:amount-type-changed', function () {
+    const seasonHeader = trackerSummaryTable
+        ? trackerSummaryTable.querySelector('thead tr:first-child th.col-season')
+        : null;
+    if (!seasonHeader) return;
+    const analysisDates = getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey());
+    seasonHeader.innerHTML = buildSeasonHeaderHtml(analysisDates);
+});
+
 function getTrackerSummaryRow(userId) {
     if (!trackerSummaryTable) return null;
     const targetId = String(userId);
@@ -1129,7 +1236,7 @@ function createTimelineBodyDayCell(userId, dateKey) {
     cell.className = classes.join(' ');
     cell.dataset.date = dateKey;
     cell.textContent = symbol;
-    if (!isFutureDate) cell.setAttribute('onclick', `toggleStatus('${userId}', '${dateKey}', this)`);
+    cell.setAttribute('onclick', `toggleStatus('${userId}', '${dateKey}', this)`);
     return cell;
 }
 
@@ -1570,7 +1677,11 @@ function queueStatusUpdate(userId, date, status, cell, previousSnapshot, nextSna
                     })
                 });
                 if (!response.ok) {
-                    throw new Error(`Okuma durumu kaydedilemedi (${response.status})`);
+                    const errorBody = await response.json().catch(function () { return {}; });
+                    const requestError = new Error(errorBody.error || `Okuma durumu kaydedilemedi (${response.status})`);
+                    requestError.code = errorBody.code;
+                    requestError.readingEditPolicy = errorBody.readingEditPolicy;
+                    throw requestError;
                 }
                 queue.confirmedSnapshot = update.snapshot;
             } catch (error) {
@@ -1583,7 +1694,14 @@ function queueStatusUpdate(userId, date, status, cell, previousSnapshot, nextSna
                         update.snapshot,
                         queue.confirmedSnapshot
                     );
-                    if (typeof showNotification === 'function') {
+                    if (error.code === 'READING_EDIT_DATE_RESTRICTED'
+                        && typeof window.showReadingEditRestrictionInfo === 'function') {
+                        if (error.readingEditPolicy
+                            && typeof window.setCurrentReadingEditPolicy === 'function') {
+                            window.setCurrentReadingEditPolicy(error.readingEditPolicy);
+                        }
+                        window.showReadingEditRestrictionInfo();
+                    } else if (typeof showNotification === 'function') {
                         showNotification('Okuma durumu kaydedilemedi; önceki durum geri yüklendi.', 'error');
                     }
                 }
@@ -1632,6 +1750,24 @@ window.toggleStatus = function toggleStatus(userId, date, clickedCell) {
 
     // Member kullanıcıları sadece kendi verilerini güncelleyebilir
     if (userInfo.userAuthority === 'member' && userInfo.userId !== userId) {
+        if (typeof window.showReadingEditRestrictionInfo === 'function') {
+            window.showReadingEditRestrictionInfo('other_user');
+        }
+        return;
+    }
+
+    if (date > getTodayDateKey()) {
+        if (typeof window.showReadingEditRestrictionInfo === 'function') {
+            window.showReadingEditRestrictionInfo('future');
+        }
+        return;
+    }
+
+    if (typeof window.isReadingDateEditableForCurrentUser === 'function'
+        && !window.isReadingDateEditableForCurrentUser(date)) {
+        if (typeof window.showReadingEditRestrictionInfo === 'function') {
+            window.showReadingEditRestrictionInfo('date_restricted');
+        }
         return;
     }
 

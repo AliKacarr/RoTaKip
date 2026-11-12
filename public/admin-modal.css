@@ -599,7 +599,7 @@
 }
 
 .groups-auth-forgot-modal-body {
-    padding: 30px;
+    padding: 0 30px 30px;
 }
 
 .groups-auth-forgot-content {
@@ -734,29 +734,20 @@
 }
 
 .groups-auth-join-modal-content {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    background: white;
     border-radius: 20px;
     width: 90%;
-    max-width: 460px;
+    max-width: 500px;
     position: relative;
-    overflow: auto;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    animation: groupsAuthModalSlideIn 0.4s ease-out;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    animation: groupsAuthModalSlideIn 0.3s ease-out;
     flex-direction: column;
     max-height: 90vh;
 }
 
 .groups-auth-join-modal-content::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #3B82F6, #60A5FA, #3B82F6);
-    background-size: 200% 100%;
-    animation: groupsAuthGradientShift 3s ease-in-out infinite;
+    content: none;
 }
 
 .groups-auth-join-close-btn {
@@ -774,7 +765,9 @@
     align-items: center;
     justify-content: center;
     position: absolute;
-    right: 0;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
 }
 
 .groups-auth-join-close-btn:hover {
@@ -784,20 +777,22 @@
 
 .groups-auth-join-modal-body {
     padding: 0;
-    overflow-y: auto;
+    overflow: visible;
     flex: 1;
 }
 
 /* Grup Bilgileri Bölümü */
 .groups-auth-join-info-section {
-    padding: 20px;
+    padding: 25px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: 1.5px solid #cbd5e1;
+    color: white;
     border-radius: 20px 20px 0 0;
+    margin-bottom: 0;
+    position: relative;
 }
 
 .groups-auth-join-form-content {
-    padding: 30px;
+    padding: 25px 30px;
 }
 
 .groups-auth-join-group-info {
@@ -805,14 +800,14 @@
     align-items: center;
     gap: 15px;
     position: relative;
+    padding-right: 42px;
 }
 
 .groups-auth-join-group-avatar {
     width: 60px;
     height: 60px;
-    border-radius: 50px;
+    border-radius: 50%;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
     border: 3px solid rgba(255, 255, 255, 0.3);
 }
@@ -825,9 +820,9 @@
 
 .groups-auth-join-group-details h3 {
     color: #ffffff;
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin: 0 0 5px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
     padding-bottom: 0 !important;
     border-bottom: none !important;
     width: auto !important;
@@ -835,9 +830,10 @@
 
 .groups-auth-join-group-details p {
     color: #ffffff;
-    font-size: 0.95rem;
-    margin: 0;
-    font-weight: 500;
+    font-size: 0.875rem;
+    margin: 5px 0 0;
+    font-weight: 400;
+    opacity: 0.9;
 }
 
 /* Form Bölümleri */
@@ -850,8 +846,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #1f2937;
-    font-size: 1.1rem;
+    color: #374151;
+    font-size: 1.125rem;
     font-weight: 600;
     margin: 0 0 20px 0;
     padding-bottom: 10px;
@@ -859,12 +855,12 @@
 }
 
 .groups-auth-join-section-title i {
-    color: #3B82F6;
+    color: #667eea;
     font-size: 1rem;
 }
 
 .groups-auth-join-form-group {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 .groups-auth-join-form-group label {
@@ -903,25 +899,26 @@
 .groups-auth-join-form-input {
     width: 100%;
     padding: 15px 20px 15px 50px;
-    border: 2px solid #c3d1e2;
+    border: 2px solid #64b5f6;
     border-radius: 12px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    background: #ffffff;
+    background: #f8f9ff;
     outline: none;
     font-family: inherit;
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(100, 181, 246, 0.15);
 }
 
 .groups-auth-join-form-input:focus {
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    background: #f8fafc;
+    border-color: #42a5f5;
+    box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.25);
+    background: white;
+    transform: translateY(-1px);
 }
 
 .groups-auth-join-form-input:focus + .groups-auth-join-input-icon,
 .groups-auth-join-input-container:focus-within .groups-auth-join-input-icon {
-    color: #3B82F6;
+    color: #2196f3;
 }
 
 .groups-auth-join-form-input::placeholder {
@@ -934,28 +931,31 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 15px 20px;
-    border: 2px dashed #cbd5e1;
-    border-radius: 12px;
+    padding: 15px 70px 15px 15px;
+    border: 2px solid #64b5f6;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: #f9fafb;
-    color: #6b7280;
+    background: #e3f2fd;
+    color: #1976d2;
     font-weight: 500;
     position: relative;
     flex-wrap: nowrap;
     overflow: hidden;
+    box-shadow: 0 2px 8px rgba(100, 181, 246, 0.15);
 }
 
 .groups-auth-join-file-input-label:hover {
-    border-color: #3B82F6;
-    background: #eff6ff;
-    color: #2563EB;
+    border-color: #42a5f5;
+    background: #bbdefb;
+    color: #1976d2;
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.25);
+    transform: translateY(-1px);
 }
 
 .groups-auth-join-file-input-icon {
-    font-size: 1.2rem;
-    color: #3B82F6;
+    font-size: 1rem;
+    color: #2196f3;
     flex-shrink: 0;
 }
 
@@ -963,6 +963,8 @@
     margin-left: 10px;
     font-size: 0.95rem;
     flex: 1;
+    color: #1976d2;
+    font-weight: 500;
 }
 
 .groups-auth-join-file-name {
@@ -1011,16 +1013,16 @@
     display: flex;
     gap: 15px;
     justify-content: flex-end;
-    margin-top: 30px;
+    margin-top: 10px;
     padding-top: 20px;
     border-top: 1px solid #e5e7eb;
 }
 
 .groups-auth-join-cancel-btn {
     flex: 1;
-    background: #f3f4f6;
-    color: #6b7280;
-    border: 2px solid #bbc6d3;
+    background: white;
+    color: #38a8f8;
+    border: 2px solid #38BDF8;
     padding: 15px 25px;
     border-radius: 12px;
     font-size: 1rem;
@@ -1034,13 +1036,15 @@
 }
 
 .groups-auth-join-cancel-btn:hover {
-    background: #e5e7eb;
-    color: #374151;
-    border-color: #d1d5db;
-    transform: translateY(-2px);
+    background: rgba(56, 189, 248, 0.1);
+    color: #38a8f8;
+    border-color: #38BDF8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
 }
 
 .groups-auth-join-submit-btn {
+    flex: 2;
     background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
     color: white;
     border: none;
@@ -1891,19 +1895,19 @@
 .groups-auth-join-avatar-btn {
   background: #fff;
   color: #1976d2;
-  border: 2px solid #bccfdf;
+  border: 2px solid #64b5f6;
   border-radius: 8px;
-  padding: 12px 16px;
+  padding: 8px 12px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0;
   transition: all 0.3s ease;
-  height: 48px;
-  box-shadow: 0 2px 8px rgba(100, 181, 246, 0.3);
+  height: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   position: absolute;
   right: 10px;
   top: 50%;
@@ -2287,8 +2291,9 @@
 
 .user-stats-streak {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 4px;
     color: white;
 }
 
@@ -2308,8 +2313,9 @@
 
 .user-stats-streak-info {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 .user-stats-streak-number {
@@ -2325,6 +2331,8 @@
     font-weight: 500;
     color: #242933;
     opacity: 0.8;
+    text-align: center;
+    white-space: nowrap;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
@@ -2424,8 +2432,9 @@
 
 .user-stats-reading {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 4px;
     color: white;
 }
 
@@ -2446,8 +2455,9 @@
 
 .user-stats-reading-info {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 .user-stats-reading-number {
@@ -2463,6 +2473,8 @@
     font-weight: 500;
     color: #242933;
     opacity: 0.8;
+    text-align: center;
+    white-space: nowrap;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 

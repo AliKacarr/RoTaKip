@@ -11,7 +11,7 @@
   <link rel="icon" href="/images/favicon.webp" type="image/x-icon" />
   <title id="page-title">RoTaKip</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="groups.min.css?v=4ea6f2f682fd" />
+  <link rel="stylesheet" href="groups.min.css?v=6ef24747b681" />
 
 </head>
 
@@ -503,13 +503,13 @@
         <!-- Sol Kısım: Giriş Serisi -->
         <div class="user-stats-left">
           <div class="user-stats-streak">
-            <div class="user-stats-streak-icon">
-              <img src="/images/fire.webp" alt="Ateş">
-            </div>
             <div class="user-stats-streak-info">
+              <div class="user-stats-streak-icon">
+                <img src="/images/fire.webp" alt="Ateş">
+              </div>
               <div class="user-stats-streak-number" id="userLoginStreak">0</div>
-              <div class="user-stats-streak-label">Giriş Serisi</div>
             </div>
+            <div class="user-stats-streak-label">Günlük Giriş Serisi</div>
           </div>
         </div>
 
@@ -543,13 +543,13 @@
         <!-- Sağ Kısım: Toplam Okuma -->
         <div class="user-stats-right">
           <div class="user-stats-reading">
-            <div class="user-stats-reading-icon">
-              <img src="/images/yıldız.png" alt="Yıldız">
-            </div>
             <div class="user-stats-reading-info">
+              <div class="user-stats-reading-icon">
+                <img src="/images/yıldız.png" alt="Yıldız">
+              </div>
               <div class="user-stats-reading-number" id="userTotalReading"></div>
-              <div class="user-stats-reading-label">Toplam Okuma</div>
             </div>
+            <div class="user-stats-reading-label">Toplam Okuma Günü</div>
           </div>
         </div>
       </div>
@@ -861,11 +861,11 @@
 
       <div class="leaderboard-sort-bar" style="display: none;" aria-label="Liderlik panosu sıralaması">
         <div class="leaderboard-sort-buttons" role="group" aria-label="Sıralama seçeneği">
-          <button type="button" class="leaderboard-sort-button is-active" data-sort="league" aria-pressed="true"><i class="fa-solid fa-trophy"></i> En yüksek lig</button>
-          <button type="button" class="leaderboard-sort-button" data-sort="promotion" aria-pressed="false"><i class="fa-solid fa-arrow-trend-up"></i> Yeni lige en yakın</button>
-          <button type="button" class="leaderboard-sort-button" data-sort="total" aria-pressed="false"><i class="fa-solid fa-book-open"></i> Toplam okuma</button>
-          <button type="button" class="leaderboard-sort-button" data-sort="month" aria-pressed="false"><i class="fa-regular fa-calendar"></i> <span class="leaderboard-current-month-label">Aylık okuma</span></button>
-          <button type="button" class="leaderboard-sort-button" data-sort="percentage" aria-pressed="false"><i class="fa-solid fa-percent"></i> Okuma yüzdesi</button>
+          <button type="button" class="leaderboard-sort-button is-active" data-sort="league" aria-pressed="true"><i class="fa-solid fa-trophy"></i> En Yüksek Lig</button>
+          <button type="button" class="leaderboard-sort-button" data-sort="promotion" aria-pressed="false"><i class="fa-solid fa-arrow-trend-up"></i> Yeni Lige En Yakın</button>
+          <button type="button" class="leaderboard-sort-button" data-sort="total" aria-pressed="false"><i class="fa-solid fa-book-open"></i> <span class="leaderboard-total-amount-label">Toplam Sayfa</span></button>
+          <button type="button" class="leaderboard-sort-button" data-sort="month" aria-pressed="false"><i class="fa-regular fa-calendar"></i> <span class="leaderboard-current-month-label">Aylık Sayfa</span></button>
+          <button type="button" class="leaderboard-sort-button" data-sort="percentage" aria-pressed="false"><i class="fa-solid fa-percent"></i> Okuma Yüzdesi</button>
           <button type="button" class="leaderboard-sort-button" data-sort="name" aria-pressed="false"><i class="fa-solid fa-arrow-down-a-z"></i> İsim A-Z</button>
         </div>
       </div>
@@ -1350,6 +1350,37 @@
 
           <div class="group-right-column">
             <div class="automation-settings-column">
+                <div class="form-group">
+                  <div class="form-group-label">Okuma Birimi:</div>
+                  <div class="visibility-container">
+                    <i class="fa-solid fa-file-lines visibility-icon public" id="groupAmountTypeIcon"></i>
+                    <select id="groupAmountTypeSelect" class="group-select" style="width: 100%; cursor: pointer;">
+                      <option value="sayfa">Sayfa</option>
+                      <option value="dakika">Dakika</option>
+                    </select>
+                  </div>
+                  <div class="visibility-info public" id="groupAmountTypeInfo">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Okuma miktarları sayfa olarak gösterilir.</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <div class="form-group-label">Üyelerin Düzenleyebileceği Günler:</div>
+                  <div class="visibility-container">
+                    <i class="fa-solid fa-calendar-days visibility-icon public" id="readingEditPolicyIcon"></i>
+                    <select id="readingEditPolicySelect" class="group-select" style="width: 100%; cursor: pointer;">
+                      <option value="all">Tüm Geçmiş</option>
+                      <option value="today">Sadece Bugün</option>
+                      <option value="today_yesterday">Bugün + Dün</option>
+                    </select>
+                  </div>
+                  <div class="visibility-info public" id="readingEditPolicyInfo">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Bugün ve geçmişteki tüm kayıtlar düzenlenebilir.</span>
+                  </div>
+                </div>
+
                 <form class="form-group">
                   <div class="form-group-label">Otomatik "✖" İşaretleme:</div>
                   <div class="visibility-container">
@@ -1653,6 +1684,31 @@
     </div>
   </div>
 
+  <!-- Geçmiş okuma kaydı düzenleme bilgi paneli -->
+  <div id="readingEditRestrictionPanel" class="reading-edit-restriction-panel" hidden>
+    <button type="button" class="reading-edit-restriction-overlay" aria-label="Bilgi panelini kapat"></button>
+    <div class="reading-edit-restriction-card" role="dialog" aria-modal="true" aria-labelledby="readingEditRestrictionTitle" aria-describedby="readingEditRestrictionMessage readingEditRestrictionGuidance">
+      <div class="reading-edit-restriction-header">
+        <div class="reading-edit-restriction-icon" aria-hidden="true">
+          <i class="fa-solid fa-circle-info"></i>
+        </div>
+        <h2 id="readingEditRestrictionTitle">Bu tarih düzenlenemiyor</h2>
+        <button type="button" class="reading-edit-restriction-x" aria-label="Bilgi panelini kapat">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="reading-edit-restriction-body">
+        <div class="reading-edit-restriction-message-box">
+          <p id="readingEditRestrictionMessage"></p>
+          <p id="readingEditRestrictionGuidance" class="reading-edit-restriction-guidance">Geçmiş bir okuma kaydını değiştirmeniz gerekiyorsa grup yöneticinizle iletişime geçin.</p>
+        </div>
+        <div class="reading-edit-restriction-actions">
+          <button type="button" class="reading-edit-restriction-close">Anladım</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Longest Series Share Modal -->
   <div id="longestSeriesShareModal" class="longest-series-share-modal" style="display: none;">
     <div class="longest-series-share-modal-overlay"></div>
@@ -1812,7 +1868,7 @@
           <div class="profile-info-item">
             <div class="profile-info-label">
               <i class="fa-solid fa-star" style="color: #ff9300"></i>
-              Toplam Okuma Skoru
+              Toplam Okuma Günü
             </div>
             <div id="profileReadingScore" class="profile-info-value profile-score">
               <span class="score-number">0</span>
@@ -1822,7 +1878,7 @@
           <div class="profile-info-item">
             <div class="profile-info-label">
               <i class="fa-solid fa-fire-flame-simple" style="color: red"></i>
-              Giriş Serisi
+              Günlük Giriş Serisi
             </div>
             <div id="profileLoginStreak" class="profile-info-value profile-streak">
               <span class="streak-number">0</span>
@@ -1979,7 +2035,7 @@
     </div>
   </div>
 
-  <script src="groups.min.js?v=d4ae501ae710"></script>
+  <script src="groups.min.js?v=1d70294d7811"></script>
 
 </body>
 
