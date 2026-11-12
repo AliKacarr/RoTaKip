@@ -71,13 +71,7 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
         console.log("✅ OneSignal başarıyla başlatıldı");
 
         const customLinkContainer = document.querySelector('.onesignal-customlink-container');
-        const notificationButtonSelector = [
-          '.onesignal-customlink-subscribe',
-          '.onesignal-customlink-unsubscribe',
-          '.onesignal-reset',
-          '.onesignal-customlink-container-button',
-          'button'
-        ].join(', ');
+        const notificationButtonSelector = '.onesignal-customlink-container-button';
         let notificationStateUpdateFrame = null;
         let notificationStateChanging = false;
         let notificationPlaceholder = null;
@@ -94,14 +88,7 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
         const getNotificationButtons = () => {
           if (!customLinkContainer) return [];
 
-          const buttons = Array.from(customLinkContainer.querySelectorAll(notificationButtonSelector));
-
-          // İç içe bir düğme yapısı varsa yalnızca en dıştaki etkileşimli öğeyi
-          // güncelle; açıklama içindeki bağlantılara dokunma.
-          return buttons.filter((button) => {
-            const ancestorButton = button.parentElement?.closest(notificationButtonSelector);
-            return !ancestorButton || !customLinkContainer.contains(ancestorButton);
-          });
+          return Array.from(customLinkContainer.querySelectorAll(notificationButtonSelector));
         };
 
         const removeNotificationPlaceholder = () => {
