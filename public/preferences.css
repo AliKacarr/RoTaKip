@@ -23,6 +23,28 @@
     position: relative;
 }
 
+.onesignal-settings-section {
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: height 0.45s ease, opacity 0.3s ease;
+    will-change: height, opacity;
+}
+
+.onesignal-settings-section.is-visible {
+    opacity: 1;
+}
+
+.onesignal-settings-content {
+    min-height: 0;
+}
+
 #ayarlar {
     margin-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onesignal-settings-section {
+        transition: none;
+    }
 }

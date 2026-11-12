@@ -5,13 +5,31 @@ if (!window.OneSignalInitialized) {
 function initializeOneSignalSettingsVisibility() {
     const container = document.querySelector('.onesignal-customlink-container');
     const settingsSection = container?.closest('.onesignal-settings-section');
+    const settingsContent = settingsSection?.querySelector('.onesignal-settings-content');
 
-    if (!container || !settingsSection) return;
+    if (!container || !settingsSection || !settingsContent) return;
+
+    let updateFrame = null;
+    let isVisible = false;
 
     const updateVisibility = () => {
-        const hasContent = container.childElementCount > 0 || container.textContent.trim().length > 0;
-        settingsSection.hidden = !hasContent;
+        if (updateFrame !== null) cancelAnimationFrame(updateFrame);
+        updateFrame = requestAnimationFrame(() => {
+            updateFrame = null;
+            const hasContent = container.childElementCount > 0 || container.textContent.trim().length > 0;
+
+            if (hasContent) settingsSection.hidden = false;
+            settingsSection.classList.toggle('is-visible', hasContent);
+            settingsSection.style.height = hasContent ? `${settingsContent.scrollHeight}px` : '0px';
+            isVisible = hasContent;
+        });
     };
+
+    settingsSection.addEventListener('transitionend', (event) => {
+        if (event.propertyName === 'height' && !isVisible) {
+            settingsSection.hidden = true;
+        }
+    });
 
     updateVisibility();
     new MutationObserver(updateVisibility).observe(container, {
@@ -19,6 +37,14 @@ function initializeOneSignalSettingsVisibility() {
         subtree: true,
         characterData: true
     });
+
+    if ('ResizeObserver' in window) {
+        new ResizeObserver(() => {
+            if (isVisible) updateVisibility();
+        }).observe(settingsContent);
+    } else {
+        window.addEventListener('resize', updateVisibility);
+    }
 }
 
 if (document.readyState === 'loading') {
@@ -39,36 +65,127 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
         await OneSignal.init({ appId });
   
         console.log("✅ OneSignal başarıyla başlatıldı");
-  
-        // Eğer kullanıcı daha önce izin vermişse:
-        const permission = await OneSignal.Notifications.permission;
-        if (permission === "granted") {
+
+        const customLinkContainer = document.querySelector('.onesignal-customlink-container');
+        const notificationButtonSelector = [
+          '.onesignal-customlink-subscribe',
+          '.onesignal-customlink-unsubscribe',
+          '.onesignal-reset',
+          '.onesignal-customlink-notification-enable',
+          '.onesignal-customlink-container-button',
+          'button',
+          '[role="button"]'
+        ].join(', ');
+        let notificationStateUpdateFrame = null;
+        let notificationStateChanging = false;
+
+        const isNotificationEnabled = () => (
+          OneSignal.Notifications.permission === true &&
+          OneSignal.User.PushSubscription.optedIn === true
+        );
+
+        const getNotificationButtons = () => {
+          if (!customLinkContainer) return [];
+
+          const buttons = Array.from(customLinkContainer.querySelectorAll(notificationButtonSelector));
+
+          // İç içe bir düğme yapısı varsa yalnızca en dıştaki etkileşimli öğeyi
+          // güncelle; açıklama içindeki bağlantılara dokunma.
+          return buttons.filter((button) => {
+            const ancestorButton = button.parentElement?.closest(notificationButtonSelector);
+            return !ancestorButton || !customLinkContainer.contains(ancestorButton);
+          });
+        };
+
+        const updateNotificationButtonState = () => {
+          if (notificationStateUpdateFrame !== null) {
+            cancelAnimationFrame(notificationStateUpdateFrame);
+          }
+
+          notificationStateUpdateFrame = requestAnimationFrame(() => {
+            notificationStateUpdateFrame = null;
+            const enabled = isNotificationEnabled();
+            const label = enabled ? '🔕 Bildirimleri Kapat' : '🔔 Bildirimleri Aç';
+
+            getNotificationButtons().forEach((button) => {
+              if (button.textContent.trim() !== label) button.textContent = label;
+              button.setAttribute('aria-pressed', String(enabled));
+              button.setAttribute('aria-busy', String(notificationStateChanging));
+
+              if ('disabled' in button) button.disabled = notificationStateChanging;
+            });
+          });
+        };
+
+        const logNotificationPreferenceChange = (enabled) => {
+          if (typeof logUnauthorizedAccess !== 'function') return;
+
+          logUnauthorizedAccess(
+            enabled
+              ? 'OneSignal bildirimleri kapatma'
+              : 'OneSignal bildirimleri açma'
+          );
+        };
+
+        const handleNotificationToggle = async (event) => {
+          if (!(event.target instanceof Element)) return;
+
+          const button = event.target.closest(notificationButtonSelector);
+          if (!button || !customLinkContainer?.contains(button)) return;
+
+          // OneSignal'ın oluşturduğu bağlantının masaüstü ve mobilde farklı
+          // zamanlarda yenilenmesine bağlı kalmadan tercihi SDK üzerinden değiştir.
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+
+          if (notificationStateChanging) return;
+
+          const enabled = isNotificationEnabled();
+          notificationStateChanging = true;
+          logNotificationPreferenceChange(enabled);
+          updateNotificationButtonState();
+
+          try {
+            if (enabled) {
+              await OneSignal.User.PushSubscription.optOut();
+            } else {
+              // Geçerli bir push anahtarı yoksa optIn() mobilde yerel izin
+              // penceresini de açar; sonuç aşağıdaki değişim olaylarıyla eşitlenir.
+              await OneSignal.User.PushSubscription.optIn();
+            }
+          } catch (error) {
+            console.error('❌ Bildirim tercihi güncellenemedi:', error);
+          } finally {
+            notificationStateChanging = false;
+            updateNotificationButtonState();
+          }
+        };
+
+        if (customLinkContainer) {
+          customLinkContainer.addEventListener('click', handleNotificationToggle, true);
+          new MutationObserver(updateNotificationButtonState).observe(customLinkContainer, {
+            childList: true,
+            subtree: true,
+            characterData: true
+          });
+        }
+
+        OneSignal.Notifications.addEventListener('permissionChange', updateNotificationButtonState);
+        OneSignal.User.PushSubscription.addEventListener('change', updateNotificationButtonState);
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) updateNotificationButtonState();
+        });
+        window.addEventListener('pageshow', updateNotificationButtonState);
+
+        updateNotificationButtonState();
+
+        // Eğer kullanıcı daha önce izin vermiş ve aboneliği etkinse:
+        if (isNotificationEnabled()) {
           console.log("🔔 Bildirim izni zaten verilmiş");
         } else {
           console.log("🚫 Bildirim izni yok");
         }
-
-        // OneSignal bildirim butonları için event delegation
-        document.addEventListener('click', function(e) {
-            // OneSignal butonlarını kontrol et
-            if (e.target.classList.contains('onesignal-reset') || 
-                e.target.classList.contains('onesignal-customlink-subscribe') ||
-                e.target.closest('.onesignal-reset') ||
-                e.target.closest('.onesignal-customlink-subscribe')) {
-                
-                // Bildirim izni değiştirme işlemini logla
-                if (typeof logUnauthorizedAccess === 'function') {
-                    const buttonText = e.target.textContent || e.target.innerText || '';
-                    if (buttonText.includes('Kapat') || buttonText.includes('🔕')) {
-                        logUnauthorizedAccess('OneSignal bildirimleri kapatma');
-                    } else if (buttonText.includes('Aç') || buttonText.includes('🔔')) {
-                        logUnauthorizedAccess('OneSignal bildirimleri açma');
-                    } else {
-                        logUnauthorizedAccess('OneSignal bildirim ayarları değiştirme');
-                    }
-                }
-            }
-        });
       } catch (err) {
         console.error("❌ OneSignal yükleme hatası:", err);
       }
