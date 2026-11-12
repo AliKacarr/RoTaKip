@@ -33,7 +33,7 @@
     "express-session": "^1.19.0",
     "moment": "^2.30.1",
     "mongodb": "^7.8.0",
-    "mongoose": "^9.11.4",
+    "mongoose": "^9.12.0",
     "multer": "^2.5.0",
     "node-schedule": "^2.1.2",
     "pino": "^10.4.0",
