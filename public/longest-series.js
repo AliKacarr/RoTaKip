@@ -18,7 +18,8 @@ window.renderLongestSeries = function renderLongestSeries() {
             // En iyi (yüksek streak) üstte olacak şekilde sırala
             const sortedData = (data || []).slice().sort((a, b) => b.streak - a.streak);
             // Barlar ters: en iyi = en kısa (order 0 → minBarWidth)
-            const minBarWidth = 220; // px
+            const initialBarWidth = 220; // px — animasyonun başlangıç genişliği
+            const minBarWidth = 260; // px — en üstteki barın taban genişliği
             const maxBarWidth = 600; // px
 
             // Doğru rank algoritması
@@ -91,7 +92,7 @@ window.renderLongestSeries = function renderLongestSeries() {
                 // Çubuk
                 const bar = document.createElement('div');
                 bar.className = 'longest-series-bar';
-                bar.style.width = minBarWidth + 'px'; // Başlangıçta minimum genişlikte başlat
+                bar.style.width = initialBarWidth + 'px';
 
                 // Aynı streak'e sahip olanlar aynı renkte olacak
                 const { startColor, endColor } = streakColorMap[user.streak];
