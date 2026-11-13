@@ -91,6 +91,10 @@
     padding: 20px 16px 0 16px;
 }
 
+.reading-edit-mode-bar[hidden] {
+    display: none !important;
+}
+
 .tracker-table-layout {
     display: grid;
     grid-template-columns: 245px minmax(62px, 1fr) auto;
@@ -332,32 +336,6 @@
 
 .table-area.is-dragging * {
     cursor: grabbing !important;
-}
-
-/* Giriş yapan kullanıcıya ait alanları tek akışta açıp kapatır. */
-.authenticated-user-areas {
-    display: grid;
-    grid-template-rows: 0fr;
-    width: 100%;
-    opacity: 0;
-    transform: translateY(20px);
-    visibility: hidden;
-    pointer-events: none;
-    transition: grid-template-rows 0.8s ease-out, opacity 0.3s ease-out, transform 0.8s ease-out, visibility 0s linear 0.8s;
-}
-
-.authenticated-user-areas.show {
-    grid-template-rows: 1fr;
-    opacity: 1;
-    transform: translateY(0);
-    visibility: visible;
-    pointer-events: auto;
-    transition: grid-template-rows 0.8s ease-out, opacity 0.3s ease-out, transform 0.8s ease-out, visibility 0s linear 0s;
-}
-
-.authenticated-user-areas-content {
-    min-height: 0;
-    overflow: hidden;
 }
 
 /* Okuma düzenleme modları (Durum / Miktar) */

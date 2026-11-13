@@ -1,6 +1,9 @@
 let lastQuoteText = "";
 let lastQuoteSection = null;
-document.addEventListener('DOMContentLoaded', function () {
+window.initializeQuoteSharing = function initializeQuoteSharing() {
+    const quoteRoot = document.querySelector('.quote');
+    if (!quoteRoot || quoteRoot.dataset.sharingBound === 'true') return;
+    quoteRoot.dataset.sharingBound = 'true';
     // Paylaş butonuna tıklandığında
     document.querySelectorAll('.share-quote').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -251,4 +254,10 @@ document.addEventListener('DOMContentLoaded', function () {
         hideSharePanel();
     });
 
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initializeQuoteSharing, { once: true });
+} else {
+    window.initializeQuoteSharing();
+}

@@ -1,8 +1,11 @@
-document.addEventListener('DOMContentLoaded', function () {
+window.initializeCookieConsent = function initializeCookieConsent() {
 
     const cookieConsentBanner = document.getElementById('cookieConsentBanner');
     const acceptCookiesBtn = document.getElementById('acceptCookies');
     const declineCookiesBtn = document.getElementById('declineCookies');
+    if (!cookieConsentBanner || !acceptCookiesBtn || !declineCookiesBtn) return;
+    if (cookieConsentBanner.dataset.consentBound === 'true') return;
+    cookieConsentBanner.dataset.consentBound = 'true';
 
     function checkCookieConsent() {
         const cookieConsent = localStorage.getItem('cookieConsent');
@@ -76,4 +79,10 @@ document.addEventListener('DOMContentLoaded', function () {
         window.scheduleGoogleAnalyticsAfterPrimaryContent();
     }
     checkCookieConsent();
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initializeCookieConsent, { once: true });
+} else {
+    window.initializeCookieConsent();
+}

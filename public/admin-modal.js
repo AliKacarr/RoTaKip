@@ -7,6 +7,9 @@ let isJoinRequestSuccess = false;
 
 // Create navigation buttons function (her zaman görünür)
 window.createNavigationButtons = function createNavigationButtons() {
+    // Yeni shell kendi sabit menüsünü kullanır. Eski yüzen kısayollar yalnız
+    // geriye dönük bağımsız sayfa kullanımında oluşturulur.
+    if (document.body.classList.contains('app-shell-body')) return;
 
     // Create articles button if it doesn't exist
     let articlesButton = document.querySelector('.articles-button');
@@ -122,7 +125,6 @@ if (!quotesButton) {
 }
 
 async function showAdminIndicator() { 
-
         // Üç navigasyon butonunu göster
         const quotesButton = document.querySelector('.quotes-button');
         const videosButton = document.querySelector('.videos-button');
@@ -228,11 +230,14 @@ async function showAdminIndicator() {
 }
 
 
-document.addEventListener('DOMContentLoaded', function () {
+window.initializeAdminModal = function initializeAdminModal() {
 
     const adminLogin = document.getElementById('secretAdminLogin');
     const groupsAuthLoginModal = document.getElementById('groupsAuthLoginModal');
     const groupsAuthForgotModal = document.getElementById('groupsAuthForgotModal');
+    if (!adminLogin || !groupsAuthLoginModal || !groupsAuthForgotModal) return;
+    if (groupsAuthLoginModal.dataset.authBound === 'true') return;
+    groupsAuthLoginModal.dataset.authBound = 'true';
     
     // Login modal elements
     const closeGroupsAuthLoginModal = document.getElementById('closeGroupsAuthLoginModal');
@@ -479,22 +484,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Update group info in modal function
                 async function updateGroupInfoInModal() {
-                    // Get current group info from URL or page context
-                    const currentPath = window.location.pathname;
-                    let groupId = currentPath.replace('/', ''); // Remove leading slash
-                    
-                    // Clean groupId if it contains 'groupid=' prefix
-                    if (groupId.startsWith('groupid=')) {
-                        groupId = groupId.replace('groupid=', '');
-                    }
-                    
-                    // Decode URL encoded characters
-                    try {
-                        groupId = decodeURIComponent(groupId);
-                    } catch (e) {
-                        // If decoding fails, use original value
-                        console.warn('URL decode failed for groupId:', groupId);
-                    }
+                    const groupId = window.groupid || getGroupIdFromUrl();
                     
                     // Get group name and ID elements
                     const groupsAuthJoinGroupName = document.getElementById('groupsAuthJoinGroupName');
@@ -594,18 +584,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Show success modal function
                 function showSuccessModal() {
                     // Grup visibility bilgisini al
-                    const currentPath = window.location.pathname;
-                    let groupId = currentPath.replace('/', '');
-                    if (groupId.startsWith('groupid=')) {
-                        groupId = groupId.replace('groupid=', '');
-                    }
-                    
-                    // Decode URL encoded characters
-                    try {
-                        groupId = decodeURIComponent(groupId);
-                    } catch (e) {
-                        console.warn('URL decode failed for groupId:', groupId);
-                    }
+                    const groupId = window.groupid || getGroupIdFromUrl();
                     
                     // Grup bilgilerini al ve visibility kontrolü yap
                     fetch(`/api/group/${groupId}`)
@@ -648,20 +627,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (groupsAuthJoinSuccessCancelBtn) {
                     groupsAuthJoinSuccessCancelBtn.addEventListener('click', async function () {
                         // Get current group ID from URL
-                        const currentPath = window.location.pathname;
-                        let groupId = currentPath.replace('/', '');
-                        
-                        // Clean groupId if it contains 'groupid=' prefix
-                        if (groupId.startsWith('groupid=')) {
-                            groupId = groupId.replace('groupid=', '');
-                        }
-                        
-                        // Decode URL encoded characters
-                        try {
-                            groupId = decodeURIComponent(groupId);
-                        } catch (e) {
-                            console.warn('URL decode failed for groupId:', groupId);
-                        }
+                        const groupId = window.groupid || getGroupIdFromUrl();
                         
                         if (groupId && groupId !== 'groups.html') {
                             // Get join request ID from localStorage
@@ -762,20 +728,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                         
                         // Get current group ID from URL
-                        const currentPath = window.location.pathname;
-                        let groupId = currentPath.replace('/', '');
-                        
-                        // Clean groupId if it contains 'groupid=' prefix
-                        if (groupId.startsWith('groupid=')) {
-                            groupId = groupId.replace('groupid=', '');
-                        }
-                        
-                        // Decode URL encoded characters
-                        try {
-                            groupId = decodeURIComponent(groupId);
-                        } catch (e) {
-                            console.warn('URL decode failed for groupId:', groupId);
-                        }
+                        const groupId = window.groupid || getGroupIdFromUrl();
                         
                         if (!groupId || groupId === 'groups.html') {
                             alert('Grup bilgisi bulunamadı.');
@@ -1043,7 +996,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Handle welcome modal close based on group visibility
     function handleWelcomeModalClose() {
         // Clean URL first - remove invite parameters
-        const cleanUrl = `/groupid=${encodeURIComponent(window.groupid)}`;
+        const cleanUrl = `/grup/${encodeURIComponent(window.groupid)}/haftalik`;
         window.history.replaceState({}, '', cleanUrl);
 
         // Always check group visibility (don't depend on localStorage)
@@ -1295,6 +1248,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Reload data to update UI with admin privileges
                 if (typeof loadTrackerTable === 'function') loadTrackerTable();
                 if (typeof loadUserCards === 'function') loadUserCards();
+                if (typeof window.renderReadingMessagePanels === 'function') window.renderReadingMessagePanels();
                 if (typeof loadMonthlyCalendar === 'function') loadMonthlyCalendar();
                 if (typeof renderLongestSeries === 'function') renderLongestSeries();
 
@@ -1397,7 +1351,13 @@ document.addEventListener('DOMContentLoaded', function () {
         // Başlangıçta loading efekti başlat
         profileImagePreview.classList.add('profile-image-loading');
     }
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initializeAdminModal, { once: true });
+} else {
+    window.initializeAdminModal();
+}
 
 
 // ==================== Profile Modal Functions ====================

@@ -1,0 +1,415 @@
+<div id="readingEditModeBar" class="reading-edit-mode-bar" hidden>
+  <div class="reading-edit-mode-segment" role="group" aria-label="Okuma düzenleme modu">
+    <button type="button" id="readingEditModeDefault" class="reading-edit-mode-btn is-active" aria-pressed="true">
+      <i class="fa-solid fa-arrows-left-right reading-edit-mode-icon" aria-hidden="true"></i> Gezinme
+    </button>
+    <button type="button" id="readingEditModeStatus" class="reading-edit-mode-btn" aria-pressed="false">
+      <i class="fa-solid fa-bolt reading-edit-mode-icon" aria-hidden="true"></i> Durum
+    </button>
+    <button type="button" id="readingEditModeAmount" class="reading-edit-mode-btn" aria-pressed="false">
+      <i class="fa-solid fa-pen reading-edit-mode-icon" aria-hidden="true"></i> Miktar
+    </button>
+  </div>
+  <p class="reading-edit-mode-hint" id="readingEditModeHint">Tabloyu incelemek için sağa veya sola kaydırın.</p>
+</div>
+
+<div class="tracker-table-shell" style="display: none;">
+      <div class="tracker-table-layout">
+        <div id="timelineScrollHint" class="timeline-scroll-hint" aria-hidden="true">
+          <span class="timeline-swipe-guide">
+            <span class="timeline-swipe-motion">
+              <span class="timeline-swipe-arrow timeline-swipe-arrow-left" aria-hidden="true">
+                <svg viewBox="0 0 104 40" focusable="false">
+                  <path class="timeline-swipe-arrow-outline" d="M100 20H8M24 4L8 20l16 16"></path>
+                  <path class="timeline-swipe-arrow-fill" d="M100 20H8M24 4L8 20l16 16"></path>
+                </svg>
+              </span>
+              <span class="timeline-swipe-arrow timeline-swipe-arrow-right" aria-hidden="true">
+                <svg viewBox="0 0 104 40" focusable="false">
+                  <path class="timeline-swipe-arrow-outline" d="M4 20h92M80 4l16 16-16 16"></path>
+                  <path class="timeline-swipe-arrow-fill" d="M4 20h92M80 4l16 16-16 16"></path>
+                </svg>
+              </span>
+              <span class="timeline-swipe-hand">
+                <img src="/images/hand.png" alt="" draggable="false">
+              </span>
+            </span>
+            <span class="timeline-swipe-label">Geçmiş günleri görmek için kaydırın</span>
+          </span>
+        </div>
+        <div class="tracker-users-area">
+          <table id="trackerUsersTable" aria-label="Kullanıcılar">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="table-area">
+          <table id="trackerTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="tracker-summary-area">
+          <table id="trackerSummaryTable" aria-label="Okuma özetleri">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Week navigation controls -->
+      <div class="week-navigation" style="display: none;">
+        <div class="nav-group">
+          <button id="prevWeek" class="week-nav-button">
+            <span class="week-arrow-icon" style="transform: scaleX(-1);"></span> Önceki Hafta
+          </button>
+          <button id="prevWeekToday" class="week-nav-button today-button">
+            <span class="week-arrow-icon" style="transform: scaleX(-1);"></span> Bu Hafta
+          </button>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button id="currentWeekDisplay" class="current-week" type="button">1 - 7 Ocak</button>
+          <button id="shareTableBtn" class="share-table-btn" title="Tabloyu Paylaş">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
+            </svg>
+            <span>Paylaş</span>
+          </button>
+        </div>
+        <div class="nav-group">
+          <button id="nextWeek" class="week-nav-button">
+            Sonraki Hafta <span class="week-arrow-icon"></span>
+          </button>
+          <button id="nextWeekToday" class="week-nav-button today-button">
+            Bu Hafta <span class="week-arrow-icon"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+<section class="reading-message-panels" aria-live="polite">
+  <div class="reading-message-panels-content"></div>
+</section>
+
+<section class="home-mercy-window" aria-labelledby="homeMercyWindowTitle">
+  <h3 id="homeMercyWindowTitle">
+    <i class="fa-solid fa-quote-right" aria-hidden="true"></i> Günün Vecizeleri
+  </h3>
+  <div class="home-mercy-images">
+    <div class="quote-section-image">
+      <button class="refresh-quote home-mercy-refresh" type="button" title="Yeni görsel getir" aria-label="İlk görseli yenile">
+        <i class="fa-solid fa-arrow-rotate-right" aria-hidden="true"></i>
+      </button>
+      <button class="share-quote home-mercy-share" type="button" title="Resmi paylaş" aria-label="İlk görseli paylaş">
+        <img src="/images/share.webp" alt="" aria-hidden="true">
+      </button>
+      <img class="home-mercy-image" src="/quotes/bir_gorsel.jpg" alt="Rahmet Penceresi görseli">
+    </div>
+    <div class="quote-section-image">
+      <button class="refresh-quote home-mercy-refresh" type="button" title="Yeni görsel getir" aria-label="İkinci görseli yenile">
+        <i class="fa-solid fa-arrow-rotate-right" aria-hidden="true"></i>
+      </button>
+      <button class="share-quote home-mercy-share" type="button" title="Resmi paylaş" aria-label="İkinci görseli paylaş">
+        <img src="/images/share.webp" alt="" aria-hidden="true">
+      </button>
+      <img class="home-mercy-image" src="/quotes/bir_gorsel.jpg" alt="Rahmet Penceresi görseli">
+    </div>
+  </div>
+</section>
+
+<div class="main-area" style="display: none;">
+      <div class="top-section">
+        <div class="group-settings scroll-fade-in">
+          <h3><i class="fa-solid fa-gear" style="font-size: 1.2em !important; padding: 0 10px 0 5px;"></i> Grup Ayarları
+          </h3>
+
+          <div class="group-info-section">
+            <!-- Sol Sütun: Grup Bilgileri -->
+            <div class="group-left-column">
+              <!-- Üst Bölüm: İki Alt Sütun -->
+              <div class="group-top-section">
+                <!-- Sol Alt Sütun: Grup Resmi ve Adı -->
+                <div class="group-left-sub-column">
+                  <div class="group-image-section">
+                    <label for="groupImage"><i class="fa-solid fa-image"></i> Grup Resmi:</label>
+                    <div class="group-image-container">
+                      <img id="currentGroupImage" src="/images/open-book.webp" alt="Grup resmi"
+                        class="group-image-preview" onclick="document.getElementById('groupImage').click()">
+                      <div class="group-image-actions">
+                        <input type="file" id="groupImage" name="groupImage" accept="image/*" style="display: none;" />
+                        <div class="top-buttons">
+                          <label for="groupImage" class="change-image-btn">
+                            <i class="fa-solid fa-upload"></i>
+                            <span>Yükle</span>
+                          </label>
+                          <button type="button" class="group-image-remove-btn" title="Resmi Kaldır"
+                            style="display: none;">
+                            <i class="fa-solid fa-trash"></i>
+                            <span>Kaldır</span>
+                          </button>
+                        </div>
+                        <button type="button" class="ready-images-btn" onclick="toggleReadyImagesModal()">
+                          <i class="fa-solid fa-images"></i>
+                          <span>Hazır Görseller</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="groupVisibility">Grup Görünürlüğü:</label>
+                    <div class="visibility-container">
+                      <i class="fa-solid fa-eye visibility-icon" id="visibilityIcon"></i>
+                      <select id="groupVisibility" class="group-select">
+                        <option value="public">Herkese Açık</option>
+                        <option value="private">Gizli Grup</option>
+                      </select>
+                    </div>
+                    <div class="visibility-info" id="visibilityInfo">
+                      <i class="fa-solid fa-info-circle"></i>
+                      <span>Herkes bu grubu görüntüleyebilir.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sağ Alt Sütun: Açıklama ve Görünürlük -->
+                <div class="group-right-sub-column">
+                  <div class="form-group">
+                    <label for="groupName"><i class="fas fa-layer-group"></i> Grup Adı:</label>
+                    <input type="text" id="groupName" class="group-input" placeholder="Grup adını giriniz"
+                      maxlength="40" />
+                  </div>
+                  <div class="form-group">
+                    <label for="groupDescription"><i class="fa-solid fa-align-left"></i> Grup Açıklaması:</label>
+                    <textarea id="groupDescription" class="group-textarea" placeholder="Grup açıklamasını giriniz"
+                      rows="3" maxlength="200"></textarea>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Alt Satır: Kaydet Butonu -->
+              <div class="group-actions">
+                <button type="button" class="save-group-btn">
+                  <i class="fa-solid fa-save"></i> Kaydet
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="automation-section scroll-fade-in">
+        <div class="automation-settings">
+          <h3 class="automation-section-title"><i class="fa-solid fa-gears"></i> Otomasyonlar</h3>
+
+          <div class="group-right-column">
+            <div class="automation-settings-column">
+                <div class="form-group">
+                  <div class="form-group-label">Okuma Birimi:</div>
+                  <div class="visibility-container">
+                    <i class="fa-solid fa-file-lines visibility-icon public" id="groupAmountTypeIcon"></i>
+                    <select id="groupAmountTypeSelect" class="group-select" style="width: 100%; cursor: pointer;">
+                      <option value="sayfa">Sayfa</option>
+                      <option value="dakika">Dakika</option>
+                    </select>
+                  </div>
+                  <div class="visibility-info public" id="groupAmountTypeInfo">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Okuma miktarları sayfa olarak gösterilir.</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <div class="form-group-label">Üyelerin Düzenleyebileceği Günler:</div>
+                  <div class="visibility-container">
+                    <i class="fa-solid fa-calendar-days visibility-icon public" id="readingEditPolicyIcon"></i>
+                    <select id="readingEditPolicySelect" class="group-select" style="width: 100%; cursor: pointer;">
+                      <option value="all">Tüm Geçmiş</option>
+                      <option value="today">Sadece Bugün</option>
+                      <option value="today_yesterday">Bugün + Dün</option>
+                    </select>
+                  </div>
+                  <div class="visibility-info public" id="readingEditPolicyInfo">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Bugün ve geçmişteki tüm kayıtlar düzenlenebilir.</span>
+                  </div>
+                </div>
+
+                <form class="form-group">
+                  <div class="form-group-label">Otomatik "✖" İşaretleme:</div>
+                  <div class="visibility-container">
+                    <i class="fa-solid fa-user-clock visibility-icon public" id="autoMarkUnreadIcon"></i>
+                    <select id="autoMarkUnreadSelect" class="group-select" style="width: 100%; cursor: pointer;">
+                      <option value="true">Aktif</option>
+                      <option value="false">Kapalı</option>
+                    </select>
+                  </div>
+                  <div class="visibility-info public" id="autoMarkUnreadInfo">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Okumayanlar sabah 06:00'da işaretlenir.</span>
+                  </div>
+                </form>
+
+                <div class="form-group">
+                  <div class="form-group-label">Art arda 15 Gün Okumayan Üyeler:</div>
+                  <div class="visibility-container">
+                    <i class="fa-solid fa-circle-pause visibility-icon public" id="inactiveMemberActionIcon"></i>
+                    <select id="inactiveMemberActionSelect" name="inactiveMemberAction" class="group-select"
+                      style="width: 100%; cursor: pointer;">
+                      <option value="none">Kapalı</option>
+                      <option value="delete">Otomatik Sil</option>
+                      <option value="passive">Otomatik Pasife Al</option>
+                    </select>
+                  </div>
+                  <div class="visibility-info public" id="inactiveMemberActionInfo">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Okumayanlar için otomatik işlem kapalı.</span>
+                  </div>
+                </div>
+            </div>
+
+            <div class="automation-actions-column">
+                <div class="member-records-form">
+                  <div class="form-group-label"><i class="fa-solid fa-clipboard-list"></i> Kullanıcı Etkinlikleri</div>
+                  <button type="button" class="group-link-btn" onclick="window.location.href='/access-logs.html?groupId=' + encodeURIComponent(window.groupid)">
+                    <i class="fa-solid fa-history"></i>
+                    <span>Son İşlemler</span>
+                  </button>
+                  <button type="button" class="group-link-btn" onclick="window.location.href='/login-logs.html?groupId=' + encodeURIComponent(window.groupid)">
+                    <i class="fa-solid fa-font-awesome"></i>
+                    <span>Giriş Kayıtları</span>
+                  </button>
+                </div>
+
+                <div class="group-management-actions">
+                  <div class="automation-column-heading">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> Grup İşlemleri
+                  </div>
+                  <div class="group-action-buttons">
+                    <button type="button" class="danger-toggle-btn">
+                      <i class="fa-solid fa-trash-can"></i>
+                      <span class="danger-text">Grubu Sil</span>
+                    </button>
+                    <button type="button" class="share-group-btn">
+                      <i class="fa-solid fa-share-nodes"></i>
+                      <span>Grubu Paylaş</span>
+                    </button>
+                  </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Alt Bölüm: Kullanıcı Listesi ve Kullanıcı Ekleme Formu -->
+      <div class="bottom-section scroll-fade-in">
+        <div class="left-column">
+          <div class="user-list">
+            <div class="join-requests-section">
+              <h3><i class="fa-solid fa-envelope" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                Katılma İstekleri</h3>
+              <div id="joinRequestsList" class="join-requests-list">
+                <!-- Katılma istekleri buraya yüklenecek -->
+              </div>
+            </div>
+
+            <div id="userManagementLists">
+              <section class="managed-user-section">
+                <h3><i class="fa-solid fa-users" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                  Aktif Kullanıcılar</h3>
+                <ul id="userList" class="managed-user-list"></ul>
+              </section>
+              <section class="managed-user-section passive-user-section">
+                <h3><i class="fa-solid fa-user-slash" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                  Pasif Kullanıcılar</h3>
+                <ul id="passiveUserList" class="managed-user-list" hidden></ul>
+                <div id="passiveUserListEmpty" class="no-join-requests">
+                  <i class="fa-solid fa-exclamation-circle"></i> Kullanıcıları gizlemek veya yeniden görünür yapmak için Aktif/Pasif seçeneğini kullanabilirsiniz.
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-column">
+          <!-- Add the Add User section -->
+          <form id="newUserForm" enctype="multipart/form-data">
+            <div class="new-user-invite-section">
+              <h3><i class="fas fa-paper-plane" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                Kullanıcı Davet Et</h3>
+              <div class="invite-controls">
+                <select id="userSelectForInvite" class="user-select-dropdown">
+                  <option value="">Kullanıcı seçiniz...</option>
+                </select>
+                <button type="button" class="invite-selected-btn" onclick="inviteSelectedUser()">
+                  <i class="fa-solid fa-share"></i>
+                  <span>Davet Et</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-left-column">
+              <h3><i class="fa-solid fa-user-plus" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                Kullanıcı Ekle</h3>
+              <div class="add-user-form-group">
+                <label for="newUserInput">Kullanıcı İsmi:</label>
+                <div class="add-user-input-container">
+                  <div class="add-user-input-icon-container">
+                    <img src="/images/default.png" alt="Varsayılan profil resmi" class="add-user-input-profile-image"
+                      id="addUserInputProfileImage">
+                  </div>
+                  <input type="text" id="newUserInput" placeholder="Kullanıcı ismi giriniz" maxlength="40" required />
+                </div>
+              </div>
+              <div class="image-upload">
+                <label for="profileImage">Profil Resmi:</label>
+                <div class="file-input-container">
+                  <input type="file" id="profileImage" name="profileImage" accept="image/*" />
+                  <button type="button" class="upload-btn" id="uploadBtn">
+                    <i class="fa-solid fa-upload"></i>
+                    Yükle
+                  </button>
+                  <button type="button" class="avatar-select-btn" id="addUserAvatarBtn">
+                    <i class="fa-solid fa-images"></i>
+                    Avatarlar
+                  </button>
+                  <button type="button" class="remove-image-btn" id="addUserRemoveBtn">
+                    <i class="fas fa-trash"></i>
+                    Sil
+                  </button>
+                </div>
+              </div>
+              <div class="add-user-options-row">
+                <select id="newUserAuthority" class="new-user-option-select" aria-label="Kullanıcı yetkisi">
+                  <option value="member" selected>Üye</option>
+                  <option value="admin">Yönetici</option>
+                </select>
+                <select id="newUserVisibility" class="new-user-option-select" aria-label="Kullanıcı görünürlüğü">
+                  <option value="aktif" selected>Aktif</option>
+                  <option value="pasif">Pasif</option>
+                </select>
+                <button type="submit" class="submit-button">Ekle</button>
+              </div>
+            </div>
+            <div class="form-right-column">
+              <!-- Resim ön izleme alanı - sağ sütunda -->
+              <div id="imagePreviewContainer" style="display: none;">
+                <img id="imagePreview" alt="Profil resmi ön izlemesi" class="profile-preview-image">
+                <button type="button" id="closePreview" class="close-preview-button"><i
+                    class="fa-solid fa-xmark"></i></button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+<div class="settings-section onesignal-settings-section" hidden>
+      <div class="onesignal-settings-content">
+        <h3 id="ayarlar"><i class="fa-classic fa-solid fa-sliders fa-fw"
+            style="font-size: 1.2em !important; padding-left:2px; padding-right: 8px;"></i>Tercihler</h3>
+        <div class="onesignal-customlink-container"></div>
+      </div>
+    </div>

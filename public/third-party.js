@@ -38,6 +38,48 @@
     };
 })();
 
+// Sekme modüllerinin grup çekirdeğini yüklemeden de ağır kütüphaneleri ihtiyaç
+// anında çağırabilmesi için ortak script yükleyici.
+window.rotakipExternalScriptLoads = window.rotakipExternalScriptLoads || new Map();
+window.loadExternalScriptOnce = window.loadExternalScriptOnce || function loadExternalScriptOnce(src, isReady) {
+    if (typeof isReady === 'function' && isReady()) return Promise.resolve();
+    const loads = window.rotakipExternalScriptLoads;
+    if (loads.has(src)) return loads.get(src);
+    const promise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = resolve;
+        script.onerror = () => {
+            loads.delete(src);
+            script.remove();
+            reject(new Error(`Harici script yüklenemedi: ${src}`));
+        };
+        document.head.appendChild(script);
+    });
+    loads.set(src, promise);
+    return promise;
+};
+
+window.ensureHtml2Canvas = window.ensureHtml2Canvas || async function ensureHtml2Canvas() {
+    await window.loadExternalScriptOnce(
+        'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+        () => typeof window.html2canvas !== 'undefined'
+    );
+    return window.html2canvas;
+};
+
+window.ensureChartLibraries = window.ensureChartLibraries || async function ensureChartLibraries() {
+    await window.loadExternalScriptOnce(
+        'https://cdn.jsdelivr.net/npm/chart.js',
+        () => typeof window.Chart !== 'undefined'
+    );
+    await window.loadExternalScriptOnce(
+        'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0',
+        () => typeof window.ChartDataLabels !== 'undefined'
+    );
+};
+
 const deferredScriptLoads = new Map();
 
 function loadDeferredScriptOnce(src, isReady) {

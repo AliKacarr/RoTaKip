@@ -926,7 +926,7 @@ class GroupsPage {
                 LocalStorageManager.loginUser(result.group.groupId, result.userId, 'admin', adminUserName, result.group.groupName, adminName);
                 
                 this.closeCreateModal();
-                window.location.href = `/groupid=${result.group.groupId}`;
+                window.location.href = `/grup/${encodeURIComponent(result.group.groupId)}/haftalik`;
             } else {
                 alert(`Grup oluşturulamadı: ${result.error}`);
             }
@@ -1014,7 +1014,7 @@ class GroupsPage {
 
         // Tüm gruplar için tıklama işlevi (private gruplar da dahil)
         card.addEventListener('click', () => {
-            window.location.href = `/groupid=${group.groupId}`;
+            window.location.href = `/grup/${encodeURIComponent(group.groupId)}/haftalik`;
         });
 
         return card;
@@ -1459,7 +1459,7 @@ class GroupsPage {
     goToHomePage() {
         if (this.currentJoinGroup) {
             // Grup sayfasına yönlendir
-            window.location.href = `/groupid=${this.currentJoinGroup.groupId}`;
+            window.location.href = `/grup/${encodeURIComponent(this.currentJoinGroup.groupId)}/haftalik`;
         } else {
             this.closeJoinModal();
         }

@@ -124,8 +124,7 @@ class ArticlesManager {
         // Rastgele sırala
         this.shuffleArray(this.filteredArticles);
 
-        // Geçiş efekti ile render et
-        this.renderArticlesWithTransition();
+        this.renderArticles();
     }
 
     async loadMoreArticles() {
@@ -147,56 +146,6 @@ class ArticlesManager {
             this.isLoading = false;
             this.updateLoadMoreButton(false);
         }
-    }
-
-    renderArticlesWithTransition() {
-        const container = document.getElementById('articlesContainer');
-        if (!container) return;
-
-        const startIndex = 0;
-        const endIndex = (this.currentPage + 1) * this.articlesPerPage;
-        const articlesToShow = this.filteredArticles.slice(startIndex, endIndex);
-
-        // Mevcut kartlara fade-out efekti ver
-        const existingCards = container.querySelectorAll('.article-card');
-        existingCards.forEach((card, index) => {
-            setTimeout(() => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-            }, index * 50); // Her kart için 50ms gecikme
-        });
-
-        // Kartlar kaybolduktan sonra yeni içeriği yükle
-        setTimeout(() => {
-            container.innerHTML = '';
-
-            if (articlesToShow.length === 0) {
-                this.showEmptyState();
-                return;
-            }
-
-            // Yeni makale kartlarını oluştur
-            articlesToShow.forEach((article, index) => {
-                const articleCard = this.createArticleCard(article);
-                
-                // Başlangıçta görünmez yap
-                articleCard.style.opacity = '0';
-                articleCard.style.transform = 'translateY(20px)';
-                
-                container.appendChild(articleCard);
-
-                // Fade-in efekti ver
-                setTimeout(() => {
-                    articleCard.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-                    articleCard.style.opacity = '1';
-                    articleCard.style.transform = 'translateY(0)';
-                }, index * 100); // Her kart için 100ms gecikme
-            });
-
-            // Daha fazla makale var mı kontrol et
-            this.hasMoreArticles = endIndex < this.filteredArticles.length;
-            this.updateLoadMoreButton(false);
-        }, existingCards.length * 50 + 200); // Tüm kartlar kaybolduktan sonra 200ms bekle
     }
 
     renderArticles() {
@@ -488,3 +437,21 @@ function showShareToast(message) {
         }, 300);
     }, 3000);
 }
+
+window.ArticlesManager = ArticlesManager;
+window.RoTaKipArticlesTab = {
+    init() {
+        if (!window.articlesManager) {
+            window.articlesManager = new ArticlesManager();
+        }
+        return window.articlesManager;
+    },
+    destroy() {
+        // Makale DOM'u sekme önbelleğinde korunur; yeniden istek yapılmaz.
+    },
+    preload() {
+        return fetch('/api/articles', { headers: { Accept: 'application/json' } })
+            .then(response => response.ok ? response.json() : null)
+            .catch(() => null);
+    }
+};

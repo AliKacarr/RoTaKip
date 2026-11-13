@@ -1,0 +1,480 @@
+.reading-message-panels {
+  width: 100%;
+  margin: 22px 0;
+}
+
+.reading-message-panels-content {
+  display: flow-root;
+  width: 100%;
+}
+
+.reading-message-panels-content:empty {
+  display: none;
+}
+
+.league-promotion-message,
+.league-promotion-backlog,
+.everyone-read-message,
+.reading-streak-message,
+.weak-link-message {
+    width: 93%;
+    max-width: 1200px;
+    border-radius: 10px;
+    line-height: 1.7;
+    color: #222;
+    margin: 10px auto 18px;
+    padding: 60px 20px 55px;
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.01em;
+    position: relative;
+    opacity: 1;
+    transform: none;
+    cursor: pointer;
+}
+
+.league-promotion-message {
+    background: #e6f2ff;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
+    border: 1px solid #abcdef;
+}
+
+.league-promotion-message::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 28px;
+    background-image: url('/images/kurdele.webp');
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: top center;
+    z-index: 1;
+    margin: 0 auto;
+}
+
+
+.league-promotion-message .left-emoji {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    width: 45px;
+    height: 45px;
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/partying_face.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+    transform: scaleX(-1);
+}
+
+
+/* Confetti efekti için ayrı element */
+.league-promotion-message .confetti-overlay,
+.league-promotion-backlog .confetti-overlay {
+    position: absolute;
+    top: 0px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/images/confeti.webp');
+    background-size: auto;
+    background-repeat: repeat;
+    background-position: center;
+    z-index: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.league-promotion-message .confetti-overlay.show,
+.league-promotion-backlog .confetti-overlay.show {
+    animation: confetti-show 3s ease-in-out forwards;
+}
+
+@keyframes confetti-show {
+    0% {
+        opacity: 0.9;
+        transform: scale(0.9);
+    }
+
+    15% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    85% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1);
+    }
+}
+
+/* Bildirim paneli gövdeleri: içerik blokları + eşit dikey aralık */
+.league-promotion-message .promotion-message-content,
+.league-promotion-backlog .promotion-message-content,
+.reading-streak-message .streak-panel-body,
+.weak-link-message .weak-link-body,
+.everyone-read-message .everyone-read-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.75;
+    text-align: center;
+}
+
+.promotion-message-content .promotion-panel-title {
+    display: block;
+}
+
+.promotion-message-content .promotion-promoted-list {
+    display: block;
+    width: 100%;
+}
+
+.promotion-message-content .promotion-subtitle-wrap {
+    display: block;
+    width: 100%;
+}
+
+.league-promotion-message.message-fade-in {
+    opacity: 1;
+    transform: none;
+}
+
+.league-promotion-backlog .promoted-username,
+.league-promotion-message .promoted-username {
+    font-style: italic;
+    color: #333;
+}
+
+.league-promotion-backlog .promoted-league,
+.league-promotion-message .promoted-league {
+    font-style: italic;
+    color: #313131;
+}
+
+.league-promotion-backlog {
+    background: #e8f4fc;
+    box-shadow: 0 2px 8px rgba(30, 136, 229, 0.08);
+    border: 1px solid #90caf9;
+}
+
+.league-promotion-backlog::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 28px;
+    background-image: url('/images/kurdele.webp');
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: top center;
+    z-index: 1;
+    margin: 0 auto;
+}
+
+.league-promotion-backlog.message-fade-in {
+    opacity: 1;
+    transform: none;
+}
+
+.league-promotion-message .promotion-subtitle,
+.league-promotion-backlog .promotion-subtitle {
+    display: block;
+    font-size: 0.92em;
+    font-weight: 500;
+    color: #333;
+    font-style: normal;
+}
+
+.league-promotion-backlog .left-emoji {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    width: 45px;
+    height: 45px;
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/partying_face.gif');
+    transform: scaleX(-1);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+.everyone-read-message {
+    background: #f0f7ff;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
+    border: 1px solid #bcdaf8;
+}
+
+.everyone-read-message::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 16px;
+    background-image: url('/images/zincir.webp');
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: top center;
+    z-index: 1;
+    margin: 0 auto;
+}
+
+.everyone-read-message .everyone-read-title {
+    display: block;
+}
+
+
+
+.everyone-read-message .left-emoji {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    width: 45px;
+    height: 45px;
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/frowning_face.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+.everyone-read-message .left-emoji.party-emoji {
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/partying_face.gif');
+    transform: scaleX(-1);
+}
+
+.copy-emoji {
+    display: inline-block;
+    animation: bounce-copy-emoji 3s infinite;
+}
+
+@keyframes bounce-copy-emoji {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateX(0) rotate(0deg) scale(1);
+    }
+
+    40% {
+        transform: translateX(-3px) rotate(-10deg) scale(0.9);
+    }
+
+    60% {
+        transform: translateX(0px) rotate(0deg) scale(1);
+    }
+}
+
+/* Copy Chip Hover Effects */
+.reading-streak-message:hover .copy-chip,
+.weak-link-message:hover .copy-chip,
+.everyone-read-message:hover .copy-chip,
+.league-promotion-message:hover .copy-chip,
+.league-promotion-backlog:hover .copy-chip {
+    transform: scale(1.05);
+}
+
+.copy-chip {
+    position: absolute;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    bottom: 10px !important;
+    right: 14px !important;
+    padding: 5px 10px !important;
+    border: 1px solid rgba(150, 150, 150, 0.8);
+    border-radius: 9px !important;
+    background: rgba(255, 255, 255, 0.9);
+    color: #444;
+    font-size: 20px !important;
+    font-weight: bold;
+    line-height: 1.2;
+    transition: all 0.2s ease;
+}
+
+
+.everyone-read-message.message-fade-in {
+    opacity: 1;
+    transform: none;
+}
+
+/* Okuma serisi paneli (Zinciri Kırma + zincir.webp) */
+.reading-streak-message {
+    background: #f0f4f9;
+    box-shadow: 0 2px 8px rgba(33, 58, 90, 0.08);
+    border: 1px solid #abcdef;
+}
+
+.reading-streak-message::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 16px;
+    background-image: url('/images/zincir.webp');
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: top center;
+    z-index: 1;
+    margin: 0 auto;
+}
+
+.reading-streak-message .chain-text {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #f0f4f9;
+    padding: 6px 12px;
+    height: 29px;
+    line-height: 20px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+    z-index: 2;
+    white-space: nowrap;
+}
+
+.reading-streak-message .streak-section-title {
+    display: block;
+}
+
+.reading-streak-message .streak-names-block {
+    display: block;
+    width: 100%;
+}
+
+.reading-streak-message .streak-username {
+    color: #333;
+    font-style: italic;
+}
+
+.reading-streak-message .streak-days {
+    color: #333;
+    font-weight: bold;
+}
+
+.reading-streak-message .left-emoji.streak-clap-emoji {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    width: 45px;
+    height: 45px;
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/clapping_hands.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+.reading-streak-message.message-fade-in {
+    opacity: 1;
+    transform: none;
+}
+
+/* Art arda okumayanlar paneli (Zayıf Halka + dugum.webp) */
+.weak-link-message {
+    background: #f7f4fb;
+    box-shadow: 0 2px 8px rgba(94, 53, 177, 0.08);
+    border: 1px solid #abcdef;
+}
+
+.weak-link-message::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 18px;
+    background-image: url('/images/dugum.webp');
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: top center;
+    z-index: 1;
+    margin: 0 auto;
+}
+
+.weak-link-message .weak-link-banner {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #f7f4fb;
+    padding: 6px 14px;
+    height: 31px;
+    line-height: 21px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+    z-index: 2;
+    white-space: nowrap;
+}
+
+.weak-link-message .missed-title {
+    display: block;
+}
+
+.weak-link-message .weak-names-block {
+    display: block;
+    width: 100%;
+}
+
+.weak-link-message .left-emoji {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    width: 45px;
+    height: 45px;
+    background-image: url('https://www.emojiall.com/images/animations/joypixels/64px/frowning_face.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+}
+
+.weak-link-message.message-fade-in {
+    opacity: 1;
+    transform: none;
+}
+
+.missed-username {
+    color: #333;
+    font-style: italic;
+}
+
+.missed-days {
+    color: #333;
+    font-weight: bold;
+}
+
+.streak-tagline,
+.missed-reminder,
+.everyone-read-reminder {
+    color: #333;
+    font-size: 22px;
+    font-style: italic;
+    font-weight: bold;
+    text-decoration: underline;
+}

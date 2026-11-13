@@ -1,0 +1,112 @@
+<div class="videos">
+      <h3><i class="fa-regular fa-circle-play" style="font-size: 1.3em !important; padding: 0 10px 0 5px;"></i>Videolar
+      </h3>
+      <div class="top-bar">
+        <button id="randomBtn">
+          <i class="fa-solid fa-shuffle"></i> Rastgele
+        </button>
+        <button id="latestBtn">
+          <i class="fa-solid fa-forward-fast"></i> Son Yüklenen
+        </button>
+        <button id="mostViewedBtn">
+          <i class="fa-solid fa-chart-line"></i> Popüler
+        </button>
+        <button id="refreshBtn">
+          <i class="fa-solid fa-rotate"></i> Yenile
+        </button>
+      </div>
+      <div id="videos" class="videos-container" style="position: relative;">
+        <!-- Loading state - 6 video kartı -->
+        <div class="video-card loading-card">
+          <div class="loading-thumbnail">
+            <div class="video-loading-spinner"></div>
+          </div>
+          <div class="loading-content">
+            <div class="video-loading-title">
+              <div class="video-loading-line video-loading-line-1"></div>
+              <div class="video-loading-line video-loading-line-2"></div>
+            </div>
+            <div class="loading-view-count">
+              <div class="video-loading-line video-loading-line-3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="video-card loading-card">
+          <div class="loading-thumbnail">
+            <div class="video-loading-spinner"></div>
+          </div>
+          <div class="loading-content">
+            <div class="video-loading-title">
+              <div class="video-loading-line video-loading-line-1"></div>
+              <div class="video-loading-line video-loading-line-2"></div>
+            </div>
+            <div class="loading-view-count">
+              <div class="video-loading-line video-loading-line-3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="video-card loading-card">
+          <div class="loading-thumbnail">
+            <div class="video-loading-spinner"></div>
+          </div>
+          <div class="loading-content">
+            <div class="video-loading-title">
+              <div class="video-loading-line video-loading-line-1"></div>
+              <div class="video-loading-line video-loading-line-2"></div>
+            </div>
+            <div class="loading-view-count">
+              <div class="video-loading-line video-loading-line-3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="video-card loading-card">
+          <div class="loading-thumbnail">
+            <div class="video-loading-spinner"></div>
+          </div>
+          <div class="loading-content">
+            <div class="video-loading-title">
+              <div class="video-loading-line video-loading-line-1"></div>
+              <div class="video-loading-line video-loading-line-2"></div>
+            </div>
+            <div class="loading-view-count">
+              <div class="video-loading-line video-loading-line-3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="video-card loading-card">
+          <div class="loading-thumbnail">
+            <div class="video-loading-spinner"></div>
+          </div>
+          <div class="loading-content">
+            <div class="video-loading-title">
+              <div class="video-loading-line video-loading-line-1"></div>
+              <div class="video-loading-line video-loading-line-2"></div>
+            </div>
+            <div class="loading-view-count">
+              <div class="video-loading-line video-loading-line-3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="video-card loading-card">
+          <div class="loading-thumbnail">
+            <div class="video-loading-spinner"></div>
+          </div>
+          <div class="loading-content">
+            <div class="video-loading-title">
+              <div class="video-loading-line video-loading-line-1"></div>
+              <div class="video-loading-line video-loading-line-2"></div>
+            </div>
+            <div class="loading-view-count">
+              <div class="video-loading-line video-loading-line-3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="videoModal" class="video-modal">
+        <div class="modal-content-video">
+          <span class="close">&times;</span>
+          <iframe id="videoFrame" frameborder="0" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>

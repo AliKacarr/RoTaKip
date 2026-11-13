@@ -1,13 +1,19 @@
 /* exported loadMonthlyCalendar */
 
 // Monthly Calendar Functionality
-function loadMonthlyCalendar() {
+window.loadMonthlyCalendar = function loadMonthlyCalendar() {
     console.log('🔍 Monthly Calendar Loading...');
     // Elements
     const prevMonthBtn = document.getElementById('prevMonth');
     const nextMonthBtn = document.getElementById('nextMonth');
     const monthYearHeader = document.getElementById('monthYearHeader');
     const calendarBody = document.getElementById('calendarBody');
+    const monthlyCalendarSection = document.querySelector('.monthly-calendar-section');
+    if (monthlyCalendarSection) monthlyCalendarSection.style.display = 'block';
+    if (!prevMonthBtn || !nextMonthBtn || !monthYearHeader || !calendarBody) {
+        console.error('Aylık takvim için gerekli DOM elemanları bulunamadı.');
+        return;
+    }
 
     // Track current month and year
     let currentDate = new Date();
@@ -44,6 +50,10 @@ function loadMonthlyCalendar() {
 
     // Get user selector element
     const userSelector = document.getElementById('userSelector');
+    if (!userSelector) {
+        console.error('Aylık takvim kullanıcı seçicisi oluşturulamadı.');
+        return;
+    }
 
     // Populate user selector with users from the main table
     function populateUserSelector() {
@@ -510,7 +520,6 @@ function loadMonthlyCalendar() {
     }
 
     // Show monthly calendar section
-    const monthlyCalendarSection = document.querySelector('.monthly-calendar-section');
     if (monthlyCalendarSection) {
         monthlyCalendarSection.style.display = 'block';
     }
@@ -533,7 +542,7 @@ function loadMonthlyCalendar() {
     if (monthShareBtn) {
         monthShareBtn.addEventListener('click', shareMonthlyCalendar);
     }
-}
+};
 
 // Aylık takvimi resme çevirip modal'da göster
 async function shareMonthlyCalendar() {

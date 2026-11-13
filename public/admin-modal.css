@@ -131,6 +131,12 @@
     min-height: 20px;
 }
 
+/* Bu pencerelerin HTML'i grup ortak alanında bulunur. Ana Sayfa paketi
+   yüklenmeden açılan Analiz sekmesinde normal içerik olarak görünmemelidir. */
+.ready-images-modal:not(.show) {
+    display: none !important;
+}
+
 
 /* Yukarı Çık Butonu */
 .scroll-to-top-btn {
@@ -2200,6 +2206,33 @@
 .videos-button:active,
 .articles-button:active {
     transform: translateY(0);
+}
+
+/* Giriş yapan kullanıcıya ait ortak alan. Analiz veya Ana Sayfa ilk açılsa da
+   oturum doğrulanana kadar kapalı kalır. */
+.authenticated-user-areas {
+    display: grid;
+    grid-template-rows: 0fr;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(20px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: grid-template-rows 0.8s ease-out, opacity 0.3s ease-out, transform 0.8s ease-out, visibility 0s linear 0.8s;
+}
+
+.authenticated-user-areas.show {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: grid-template-rows 0.8s ease-out, opacity 0.3s ease-out, transform 0.8s ease-out, visibility 0s linear 0s;
+}
+
+.authenticated-user-areas-content {
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* Kullanıcı İstatistik Bilgi Alanı Stilleri */

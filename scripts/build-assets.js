@@ -10,50 +10,78 @@ const publicPath = path.join(projectRoot, 'public');
 const bundles = {
   index: {
     css: ['index.css', 'footer.css'],
-    js: ['third-party.js', 'index.js']
+    js: ['third-party.js', 'index.js'],
+    html: ['index.html']
   },
-  groups: {
+  shell: {
     css: [
       'style.css',
-      'tracker-table.css',
-      'user-cards.css',
-      'admin-modal.css',
-      'daily-gift.css',
-      'quote.css',
-      'stats-section.css',
-      'longest-series.css',
-      'monthly.css',
-      'videos.css',
-      'main-area.css',
-      'preferences.css',
-      'articles.css',
       'footer.css',
       'groups-footer.css',
-      'profile-modal.css',
       'cookies.css',
-      'share-modal.css'
+      'share-modal.css',
+      'shell.css'
+    ],
+    js: ['third-party.js', 'cookies.js'],
+    html: ['groups.html']
+  },
+  'group-common': {
+    css: [
+      'admin-modal.css',
+      'daily-gift.css',
+      'profile-modal.css'
     ],
     js: [
-      'third-party.js',
       'league-config.js',
       'script.js',
       'admin-modal.js',
+      'daily-gift.js',
+      'reading-journey.js',
+      'share-utils.js'
+    ]
+  },
+  weekly: {
+    css: [
+      'tracker-table.css',
+      'reading-message-panels.css',
+      'home-mercy.css',
+      'main-area.css',
+      'preferences.css'
+    ],
+    js: [
       'reading-edit-mode.js',
       'weekly-table-image.js',
       'tracker-table.js',
+      'reading-message-panels.js',
+      'home-mercy.js',
+      'main-area.js'
+    ]
+  },
+  statistics: {
+    css: [
+      'user-cards.css',
+      'longest-series.css',
+      'stats-section.css',
+      'monthly.css'
+    ],
+    js: [
       'user-cards.js',
-      'daily-gift.js',
       'longest-series.js',
       'stats-section.js',
-      'monthly.js',
-      'quete.js',
-      'videos.js',
-      'main-area.js',
-      'articles.js',
-      'share-quote.js',
-      'share-utils.js',
-      'cookies.js'
+      'monthly.js'
     ]
+  },
+  videos: {
+    css: ['videos.css'],
+    js: ['videos.js']
+  },
+  mercy: {
+    css: ['quote.css'],
+    js: ['quete.js', 'share-quote.js']
+  },
+  articles: {
+    css: ['articles.css'],
+    js: ['articles.js']
   }
 };
 
@@ -90,7 +118,7 @@ function updateHtmlAssetVersion(htmlFileName, assetFileName, version) {
   }
 }
 
-async function buildBundle(bundleName, config) {
+async function buildBundle(bundleName, config, manifest) {
   const cssSource = readRequiredFiles(config.css);
   if (cssSource) {
     const cssResult = new CleanCSS().minify(cssSource);
@@ -100,7 +128,9 @@ async function buildBundle(bundleName, config) {
 
     const cssFileName = `${bundleName}.min.css`;
     fs.writeFileSync(path.join(publicPath, cssFileName), cssResult.styles);
-    updateHtmlAssetVersion(`${bundleName}.html`, cssFileName, contentHash(cssResult.styles));
+    const cssVersion = contentHash(cssResult.styles);
+    manifest[cssFileName] = `${cssFileName}?v=${cssVersion}`;
+    (config.html || []).forEach(htmlFileName => updateHtmlAssetVersion(htmlFileName, cssFileName, cssVersion));
   }
 
   const jsSource = readRequiredFiles(config.js);
@@ -117,14 +147,22 @@ async function buildBundle(bundleName, config) {
 
     const jsFileName = `${bundleName}.min.js`;
     fs.writeFileSync(path.join(publicPath, jsFileName), jsResult.code);
-    updateHtmlAssetVersion(`${bundleName}.html`, jsFileName, contentHash(jsResult.code));
+    const jsVersion = contentHash(jsResult.code);
+    manifest[jsFileName] = `${jsFileName}?v=${jsVersion}`;
+    (config.html || []).forEach(htmlFileName => updateHtmlAssetVersion(htmlFileName, jsFileName, jsVersion));
   }
 }
 
 async function buildAssets() {
+  const manifest = {};
   for (const [bundleName, config] of Object.entries(bundles)) {
-    await buildBundle(bundleName, config);
+    await buildBundle(bundleName, config, manifest);
   }
+  fs.writeFileSync(
+    path.join(publicPath, 'assets-manifest.json'),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    'utf8'
+  );
   console.log('Frontend asset paketleri oluşturuldu.');
 }
 

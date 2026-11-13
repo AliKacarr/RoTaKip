@@ -1,88 +1,16 @@
-let userCardScrollObserver = null;
-
-function getUserCardScrollObserver() {
-  if (!('IntersectionObserver' in window)) return null;
-  if (!userCardScrollObserver) {
-    userCardScrollObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        entry.target.classList.toggle('card-fade-in', entry.isIntersecting);
-      });
-    }, {
-      threshold: 0.2,
-      rootMargin: '100px'
-    });
-  }
-  return userCardScrollObserver;
-}
-
-function isGroupAdminSession() {
-  return (
-    typeof LocalStorageManager !== 'undefined' &&
-    LocalStorageManager.isUserLoggedIn() &&
-    LocalStorageManager.isAdmin()
-  );
-}
-
 window.addEventListener('rotakip:amount-type-changed', function () {
   if (typeof window.loadUserCards === 'function') {
     window.loadUserCards();
   }
 });
 
-async function postLastCongratulatedLeagues(items) {
-  if (!items || !items.length) return;
-  if (!isGroupAdminSession()) return;
-  const userInfo = LocalStorageManager.getCurrentUserInfo();
-  if (!userInfo) return;
-  const gid = typeof window !== 'undefined' && window.groupid ? window.groupid : '';
-  if (!gid) return;
-  try {
-    const res = await fetch(`/api/last-congratulated-league/${gid}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        items
-      })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(function () {
-        return {};
-      });
-      console.error('Son kutlanan lig güncellenemedi:', err.error || res.status);
-      return;
-    }
-    if (window.globalDataStore && typeof window.globalDataStore.patchUsersLastCongratulated === 'function') {
-      window.globalDataStore.patchUsersLastCongratulated(items);
-    }
-  } catch (e) {
-    console.error('Son kutlanan lig isteği başarısız:', e);
-  }
-}
-
 window.loadUserCards = async function loadUserCards() {
   console.log('🔍 User Cards Loading...');
   const container = document.querySelector('.user-cards-container');
   if (!container) return;
 
-  const cardScrollObserver = getUserCardScrollObserver();
-
   function observeRevealToggle(el) {
-    if (!el || el.dataset.revealObserved === '1') return;
-    el.dataset.revealObserved = '1';
-    if (!('IntersectionObserver' in window)) {
-      el.classList.add('visible');
-      return;
-    }
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        } else {
-          entry.target.classList.remove('visible');
-        }
-      });
-    }, { threshold: 0.2, rootMargin: '0px' });
-    obs.observe(el);
+    if (el) el.classList.add('visible');
   }
 
   try {
@@ -107,8 +35,6 @@ window.loadUserCards = async function loadUserCards() {
 
     // Giriş yapılan kullanıcı bilgisi
     const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
-    const isAdminUser = isGroupAdminSession();
-
     const sortBar = document.querySelector('.leaderboard-sort-bar');
     const sortButtons = sortBar ? Array.from(sortBar.querySelectorAll('.leaderboard-sort-button')) : [];
     const validSortModes = ['league', 'promotion', 'total', 'month', 'percentage', 'name'];
@@ -230,7 +156,6 @@ window.loadUserCards = async function loadUserCards() {
     // Artık olmayan kullanıcıların kartlarını kaldır
     existingCards.forEach((card, userId) => {
       if (!currentUserIds.includes(userId)) {
-        if (cardScrollObserver) cardScrollObserver.unobserve(card);
         card.remove();
       }
     });
@@ -309,9 +234,6 @@ window.loadUserCards = async function loadUserCards() {
       return `${diffDays} gün önce`;
     }
 
-    // Okuma serisi yapanları toplamak için array
-    const activeStreaks = [];
-
     orderedUsers.forEach(user => {
       const userId = String(user._id);
       const userStats = readingStatsByUser.get(userId) || [];
@@ -335,11 +257,6 @@ window.loadUserCards = async function loadUserCards() {
 
       const streak = calculateStreakForUser(userStats);
 
-      // Seri > 0 ise activeStreaks listesine ekle
-      if (streak > 0) {
-        activeStreaks.push({ name: user.name, streak: streak });
-      }
-
       // Progress bar
       const percent = totalDays > 0 ? Math.round((okudumDays / totalDays) * 100) : 0;
 
@@ -361,9 +278,7 @@ window.loadUserCards = async function loadUserCards() {
       const section = document.querySelector('.user-cards-section');
       if (section) {
         section.style.display = 'block';
-        setTimeout(() => {
-          section.classList.add('visible');
-        }, 50);
+        section.classList.add('visible');
       }
 
       // League info bar'ı da göster
@@ -382,9 +297,7 @@ window.loadUserCards = async function loadUserCards() {
       const userCardsHeader = document.querySelector('.user-cards-header');
       if (userCardsHeader) {
         userCardsHeader.style.display = 'block';
-        setTimeout(() => {
-          userCardsHeader.classList.add('visible');
-        }, 150);
+        userCardsHeader.classList.add('visible');
       }
 
       container.style.display = 'flex';
@@ -401,8 +314,7 @@ window.loadUserCards = async function loadUserCards() {
           card.classList.add('current-user-card');
         }
 
-        if (cardScrollObserver) cardScrollObserver.observe(card);
-        else card.classList.add('card-fade-in');
+        card.classList.add('card-fade-in');
       } else {
         // Giriş yapılan kullanıcı için özel class ekle
         if (currentUserInfo && currentUserInfo.userId === user._id) {
@@ -411,8 +323,7 @@ window.loadUserCards = async function loadUserCards() {
           card.classList.remove('current-user-card');
         }
 
-        if (cardScrollObserver) cardScrollObserver.observe(card);
-        else card.classList.add('card-fade-in');
+        card.classList.add('card-fade-in');
       }
 
       // Kullanıcılar sıralandıktan sonra kartların DOM sırasını da güncelle.
@@ -429,11 +340,11 @@ window.loadUserCards = async function loadUserCards() {
           <div class="user-league">${league.name}</div>
         </div>
         <button type="button" class="share-icon-wrapper" aria-label="${window.escapeHtml(user.name)} kullanıcısının okuma bilgilerini paylaş">
-          <img class="share-icon" src="images/share.webp" alt="Paylaş">
+          <img class="share-icon" src="/images/share.webp" alt="Paylaş">
         </button>
         <div class="league-badge-group">
           <div class="league-badge" title="${league.name} Ligi:  ${league.min} - ${league.max - 1} gün arası okuma">
-            <img src="images/${league.img}" alt="${league.name}">
+            <img src="/images/${league.img}" alt="${league.name}">
           </div>
           <div class="league-progress-text">${leagueProgressText}</div>
         </div>
@@ -511,579 +422,9 @@ window.loadUserCards = async function loadUserCards() {
       }
     });
 
-    // Seri sayısına göre sırala (en yüksekten en düşüğe)
-    activeStreaks.sort((a, b) => b.streak - a.streak);
+    const leagueInfoBar = document.querySelector('.league-info-bar');
+    if (leagueInfoBar) leagueInfoBar.style.display = 'flex';
 
-    let leagueInfoBar = document.querySelector('.league-info-bar');
-    if (leagueInfoBar) {
-      leagueInfoBar.style.display = 'flex';
-    }
-
-    // --- LİG ATLAMA BİLGİSİ (lastCongratulatedLeague) ---
-    const messagePanelsContainer = document.querySelector('.user-cards-message-panels');
-    document
-      .querySelectorAll('.league-promotion-message, .league-promotion-backlog')
-      .forEach((el) => el.remove());
-
-    // Önce mevcut okuma serisi / zayıf halka / tebrik mesajı panellerini kaldır
-    document
-      .querySelectorAll('.reading-streak-message, .weak-link-message, .everyone-read-message')
-      .forEach((el) => el.remove());
-
-    const today = new Date();
-    function formatDate(date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    const todayStr = formatDate(today);
-
-    function leagueRankByName(name) {
-      const i = leagues.findIndex((l) => l.name === name);
-      return i < 0 ? -1 : i;
-    }
-
-    function getFirstDateAtOrAboveMinOkudum(userId, minOkudum) {
-      const uid = String(userId);
-      const okudum = (readingStatsByUser.get(uid) || [])
-        .filter((s) => s.status === 'okudum')
-        .sort((a, b) => a.date.localeCompare(b.date));
-      let cum = 0;
-      for (const s of okudum) {
-        cum += 1;
-        if (cum >= minOkudum) return s.date;
-      }
-      return null;
-    }
-
-    const sortByLeagueHighFirst = (a, b) => leagueRankByName(b.league) - leagueRankByName(a.league);
-
-    const promotedToday = [];
-    const promotedBacklog = [];
-
-    users.forEach((user) => {
-      const userId = user._id;
-      const uidStr = String(userId);
-      const userStatsFiltered = readingStatsByUser.get(uidStr) || [];
-      const okudumCount = userStatsFiltered.filter((s) => s.status === 'okudum').length;
-      const currentLeague =
-        leagues.find((l) => okudumCount >= l.min && okudumCount < l.max) || leagues[leagues.length - 1];
-
-      // Varsayılan başlangıç ligi (Bronz, min=0) "lig atlama" olarak sayılmamalı.
-      if (currentLeague.min === 0) return;
-
-      const streakDays = calculateStreakForUser(userStatsFiltered);
-      const promotionDate = getFirstDateAtOrAboveMinOkudum(uidStr, currentLeague.min);
-      if (!promotionDate) return;
-
-      const row = {
-        userId,
-        name: user.name,
-        league: currentLeague.name,
-        streakDays,
-        promotionDate
-      };
-
-      if (promotionDate === todayStr) {
-        promotedToday.push(row);
-        return;
-      }
-
-      const lastC =
-        user.lastCongratulatedLeague != null && String(user.lastCongratulatedLeague).trim() !== ''
-          ? String(user.lastCongratulatedLeague).trim()
-          : 'Bronz';
-      if (currentLeague.name === lastC) return;
-
-      const rCur = leagueRankByName(currentLeague.name);
-      const rLast = leagueRankByName(lastC);
-      if (rCur < rLast) return;
-
-      promotedBacklog.push(row);
-    });
-
-    promotedToday.sort(sortByLeagueHighFirst);
-    promotedBacklog.sort((a, b) => {
-      const byDate = b.promotionDate.localeCompare(a.promotionDate);
-      return byDate !== 0 ? byDate : sortByLeagueHighFirst(a, b);
-    });
-
-    function buildCongratulateItems(rows) {
-      return rows.map((r) => ({ userId: r.userId, leagueName: r.league }));
-    }
-
-    function mountPromotionPanel(rows, options, insertBeforeNode) {
-      const { panelClass, titleHtml, withConfetti, subtitleHtml } = options;
-      if (!rows.length) return null;
-
-      const panel = document.createElement('div');
-      panel.className = panelClass;
-
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'promotion-message-content';
-
-      const copyLines = [];
-      const listLines = rows.map((u, index) => {
-        const isLast = index === rows.length - 1;
-        const punctuation = isLast ? '.' : ',';
-        const leagueDef = leagues.find((l) => l.name === u.league);
-        const days = leagueDef ? leagueDef.min : 0;
-        copyLines.push(
-          `⚡${days} gün - *${u.name}* ${u.league.toLowerCase()} lige yükseldi${punctuation}`
-        );
-        return `⚡${days} gün - <b class="promoted-username">${window.escapeHtml(u.name)}</b> <span class="promoted-league">${window.escapeHtml(u.league.toLowerCase())}</span> lige yükseldi${punctuation}`;
-      });
-
-      let bodyHtml = '';
-      if (titleHtml) {
-        bodyHtml += `<div class="promotion-panel-title">${titleHtml}</div>`;
-      }
-      bodyHtml += `<div class="promotion-promoted-list">${listLines.join('<br>')}</div>`;
-      if (subtitleHtml) {
-        bodyHtml += `<div class="promotion-subtitle-wrap"><span class="promotion-subtitle">${subtitleHtml}</span></div>`;
-      }
-      contentDiv.innerHTML = bodyHtml;
-      const headerPlain = (titleHtml || '').replace(/<[^>]+>/g, '').trim();
-      contentDiv.__plainCopyText = `${headerPlain}\n\n${copyLines.join('\n')}`;
-      panel.appendChild(contentDiv);
-
-      if (withConfetti) {
-        const confettiOverlay = document.createElement('div');
-        confettiOverlay.className = 'confetti-overlay';
-        panel.appendChild(confettiOverlay);
-      }
-
-      const leftEmoji = document.createElement('div');
-      leftEmoji.className = 'left-emoji';
-      panel.appendChild(leftEmoji);
-
-      const copyChip = document.createElement('div');
-      copyChip.className = 'copy-chip';
-      copyChip.style.cssText =
-        'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(150, 150, 150, 0.8); color: #444;';
-      copyChip.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
-      panel.appendChild(copyChip);
-
-      const userCardsSection = document.querySelector('.user-cards-section');
-      const ref =
-        insertBeforeNode ||
-        document.querySelector('.user-cards-header') ||
-        document.querySelector('.league-info-bar');
-      if (messagePanelsContainer) {
-        if (insertBeforeNode && insertBeforeNode.parentNode === messagePanelsContainer) {
-          messagePanelsContainer.insertBefore(panel, insertBeforeNode);
-        } else {
-          messagePanelsContainer.appendChild(panel);
-        }
-      } else if (userCardsSection && ref) {
-        userCardsSection.insertBefore(panel, ref);
-      }
-
-      if (withConfetti) {
-        const promoObserver = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting && !entry.target.classList.contains('confetti-triggered')) {
-                entry.target.classList.add('confetti-triggered');
-                const confetti = entry.target.querySelector('.confetti-overlay');
-                if (confetti) confetti.classList.add('show');
-              }
-            });
-          },
-          { threshold: 0.5 }
-        );
-        promoObserver.observe(panel);
-      }
-
-      const items = buildCongratulateItems(rows);
-      panel.style.cursor = 'pointer';
-      panel.addEventListener('click', async () => {
-        try {
-          const textToCopy =
-            contentDiv.__plainCopyText ||
-            contentDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
-          await navigator.clipboard.writeText(textToCopy);
-          if (isGroupAdminSession()) {
-            await postLastCongratulatedLeagues(items);
-          }
-          const chip = panel.querySelector('.copy-chip');
-          if (chip) {
-            const prev = chip.innerHTML;
-            chip.innerHTML = 'Kopyalandı ✅';
-            setTimeout(() => {
-              chip.innerHTML = prev;
-            }, 1500);
-          }
-        } catch (err) {
-          console.error('Panoya kopyalama veya kayıt hatası:', err);
-        }
-      });
-
-      setTimeout(() => panel.classList.add('message-fade-in'), 50);
-      return panel;
-    }
-
-    const leagueBarEl = document.querySelector('.league-info-bar');
-    const userCardsHeaderEl = document.querySelector('.user-cards-header');
-    let insertAnchor = messagePanelsContainer ? null : userCardsHeaderEl || leagueBarEl;
-
-    if (promotedBacklog.length > 0) {
-      const bl = mountPromotionPanel(
-        promotedBacklog,
-        {
-          panelClass: 'league-promotion-backlog',
-          titleHtml: promotedBacklog.length === 1
-            ? 'Lig atlayan arkadaşımızı tebrik ediyoruz! 🎉🎉'
-            : 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
-          withConfetti: true,
-          subtitleHtml: isAdminUser
-            ? 'Lig atlaması henüz kutlanmamış kullanıcılar var. Panele tıklayıp mesajı kopyalayabilirsiniz.'
-            : '',
-          allowLeagueUpdate: isAdminUser
-        },
-        insertAnchor
-      );
-      if (bl) insertAnchor = bl;
-    }
-
-    if (promotedToday.length > 0) {
-      mountPromotionPanel(
-        promotedToday,
-        {
-          panelClass: 'league-promotion-message',
-          titleHtml: promotedToday.length === 1
-            ? 'Lig atlayan arkadaşımızı tebrik ediyoruz! 🎉🎉'
-            : 'Lig atlayan arkadaşlarımızı tebrik ediyoruz! 🎉🎉',
-          withConfetti: true,
-          subtitleHtml: isAdminUser
-            ? 'Bugün lig atlayan kullanıcılar var. Panele tıklayıp mesajı kopyalayabilirsiniz.'
-            : ''
-        },
-        insertAnchor
-      );
-    }
-
-    // --- ART ARDA OKUMAYANLAR BİLGİSİ ---
-    // Alternatif hatırlatma cümleleri
-    const reminderAlternatives = [
-      "Okumalarımıza düzenli devam edebilmek dileğiyle 🌿",
-      "Okuma alışkanlığımızı birlikte güçlendirelim inşaAllah 📖",
-      "Küçük adımlar, büyük alışkanlıklar oluşturur. Takipteyiz! 📘",
-      "Bu hatırlatma bir vesile olsun, kaldığımız yerden devam edelim 🔄",
-      "Düzenli okumalarla bereketli bir sürece birlikte yürüyelim 🌱",
-      "İstikrar güzeldir; eksiklerimizi birlikte tamamlayalım 🤝",
-      "Okuyanlara tebrikler, henüz okumayanlara nazik bir davet 😊",
-      "İstikrarın güzelliğini hep birlikte yaşayalım 🌟",
-      "Daha okumasını tamamlamayanlar için nazik bir hatırlatma 📖",
-      "Okumalarımıza birlikte devam edebilmek duasıyla 🤲",
-      "Birlikte ilerlemek, devam etmenin en güzel hali 👣",
-      "Okumalarımıza sadakatle devam edelim inşaAllah 🕊️",
-      "Her gün bir satır da olsa, devam edelim ✍️",
-      "İstikrarla yürüdüğümüz bu yolda hep birlikteyiz 🛤️",
-      "Bu küçük hatırlatma, güzel bir başlangıç olsun 🌸",
-      "Unutmak kolay, alışkanlık ise emek ister. Devam edelim 💪",
-      "Güzel alışkanlıklar birlikte inşa edilir 🍃",
-      "Okuma yolculuğumuza birlikte güç katalım 🚀",
-      "Birlikte tamamlanan okumalarda bereket vardır 🧡",
-      "Düzenli okumalarla kalplerimizi diri tutalım ❤️🔥",
-      "Hatırlatmak bizden, gayret sizden 🙏",
-      "Okumaları unutmayalım 🔔",
-      "İstikrarlı adımlar en kalıcı olanlardır ⏳",
-      "Okuma halkamızın bir parçası olmaya ne dersiniz? 💫",
-      "Birlikte okumak, yalnız okumaktan daha değerlidir 🤝",
-      "Okudukça zihin açılır, gönül ferahlar ☀️",
-      "İstikrarlı olan kazanır; bugünü de boş geçmeyelim ⏰",
-      "Birlikte okumak, birlikte güçlenmektir 💪",
-      "Bugün okumaya vakit ayırmak, kendine bir iyiliktir 💝",
-      "Okuma halkamızda siz de yerinizi alın 🤗",
-      "Bir satır da bugün için, alışkanlık zincirini kırma 🔗",
-      "Okumak, gönlü besleyen en güzel alışkanlıktır 🌾",
-      "Okuma yolculuğumuzda mola değil, devam zamanı 🔄",
-      "Zinciri kırmayalım, okumaya devam 🔗",
-      "Az da olsa devamlı okuyalım 💧",
-      "Kaldığımız yerden aynı şevkle devam! 🚀",
-      "Birkaç satır da olsa okuyalım 📖",
-      "Birlikte okuyor, birlikte güzelleşiyoruz 🌱",
-      "Ruhumuza kısa bir okuma molası ☕",
-      "Günün yoğunluğuna kısa bir okuma arası ☕",
-      "Günün bereketini okumayla yakalayalım ☀️",
-      "Okuma saatimiz geldi, sizleri de aramızda görmek isteriz ⏰",
-      "Günü kapatmadan okumalarımızı tamamlayalım ⌛",
-      "Küçük bir gayret, büyük bereket 🌾",
-      "Kitaplar bizi bekler, hadi okumaya 📚",
-      "Gönlümüze iyi gelecek satırlara dönelim 🕊️",
-      "Okuma kervanımız yola devam ediyor 🛤️",
-      "Okumalarımızı tamamlayıp güne huzur katalım 🍂"
-    ];
-
-    // Her kullanıcı için ardışık okumama günlerini hesapla (Bugünden geriye takvim bazlı)
-    const consecutiveMissed = [];
-
-    users.forEach(user => {
-      const userStatMap = {};
-      const userDates = [];
-      (readingStatsByUser.get(String(user._id)) || [])
-        .forEach(s => {
-          userStatMap[s.date] = s.status;
-          if (s.date) userDates.push(s.date);
-        });
-
-      // Kullanıcının hiç kayıt verisi yoksa atla
-      if (userDates.length === 0) return;
-
-      userDates.sort();
-      const userEarliestDate = userDates[0]; // Kullanıcının sistemdeki kendi en eski kayıt tarihi
-
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const dayStr = String(today.getDate()).padStart(2, '0');
-      const todayKey = `${year}-${month}-${dayStr}`;
-
-      const todayStatus = userStatMap[todayKey];
-      let count = 0;
-      let d;
-
-      if (todayStatus === 'okudum') {
-        // Bugün okunduysa okumama serisi yok demektir
-        return;
-      } else if (todayStatus === 'okumadım') {
-        // Bugün açıkça okumadım diye işaretlendiyse aramaya bugünden başla
-        d = new Date(today);
-      } else {
-        // Bugün henüz işaretlenmediyse bugünü sayma, aramaya dünden başla
-        d = new Date(today);
-        d.setDate(d.getDate() - 1);
-      }
-
-      while (true) {
-        const currYear = d.getFullYear();
-        const currMonth = String(d.getMonth() + 1).padStart(2, '0');
-        const currDayStr = String(d.getDate()).padStart(2, '0');
-        const dateKey = `${currYear}-${currMonth}-${currDayStr}`;
-
-        // 'okudum' olan güne ulaşıldığında okumama serisi kesilir
-        if (userStatMap[dateKey] === 'okudum') {
-          break;
-        }
-
-        count++;
-
-        // Kullanıcının kendi en eski kayıt tarihine ulaşıldıysa daha geriye gitme
-        if (userEarliestDate && dateKey <= userEarliestDate) {
-          break;
-        }
-
-        d.setDate(d.getDate() - 1);
-      }
-
-      if (count > 1) {
-        consecutiveMissed.push({ name: user.name, days: count });
-      }
-    });
-
-    // Gün sayısına göre sırala (en yüksekten en düşüğe)
-    consecutiveMissed.sort((a, b) => b.days - a.days);
-
-    function insertMotivationPanel(panelEl) {
-      const userCardsSection = document.querySelector('.user-cards-section');
-      if (!userCardsSection || !panelEl) return;
-      if (messagePanelsContainer) {
-        messagePanelsContainer.appendChild(panelEl);
-        return;
-      }
-      // Lig tebrik panellerinden sonra, başlıktan önce: okuma serisi → art arda okumayanlar
-      const ref =
-        userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
-      userCardsSection.insertBefore(panelEl, ref);
-    }
-
-    function addCopyChip(panelEl) {
-      const copyChip = document.createElement('div');
-      copyChip.className = 'copy-chip';
-      copyChip.style.cssText =
-        'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(150, 150, 150, 0.8); color: #444;';
-      copyChip.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
-      panelEl.appendChild(copyChip);
-      return copyChip;
-    }
-
-    if (activeStreaks.length > 0) {
-      const streakPanel = document.createElement('div');
-      streakPanel.className = 'reading-streak-message';
-
-      const chainText = document.createElement('div');
-      chainText.className = 'chain-text';
-      chainText.textContent = 'Zinciri Kırma';
-
-      const messageContent = document.createElement('div');
-      messageContent.className = 'streak-panel-body';
-      messageContent.innerHTML =
-        '<span class="streak-section-title">Okuma Serisi Yapanlar:</span>' +
-        '<div class="streak-names-block">' +
-        activeStreaks
-          .map(
-            (u) =>
-              `<b class="streak-username">${window.escapeHtml(u.name)}</b> (<span class="streak-days">${u.streak} gün</span>)`
-          )
-          .join(', ') +
-        '</div>' +
-        '<span class="streak-tagline">Az da olsa devamlı okumak.</span>';
-
-      const leftEmoji = document.createElement('div');
-      leftEmoji.className = 'left-emoji streak-clap-emoji';
-      streakPanel.appendChild(leftEmoji);
-      addCopyChip(streakPanel);
-      streakPanel.appendChild(chainText);
-      streakPanel.appendChild(messageContent);
-
-      insertMotivationPanel(streakPanel);
-      streakPanel.style.cursor = 'pointer';
-      streakPanel.addEventListener('click', async () => {
-        try {
-          const text =
-            '*Okuma serisi yapanlar:*\n' +
-            activeStreaks.map((u) => `${u.name} (${u.streak} gün)`).join(',\n');
-          await navigator.clipboard.writeText(text);
-          const chip = streakPanel.querySelector('.copy-chip');
-          if (chip) {
-            const prev = chip.innerHTML;
-            chip.innerHTML = 'Kopyalandı ✅';
-            setTimeout(() => {
-              chip.innerHTML = prev;
-            }, 1500);
-          }
-        } catch (err) {
-          console.error('Panoya kopyalama başarısız oldu:', err);
-        }
-      });
-      setTimeout(() => streakPanel.classList.add('message-fade-in'), 50);
-    }
-
-    if (consecutiveMissed.length > 0) {
-      const weakPanel = document.createElement('div');
-      weakPanel.className = 'weak-link-message';
-
-      const banner = document.createElement('div');
-      banner.className = 'weak-link-banner';
-      banner.textContent = 'Zayıf Halka';
-
-      const messageContent = document.createElement('div');
-      messageContent.className = 'weak-link-body';
-      messageContent.innerHTML =
-        '<span class="missed-title">Art arda okumayanlar:</span>' +
-        '<div class="weak-names-block">' +
-        consecutiveMissed
-          .map(
-            (u) =>
-              `<b class="missed-username">${window.escapeHtml(u.name)}</b> (<span class="missed-days">${u.days} gün</span>)`
-          )
-          .join(', ') +
-        '</div>' +
-        '<span class="missed-reminder">Hususî okumanı terk etme.</span>';
-
-      const leftEmoji = document.createElement('div');
-      leftEmoji.className = 'left-emoji';
-      weakPanel.appendChild(leftEmoji);
-      addCopyChip(weakPanel);
-      weakPanel.appendChild(banner);
-      weakPanel.appendChild(messageContent);
-
-      insertMotivationPanel(weakPanel);
-      weakPanel.style.cursor = 'pointer';
-      weakPanel.addEventListener('click', async () => {
-        try {
-          const randomReminder =
-            reminderAlternatives[Math.floor(Math.random() * reminderAlternatives.length)];
-          const text =
-            '*Art arda okumayanlar:*\n' +
-            consecutiveMissed.map((u) => `${u.name} (${u.days} gün)`).join(',\n') +
-            '\n\n' +
-            randomReminder;
-          await navigator.clipboard.writeText(text);
-          const chip = weakPanel.querySelector('.copy-chip');
-          if (chip) {
-            const prev = chip.innerHTML;
-            chip.innerHTML = 'Kopyalandı ✅';
-            setTimeout(() => {
-              chip.innerHTML = prev;
-            }, 1500);
-          }
-        } catch (err) {
-          console.error('Panoya kopyalama başarısız oldu:', err);
-        }
-      });
-      setTimeout(() => weakPanel.classList.add('message-fade-in'), 50);
-    }
-
-    if (consecutiveMissed.length === 0) {
-      // Bugün herkesin okuduğunu kontrol et
-      let everyoneReadToday = true;
-      users.forEach(user => {
-        const todayStat = (readingStatsByUser.get(String(user._id)) || [])
-          .find(s => s.date === todayStr);
-        if (!todayStat || todayStat.status !== 'okudum') {
-          everyoneReadToday = false;
-        }
-      });
-
-      // Sadece gerçekten bugün herkes okumuşsa tebrik mesajı göster
-      if (everyoneReadToday) {
-        const everyoneReadMsg = document.createElement('div');
-        everyoneReadMsg.className = 'everyone-read-message';
-
-        const messageContent = document.createElement('div');
-        messageContent.className = 'everyone-read-body';
-        messageContent.innerHTML =
-          '<span class="everyone-read-title">Harika! Herkes bugün okumalarını yapmış! 🎉🎉</span>' +
-          '<span class="everyone-read-reminder">Bu güzel alışkanlığı devam ettirelim!</span>';
-        everyoneReadMsg.appendChild(messageContent);
-
-        // Sol alt köşe emoji ekle
-        const leftEmoji = document.createElement('div');
-        leftEmoji.className = 'left-emoji party-emoji';
-        everyoneReadMsg.appendChild(leftEmoji);
-
-        // Kopyala yazısı ve emoji ekle
-        const copyText = document.createElement('div');
-        copyText.className = 'copy-chip';
-        copyText.style.cssText = 'position: absolute; bottom: 8px; right: 12px; font-size: 15px; font-weight: bold; background: rgba(255, 255, 255, 0.9); padding: 3px 3px 3px 7px; border-radius: 8px; border: 1px solid rgba(150, 150, 150, 0.8); color: #444;';
-        copyText.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
-        everyoneReadMsg.appendChild(copyText);
-
-        const userCardsSection = document.querySelector('.user-cards-section');
-        if (messagePanelsContainer) {
-          messagePanelsContainer.appendChild(everyoneReadMsg);
-        } else if (userCardsSection) {
-          const refBeforeHeader =
-            userCardsHeaderEl || leagueInfoBar || userCardsSection.firstChild;
-          if (refBeforeHeader) {
-            userCardsSection.insertBefore(everyoneReadMsg, refBeforeHeader);
-          } else {
-            userCardsSection.appendChild(everyoneReadMsg);
-          }
-        }
-        // Tıklama ile panoya kopyalama ve bildirim
-        everyoneReadMsg.style.cursor = 'pointer';
-        everyoneReadMsg.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(messageContent.innerText);
-            const chip = everyoneReadMsg.querySelector('.copy-chip');
-            if (chip) {
-              const prev = chip.innerHTML;
-              chip.innerHTML = 'Kopyalandı ✅';
-              setTimeout(() => { chip.innerHTML = prev; }, 1500);
-            }
-          } catch (err) {
-            console.error('Panoya kopyalama başarısız oldu:', err);
-          }
-        });
-        setTimeout(() => {
-          everyoneReadMsg.classList.add('message-fade-in');
-        }, 50);
-      }
-    }
   } catch (error) {
     console.error('Kullanıcı kartları yüklenirken hata oluştu:', error);
   }

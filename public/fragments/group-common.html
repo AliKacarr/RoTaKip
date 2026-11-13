@@ -1,0 +1,656 @@
+<div style="display: flex; align-items: center; gap: 12px;">
+      <button onclick="window.location.href='/'" class="showGroups" title="Grupları Görüntüle">
+        <i class="fa-solid fa-user-group" style="font-size: 20px; margin-right: 7px; color: #4e54c8;"></i>
+        Gruplar</button>
+      <div id="secretAdminLogin">
+
+      </div>
+      <button id="profileButton" class="profileButton" title="Yönetici Girişi">
+        <i id="profileButtonIcon" class="fa-solid fa-sign-in-alt"
+          style="font-size: 20px; margin-right: 7px; color: #0056ff;"></i>
+        <span id="profileButtonText" class="profileButtonText">Giriş Yap</span>
+      </button>
+    </div>
+
+    <!-- Modern Groups Login Modal -->
+    <div id="groupsAuthLoginModal" class="groups-auth-login-modal">
+      <div class="groups-auth-login-modal-content">
+        <div class="groups-auth-login-modal-header">
+          <div class="groups-auth-login-modal-icon">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <h2 class="groups-auth-login-modal-title">Gruba Giriş Yap</h2>
+          <button class="groups-auth-login-close-btn" id="closeGroupsAuthLoginModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="groups-auth-login-modal-body">
+          <!-- Bilgilendirme mesajı -->
+          <div id="groupsAuthLoginInfoMessage" class="groups-auth-login-info-message" style="display: none;">
+            <div class="groups-auth-info-icon">
+              <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="groups-auth-info-text">
+              <p id="groupsAuthLoginInfoText"></p>
+            </div>
+          </div>
+
+          <form id="groupsAuthLoginForm" class="groups-auth-login-form">
+            <div class="groups-auth-form-group">
+              <div class="groups-auth-input-container">
+                <i class="fas fa-id-card groups-auth-input-icon"></i>
+                <input type="text" id="groupsAuthLoginName" class="groups-auth-form-input"
+                  placeholder="Üye Adınızı Giriniz" autocomplete="username" required>
+              </div>
+            </div>
+
+            <div class="groups-auth-form-group">
+              <div class="groups-auth-input-container">
+                <i class="fas fa-lock groups-auth-input-icon"></i>
+                <input type="password" id="groupsAuthLoginPassword" class="groups-auth-form-input"
+                  placeholder="Üye Şifrenizi Giriniz" autocomplete="current-password" required>
+                <button type="button" class="groups-auth-password-toggle" id="groupsAuthTogglePassword">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="groups-auth-login-actions">
+              <button type="submit" class="groups-auth-login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Giriş Yap
+              </button>
+            </div>
+
+            <div id="groupsAuthLoginError" class="groups-auth-error-message"></div>
+
+            <div class="groups-auth-login-links">
+              <a href="" class="groups-auth-forgot-password-link" id="groupsAuthForgotPasswordLink">
+                <i class="fas fa-key"></i>
+                Şifremi Unuttum
+              </a>
+              <a href="" class="groups-auth-join-group-link" id="groupsAuthJoinGroupLink">
+                <i class="fas fa-user-plus"></i>
+                Gruba Üye Ol
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="groupsAuthForgotModal" class="groups-auth-forgot-modal">
+      <div class="groups-auth-forgot-modal-content">
+        <div class="groups-auth-forgot-modal-header">
+          <div class="groups-auth-forgot-modal-icon">
+            <i class="fas fa-key"></i>
+          </div>
+          <h2 class="groups-auth-forgot-modal-title">Şifremi Unuttum</h2>
+          <button class="groups-auth-forgot-close-btn" id="closeGroupsAuthForgotModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="groups-auth-forgot-modal-body">
+          <div class="groups-auth-forgot-content">
+            <p class="groups-auth-forgot-description">
+              Kullanıcı adınızı veya şifrenizi unuttuysanız, aşağıdakileri deneyebilirsiniz:
+            </p>
+
+            <div class="groups-auth-forgot-options">
+              <div class="groups-auth-forgot-option">
+                <div class="groups-auth-forgot-option-icon">
+                  <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="groups-auth-forgot-option-content">
+                  <h3>Grup Yöneticisi ile İletişime Geçin</h3>
+                  <p>Grup yöneticinizle iletişime geçerek yeni bir davet alabilirsiniz.</p>
+                </div>
+              </div>
+
+              <div class="groups-auth-forgot-option">
+                <div class="groups-auth-forgot-option-icon">
+                  <i class="fas fa-headset"></i>
+                </div>
+                <div class="groups-auth-forgot-option-content">
+                  <h3>Destek Ekibimizle İletişime Geçin</h3>
+                  <p>Teknik destek için bizimle iletişime geçebilirsiniz.</p>
+                  <a href="mailto:alikacardev@gmail.com" class="groups-auth-support-email">
+                    <i class="fas fa-envelope"></i>
+                    alikacardev@gmail.com
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Join Group Modal -->
+    <div id="groupsAuthJoinModal" class="groups-auth-join-modal">
+      <div class="groups-auth-join-modal-content">
+        <div class="groups-auth-join-modal-body">
+          <!-- Grup Bilgileri Bölümü -->
+          <div class="groups-auth-join-info-section">
+            <div class="groups-auth-join-group-info">
+              <div class="groups-auth-join-group-avatar">
+                <img id="groupsAuthJoinGroupAvatar" src="/images/open-book.webp" alt="Grup Avatar">
+              </div>
+              <div class="groups-auth-join-group-details">
+                <h3 id="groupsAuthJoinGroupName">Grup Adı</h3>
+                <p id="groupsAuthJoinGroupId">@grup-id</p>
+              </div>
+              <button class="groups-auth-join-close-btn" id="closeGroupsAuthJoinModal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <form id="groupsAuthJoinForm" class="groups-auth-join-form-content">
+            <!-- Kullanıcı Bilgileri Bölümü -->
+            <div class="groups-auth-join-form-section">
+              <h4 class="groups-auth-join-section-title">
+                <i class="fas fa-user"></i>
+                Kullanıcı Bilgileriniz
+              </h4>
+
+              <div class="groups-auth-join-form-group">
+                <div class="groups-auth-join-form-label">Profil Resmi</div>
+                <div class="groups-auth-join-input-container">
+                  <label for="groupsAuthJoinProfileImageInput" class="groups-auth-join-file-input-label">
+                    <i class="fas fa-image groups-auth-join-file-input-icon"></i>
+                    <span class="groups-auth-join-file-input-text">Bir resim seçin...</span>
+                    <span class="groups-auth-join-file-name" id="groupsAuthJoinFileName" style="display: none;"></span>
+                  </label>
+                  <input type="file" id="groupsAuthJoinProfileImageInput" accept="image/*">
+                  <button type="button" class="groups-auth-join-avatar-btn" id="groupsAuthJoinAvatarBtn">
+                    ✨
+                  </button>
+                </div>
+              </div>
+
+              <div class="groups-auth-join-form-group">
+                <label for="groupsAuthJoinUserNameInput">Kullanıcı Adı</label>
+                <div class="groups-auth-join-input-container">
+                  <i class="fas fa-user groups-auth-join-input-icon"></i>
+                  <input type="text" id="groupsAuthJoinUserNameInput" class="groups-auth-join-form-input" required
+                    placeholder="Kullanıcı adınızı giriniz" maxlength="40">
+                </div>
+              </div>
+            </div>
+
+            <!-- Üye Girişi Bilgileri Bölümü -->
+            <div class="groups-auth-join-form-section">
+              <h4 class="groups-auth-join-section-title">
+                <i class="fas fa-key"></i>
+                Üye Girişi Bilgileriniz
+              </h4>
+
+              <div class="groups-auth-join-form-group">
+                <label for="groupsAuthJoinMemberNameInput">Üye Adı</label>
+                <div class="groups-auth-join-input-container">
+                  <i class="fas fa-id-card groups-auth-join-input-icon"></i>
+                  <input type="text" id="groupsAuthJoinMemberNameInput" class="groups-auth-join-form-input" required
+                    placeholder="Üye adınızı giriniz" maxlength="40" autocomplete="username">
+                </div>
+              </div>
+
+              <div class="groups-auth-join-form-group">
+                <label for="groupsAuthJoinMemberPasswordInput">Üye Şifresi</label>
+                <div class="groups-auth-join-input-container">
+                  <i class="fas fa-lock groups-auth-join-input-icon"></i>
+                  <input type="password" id="groupsAuthJoinMemberPasswordInput" class="groups-auth-join-form-input"
+                    required minlength="6" placeholder="En az 6 karakter" maxlength="40" autocomplete="new-password">
+                  <button type="button" class="groups-auth-join-password-toggle" id="groupsAuthJoinPasswordToggle">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Butonlar -->
+            <div class="groups-auth-join-actions">
+              <button type="button" class="groups-auth-join-cancel-btn" id="groupsAuthJoinCancelBtn">
+                <i class="fas fa-times-circle"></i>
+                İptal
+              </button>
+              <button type="submit" class="groups-auth-join-submit-btn" id="groupsAuthJoinSubmitBtn">
+                <i class="fas fa-paper-plane"></i>
+                Katılma İsteği Gönder
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Join Request Success Modal -->
+    <div id="groupsAuthJoinSuccessModal" class="groups-auth-join-success-modal">
+      <div class="groups-auth-join-success-modal-content">
+        <div class="groups-auth-join-success-modal-header">
+          <div class="groups-auth-join-success-modal-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h2 class="groups-auth-join-success-modal-title">İstek Gönderildi!</h2>
+          <button class="groups-auth-join-success-close-btn" id="closeGroupsAuthJoinSuccessModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="groups-auth-join-success-modal-body">
+          <div class="groups-auth-join-success-content">
+            <div class="groups-auth-join-success-message">
+              <p>Katılma isteğiniz grup yöneticisine iletildi. Onay bekleniyor...</p>
+            </div>
+
+            <div class="groups-auth-join-success-actions">
+              <button type="button" class="groups-auth-join-success-cancel-btn" id="groupsAuthJoinSuccessCancelBtn">
+                <i class="fas fa-times-circle"></i>
+                İptal Et
+              </button>
+              <button type="button" class="groups-auth-join-success-view-btn" id="groupsAuthJoinSuccessViewBtn">
+                Grubu Görüntüle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Welcome Invite Modal -->
+    <div id="welcomeInviteModal" class="welcome-invite-modal">
+      <div class="welcome-invite-modal-content">
+        <div class="welcome-invite-modal-body">
+          <div class="welcome-invite-content">
+            <div class="welcome-invite-group-info">
+              <button class="welcome-invite-close-btn" id="closeWelcomeInviteModal">
+                <i class="fas fa-times"></i>
+              </button>
+              <div class="welcome-invite-group-avatar">
+                <img id="welcomeInviteGroupAvatar" src="/images/open-book.webp" alt="Grup Avatar">
+              </div>
+              <div class="welcome-invite-group-details">
+                <h3 id="welcomeInviteGroupName">Grup Adı</h3>
+                <div class="welcome-user-name" id="welcomeUserName">Hoşgeldin!</div>
+              </div>
+            </div>
+
+            <form id="welcomeInviteForm" class="welcome-invite-form-content">
+              <!-- Kullanıcı Bilgileri Formu -->
+              <div class="welcome-invite-form">
+
+                <!-- Profil Resmi Seçimi -->
+                <div class="welcome-form-group">
+                  <div class="welcome-form-label">Profil Resmi</div>
+                  <div class="welcome-profile-section">
+                    <div class="welcome-profile-preview">
+                      <img id="welcomeInviteProfilePreview" src="/images/default.png" alt="Profil Önizleme">
+                    </div>
+                    <div class="welcome-profile-buttons">
+                      <input type="file" id="welcomeInviteProfileImage" accept="image/*" style="display: none;">
+                      <div class="welcome-button-row">
+                        <button type="button" class="welcome-remove-btn" id="welcomeInviteRemoveBtn">
+                          <i class="fas fa-trash"></i>
+                          Sil
+                        </button>
+                        <button type="button" class="welcome-upload-btn" id="welcomeInviteUploadBtn">
+                          <i class="fas fa-upload"></i>
+                          Resim Seç
+                        </button>
+                      </div>
+                      <button type="button" class="welcome-avatar-btn" id="welcomeInviteAvatarBtn">
+                        <i class="fa-solid fa-images"></i>
+                        Avatar Seç
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="welcome-form-group">
+                  <label for="welcomeInviteUserName">Kullanıcı Adı</label>
+                  <div class="welcome-input-container">
+                    <i class="fas fa-user welcome-input-icon"></i>
+                    <input type="text" id="welcomeInviteUserName" class="welcome-form-input"
+                      placeholder="Adınızı giriniz" maxlength="40">
+                  </div>
+                  <div class="welcome-info-message">
+                    <i class="fas fa-info-circle welcome-info-icon"></i>
+                    <div class="welcome-info-text">
+                      <p>Gruptaki kullanıcı adınız</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="welcome-form-group">
+                  <label for="welcomeInviteMemberName">Benzersiz Üye Adı</label>
+                  <div class="welcome-input-container">
+                    <i class="fas fa-id-card welcome-input-icon"></i>
+                    <input type="text" id="welcomeInviteMemberName" class="welcome-form-input"
+                      placeholder="Kullanıcı adınızı giriniz" maxlength="40" autocomplete="username">
+                  </div>
+                  <div class="welcome-info-message">
+                    <i class="fas fa-info-circle welcome-info-icon"></i>
+                    <div class="welcome-info-text">
+                      <p>Gruba giriş için üye adınız</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="welcome-form-group">
+                  <label for="welcomeInviteMemberPassword">Üye Şifresi</label>
+                  <div class="welcome-input-container">
+                    <i class="fas fa-lock welcome-input-icon"></i>
+                    <input type="password" id="welcomeInviteMemberPassword" class="welcome-form-input"
+                      required minlength="6" placeholder="En az 6 karakter" maxlength="40" autocomplete="new-password">
+                    <button type="button" class="welcome-password-toggle" id="welcomeInviteMemberPasswordToggle">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
+                  <div class="welcome-info-message">
+                    <i class="fas fa-info-circle welcome-info-icon"></i>
+                    <div class="welcome-info-text">
+                      <p>Gruba giriş için şifreniz</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="welcome-invite-actions">
+                <button type="button" class="welcome-invite-cancel-btn" id="welcomeInviteCancelBtn">
+                  <i class="fas fa-times-circle"></i>
+                  İptal
+                </button>
+                <button type="submit" class="welcome-invite-join-btn" id="welcomeInviteJoinBtn">
+                  <i class="fas fa-save"></i>
+                  Kaydet
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hazır Görseller Modal -->
+    <div id="readyImagesModal" class="ready-images-modal">
+      <div class="ready-images-modal-content">
+        <div class="modal-header">
+          <h3>
+            <i class="fa-solid fa-images"></i>
+            Hazır Görseller
+          </h3>
+          <button type="button" class="modal-close-btn" onclick="toggleReadyImagesModal()">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="avatar-grid" id="avatarGrid">
+            <!-- Avatar resimleri JavaScript ile yüklenecek -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Avatar Selection Modal -->
+    <div id="userAvatarModal" class="ready-images-modal">
+      <div class="ready-images-modal-content">
+        <div class="modal-header">
+          <h3>
+            <i class="fa-solid fa-images"></i>
+            Avatar Seç
+          </h3>
+          <button type="button" class="modal-close-btn" onclick="toggleUserAvatarModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="avatar-grid" id="userAvatarGrid">
+            <!-- User avatar resimleri JavaScript ile yüklenecek -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add User Avatar Selection Modal -->
+    <div id="addUserAvatarModal" class="ready-images-modal">
+      <div class="ready-images-modal-content">
+        <div class="modal-header">
+          <h3>
+            <i class="fa-solid fa-images"></i>
+            Avatar Seç
+          </h3>
+          <button type="button" class="modal-close-btn" onclick="toggleAddUserAvatarModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="avatar-grid" id="addUserAvatarGrid">
+            <!-- User avatar resimleri JavaScript ile yüklenecek -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div id="authenticatedUserAreas" class="authenticated-user-areas" aria-hidden="true">
+      <div class="authenticated-user-areas-content">
+    <!-- Kullanıcı İstatistik Bilgi Alanı -->
+    <div class="user-stats-info-area">
+      <div class="user-stats-header">
+        <!-- Günlük Görevler Butonu -->
+        <div id="dailyTasksButton" class="daily-tasks-button">
+          <div class="tasks-icon">📋</div>
+          <div class="tasks-text">Günlük Görevler</div>
+        </div>
+
+        <div class="user-stats-title">
+          <i class="fa-regular fa-compass"></i>
+          Okuma Yolculuğum
+        </div>
+
+        <!-- Günlük Hediye Butonu -->
+        <div id="dailyGiftButton" class="daily-gift-button">
+          <div class="gift-icon">🎁</div>
+          <div class="gift-text">Günün Hediyesi</div>
+        </div>
+      </div>
+      <div class="user-stats-content">
+        <div class="confetti-overlay"></div>
+        <!-- Sol Kısım: Giriş Serisi -->
+        <div class="user-stats-left">
+          <div class="user-stats-streak">
+            <div class="user-stats-streak-info">
+              <div class="user-stats-streak-icon">
+                <img src="/images/fire.webp" alt="Ateş">
+              </div>
+              <div class="user-stats-streak-number" id="userLoginStreak">0</div>
+            </div>
+            <div class="user-stats-streak-label">Günlük Giriş Serisi</div>
+          </div>
+        </div>
+
+        <!-- Orta Kısım: Lig Bilgisi -->
+        <div class="user-stats-center">
+          <div class="user-stats-league-progress-container">
+            <!-- Mevcut Lig -->
+            <div class="user-stats-current-league">
+              <img id="currentLeagueImg" src="" alt="Mevcut Liginiz" class="user-stats-league-img">
+              <div class="user-stats-league-name" id="currentLeagueName"></div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="user-stats-league-progress-bar">
+              <div class="user-stats-progress-info">
+                <span id="leagueProgressText"></span>
+              </div>
+              <div class="user-stats-progress-track">
+                <div class="user-stats-progress-fill" id="leagueProgressFill" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Sonraki Lig -->
+            <div class="user-stats-next-league">
+              <img id="nextLeagueImg" src="" alt="Sonraki Liginiz" class="user-stats-league-img">
+              <div class="user-stats-league-name" id="nextLeagueName"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sağ Kısım: Toplam Okuma -->
+        <div class="user-stats-right">
+          <div class="user-stats-reading">
+            <div class="user-stats-reading-info">
+              <div class="user-stats-reading-icon">
+                <img src="/images/yıldız.png" alt="Yıldız">
+              </div>
+              <div class="user-stats-reading-number" id="userTotalReading"></div>
+            </div>
+            <div class="user-stats-reading-label">Toplam Okuma Günü</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      </div>
+    </div>
+
+<div id="dailyGiftModal" class="daily-gift-modal" style="display: none;">
+      <div class="daily-gift-overlay"></div>
+      <div class="daily-gift-content">
+        <div class="daily-gift-header">
+          <h2 class="daily-gift-title" id="esmaulhusnaName">Esmaül Hüsna</h2>
+          <button class="daily-gift-close" id="dailyGiftClose">×</button>
+        </div>
+        <div class="daily-gift-body">
+          <div class="daily-gift-description" id="esmaulhusnaDescription">
+            Açıklama yükleniyor...
+          </div>
+          <div class="daily-gift-video-container">
+            <a href="#" id="esmaulhusnaVideoLink" class="daily-gift-video-link" target="_blank">
+              <div class="daily-gift-video-thumbnail-container">
+                <img id="esmaulhusnaVideoThumbnail" class="daily-gift-video-thumbnail" src="" alt="Video Thumbnail"
+                  style="display: none;">
+                <span class="daily-gift-play-icon"><i class="fa-solid fa-play"></i></span>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="daily-gift-footer">
+          <p class="daily-gift-quote">
+            En güzel isimler Allah'ındır; bu güzel isimlerle O'na dua edin, O'nun isimleri hakkında doğru inançtan
+            sapanları kendi başlarına bırakın. Onlar yaptıklarının cezasını çekecekler! (A'râf Sûresi, 180)
+          </p>
+        </div>
+      </div>
+    </div>
+
+<div id="dailyTasksModal" class="daily-tasks-modal" style="display: none;">
+      <div class="daily-tasks-overlay"></div>
+      <div class="daily-tasks-content">
+        <div class="daily-tasks-header">
+          <h2 class="daily-tasks-title">
+            <i class="fa-solid fa-list-check"></i>
+            Günlük Görevler
+          </h2>
+          <button class="daily-tasks-close" id="dailyTasksClose">×</button>
+        </div>
+
+        <div class="daily-tasks-body">
+
+          <!-- Görev İlerleme Alanı -->
+          <div class="daily-tasks-progress-area">
+            <div class="daily-tasks-progress-bar">
+              <div class="daily-tasks-progress-fill" id="dailyTasksProgressFill"></div>
+            </div>
+            <div class="daily-tasks-progress-text" id="dailyTasksProgressText">0/3 Görev Tamamlandı</div>
+          </div>
+
+          <!-- Görev Listesi -->
+          <div class="daily-tasks-list">
+            <!-- Okuma Görevi -->
+            <div class="daily-task-item" data-task="reading">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günlük Okumanı Tamamla</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskReading" class="daily-task-check">
+                <label for="taskReading" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+
+            <!-- Hediye Görevi -->
+            <div class="daily-task-item" data-task="gift">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-gift"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günün Hediyesini Al</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskGift" class="daily-task-check">
+                <label for="taskGift" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+
+            <!-- Video Görevi -->
+            <div class="daily-task-item" data-task="video">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-play"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günün Videosunu İzle</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskVideo" class="daily-task-check">
+                <label for="taskVideo" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Günün Videosu -->
+          <div class="daily-tasks-video-section">
+            <h3 class="daily-tasks-video-section-title">
+              <i class="fa-solid fa-play-circle"></i>
+              Günün Videosu
+            </h3>
+            <div class="daily-tasks-video-container">
+              <a href="https://youtu.be/bOB9k0eG_SY?si=0gSTbJtJmbWt6MZL" id="dailyTasksVideoLink"
+                class="daily-tasks-video-link" target="_blank">
+                <div class="daily-tasks-video-thumbnail-container">
+                  <img id="dailyTasksVideoThumbnail" class="daily-tasks-video-thumbnail" src="/images/video_default.png"
+                    alt="Günün Videosu">
+                  <div class="daily-tasks-video-overlay">
+                    <div class="daily-tasks-video-play-icon">
+                      <i class="fa-solid fa-play"></i>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Hatırlatma -->
+          <div class="daily-tasks-reminder-section">
+            <p id="dailyTasksReminderText" class="daily-tasks-reminder-text">Yükleniyor...</p>
+          </div>
+        </div>
+
+      </div>
+    </div>

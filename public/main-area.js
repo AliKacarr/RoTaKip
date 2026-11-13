@@ -1076,7 +1076,7 @@ async function inviteSelectedUser() {
 
         // Grup URL'lerini oluştur
         const baseUrl = window.location.origin;
-        const quickLoginUrl = `${baseUrl}/groupid=${window.groupid}?quick-login&invite=${inviteToken}`;
+        const quickLoginUrl = `${baseUrl}/grup/${encodeURIComponent(window.groupid)}/haftalik?quick-login&invite=${inviteToken}`;
         // Davet metnini oluştur
         const inviteText = `*${groupName} okuma grubu*
 
@@ -2076,7 +2076,7 @@ async function shareGroup() {
         const groupName = document.getElementById('groupName').value || 'Grup';
 
         // URL formatını oluştur
-        const groupUrl = `${window.location.origin}/groupid=${window.groupid}`;
+        const groupUrl = `${window.location.origin}/grup/${encodeURIComponent(window.groupid)}/haftalik`;
 
         // Paylaşım metnini oluştur
         const shareText = `RoTaKip ${groupName}\n${groupUrl}`;
@@ -2184,8 +2184,11 @@ async function deleteGroup() {
     }
 }
 
-// Event listener'ları ekle
-document.addEventListener('DOMContentLoaded', function () {
+// Event listener'ları shell fragmenti sonradan eklendiğinde de bağla.
+window.initializeGroupManagement = function initializeGroupManagement() {
+    const managementRoot = document.querySelector('.main-area');
+    if (!managementRoot || managementRoot.dataset.managementBound === 'true') return;
+    managementRoot.dataset.managementBound = 'true';
     // Grup ayarları butonları
     const saveGroupBtn = document.querySelector('.save-group-btn');
     const changeImageBtn = document.querySelector('.change-image-btn');
@@ -2330,7 +2333,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initializeGroupManagement, { once: true });
+} else {
+    window.initializeGroupManagement();
+}
 
 // Katılma isteklerini yükle
 async function loadJoinRequests() {
@@ -2374,7 +2383,7 @@ function displayJoinRequests(requests) {
                 <img src="${window.escapeHtml(window.safeImageSrc(request.profileImage))}"
                      alt="${window.escapeHtml(request.userName)}"
                      class="join-request-avatar"
-                     onerror="this.src='images/default.png'">
+                     onerror="this.src='/images/default.png'">
                 <div class="join-request-info">
                     <div class="join-request-name">${window.escapeHtml(request.name)}</div>
                     <div class="join-request-date">${requestDate}</div>

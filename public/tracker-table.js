@@ -158,9 +158,11 @@ window.closeReadingEditRestrictionInfo = function closeReadingEditRestrictionInf
     readingEditRestrictionPreviousFocus = null;
 };
 
-document.addEventListener('DOMContentLoaded', function () {
+function initializeReadingRestrictionPanel() {
     const panel = document.getElementById('readingEditRestrictionPanel');
     if (!panel) return;
+    if (panel.dataset.restrictionBound === 'true') return;
+    panel.dataset.restrictionBound = 'true';
     const closeButton = panel.querySelector('.reading-edit-restriction-close');
     const xButton = panel.querySelector('.reading-edit-restriction-x');
     const overlay = panel.querySelector('.reading-edit-restriction-overlay');
@@ -172,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
             window.closeReadingEditRestrictionInfo();
         }
     });
-});
+}
 
 function getSevenDaysEndingAt(dateKey) {
     const dates = [];
@@ -2283,13 +2285,16 @@ function reloadPageAfterSessionTimeout() {
 }
 
 // Paylaş butonuna event listener ekle ve modal kapatma işlemlerini başlat
-document.addEventListener('DOMContentLoaded', () => {
+function initializeTrackerShareActions() {
     // Table share modal
     const shareTableBtn = document.getElementById('shareTableBtn');
+    if (shareTableBtn && shareTableBtn.dataset.shareBound === 'true') return;
     if (shareTableBtn) {
+        shareTableBtn.dataset.shareBound = 'true';
         shareTableBtn.addEventListener('click', shareTrackerTable);
     }
 
+    if (typeof window.setupShareModal !== 'function') return;
     window.setupShareModal('tableShareModal', 'closeTableShareModal');
 
     // Month share modal setup
@@ -2306,6 +2311,32 @@ document.addEventListener('DOMContentLoaded', () => {
     window.setupShareModal('readingStatsShareModal', 'closeReadingStatsShareModal', () => {
         // Restore işlemi gerekmiyor
     });
-});
+}
+
+window.initializeTrackerTableInteractions = function initializeTrackerTableInteractions() {
+    initializeReadingRestrictionPanel();
+    initializeTrackerShareActions();
+};
+
+window.refreshTrackerTableLayout = function refreshTrackerTableLayout() {
+    return new Promise(function (resolve) {
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                syncTrackerSummaryRowHeights();
+                updateTimelineSummaries(getTimelineRightmostVisibleDate());
+                if (timelineScrollHint?.classList.contains('is-visible')) {
+                    positionTimelineScrollHint();
+                }
+                resolve();
+            });
+        });
+    });
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initializeTrackerTableInteractions, { once: true });
+} else {
+    window.initializeTrackerTableInteractions();
+}
 
 

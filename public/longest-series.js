@@ -18,7 +18,6 @@ window.renderLongestSeries = function renderLongestSeries() {
             // En iyi (yüksek streak) üstte olacak şekilde sırala
             const sortedData = (data || []).slice().sort((a, b) => b.streak - a.streak);
             // Barlar ters: en iyi = en kısa (order 0 → minBarWidth)
-            const initialBarWidth = 220; // px — animasyonun başlangıç genişliği
             const minBarWidth = 260; // px — en üstteki barın taban genişliği
             const maxBarWidth = 600; // px
 
@@ -62,9 +61,6 @@ window.renderLongestSeries = function renderLongestSeries() {
             });
             // --- RENK HESAPLAMASI SONU ---
 
-            // Animasyon için bar ve değerleri saklayacağız
-            const barsToAnimate = [];
-
             // Giriş yapılan kullanıcı bilgisini al
             const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
 
@@ -92,7 +88,7 @@ window.renderLongestSeries = function renderLongestSeries() {
                 // Çubuk
                 const bar = document.createElement('div');
                 bar.className = 'longest-series-bar';
-                bar.style.width = initialBarWidth + 'px';
+                bar.style.width = barWidth + 'px';
 
                 // Aynı streak'e sahip olanlar aynı renkte olacak
                 const { startColor, endColor } = streakColorMap[user.streak];
@@ -111,8 +107,8 @@ window.renderLongestSeries = function renderLongestSeries() {
 
                 bar.innerHTML = `
                   ${rankHTML}
-                  <span class="series-info" style="opacity:0;">${window.escapeHtml(user.name)}</span>
-                  <span class="series-count" style="opacity:0;"><b><span class="longest-fire-emoji"><i class="fa-solid fa-bolt" style="color: #ffd700; text-shadow: 1px 2px rgb(0 58 255 / 40%);"></i></span> ${user.streak}</b></span>
+                  <span class="series-info">${window.escapeHtml(user.name)}</span>
+                  <span class="series-count"><b><span class="longest-fire-emoji"><i class="fa-solid fa-bolt" style="color: #ffd700; text-shadow: 1px 2px rgb(0 58 255 / 40%);"></i></span> ${user.streak}</b></span>
                 `;
 
                 // --- YENİ: Bar'a tıklanınca ilgili kullanıcı kartını aç ve vurgula ---
@@ -173,69 +169,7 @@ window.renderLongestSeries = function renderLongestSeries() {
                     loadingElement.style.display = 'none';
                 }
 
-                // Animasyon için bar ve değerleri sakla
-                barsToAnimate.push({
-                    bar,
-                    barWidth,
-                    idx
-                });
             });
-
-            // --- Animasyon sırası: Aşağıdan yukarıya (en uzun bardan en kısa bara) ---
-            // Önce en uzun barlar, sonra kısalar; eşit genişlikte olanlarda alttaki (idx büyük) önce
-            const sortedBarsToAnimate = barsToAnimate.slice().sort((a, b) => {
-                if (a.barWidth !== b.barWidth) {
-                    return b.barWidth - a.barWidth; // büyükten küçüğe
-                } else {
-                    return b.idx - a.idx; // alttaki önce
-                }
-            });
-
-            // Intersection Observer ile animasyonu tetikle
-            if ('IntersectionObserver' in window) {
-                const observer = new IntersectionObserver((entries, obs) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            // Animasyonu başlat (aşağıdan yukarıya: en uzun bardan en kısa bara)
-                            sortedBarsToAnimate.forEach(({ bar, barWidth }, sortedIdx) => {
-                                setTimeout(() => {
-                                    bar.style.transition = 'width 1s cubic-bezier(.4,1.5,.6,1)';
-                                    bar.style.width = barWidth + 'px';
-                                }, 100 + sortedIdx * 200);
-
-                                setTimeout(() => {
-                                    const info = bar.querySelector('.series-info');
-                                    const count = bar.querySelector('.series-count');
-                                    if (info) info.style.transition = 'opacity 0.5s';
-                                    if (count) count.style.transition = 'opacity 0.5s';
-                                    if (info) info.style.opacity = 1;
-                                    if (count) count.style.opacity = 1;
-                                }, 1000 + sortedIdx * 190);
-                            });
-                            obs.disconnect(); // Bir kere tetiklensin
-                        }
-                    });
-                }, { threshold: 0.2 });
-
-                observer.observe(chart);
-            } else {
-                // Eski tarayıcılar için animasyonu hemen başlat (aşağıdan yukarıya)
-                sortedBarsToAnimate.forEach(({ bar, barWidth }, sortedIdx) => {
-                    setTimeout(() => {
-                        bar.style.transition = 'width 1s cubic-bezier(.4,1.5,.6,1)';
-                        bar.style.width = barWidth + 'px';
-                    }, 100 + sortedIdx * 200);
-
-                    setTimeout(() => {
-                        const info = bar.querySelector('.series-info');
-                        const count = bar.querySelector('.series-count');
-                        if (info) info.style.transition = 'opacity 0.5s';
-                        if (count) count.style.transition = 'opacity 0.5s';
-                        if (info) info.style.opacity = 1;
-                        if (count) count.style.opacity = 1;
-                    }, 1100 + sortedIdx * 200);
-                });
-            }
         
     } catch (e) {
         console.error('Longest series yüklenirken hata:', e);

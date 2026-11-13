@@ -180,6 +180,12 @@ LocalStorageManager.currentUser = null;
 // URL'den grup ID'sini çıkarma fonksiyonu
 window.getGroupIdFromUrl = function getGroupIdFromUrl() {
   const path = window.location.pathname;
+
+  // Yeni kanonik format: /grup/catikati23/haftalik veya /istatistikler
+  const canonicalMatch = path.match(/\/grup\/([^/?]+)\/(?:haftalik|istatistikler)/i);
+  if (canonicalMatch) {
+    return decodeURIComponent(canonicalMatch[1]);
+  }
   
   // Yeni format: /groupid=catikati23
   const groupIdMatch = path.match(/\/groupid=([^\/\?]+)/);
@@ -288,12 +294,20 @@ async function initializeAuthSystem() {
   }
 
   try {
-    const response = await fetch(`/api/auth/me/${groupid}`);
-    if (!response.ok) {
-      return false;
+    const resolvedContext = window.__rotakipResolvedGroupContext;
+    let data;
+    if (resolvedContext && resolvedContext.groupId === groupid) {
+      window.currentGroupData = resolvedContext.group;
+      if (!resolvedContext.user) return false;
+      data = { group: resolvedContext.group, user: resolvedContext.user };
+    } else {
+      const response = await fetch(`/api/auth/me/${groupid}`);
+      if (!response.ok) {
+        return false;
+      }
+      data = await response.json();
     }
 
-    const data = await response.json();
     const user = data.user;
 
     if (!data.group) {
@@ -412,7 +426,7 @@ async function validateGroup() {
         
         if (!response.ok) {
           // 404 veya başka hata - temiz grup linkine yönlendir
-          const cleanUrl = `/groupid=${encodeURIComponent(window.groupid)}`;
+          const cleanUrl = `/grup/${encodeURIComponent(window.groupid)}/haftalik`;
           window.location.href = cleanUrl;
           return false;
         }
@@ -424,17 +438,17 @@ async function validateGroup() {
           if (typeof window.showWelcomeInviteModal === 'function') {
             await window.showWelcomeInviteModal(group, data);
           }
-          return true; // Davet linki ile gelinmişse normal akışı durdur
+          return 'invite'; // Davet akışında okuma verilerini henüz yükleme
         } else {
           // Geçersiz token - temiz grup linkine yönlendir
-          const cleanUrl = `/groupid=${encodeURIComponent(window.groupid)}`;
+          const cleanUrl = `/grup/${encodeURIComponent(window.groupid)}/haftalik`;
           window.location.href = cleanUrl;
           return false;
         }
       } catch (error) {
         console.error('Token doğrulama hatası:', error);
         // Hata durumunda da temiz grup linkine yönlendir
-        const cleanUrl = `/groupid=${encodeURIComponent(window.groupid)}`;
+        const cleanUrl = `/grup/${encodeURIComponent(window.groupid)}/haftalik`;
         window.location.href = cleanUrl;
         return false;
       }
@@ -616,8 +630,12 @@ async function startErpReadingsSyncInBackground(groupId) {
   }
 }
 
-// Ana DOMContentLoaded event listener
-document.addEventListener('DOMContentLoaded', async function () {
+// Grup shell'i tarafından çağrılan ortak başlangıç işlemi. Sekmeye özgü
+// çizimler haftalık/istatistik modüllerinin init fonksiyonlarında yapılır.
+window.initializeGroupPage = async function initializeGroupPage() {
+  if (window.rotakipGroupBootstrapPromise) return window.rotakipGroupBootstrapPromise;
+
+  window.rotakipGroupBootstrapPromise = (async function bootstrapGroupPage() {
   try {
     
     // Oturum kontrolü: Eğer son oturum 2 dakikadan eskiyse → sayfayı tamamen yenile
@@ -665,6 +683,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Grup doğrulama
     const canContinue = await validateGroup();
     if (!canContinue) return;
+    if (canContinue === 'invite') {
+      return { ready: true, invite: true, groupId: window.groupid };
+    }
 
     // Profil butonunu başlat
     initializeProfileButton();
@@ -932,56 +953,32 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 
     
-    // Öncelikli içerikleri önce oluştur. Aksi halde başlangıçta gizli olan bu
-    // bölümler, aşağıdaki bölümlerin geçici konumunu görünür gibi gösterebilir.
-    await loadTrackerTable();
-    await loadUserCards();
-    await loadMonthlyCalendar();
     await waitForLayoutPaint();
-
-    window.rotakipPrimaryContentReady = true;
-    window.dispatchEvent(new Event('rotakip:primary-content-ready'));
-
-    if (typeof window.scheduleOneSignalLoad === 'function') {
-      window.scheduleOneSignalLoad();
-    }
-
-    // İlk ekran çizildikten hemen sonra ikincil içeriklerin ağ isteklerini paralel
-    // başlat. Böylece ilk görünüm önceliğini korur ve kullanıcı aşağı kaydırmadan
-    // aşağıdaki bölümlerin verileri hazır olmaya başlar.
-    window.setTimeout(() => {
-      const secondaryContentLoads = [
-        ['Okuma istatistikleri', () => loadReadingStats()],
-        ['En Uzun Seri', () => renderLongestSeries()],
-        ['Günlük sözler', () => Promise.all([
-          fetchRandomQuoteImage(),
-          fetchRandomAyet(),
-          fetchRandomQuote(),
-          fetchRandomHadis(),
-          fetchRandomDua()
-        ])],
-        ['Videolar', () => initializeVideos()],
-        ['Makaleler', () => {
-          if (typeof ArticlesManager !== 'undefined' && !window.articlesManager) {
-            window.articlesManager = new ArticlesManager();
-          }
-        }]
-      ];
-
-      secondaryContentLoads.forEach(([label, load]) => {
-        Promise.resolve()
-          .then(load)
-          .catch(error => console.error(`${label} arka plan yükleme hatası:`, error));
-      });
-    }, 0);
-
-    // Yönetici listesi de ilgili ayar alanına yaklaşılınca yüklenir.
-    if (LocalStorageManager.isAdmin()) {
-      runWhenElementNearViewport('#userList', () => renderUserList(), '300px');
-    }
+    window.rotakipGroupContextReady = true;
+    window.dispatchEvent(new CustomEvent('rotakip:group-context-ready', {
+      detail: {
+        groupId: window.groupid,
+        group: window.currentGroupData,
+        user: window.currentSessionUser || null
+      }
+    }));
+    return { ready: true, groupId: window.groupid };
 
   } catch (error) {
     console.error('Sayfa yüklenirken hata oluştu:', error);
+    window.rotakipGroupBootstrapPromise = null;
+    throw error;
+  }
+  }());
+
+  return window.rotakipGroupBootstrapPromise;
+};
+
+// Eski doğrudan HTML kullanımında geriye uyumluluk. Yeni shell başlangıcı
+// fragmentleri yerleştirdikten sonra initializeGroupPage'i kendisi çağırır.
+document.addEventListener('DOMContentLoaded', function () {
+  if (!document.body.classList.contains('app-shell-body')) {
+    window.initializeGroupPage();
   }
 });
 
@@ -1165,58 +1162,10 @@ async function logPageVisit() {
   }
 }
 
-// Kayarak gelme animasyonu (IntersectionObserver)
-const scrollFadeInObserved = new WeakSet();
-let scrollFadeInObserver = null;
-let mainAreaScrollFadeInObserver = null;
-
-function getScrollFadeInObserver() {
-  if (!('IntersectionObserver' in window)) return null;
-  if (!scrollFadeInObserver) {
-    scrollFadeInObserver = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        entry.target.classList.toggle('visible', entry.isIntersecting);
-      });
-    }, {
-      threshold: 0,
-      rootMargin: '60px 0px'
-    });
-  }
-  return scrollFadeInObserver;
-}
-
-function getMainAreaScrollFadeInObserver() {
-  if (!('IntersectionObserver' in window)) return null;
-  if (!mainAreaScrollFadeInObserver) {
-    mainAreaScrollFadeInObserver = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.1) {
-          entry.target.classList.add('visible');
-        } else if (!entry.isIntersecting) {
-          entry.target.classList.remove('visible');
-        }
-      });
-    }, {
-      threshold: [0, 0.1],
-      rootMargin: '60px 0px'
-    });
-  }
-  return mainAreaScrollFadeInObserver;
-}
-
 function attachScrollFadeInObserver(target) {
-  if (!target || scrollFadeInObserved.has(target)) return;
-  scrollFadeInObserved.add(target);
-
+  if (!target) return;
   target.classList.add('scroll-fade-in');
-  const observer = target.closest('.main-area')
-    ? getMainAreaScrollFadeInObserver()
-    : getScrollFadeInObserver();
-  if (observer) {
-    observer.observe(target);
-  } else {
-    target.classList.add('visible');
-  }
+  target.classList.add('visible');
 }
 
 window.observeScrollFadeIn = function observeScrollFadeInSelector(selector) {

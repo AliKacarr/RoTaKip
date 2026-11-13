@@ -7,14 +7,25 @@ const closeBtn = document.querySelector('.close');
 
 let videoInitialized = false;
 let isLoading = false;
+let videoAttentionInterval = null;
+let videoAttentionTimeout = null;
 
 // İlk video daily-gift.js tarafından kullanılıyor.
 window.currentVideoData = null;
 
 function initializeVideos() {
-    if (videoInitialized) return;
+    startVideoAttention();
+    if (videoInitialized) return Promise.resolve();
     videoInitialized = true;
-    showRandomVideos();
+    return showRandomVideos();
+}
+
+function resumeVideos() {
+    startVideoAttention();
+    const activeButton = document.querySelector('.top-bar button.active');
+    return activeButton?.id === 'randomBtn'
+        ? showRandomVideos()
+        : Promise.resolve();
 }
 
 async function fetchVideos(type) {
@@ -112,7 +123,7 @@ async function renderVideos(videos) {
         }
 
         const videoCard = document.createElement('div');
-        videoCard.className = 'video-card scroll-fade-in';
+        videoCard.className = 'video-card';
         if (previousVisibility[index]) {
             videoCard.classList.add('visible');
         }
@@ -147,12 +158,6 @@ async function renderVideos(videos) {
     videosContainer.replaceChildren(fragment);
 
     try {
-        if (typeof window.observeScrollFadeIn === 'function') {
-            videosContainer.querySelectorAll('.video-card').forEach(card => {
-                window.observeScrollFadeIn(card);
-            });
-        }
-
         await waitForVideoThumbnails();
     } finally {
         unlockVideosContainerHeight();
@@ -261,13 +266,47 @@ const refreshBtn = document.getElementById('refreshBtn');
 const refreshIcon = refreshBtn.querySelector('i');
 let rotateDeg = 0;
 
-setInterval(() => {
-    refreshIcon.classList.add('pulse');
-    setTimeout(() => refreshIcon.classList.remove('pulse'), 1000);
-}, 15000);
+function startVideoAttention() {
+    if (videoAttentionInterval) return;
+    videoAttentionInterval = setInterval(() => {
+        refreshIcon.classList.add('pulse');
+        videoAttentionTimeout = setTimeout(() => {
+            refreshIcon.classList.remove('pulse');
+            videoAttentionTimeout = null;
+        }, 1000);
+    }, 15000);
+}
+
+function stopVideoAttention() {
+    if (videoAttentionInterval) {
+        clearInterval(videoAttentionInterval);
+        videoAttentionInterval = null;
+    }
+    if (videoAttentionTimeout) {
+        clearTimeout(videoAttentionTimeout);
+        videoAttentionTimeout = null;
+    }
+    refreshIcon.classList.remove('pulse');
+}
 
 refreshBtn.addEventListener('click', () => {
     rotateDeg += 180;
     refreshIcon.style.transition = 'transform 0.6s';
     refreshIcon.style.transform = `rotate(${rotateDeg}deg)`;
 });
+
+window.RoTaKipVideoTab = {
+    init: initializeVideos,
+    resume: resumeVideos,
+    destroy() {
+        stopVideoAttention();
+        closeModal();
+    },
+    preload() {
+        return fetchVideos('random').catch(() => []);
+    },
+    dispose() {
+        stopVideoAttention();
+        closeModal();
+    }
+};

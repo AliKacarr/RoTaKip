@@ -1,4 +1,15 @@
-document.addEventListener('DOMContentLoaded', function () {
+let mercyTabInitialized = false;
+let mercyAttentionIntervals = [];
+
+function logMercyAction(action) {
+    if (typeof window.logUnauthorizedAccess === 'function') {
+        window.logUnauthorizedAccess(action);
+    }
+}
+
+function initializeMercyTab() {
+    if (mercyTabInitialized) return;
+    mercyTabInitialized = true;
     // Tüm yenileme butonlarını seç
 
     const refreshQuoteButtons = document.querySelectorAll('.refresh-quote');
@@ -8,18 +19,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const icon = button.querySelector('i');
         if (icon) {
             // Her 30 saniyede bir animasyonu tetikle
-            setInterval(() => {
+            const interval = setInterval(() => {
                 icon.classList.add('attention');
                 // Animasyon bittikten sonra sınıfı kaldır
                 setTimeout(() => {
                     icon.classList.remove('attention');
                 }, 1500); // Animasyon süresi kadar bekle
             }, 10000); // 10 saniye
+            mercyAttentionIntervals.push(interval);
         }
     });
 
     // Tüm alıntı metinlerine tıklama olayı ekle
     document.querySelectorAll('.quote-text').forEach(element => {
+        if (element.dataset.copyBound === 'true') return;
+        element.dataset.copyBound = 'true';
         element.addEventListener('click', async function() {
             try {
                 // Mevcut yüksekliği kaydet
@@ -58,28 +72,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     
-    const quoteImage = document.getElementById('quoteImage');
-    if (quoteImage && quoteImage.style.display !== 'none') {
-        quoteImage.classList.add('visible');
-    }
-
     const refreshBtn = document.getElementById('refreshQuote');
     if (refreshBtn) {
         refreshBtn.onclick = function () {
             fetchRandomQuote();
-            logUnauthorizedAccess('Bir söz yenileme');
-            this.classList.add('refresh-quote-spinning');
-            setTimeout(() => {
-                this.classList.remove('refresh-quote-spinning');
-            }, 1000);
-        };
-    }
-
-    const refreshImageBtn = document.getElementById('refreshQuoteImage');
-    if (refreshImageBtn) {
-        refreshImageBtn.onclick = function () {
-            fetchRandomQuoteImage();
-            logUnauthorizedAccess('Bir söz resmi yenileme');
+            logMercyAction('Bir söz yenileme');
             this.classList.add('refresh-quote-spinning');
             setTimeout(() => {
                 this.classList.remove('refresh-quote-spinning');
@@ -91,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (refreshAyatButton) {
         refreshAyatButton.onclick = function () {
             fetchRandomAyet();
-            logUnauthorizedAccess('Bir ayet yenileme');
+            logMercyAction('Bir ayet yenileme');
             this.classList.add('refresh-quote-spinning');
             setTimeout(() => {
                 this.classList.remove('refresh-quote-spinning');
@@ -103,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (refreshHadithButton) {
         refreshHadithButton.onclick = function () {
             fetchRandomHadis();
-            logUnauthorizedAccess('Bir hadis yenileme');
+            logMercyAction('Bir hadis yenileme');
             this.classList.add('refresh-quote-spinning');
             setTimeout(() => {
                 this.classList.remove('refresh-quote-spinning');
@@ -115,14 +112,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (refreshDuaButton) {
         refreshDuaButton.onclick = function () {
             fetchRandomDua();
-            logUnauthorizedAccess('Bir dua yenileme');
+            logMercyAction('Bir dua yenileme');
             this.classList.add('refresh-quote-spinning');
             setTimeout(() => {
                 this.classList.remove('refresh-quote-spinning');
             }, 1000);
         };
     }
-});
+}
 
 async function fetchRandomQuote() {
     try {
@@ -149,35 +146,6 @@ async function fetchRandomQuote() {
             quoteTextElement.textContent = 'Günün sözü yüklenemedi.';
             quoteTextElement.classList.add('visible');
         }
-    }
-}
-
-async function fetchRandomQuoteImage() {
-    const img = document.getElementById('quoteImage');
-    if (!img) return;
-
-    try {
-        // Önce visible sınıfını kaldır (gizle)
-        img.classList.remove('visible');
-        
-        const response = await fetch('/api/quote-images');
-        const data = await response.json();
-        const images = data.images;
-        if (!images || images.length === 0) {
-            img.style.display = 'none';
-            return;
-        }
-        const randomIndex = Math.floor(Math.random() * images.length);
-        img.src = `quotes/${images[randomIndex]}`;
-        img.style.display = 'block';
-        
-        // Animasyonu tetikle
-        setTimeout(() => {
-            img.classList.add('visible');
-        }, 50);
-    } catch (error) {
-        img.style.display = 'none';
-        console.error('Bir söz resmi yüklenemedi:', error);
     }
 }
 
@@ -274,3 +242,28 @@ async function fetchRandomDua() {
         }
     }
 }
+
+window.RoTaKipMercyTab = {
+    init() {
+        initializeMercyTab();
+        Promise.allSettled([
+            fetchRandomAyet(),
+            fetchRandomQuote(),
+            fetchRandomHadis(),
+            fetchRandomDua()
+        ]);
+    },
+    destroy() {
+        mercyAttentionIntervals.forEach(interval => clearInterval(interval));
+        mercyAttentionIntervals = [];
+        mercyTabInitialized = false;
+    },
+    preload() {
+        return Promise.allSettled([
+            fetch('/api/random-quote'),
+            fetch('/api/random-ayet'),
+            fetch('/api/random-hadis'),
+            fetch('/api/random-dua')
+        ]);
+    }
+};

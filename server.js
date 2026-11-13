@@ -357,17 +357,46 @@ app.get('/api/dropbox-image', imageProxyLimiter, async (req, res) => {
   }
 });
 
-app.get('/groupid=:groupId', (req, res) => {
+const GROUP_ID_PATTERN = /^[a-zA-Z0-9_\-çğıöşüÇĞIİÖŞÜ]+$/;
+
+function appendQueryString(pathname, query) {
+  const params = new URLSearchParams();
+  Object.entries(query || {}).forEach(([key, rawValue]) => {
+    const values = Array.isArray(rawValue) ? rawValue : [rawValue];
+    values.forEach(value => {
+      if (value != null) params.append(key, String(value));
+    });
+  });
+  const queryString = params.toString();
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
+
+function sendGroupShell(req, res) {
+  const groupId = req.params.groupId;
+  if (!GROUP_ID_PATTERN.test(groupId)) return res.status(404).send('Not found');
+  return sendHtmlFile(res, 'groups.html');
+}
+
+app.get('/grup/:groupId/haftalik', sendGroupShell);
+app.get('/grup/:groupId/istatistikler', sendGroupShell);
+app.get(['/videolar', '/rahmet-penceresi', '/makaleler'], (_req, res) => {
   sendHtmlFile(res, 'groups.html');
 });
 
+// Eski bağlantılar yeni kanonik haftalık adrese geçici olarak yönlendirilir.
+app.get('/groupid=:groupId', (req, res) => {
+  if (!GROUP_ID_PATTERN.test(req.params.groupId)) return res.status(404).send('Not found');
+  const target = `/grup/${encodeURIComponent(req.params.groupId)}/haftalik`;
+  return res.redirect(302, appendQueryString(target, req.query));
+});
+
 // Grup sayfası / geriye uyumluluk (Express 5: rota içinde regex parantezi yok)
-const GROUP_ID_PATTERN = /^[a-zA-Z0-9_\-çğıöşüÇĞIİÖŞÜ]+$/;
 app.get('/:groupId', (req, res) => {
   const groupId = req.params.groupId;
   // Only serve groups.html if it's not an API route or static file
   if (GROUP_ID_PATTERN.test(groupId) && !groupId.startsWith('api') && !groupId.includes('.')) {
-    sendHtmlFile(res, 'groups.html');
+    const target = `/grup/${encodeURIComponent(groupId)}/haftalik`;
+    res.redirect(302, appendQueryString(target, req.query));
   } else {
     res.status(404).send('Not found');
   }

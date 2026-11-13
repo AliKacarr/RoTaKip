@@ -93,6 +93,18 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 ---
 
+## Sekmeli Uygulama Mimarisi
+
+Grup deneyimi ortak `groups.html` shell'i üzerinde, route'a göre tembel yüklenen fragment ve asset paketlerinden oluşur:
+
+- `/grup/:groupId/haftalik` — haftalık tablo, motivasyon panelleri ve grup ayarları
+- `/grup/:groupId/istatistikler` — lig kartları, aylık takvim ve grafikler
+- `/videolar`, `/rahmet-penceresi`, `/makaleler` — grup bağlamından bağımsız içerikler
+
+Shell yönlendirmesi `public/app/`, görünüm HTML'leri `public/fragments/` altındadır. `npm run build` sekmeye özel CSS/JS paketlerini üretir ve içerik hash'lerini `public/assets-manifest.json` içine yazar. Eski `/groupid=:groupId` ve `/:groupId` bağlantıları query parametrelerini koruyarak haftalık route'a yönlendirilir.
+
+---
+
 ## Kurulum
 
 ```bash

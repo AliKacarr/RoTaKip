@@ -2,7 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://rotakip.up.railway.app/</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://rotakip.up.railway.app/videolar</loc>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://rotakip.up.railway.app/rahmet-penceresi</loc>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://rotakip.up.railway.app/makaleler</loc>
+    <lastmod>2026-11-13</lastmod>
   </url>
 
   <url>

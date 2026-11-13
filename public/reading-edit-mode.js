@@ -129,6 +129,8 @@
 
   window.showAuthenticatedUserAreas = function showAuthenticatedUserAreas() {
     var areas = $('authenticatedUserAreas');
+    var modeBar = $('readingEditModeBar');
+    if (modeBar) modeBar.hidden = false;
     if (!areas) return;
     requestAnimationFrame(function () {
       areas.setAttribute('aria-hidden', 'false');
@@ -138,6 +140,8 @@
 
   window.hideAuthenticatedUserAreas = function hideAuthenticatedUserAreas() {
     var areas = $('authenticatedUserAreas');
+    var modeBar = $('readingEditModeBar');
+    if (modeBar) modeBar.hidden = true;
     cancelAmountCellEdit();
     window.readingEditMode = 'default';
     updateSegmentButtons();
@@ -156,6 +160,8 @@
       typeof LocalStorageManager !== 'undefined' && LocalStorageManager.isUserLoggedIn();
     if (!loggedIn) {
       window.hideAuthenticatedUserAreas();
+    } else {
+      window.showAuthenticatedUserAreas();
     }
   };
 

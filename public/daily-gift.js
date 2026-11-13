@@ -2,10 +2,19 @@
 let dailyGiftData = null;
 let lastGiftDate = null;
 
-// Sayfa yüklendiğinde çalışacak
-document.addEventListener('DOMContentLoaded', function() {
+// Shell fragmenti yerleştirildikten sonra da çağrılabilen idempotent başlangıç.
+window.initializeDailyGift = function initializeDailyGift() {
+    const rootButton = document.getElementById('dailyGiftButton');
+    if (!rootButton || rootButton.dataset.giftBound === 'true') return;
+    rootButton.dataset.giftBound = 'true';
     setupDailyGiftEvents();
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initializeDailyGift, { once: true });
+} else {
+    window.initializeDailyGift();
+}
 
 // Event listener'ları ayarla
 function setupDailyGiftEvents() {

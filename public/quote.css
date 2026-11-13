@@ -67,30 +67,11 @@
     transform: translateY(20px);
 }
 
-.quote-flex-container {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 12px;
-    flex: 2 1 0;
-}
-
-.quote-vertical-group {
-    display: flex;
-    flex-direction: column;
+.quote-grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
     gap: 24px;
-    flex: 1.5 1 0;
-}
-
-.quote-image-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    margin-top: 0;
-    position: relative;
-    gap: 24px;
-    flex: 1 1;
 }
 
 .quote-section {
@@ -100,60 +81,13 @@
     border: 2px dashed #b7b7b7;
     border-radius: 8px;
     padding: 21px;
-    width: 98%;
+    width: 100%;
     background-color: #f9f9f9;
     position: relative;
     min-height: 250px;
     box-sizing: border-box;
     margin-top: 0;
 }
-
-.quote-section-image {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-    width: 372px;
-    height: 525px;
-    position: relative;
-    min-height: 250px;
-    margin-top: 0;
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
-    overflow: hidden;
-}
-
-#quoteImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 18px;
-    display: block;
-    transition: box-shadow 0.2s, transform 0.2s, opacity 0.6s ease-out;
-    opacity: 1;
-    transform: scale(1);
-}
-
-#quoteImage.visible {
-    opacity: 1;
-    transform: scale(1);
-}
-
-#quoteImage:hover {
-    box-shadow: 0 8px 24px rgba(91, 155, 213, 0.18);
-    transform: scale(1.03);
-}
-
-.refresh-quote#refreshQuoteImage {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 3;
-    background-color: rgba(107, 172, 233, 0.148);
-}
-
 
 .refresh-quote {
     position: absolute;
@@ -371,5 +305,3 @@
 .refresh-quote i.attention {
     animation: shake 0.8s ease-in-out;
 }
-
-.quote-section-image { animation-delay: 0.7s; }

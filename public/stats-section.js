@@ -1,62 +1,3 @@
-let readingStatsRealData = null;
-let readingStatsAnimationPlayed = false;
-let readingStatsVisibilityObserver = null;
-
-function isReadingStatsContainerVisible(container) {
-    if (!container) return false;
-    const rect = container.getBoundingClientRect();
-    return rect.top < window.innerHeight && rect.bottom > 0;
-}
-
-function tryPlayReadingStatsAnimation() {
-    if (readingStatsAnimationPlayed || !readingStatsRealData || !window.readingStatsChart) {
-        return;
-    }
-
-    const chartContainer = document.querySelector('.stats-section .chart-container');
-    if (!chartContainer || !isReadingStatsContainerVisible(chartContainer)) {
-        return;
-    }
-
-    readingStatsAnimationPlayed = true;
-
-    const { okudumData, okumadimData } = readingStatsRealData;
-    window.readingStatsChart.data.datasets[0].data = okudumData;
-    window.readingStatsChart.data.datasets[1].data = okumadimData;
-    window.readingStatsChart.options.animation.duration = 2200;
-    window.readingStatsChart.update();
-
-    if (readingStatsVisibilityObserver) {
-        readingStatsVisibilityObserver.disconnect();
-        readingStatsVisibilityObserver = null;
-    }
-}
-
-function setupReadingStatsVisibilityObserver(chartContainer) {
-    if (readingStatsAnimationPlayed || readingStatsVisibilityObserver || !chartContainer) {
-        return;
-    }
-
-    if (!('IntersectionObserver' in window)) {
-        tryPlayReadingStatsAnimation();
-        return;
-    }
-
-    readingStatsVisibilityObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                tryPlayReadingStatsAnimation();
-                if (readingStatsAnimationPlayed) {
-                    observer.disconnect();
-                    readingStatsVisibilityObserver = null;
-                }
-            }
-        });
-    }, { threshold: 0.2 });
-
-    readingStatsVisibilityObserver.observe(chartContainer);
-}
-
 window.loadReadingStats = async function loadReadingStats() {
     try {
         // Global store'dan verileri al
@@ -144,11 +85,6 @@ window.loadReadingStats = async function loadReadingStats() {
             window.readingStatsChart.destroy();
         }
 
-        readingStatsRealData = { okudumData, okumadimData };
-        const initialOkudumData = readingStatsAnimationPlayed ? okudumData : okudumData.map(() => 0);
-        const initialOkumadimData = readingStatsAnimationPlayed ? okumadimData : okumadimData.map(() => 0);
-        const chartAnimationDuration = readingStatsAnimationPlayed ? 0 : 2200;
-
         // Create the chart
         window.readingStatsChart = new Chart(ctx, {
             type: 'bar',
@@ -157,7 +93,7 @@ window.loadReadingStats = async function loadReadingStats() {
                 datasets: [
                     {
                         label: 'Okunan gün',
-                        data: initialOkudumData,
+                        data: okudumData,
                         backgroundColor: okudumBackgroundColors,
                         borderColor: okudumBorderColors,
                         borderWidth: enhancedUserStats.map((user, index) =>
@@ -170,7 +106,7 @@ window.loadReadingStats = async function loadReadingStats() {
                     },
                     {
                         label: 'Okunmayan gün',
-                        data: initialOkumadimData,
+                        data: okumadimData,
                         backgroundColor: 'rgba(255, 100, 60, 0.7)',
                         borderColor: 'rgba(255, 100, 60, 1)',
                         borderWidth: 1,
@@ -186,7 +122,7 @@ window.loadReadingStats = async function loadReadingStats() {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: {
-                    duration: chartAnimationDuration
+                    duration: 0
                 },
                 layout: {
                     padding: {
@@ -301,7 +237,6 @@ window.loadReadingStats = async function loadReadingStats() {
                     },
                     datalabels: {
                         display: function (context) {
-                            if (!readingStatsAnimationPlayed) return false;
                             // Sadece ilk dataset (Okudum) için göster
                             return context.datasetIndex === 0;
                         },
@@ -349,11 +284,6 @@ window.loadReadingStats = async function loadReadingStats() {
         const statsLoading = document.getElementById('stats-loading');
         if (statsLoading) statsLoading.style.display = 'none';
 
-        if (!readingStatsAnimationPlayed && chartContainer) {
-            setupReadingStatsVisibilityObserver(chartContainer);
-            tryPlayReadingStatsAnimation();
-        }
-
         // Paylaş butonunu ekle
         if (chartContainer && !document.getElementById('readingStatsShareBtn')) {
             const shareBtn = document.createElement('div');
@@ -373,6 +303,13 @@ window.loadReadingStats = async function loadReadingStats() {
         console.error('Error loading reading stats:', error);
     }
 }
+
+window.destroyReadingStatsChart = function destroyReadingStatsChart() {
+    if (window.readingStatsChart && typeof window.readingStatsChart.destroy === 'function') {
+        window.readingStatsChart.destroy();
+        window.readingStatsChart = null;
+    }
+};
 
 // Okuma istatistikleri section'ını resme çevirip modal'da göster
 async function shareReadingStatsChart() {

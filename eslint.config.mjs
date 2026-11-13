@@ -62,5 +62,15 @@ export default defineConfig([
       // Birden fazla script aynı sayfada paylaşılıyor; no-undef burası için gürültü
       'no-undef': 'off'
     }
+  },
+  {
+    files: ['public/app/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: globals.browser
+    },
+    rules: {
+      'no-undef': 'error'
+    }
   }
 ]);
