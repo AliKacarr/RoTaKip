@@ -217,6 +217,12 @@ body.route-is-loading { overflow: hidden; }
 .route-error a { color: var(--app-nav-accent); font-weight: 800; }
 .reading-message-panels { margin: 10px 0; }
 
+@media (min-width: 1181px) {
+  body.app-shell-body .cookie-consent-banner {
+    left: calc(var(--app-nav-width) + 40px);
+  }
+}
+
 @media (max-width: 1180px) {
   body.app-shell-body {
     padding-left: 0;
@@ -241,6 +247,16 @@ body.route-is-loading { overflow: hidden; }
   .app-navigation-items { width: 100%; flex-direction: row; gap: 3px; }
   .app-navigation-item { min-width: 0; min-height: 112px; flex: 1; padding: 9px 2px; gap: 9px; border-radius: 17px; font-size: 23px; }
   .app-navigation-item i { font-size: 52px; }
+  body.app-shell-body .cookie-consent-banner {
+    right: auto;
+    bottom: calc(var(--app-nav-height) + env(safe-area-inset-bottom, 0px) + 18px);
+    left: 18px;
+    width: calc(100% - 36px);
+    max-width: 500px;
+    min-width: 0;
+    margin-inline: 0;
+    box-sizing: border-box;
+  }
   #scrollToTopBtn { bottom: calc(var(--app-nav-height) + 18px + env(safe-area-inset-bottom, 0px)); }
 }
 

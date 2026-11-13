@@ -1,6 +1,57 @@
 let mercyTabInitialized = false;
 let mercyAttentionIntervals = [];
 
+function mercyLoadingMarkup() {
+    return '<div class="quote-loading-placeholder" aria-hidden="true">' +
+        '<span class="quote-loading-line"></span>' +
+        '<span class="quote-loading-line"></span>' +
+        '<span class="quote-loading-line"></span>' +
+        '</div>';
+}
+
+function setMercyTextLoading(element, label) {
+    if (!element) return;
+    element.classList.remove('visible');
+    element.classList.add('is-loading');
+    element.setAttribute('aria-busy', 'true');
+    element.setAttribute('aria-label', label);
+    element.innerHTML = mercyLoadingMarkup();
+    const section = element.closest('.quote-section');
+    section?.classList.add('is-loading');
+    section?.querySelectorAll('.refresh-quote, .share-quote').forEach(button => {
+        button.disabled = true;
+    });
+}
+
+function showMercyText(element, text) {
+    if (!element) return;
+    element.textContent = text;
+    element.classList.remove('is-loading');
+    element.classList.add('visible');
+    element.removeAttribute('aria-busy');
+    element.removeAttribute('aria-label');
+    const section = element.closest('.quote-section');
+    section?.classList.remove('is-loading');
+    section?.querySelectorAll('.refresh-quote, .share-quote').forEach(button => {
+        button.disabled = false;
+    });
+}
+
+async function fetchMercyText(elementId, endpoint, loadingLabel, fallbackText, errorLabel) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    setMercyTextLoading(element, loadingLabel);
+    try {
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error(`${errorLabel} getirme hatası`);
+        const data = await response.json();
+        showMercyText(element, data.sentence || fallbackText);
+    } catch (error) {
+        console.error(`${errorLabel} yüklenemedi:`, error);
+        showMercyText(element, fallbackText);
+    }
+}
+
 function logMercyAction(action) {
     if (typeof window.logUnauthorizedAccess === 'function') {
         window.logUnauthorizedAccess(action);
@@ -35,6 +86,7 @@ function initializeMercyTab() {
         if (element.dataset.copyBound === 'true') return;
         element.dataset.copyBound = 'true';
         element.addEventListener('click', async function() {
+            if (this.classList.contains('is-loading')) return;
             try {
                 // Mevcut yüksekliği kaydet
                 const currentHeight = this.offsetHeight;
@@ -67,7 +119,7 @@ function initializeMercyTab() {
     
     // Mevcut içerikleri görünür yap
     document.querySelectorAll('.quote-text').forEach(element => {
-        if (element.innerHTML.trim() !== '') {
+        if (!element.classList.contains('is-loading') && element.innerHTML.trim() !== '') {
             element.classList.add('visible');
         }
     });
@@ -122,125 +174,20 @@ function initializeMercyTab() {
 }
 
 async function fetchRandomQuote() {
-    try {
-        const quoteTextElement = document.getElementById('quoteText');
-        if (quoteTextElement) {
-            // Önce visible sınıfını kaldır (gizle)
-            quoteTextElement.classList.remove('visible');
-            
-            const response = await fetch('/api/random-quote');
-            const data = await response.json();
-
-            // Update with the new quote
-            quoteTextElement.textContent = data.sentence;
-            
-            // Animasyonu tetikle
-            setTimeout(() => {
-                quoteTextElement.classList.add('visible');
-            }, 50);
-        }
-    } catch (error) {
-        console.error('Bir söz yüklenemedi:', error);
-        const quoteTextElement = document.getElementById('quoteText');
-        if (quoteTextElement) {
-            quoteTextElement.textContent = 'Günün sözü yüklenemedi.';
-            quoteTextElement.classList.add('visible');
-        }
-    }
+    return fetchMercyText('quoteText', '/api/random-quote', 'Söz yükleniyor', 'Günün sözü yüklenemedi.', 'Bir söz');
 }
 
 async function fetchRandomAyet() {
-    try {
-        const ayatTextElement = document.getElementById('ayatText');
-        if (ayatTextElement) {
-            // Önce visible sınıfını kaldır (gizle)
-            ayatTextElement.classList.remove('visible');
-            
-            const response = await fetch('/api/random-ayet');
-            if (!response.ok) {
-                throw new Error('Ayet getirme hatası');
-            }
-            const data = await response.json();
-
-            // Ayet metnini sayfada göster
-            ayatTextElement.textContent = data.sentence || 'Ayet yüklenemedi';
-            
-            // Animasyonu tetikle
-            setTimeout(() => {
-                ayatTextElement.classList.add('visible');
-            }, 50);
-        }
-    } catch (error) {
-        console.error('Bir ayet yüklenemedi:', error);
-        const ayatTextElement = document.getElementById('ayatText');
-        if (ayatTextElement) {
-            ayatTextElement.textContent = 'Ayet yüklenemedi';
-            ayatTextElement.classList.add('visible');
-        }
-    }
+    return fetchMercyText('ayatText', '/api/random-ayet', 'Ayet yükleniyor', 'Ayet yüklenemedi', 'Bir ayet');
 }
 
 // Rastgele hadis getirme fonksiyonu
 async function fetchRandomHadis() {
-    try {
-        const hadithTextElement = document.getElementById('hadithText');
-        if (hadithTextElement) {
-            // Önce visible sınıfını kaldır (gizle)
-            hadithTextElement.classList.remove('visible');
-            
-            const response = await fetch('/api/random-hadis');
-            if (!response.ok) {
-                throw new Error('Hadis getirme hatası');
-            }
-            const data = await response.json();
-
-            // Hadis metnini sayfada göster
-            hadithTextElement.textContent = data.sentence || 'Hadis yüklenemedi';
-            
-            // Animasyonu tetikle
-            setTimeout(() => {
-                hadithTextElement.classList.add('visible');
-            }, 50);
-        }
-    } catch (error) {
-        console.error('Bir hadis yüklenemedi:', error);
-        const hadithTextElement = document.getElementById('hadithText');
-        if (hadithTextElement) {
-            hadithTextElement.textContent = 'Hadis yüklenemedi';
-            hadithTextElement.classList.add('visible');
-        }
-    }
+    return fetchMercyText('hadithText', '/api/random-hadis', 'Hadis yükleniyor', 'Hadis yüklenemedi', 'Bir hadis');
 }
 
 async function fetchRandomDua() {
-    try {
-        const duaTextElement = document.getElementById('duaText');
-        if (duaTextElement) {
-            // Önce visible sınıfını kaldır (gizle)
-            duaTextElement.classList.remove('visible');
-            
-            const response = await fetch('/api/random-dua');
-            if (!response.ok) {
-                throw new Error('Dua getirme hatası');
-            }
-            const data = await response.json();
-
-            // Dua metnini sayfada göster
-            duaTextElement.textContent = data.sentence || 'Dua yüklenemedi';
-            
-            // Animasyonu tetikle
-            setTimeout(() => {
-                duaTextElement.classList.add('visible');
-            }, 50);
-        }
-    } catch (error) {
-        console.error('Bir dua yüklenemedi:', error);
-        const duaTextElement = document.getElementById('duaText');
-        if (duaTextElement) {
-            duaTextElement.textContent = 'Dua yüklenemedi';
-            duaTextElement.classList.add('visible');
-        }
-    }
+    return fetchMercyText('duaText', '/api/random-dua', 'Dua yükleniyor', 'Dua yüklenemedi', 'Bir dua');
 }
 
 window.RoTaKipMercyTab = {

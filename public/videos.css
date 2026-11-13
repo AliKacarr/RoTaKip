@@ -76,8 +76,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border: 4px solid #d1d1d1;
     border-top: 4px solid #4e54c8;
     border-radius: 50%;
@@ -88,7 +88,7 @@
 
 .loading-content {
     padding: 15px;
-    min-height: 66px;
+    min-height: 114px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -107,15 +107,15 @@
 
 
 .video-loading-line {
-    width: 35px;
-    height: 5px;
+    width: 45px;
+    height: 7px;
     border-radius: 12px;
     background: linear-gradient(90deg, #ff7f50, #ff4500);
     animation: video-loading-line-bounce 1s infinite;
     position: relative;
     flex-shrink: 0;
-    min-width: 35px;
-    max-width: 35px;
+    min-width: 45px;
+    max-width: 45px;
 }
 
 @keyframes video-loading-line-bounce {

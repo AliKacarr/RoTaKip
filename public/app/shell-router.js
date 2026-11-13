@@ -39,6 +39,10 @@ function showStatus() {
   document.body.classList.add('route-is-loading');
 }
 
+function routeUsesFullScreenLoader(route) {
+  return route.name === 'weekly';
+}
+
 function hideStatus() {
   document.body.classList.remove('route-is-loading');
   if (routeStatus.hidden) return Promise.resolve();
@@ -191,10 +195,14 @@ function markPrimaryReady() {
   window.dispatchEvent(new Event('rotakip:primary-content-ready'));
 }
 
-function revealRouteContent(view) {
-  if (!view) return;
-  window.requestAnimationFrame(() => {
-    view.classList.add('visible');
+function revealRouteContent(view, waitForPaint = false) {
+  if (!view) return Promise.resolve();
+  return new Promise(resolve => {
+    window.requestAnimationFrame(() => {
+      view.classList.add('visible');
+      if (waitForPaint) window.requestAnimationFrame(resolve);
+      else resolve();
+    });
   });
 }
 
@@ -231,7 +239,9 @@ async function navigate(url, options = {}) {
     return;
   }
   if (!options.fromPopState) history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`);
-  showStatus();
+  const useFullScreenLoader = routeUsesFullScreenLoader(route);
+  if (useFullScreenLoader) showStatus();
+  else await hideStatus();
   if (activeLifecycle && typeof activeLifecycle.destroy === 'function') activeLifecycle.destroy();
   activeLifecycle = null;
   configureNavigation(route, target => navigate(target));
@@ -240,7 +250,6 @@ async function navigate(url, options = {}) {
   try {
     let groupContext = null;
     if (route.requiresGroup) {
-      showStatus();
       groupContext = await resolveGroupContext(route.groupId);
       if (sequence !== navigationSequence) return;
       updateMetadata(route, groupContext);
@@ -263,11 +272,11 @@ async function navigate(url, options = {}) {
       updateMetadata(route, null);
     }
 
-    showStatus();
     await loadBundleStyles(ROUTE_ASSETS[route.name].styles);
     if (sequence !== navigationSequence) return;
     await activateView(route);
     if (sequence !== navigationSequence) return;
+    if (!useFullScreenLoader) await revealRouteContent(activeView, true);
 
     if (lifecycleCache.has(activeView)) {
       activeLifecycle = lifecycleCache.get(activeView);
@@ -284,7 +293,7 @@ async function navigate(url, options = {}) {
     }
     await hideStatus();
     if (sequence !== navigationSequence) return;
-    revealRouteContent(activeView);
+    if (useFullScreenLoader) await revealRouteContent(activeView);
     tabContent.focus({ preventScroll: true });
     markPrimaryReady();
     schedulePrefetch(route);

@@ -31,7 +31,7 @@ test('shell yalnız ortak kabuk ve beş sekmeli navigasyonu içerir', () => {
   assert.match(shell, /data-route="statistics"[\s\S]*?<span>Analizler<\/span>/);
   assert.match(shell, /id="tabContent"/);
   assert.match(shell, /id="scrollToTopBtn"/);
-  assert.match(shell, /id="routeStatus"[\s\S]*?route-loader-star[\s\S]*?>Ro<[\s\S]*?>Ta<[\s\S]*?>Kip</);
+  assert.match(shell, /id="routeStatus"[^>]*hidden[\s\S]*?route-loader-star[\s\S]*?>Ro<[\s\S]*?>Ta<[\s\S]*?>Kip</);
   assert.match(shell, /shell\.min\.css\?v=/);
   assert.doesNotMatch(shell, /groups\.min\.(?:css|js)/);
   assert.doesNotMatch(shell, /class="tracker-table-shell"/);
@@ -51,6 +51,7 @@ test('shell yalnız ortak kabuk ve beş sekmeli navigasyonu içerir', () => {
   assert.match(shellStyles, /--app-nav-height:\s*128px/);
   assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-item\s*\{[^}]*min-height:\s*112px;[^}]*gap:\s*9px;[^}]*font-size:\s*23px;/s);
   assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-item i\s*\{[^}]*font-size:\s*52px;/s);
+  assert.match(shellStyles, /body\.app-shell-body \.cookie-consent-banner\s*\{[^}]*right:\s*auto;[^}]*bottom:\s*calc\(var\(--app-nav-height\)[^}]*left:\s*18px;[^}]*margin-inline:\s*0;/s);
 });
 
 test('asset manifesti shell ve sekme paketlerini ayrı tutar', () => {
@@ -85,6 +86,8 @@ test('haftalık ve istatistik fragmentleri planlanan içerik sınırlarına uyar
   assert.match(weekly, /Günün Vecizeleri/);
   assert.match(weekly, /fa-solid fa-quote-right/);
   assert.equal((weekly.match(/class="quote-section-image"/g) || []).length, 2);
+  assert.match(weekly, /src="\/quotes\/bir_gorsel1\.jpg"[^>]*data-image-name="bir_gorsel1\.jpg"/);
+  assert.match(weekly, /src="\/quotes\/bir_gorsel2\.jpg"[^>]*data-image-name="bir_gorsel2\.jpg"/);
   assert.doesNotMatch(weekly, /class="user-cards-container"/);
   assert.doesNotMatch(weekly, /class="monthly-calendar-section"/);
 
@@ -128,12 +131,42 @@ test('global fragmentler grup içeriği taşımaz', () => {
 
   const mercy = readPublic('fragments/mercy.html');
   assert.match(mercy, /class="quote-grid-container"/);
-  assert.equal((mercy.match(/class="quote-section"/g) || []).length, 4);
+  assert.equal((mercy.match(/class="quote-section is-loading"/g) || []).length, 4);
+  assert.equal((mercy.match(/class="quote-loading-placeholder"/g) || []).length, 4);
+  assert.doesNotMatch(mercy, /Allah yolunda sevdiğiniz|Sözlerin en doğrusu|Hangi şeye dikkat etsen/);
   assert.doesNotMatch(mercy, /quote-section-image|quoteImage|refreshQuoteImage/);
   assert.match(readPublic('quote.css'), /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+  assert.match(readPublic('quote.css'), /\.quote-loading-line\s*\{[^}]*quote-loading-shimmer/s);
+  assert.match(readPublic('quete.js'), /setMercyTextLoading[\s\S]*?showMercyText[\s\S]*?fetchMercyText/);
   assert.doesNotMatch(readPublic('quete.js'), /fetchRandomQuoteImage|refreshQuoteImage|quoteImage/);
   assert.doesNotMatch(readPublic('home-mercy.css'), /is-loading[\s\S]*?opacity/);
+  assert.match(readPublic('home-mercy.css'), /\.home-mercy-images\s*\{[^}]*width:\s*min\(calc\(100% - 40px\),\s*900px\)/s);
   assert.match(readPublic('home-mercy.js'), /const preloadImage = new Image\(\)/);
+
+  const articles = readPublic('fragments/articles.html');
+  assert.deepEqual(
+    Array.from(articles.matchAll(/data-category="([^"]+)"/g), match => match[1]),
+    [
+      'all',
+      'Think It',
+      'Kader',
+      "Allah'ın Varlığının Delilleri",
+      'Sen Kimsin',
+      "İslam'da Adalet",
+      'Hadisler',
+      "Ahiret'in Varlığının Delilleri",
+      'Kâinat Rehberi',
+      'Gayeli ve Planlı Yaratılış',
+      'Temel Sorgulama',
+      'Evrim'
+    ]
+  );
+  assert.doesNotMatch(readPublic('articles.js'), /setupCategories|data\.categories/);
+  assert.equal((articles.match(/class="article-image article-loading-image"/g) || []).length, 4);
+  assert.match(articles, /article-loading-image[\s\S]*?article-loading-title[\s\S]*?article-loading-text/);
+  assert.match(readPublic('articles.js'), /loadingCard\.repeat\(4\)/);
+  assert.doesNotMatch(readPublic('articles.js'), /article-loading-spinner/);
+  assert.match(readPublic('articles.css'), /\.article-loading-image\s*\{[^}]*height:\s*175px;[^}]*article-loading/s);
 });
 
 test('Videolar doğrudan yenilendiğinde veri ve kart görünürlüğü tamamlanır', () => {
@@ -163,6 +196,8 @@ test('router içerikleri kaydırma animasyonu olmadan ve istatistik bölümlerin
   const weeklyInit = router.match(/async function initWeeklyTab\(\)[\s\S]*?(?=async function initStatisticsTab)/)?.[0] || '';
   const statisticsInit = router.match(/async function initStatisticsTab\(\)[\s\S]*?(?=async function initGlobalTab)/)?.[0] || '';
   assert.match(router, /function revealRouteContent/);
+  assert.match(router, /function routeUsesFullScreenLoader\(route\)[\s\S]*?route\.name === 'weekly'/);
+  assert.match(router, /if \(!useFullScreenLoader\) await revealRouteContent\(activeView, true\);/);
   assert.doesNotMatch(router, /querySelectorAll\(['"]\.scroll-fade-in/);
   assert.match(commonStyles, /\.scroll-fade-in\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*none;[^}]*transition:\s*none;/s);
   assert.match(userCardStyles, /\.user-card\s*\{[^}]*transform:\s*none;[^}]*opacity:\s*1;/s);

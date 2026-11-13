@@ -1,18 +1,18 @@
 {
   "index.min.css": "index.min.css?v=af89291a224a",
   "index.min.js": "index.min.js?v=3010c173cecd",
-  "shell.min.css": "shell.min.css?v=a9f68806248a",
+  "shell.min.css": "shell.min.css?v=0799980d4cc5",
   "shell.min.js": "shell.min.js?v=5a1572b34b51",
   "group-common.min.css": "group-common.min.css?v=835fe0f70c01",
   "group-common.min.js": "group-common.min.js?v=bd0e097a3554",
-  "weekly.min.css": "weekly.min.css?v=4cc1c655041c",
+  "weekly.min.css": "weekly.min.css?v=0aea10533218",
   "weekly.min.js": "weekly.min.js?v=857e37e020ff",
   "statistics.min.css": "statistics.min.css?v=0ed5e038e2f0",
   "statistics.min.js": "statistics.min.js?v=c8ae722e0094",
-  "videos.min.css": "videos.min.css?v=a735014e2ceb",
+  "videos.min.css": "videos.min.css?v=bfbe7bdca1ef",
   "videos.min.js": "videos.min.js?v=af8780be10a2",
-  "mercy.min.css": "mercy.min.css?v=ccb483742e3b",
-  "mercy.min.js": "mercy.min.js?v=3bdf01656246",
-  "articles.min.css": "articles.min.css?v=b9a60b37d5cb",
-  "articles.min.js": "articles.min.js?v=f50cde786787"
+  "mercy.min.css": "mercy.min.css?v=8c5063180781",
+  "mercy.min.js": "mercy.min.js?v=b019a56711ad",
+  "articles.min.css": "articles.min.css?v=f1b58a64aecf",
+  "articles.min.js": "articles.min.js?v=94d7aeb76ec4"
 }

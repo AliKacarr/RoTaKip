@@ -116,7 +116,7 @@
   transition: all 0.3s ease, opacity 0.4s ease, transform 0.4s ease;
   display: flex;
   flex-direction: column;
-  min-height: 320px;
+  min-height: 330px;
   box-sizing: border-box;
   cursor: pointer;
 }
@@ -138,6 +138,7 @@
   align-items: flex-start;
   gap: 18px;
   width: 100%;
+  height: 175px;
 }
 
 .article-image {
@@ -230,8 +231,8 @@
 }
 
 .article-loading-card .article-content-wrapper {
-  flex-direction: row;
-  padding: 0;
+  flex-direction: column;
+  padding: 20px;
 }
 
 .article-share-icon {
@@ -261,46 +262,38 @@
   flex-direction: column;
 }
 
-.article-loading-title {
-  padding: 20px 20px 15px 20px;
-  border-bottom: 1px solid #f1f3f4;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .article-loading-image {
-  flex: 0 0 200px;
-  background: #f8f9fa;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 175px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #eef0f3 25%, #fafbfc 50%, #eef0f3 75%);
+  background-size: 200% 100%;
+  animation: article-loading 1.5s infinite;
 }
 
-.article-loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e9ecef;
-  border-top: 3px solid #007bff;
-  border-radius: 50%;
-  animation: article-spin 1s linear infinite;
+.article-loading-heading {
+  gap: 14px;
+  padding-top: 4px;
 }
 
-.article-loading-content {
-  flex: 1;
-  padding: 20px 20px 20px 0;
+.article-loading-title {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .article-loading-category,
-.article-loading-date,
 .article-loading-title,
 .article-loading-text {
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+
+.article-loading-text {
+  width: 100%;
+  margin-top: 18px;
+  gap: 10px;
 }
 
 .article-loading-line {
@@ -312,19 +305,15 @@
 }
 
 .article-loading-line-1 {
-  width: 60%;
+  width: 92%;
 }
 
 .article-loading-line-2 {
-  width: 40%;
+  width: 68%;
 }
 
 .article-loading-line-3 {
-  width: 90%;
-}
-
-.article-loading-line-4 {
-  width: 70%;
+  width: 48%;
 }
 
 .article-loading-line-5 {
@@ -337,11 +326,6 @@
 
 .article-loading-line-7 {
   width: 60%;
-}
-
-@keyframes article-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 @keyframes article-loading {

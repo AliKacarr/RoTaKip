@@ -6,7 +6,6 @@ class ArticlesManager {
     constructor() {
         this.articles = [];
         this.filteredArticles = [];
-        this.categories = [];
         this.currentCategory = 'all';
         this.currentPage = 0;
         this.articlesPerPage = 4;
@@ -62,12 +61,10 @@ class ArticlesManager {
 
             const data = await response.json();
             this.articles = data.articles || [];
-            this.categories = data.categories || [];
             
             // Rastgele sırala
             this.shuffleArray(this.articles);
             
-            this.setupCategories();
             this.filterByCategory('all');
             
         } catch (error) {
@@ -76,27 +73,6 @@ class ArticlesManager {
         } finally {
             this.isLoading = false;
         }
-    }
-
-    setupCategories() {
-        const categoriesContainer = document.querySelector('.articles-categories');
-        if (!categoriesContainer) return;
-
-        // Mevcut kategorileri temizle (Tümü butonu hariç)
-        const allBtn = categoriesContainer.querySelector('[data-category="all"]');
-        categoriesContainer.innerHTML = '';
-        if (allBtn) {
-            categoriesContainer.appendChild(allBtn);
-        }
-
-        // Kategori butonlarını ekle
-        this.categories.forEach(category => {
-            const btn = document.createElement('button');
-            btn.className = 'category-btn';
-            btn.dataset.category = category;
-            btn.innerHTML = `<i class="fa-solid fa-tag"></i> ${window.escapeHtml(category)}`;
-            categoriesContainer.appendChild(btn);
-        });
     }
 
     filterByCategory(category) {
@@ -237,80 +213,30 @@ class ArticlesManager {
         const container = document.getElementById('articlesContainer');
         if (!container) return;
 
-        container.innerHTML = `
+        const loadingCard = `
             <div class="article-card article-loading-card">
-                <div class="article-loading-title">
-                    <div class="article-loading-line article-loading-line-1"></div>
-                    <div class="article-loading-line article-loading-line-2"></div>
-                </div>
                 <div class="article-content-wrapper">
-                    <div class="article-loading-image">
-                        <div class="article-loading-spinner"></div>
-                    </div>
-                    <div class="article-loading-content">
-                        <div class="article-loading-category">
-                            <div class="article-loading-line article-loading-line-3"></div>
-                        </div>
-                        <div class="article-loading-date">
-                            <div class="article-loading-line article-loading-line-4"></div>
-                        </div>
-                        <div class="article-loading-text">
-                            <div class="article-loading-line article-loading-line-5"></div>
-                            <div class="article-loading-line article-loading-line-6"></div>
-                            <div class="article-loading-line article-loading-line-7"></div>
+                    <div class="article-card-header">
+                        <div class="article-image article-loading-image" aria-hidden="true"></div>
+                        <div class="article-content article-loading-heading">
+                            <div class="article-loading-category">
+                                <div class="article-loading-line article-loading-line-3"></div>
+                            </div>
+                            <div class="article-loading-title">
+                                <div class="article-loading-line article-loading-line-1"></div>
+                                <div class="article-loading-line article-loading-line-2"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="article-card article-loading-card">
-                <div class="article-loading-title">
-                    <div class="article-loading-line article-loading-line-1"></div>
-                    <div class="article-loading-line article-loading-line-2"></div>
-                </div>
-                <div class="article-content-wrapper">
-                    <div class="article-loading-image">
-                        <div class="article-loading-spinner"></div>
-                    </div>
-                    <div class="article-loading-content">
-                        <div class="article-loading-category">
-                            <div class="article-loading-line article-loading-line-3"></div>
-                        </div>
-                        <div class="article-loading-date">
-                            <div class="article-loading-line article-loading-line-4"></div>
-                        </div>
-                        <div class="article-loading-text">
-                            <div class="article-loading-line article-loading-line-5"></div>
-                            <div class="article-loading-line article-loading-line-6"></div>
-                            <div class="article-loading-line article-loading-line-7"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="article-card article-loading-card">
-                <div class="article-loading-title">
-                    <div class="article-loading-line article-loading-line-1"></div>
-                    <div class="article-loading-line article-loading-line-2"></div>
-                </div>
-                <div class="article-content-wrapper">
-                    <div class="article-loading-image">
-                        <div class="article-loading-spinner"></div>
-                    </div>
-                    <div class="article-loading-content">
-                        <div class="article-loading-category">
-                            <div class="article-loading-line article-loading-line-3"></div>
-                        </div>
-                        <div class="article-loading-date">
-                            <div class="article-loading-line article-loading-line-4"></div>
-                        </div>
-                        <div class="article-loading-text">
-                            <div class="article-loading-line article-loading-line-5"></div>
-                            <div class="article-loading-line article-loading-line-6"></div>
-                            <div class="article-loading-line article-loading-line-7"></div>
-                        </div>
+                    <div class="article-loading-text">
+                        <div class="article-loading-line article-loading-line-5"></div>
+                        <div class="article-loading-line article-loading-line-6"></div>
+                        <div class="article-loading-line article-loading-line-7"></div>
                     </div>
                 </div>
             </div>
         `;
+        container.innerHTML = loadingCard.repeat(4);
     }
 
     showEmptyState() {

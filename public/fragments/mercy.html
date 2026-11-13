@@ -3,10 +3,10 @@
       style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Rahmet Penceresi
   </h3>
   <div class="quote-grid-container">
-    <div class="quote-section">
-      <button class="refresh-quote" id="refreshAyat" title="Yeni ayet getir"><i
+    <div class="quote-section is-loading">
+      <button class="refresh-quote" id="refreshAyat" title="Yeni ayet getir" disabled><i
           class="fa-solid fa-arrow-rotate-right"></i></button>
-      <button class="share-quote" data-target="ayatText" title="Paylaş">
+      <button class="share-quote" data-target="ayatText" title="Paylaş" disabled>
         <img src="/images/share.webp" alt="Paylaş" style="width: 24px; height: 24px;">
       </button>
       <div class="quote-container">
@@ -14,17 +14,18 @@
           <img src="/images/ayat-icon.webp" alt="Ayet İkonu" loading="lazy">
           <div class="quote-title">BİR AYET</div>
         </div>
-        <div id="ayatText" class="quote-text">
-          <div class="loading-quote">Allah yolunda sevdiğiniz şeylerden harcamadıkça iyiliğe asla eremezsiniz. Ne
-            harcarsanız Allah onu hakkıyla bilir. (Âl-i İmrân sûresi, 3/92)</div>
+        <div id="ayatText" class="quote-text is-loading" aria-busy="true" aria-label="Ayet yükleniyor">
+          <div class="quote-loading-placeholder" aria-hidden="true">
+            <span class="quote-loading-line"></span><span class="quote-loading-line"></span><span class="quote-loading-line"></span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="quote-section">
-      <button class="refresh-quote" id="refreshHadith" title="Yeni hadis getir"><i
+    <div class="quote-section is-loading">
+      <button class="refresh-quote" id="refreshHadith" title="Yeni hadis getir" disabled><i
           class="fa-solid fa-arrow-rotate-right"></i></button>
-      <button class="share-quote" data-target="hadithText" title="Paylaş">
+      <button class="share-quote" data-target="hadithText" title="Paylaş" disabled>
         <img src="/images/share.webp" alt="Paylaş" style="width: 24px; height: 24px;">
       </button>
       <div class="quote-container">
@@ -32,17 +33,18 @@
           <img src="/images/hadith-icon.webp" alt="Hadis İkonu" loading="lazy">
           <div class="quote-title">BİR HADİS</div>
         </div>
-        <div id="hadithText" class="quote-text">
-          <div class="loading-quote">Sözlerin en doğrusu, Allah'ın Kitabı; hâl ve tavrın en güzeli ise Muhammed'in
-            (s.a.v.) hâl ve tavrıdır… (Nesâî, Îdeyn, 22)</div>
+        <div id="hadithText" class="quote-text is-loading" aria-busy="true" aria-label="Hadis yükleniyor">
+          <div class="quote-loading-placeholder" aria-hidden="true">
+            <span class="quote-loading-line"></span><span class="quote-loading-line"></span><span class="quote-loading-line"></span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="quote-section">
-      <button class="refresh-quote" id="refreshDua" title="Yeni dua getir"><i
+    <div class="quote-section is-loading">
+      <button class="refresh-quote" id="refreshDua" title="Yeni dua getir" disabled><i
           class="fa-solid fa-arrow-rotate-right"></i></button>
-      <button class="share-quote" data-target="duaText" title="Paylaş">
+      <button class="share-quote" data-target="duaText" title="Paylaş" disabled>
         <img src="/images/share.webp" alt="Paylaş" style="width: 24px; height: 24px;">
       </button>
       <div class="quote-container">
@@ -50,17 +52,18 @@
           <img src="/images/dua-icon.webp" alt="Dua İkonu" loading="lazy">
           <div class="quote-title">BİR DUA</div>
         </div>
-        <div id="duaText" class="quote-text">
-          <div class="loading-quote">Rabbimiz! Hesap kurulacağı gün beni, anamı, babamı ve müminleri bağışla.
-            (İbrâhîm sûresi, 14/41)</div>
+        <div id="duaText" class="quote-text is-loading" aria-busy="true" aria-label="Dua yükleniyor">
+          <div class="quote-loading-placeholder" aria-hidden="true">
+            <span class="quote-loading-line"></span><span class="quote-loading-line"></span><span class="quote-loading-line"></span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="quote-section">
-      <button class="refresh-quote" id="refreshQuote" title="Yeni söz getir"><i
+    <div class="quote-section is-loading">
+      <button class="refresh-quote" id="refreshQuote" title="Yeni söz getir" disabled><i
           class="fa-solid fa-arrow-rotate-right"></i></button>
-      <button class="share-quote" data-target="quoteText" title="Paylaş">
+      <button class="share-quote" data-target="quoteText" title="Paylaş" disabled>
         <img src="/images/share.webp" alt="Paylaş" style="width: 24px; height: 24px;">
       </button>
       <div class="quote-container">
@@ -68,9 +71,10 @@
           <img src="/images/lamba.webp" alt="Fikir Lambası" loading="lazy">
           <div class="quote-title">BİR SÖZ</div>
         </div>
-        <div id="quoteText" class="quote-text">
-          <div class="loading-quote">Hangi şeye dikkat etsen, şehadet eder ki, bu fâniden sonra bir bâki var.
-            (Sözler, Onuncu Söz, On İkinci Suret)</div>
+        <div id="quoteText" class="quote-text is-loading" aria-busy="true" aria-label="Söz yükleniyor">
+          <div class="quote-loading-placeholder" aria-hidden="true">
+            <span class="quote-loading-line"></span><span class="quote-loading-line"></span><span class="quote-loading-line"></span>
+          </div>
         </div>
       </div>
     </div>

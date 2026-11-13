@@ -67,6 +67,47 @@
     transform: translateY(20px);
 }
 
+.quote-text.is-loading {
+    min-height: 120px;
+    cursor: wait;
+}
+
+.quote-text.is-loading:hover {
+    background: transparent;
+}
+
+.quote-loading-placeholder {
+    display: flex;
+    width: min(100%, 420px);
+    flex-direction: column;
+    align-items: center;
+    gap: 13px;
+}
+
+.quote-loading-line {
+    display: block;
+    width: 92%;
+    height: 16px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #e5e8ec 25%, #f6f7f9 50%, #e5e8ec 75%);
+    background-size: 200% 100%;
+    animation: quote-loading-shimmer 1.25s ease-in-out infinite;
+}
+
+.quote-loading-line:nth-child(2) { width: 78%; }
+.quote-loading-line:nth-child(3) { width: 61%; }
+
+.quote-section.is-loading .refresh-quote,
+.quote-section.is-loading .share-quote {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+@keyframes quote-loading-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
 .quote-grid-container {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -84,7 +125,7 @@
     width: 100%;
     background-color: #f9f9f9;
     position: relative;
-    min-height: 250px;
+    min-height: 265px;
     box-sizing: border-box;
     margin-top: 0;
 }
@@ -304,4 +345,8 @@
 
 .refresh-quote i.attention {
     animation: shake 0.8s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .quote-loading-line { animation: none; }
 }
