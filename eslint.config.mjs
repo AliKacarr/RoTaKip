@@ -31,24 +31,14 @@ export default defineConfig([
   },
   {
     files: ['**/*.js'],
-    ignores: ['public/**'],
+    ignores: ['public/**', 'src/client/**'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: globals.node
     }
   },
   {
-    files: ['anket/**/*.js'],
-    languageOptions: {
-      sourceType: 'commonjs',
-      globals: {
-        ...globals.node,
-        document: 'readonly'
-      }
-    }
-  },
-  {
-    files: ['public/**/*.js'],
+    files: ['public/**/*.js', 'src/client/**/*.js'],
     languageOptions: {
       sourceType: 'script',
       globals: {

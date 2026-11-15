@@ -1,15 +1,16 @@
 export const ROUTES = Object.freeze({
-  weekly: {
-    name: 'weekly',
-    fragment: '/fragments/weekly.html',
-    title: 'Ana Sayfa',
+  okumalar: {
+    name: 'okumalar',
+    fragment: '/fragments/okumalar.html',
+    title: 'Okumalar',
     requiresGroup: true
   },
-  statistics: {
-    name: 'statistics',
-    fragment: '/fragments/statistics.html',
-    title: 'Analizler',
-    requiresGroup: true
+  tesbihat: {
+    name: 'tesbihat',
+    path: '/tesbihat',
+    fragment: '/fragments/tesbihat.html',
+    title: 'Tesbihat',
+    requiresGroup: false
   },
   videos: {
     name: 'videos',
@@ -18,11 +19,11 @@ export const ROUTES = Object.freeze({
     title: 'Videolar',
     requiresGroup: false
   },
-  mercy: {
-    name: 'mercy',
-    path: '/rahmet-penceresi',
-    fragment: '/fragments/mercy.html',
-    title: 'Rahmet Penceresi',
+  tefekkur: {
+    name: 'tefekkur',
+    path: '/tefekkur',
+    fragment: '/fragments/tefekkur.html',
+    title: 'Tefekkür',
     requiresGroup: false
   },
   articles: {
@@ -34,7 +35,7 @@ export const ROUTES = Object.freeze({
   }
 });
 
-const GROUP_ROUTE_PATTERN = /^\/grup\/([^/]+)\/(haftalik|istatistikler)\/?$/i;
+const GROUP_ROUTE_PATTERN = /^\/grup\/([^/]+)\/?$/i;
 
 export function decodeGroupId(value) {
   try {
@@ -48,21 +49,19 @@ export function resolveRoute(pathname) {
   const path = String(pathname || '/');
   const groupMatch = path.match(GROUP_ROUTE_PATTERN);
   if (groupMatch) {
-    const routeName = groupMatch[2].toLowerCase() === 'istatistikler' ? 'statistics' : 'weekly';
-    return { ...ROUTES[routeName], groupId: decodeGroupId(groupMatch[1]) };
+    return { ...ROUTES.okumalar, groupId: decodeGroupId(groupMatch[1]) };
   }
 
   const globalRoute = Object.values(ROUTES).find(route => route.path === path.replace(/\/$/, '') || route.path === path);
   return globalRoute ? { ...globalRoute, groupId: null } : null;
 }
 
-export function groupRoutePath(groupId, routeName = 'weekly') {
-  if (!groupId) return '/';
-  const section = routeName === 'statistics' ? 'istatistikler' : 'haftalik';
-  return `/grup/${encodeURIComponent(groupId)}/${section}`;
+export function groupRoutePath(groupId) {
+  if (!groupId) return '/gruplar';
+  return `/grup/${encodeURIComponent(groupId)}/`;
 }
 
 export function canonicalPath(route) {
   if (!route) return '/';
-  return route.requiresGroup ? groupRoutePath(route.groupId, route.name) : route.path;
+  return route.requiresGroup ? groupRoutePath(route.groupId) : route.path;
 }

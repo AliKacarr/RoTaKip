@@ -63,7 +63,7 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 |:----------------:|:------------:|:--------------------:|
 | <img src="public/site_gorselleri/7%20-%20Liderlik%20panosu.png" width="250"> | <img src="public/site_gorselleri/8%20-%20Ayl%C4%B1k%20takvim.png" width="250"> | <img src="public/site_gorselleri/9%20-En%20uzun%20seri%20%20grafi%C4%9Fi.png" width="250"> |
 
-| Okuma Grafiği | Rahmet Penceresi | Videolar |
+| Okuma Grafiği | Tefekkür | Videolar |
 |:-------------:|:----------------:|:--------:|
 | <img src="public/site_gorselleri/10%20-%20Okuma%20grafi%C4%9Fi.png" width="250"> | <img src="public/site_gorselleri/11%20-%20Rahmet%20Penceresi.png" width="250"> | <img src="public/site_gorselleri/12%20-%20Videolar.png" width="250"> |
 
@@ -95,13 +95,15 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 ## Sekmeli Uygulama Mimarisi
 
-Grup deneyimi ortak `groups.html` shell'i üzerinde, route'a göre tembel yüklenen fragment ve asset paketlerinden oluşur:
+Kaynak yerleşimi, dosya sahipliği ve geliştirme kuralları için [mimari belgesine](docs/architecture.md) bakın.
 
-- `/grup/:groupId/haftalik` — haftalık tablo, motivasyon panelleri ve grup ayarları
-- `/grup/:groupId/istatistikler` — lig kartları, aylık takvim ve grafikler
-- `/videolar`, `/rahmet-penceresi`, `/makaleler` — grup bağlamından bağımsız içerikler
+Grup deneyimi ortak `app-shell.html` kabuğu üzerinde, route'a göre tembel yüklenen fragment ve asset paketlerinden oluşur. Okuma gruplarını keşfetme ekranı `/gruplar` adresindeki `gruplar.html` dosyasıdır:
 
-Shell yönlendirmesi `public/app/`, görünüm HTML'leri `public/fragments/` altındadır. `npm run build` sekmeye özel CSS/JS paketlerini üretir ve içerik hash'lerini `public/assets-manifest.json` içine yazar. Eski `/groupid=:groupId` ve `/:groupId` bağlantıları query parametrelerini koruyarak haftalık route'a yönlendirilir.
+- `/grup/:groupId/` — haftalık takip, motivasyon panelleri, grup ayarları, lig kartları, aylık takvim ve grafikler
+- `/tesbihat` — bağımsız Tesbihat sekmesi; `/` bu adrese yönlendirilir (içerik daha sonra eklenecek)
+- `/videolar`, `/tefekkur`, `/makaleler` — grup bağlamından bağımsız içerikler
+
+İstemci kaynakları `src/client/`, shell yönlendirmesi `public/app/`, görünüm HTML'leri `public/fragments/` altındadır. `npm run build` sekmeye özel CSS/JS paketlerini üretir ve içerik hash'lerini `public/assets-manifest.json` içine yazar. Üretilmiş paketler Git tarafından takip edilmez. `/groupid=:groupId` bağlantıları query parametrelerini koruyarak kanonik grup adresine yönlendirilir.
 
 ---
 

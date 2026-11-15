@@ -24,12 +24,11 @@ export function configureNavigation(route, onNavigate) {
   if (route.groupId) rememberGroup(route.groupId);
   const groupId = route.groupId || getRememberedGroup();
 
-  const weekly = nav.querySelector('[data-route="weekly"]');
-  const statistics = nav.querySelector('[data-route="statistics"]');
-  weekly.href = groupRoutePath(groupId, 'weekly');
-  statistics.href = groupRoutePath(groupId, 'statistics');
-  weekly.dataset.missingGroup = groupId ? 'false' : 'true';
-  statistics.dataset.missingGroup = groupId ? 'false' : 'true';
+  const okumalar = nav.querySelector('[data-route="okumalar"]');
+  if (okumalar) {
+    okumalar.href = groupRoutePath(groupId);
+    okumalar.dataset.missingGroup = groupId ? 'false' : 'true';
+  }
 
   nav.querySelectorAll('[data-route]').forEach(link => {
     const active = link.dataset.route === route.name;
@@ -45,7 +44,7 @@ export function configureNavigation(route, onNavigate) {
     if (!link) return;
     if (link.dataset.missingGroup === 'true') {
       event.preventDefault();
-      window.location.assign('/');
+      window.location.assign('/gruplar');
       return;
     }
     const url = new URL(link.href, window.location.origin);

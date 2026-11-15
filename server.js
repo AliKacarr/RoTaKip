@@ -23,7 +23,7 @@ const {
   ERP_SKO_GROUPS,
   getErpReadingsChangeVersion,
   syncErpReadingsOnDemand
-} = require('./anket/erpReadingsSync');
+} = require('./src/server/integrations/erp/erp-readings-sync');
 const {
   USER_VISIBILITY_ACTIVE,
   USER_VISIBILITY_PASSIVE,
@@ -32,19 +32,22 @@ const {
   activeUserQuery,
   isActiveUser,
   normalizeUserVisibility
-} = require('./userVisibility');
+} = require('./src/server/modules/users/user-visibility');
 const {
   INACTIVE_MEMBER_ACTION_NONE,
   VALID_INACTIVE_MEMBER_ACTIONS,
   normalizeInactiveMemberAction
-} = require('./inactiveMemberPolicy');
+} = require('./src/server/modules/groups/inactive-member-policy');
 const {
   READING_EDIT_POLICY_ALL,
   VALID_READING_EDIT_POLICIES,
   normalizeReadingEditPolicy,
   isReadingDateAllowedByPolicy
-} = require('./readingEditPolicy');
-const { deleteGroupUser, passivateGroupUser } = require('./groupUserLifecycle');
+} = require('./src/server/modules/readings/reading-edit-policy');
+const {
+  deleteGroupUser,
+  passivateGroupUser
+} = require('./src/server/modules/users/group-user-lifecycle');
 const ERP_SKO_GROUP_SET = new Set(ERP_SKO_GROUPS);
 
 const app = express();
@@ -233,9 +236,13 @@ function sendHtmlFile(res, fileName) {
   res.sendFile(path.join(__dirname, 'public', fileName));
 }
 
-// Ana sayfa route'u
+// Kök adresi kanonik Tesbihat URL'sine taşır.
 app.get('/', (req, res) => {
-  sendHtmlFile(res, 'index.html');
+  res.redirect(302, '/tesbihat');
+});
+
+app.get('/gruplar', (_req, res) => {
+  sendHtmlFile(res, 'gruplar.html');
 });
 
 // Frontend için gerekli ortam değişkenlerini JS olarak servis et
@@ -374,32 +381,19 @@ function appendQueryString(pathname, query) {
 function sendGroupShell(req, res) {
   const groupId = req.params.groupId;
   if (!GROUP_ID_PATTERN.test(groupId)) return res.status(404).send('Not found');
-  return sendHtmlFile(res, 'groups.html');
+  return sendHtmlFile(res, 'app-shell.html');
 }
 
-app.get('/grup/:groupId/haftalik', sendGroupShell);
-app.get('/grup/:groupId/istatistikler', sendGroupShell);
-app.get(['/videolar', '/rahmet-penceresi', '/makaleler'], (_req, res) => {
-  sendHtmlFile(res, 'groups.html');
+app.get('/grup/:groupId/', sendGroupShell);
+app.get(['/tesbihat', '/videolar', '/tefekkur', '/makaleler'], (_req, res) => {
+  sendHtmlFile(res, 'app-shell.html');
 });
 
-// Eski bağlantılar yeni kanonik haftalık adrese geçici olarak yönlendirilir.
+// Eski grup bağlantıları yeni kanonik grup adresine geçici olarak yönlendirilir.
 app.get('/groupid=:groupId', (req, res) => {
   if (!GROUP_ID_PATTERN.test(req.params.groupId)) return res.status(404).send('Not found');
-  const target = `/grup/${encodeURIComponent(req.params.groupId)}/haftalik`;
+  const target = `/grup/${encodeURIComponent(req.params.groupId)}/`;
   return res.redirect(302, appendQueryString(target, req.query));
-});
-
-// Grup sayfası / geriye uyumluluk (Express 5: rota içinde regex parantezi yok)
-app.get('/:groupId', (req, res) => {
-  const groupId = req.params.groupId;
-  // Only serve groups.html if it's not an API route or static file
-  if (GROUP_ID_PATTERN.test(groupId) && !groupId.startsWith('api') && !groupId.includes('.')) {
-    const target = `/grup/${encodeURIComponent(groupId)}/haftalik`;
-    res.redirect(302, appendQueryString(target, req.query));
-  } else {
-    res.status(404).send('Not found');
-  }
 });
 
 // MongoDB bağlantı seçenekleri

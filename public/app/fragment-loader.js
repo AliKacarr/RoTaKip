@@ -17,11 +17,12 @@ export async function fetchFragment(url) {
 }
 
 export async function createFragmentView(url, routeName) {
-  const html = await fetchFragment(url);
+  const urls = Array.isArray(url) ? url : [url];
+  const fragments = await Promise.all(urls.map(fetchFragment));
   const view = document.createElement('div');
   view.className = `tab-view tab-view-${routeName}`;
   view.dataset.view = routeName;
-  view.innerHTML = html;
+  view.innerHTML = fragments.join('\n');
   return view;
 }
 
@@ -31,5 +32,6 @@ export async function mountFragment(root, url) {
 }
 
 export function preloadFragment(url) {
-  return fetchFragment(url).catch(() => null);
+  const urls = Array.isArray(url) ? url : [url];
+  return Promise.all(urls.map(item => fetchFragment(item).catch(() => null)));
 }

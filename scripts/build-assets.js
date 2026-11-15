@@ -6,87 +6,94 @@ const { minify } = require('terser');
 
 const projectRoot = path.resolve(__dirname, '..');
 const publicPath = path.join(projectRoot, 'public');
+const clientSourcePath = path.join(projectRoot, 'src', 'client');
 
 const bundles = {
   index: {
-    css: ['index.css', 'footer.css'],
-    js: ['third-party.js', 'index.js'],
-    html: ['index.html']
+    sourceRoot: clientSourcePath,
+    css: ['features/group-directory/group-directory.css', 'shared/footer.css'],
+    js: ['shared/third-party.js', 'features/group-directory/group-directory.js'],
+    html: ['gruplar.html']
   },
   shell: {
+    sourceRoot: clientSourcePath,
     css: [
-      'style.css',
-      'footer.css',
-      'groups-footer.css',
-      'cookies.css',
-      'share-modal.css',
-      'shell.css'
+      'shell/base.css',
+      'shared/footer.css',
+      'shell/group-footer.css',
+      'shared/cookies.css',
+      'shared/share-modal.css',
+      'shell/shell.css'
     ],
-    js: ['third-party.js', 'cookies.js'],
-    html: ['groups.html']
+    js: ['shared/third-party.js', 'shared/cookies.js'],
+    html: ['app-shell.html']
   },
   'group-common': {
+    sourceRoot: clientSourcePath,
     css: [
-      'admin-modal.css',
-      'daily-gift.css',
-      'profile-modal.css'
+      'features/groups/admin-modal.css',
+      'features/daily-gift/daily-gift.css',
+      'features/profile/profile-modal.css'
     ],
     js: [
-      'league-config.js',
-      'script.js',
-      'admin-modal.js',
-      'daily-gift.js',
-      'reading-journey.js',
-      'share-utils.js'
+      'features/groups/league-config.js',
+      'features/groups/group-bootstrap.js',
+      'features/groups/admin-modal.js',
+      'features/daily-gift/daily-gift.js',
+      'features/readings/reading-journey.js',
+      'shared/share-utils.js'
     ]
   },
-  weekly: {
+  okumalar: {
+    sourceRoot: clientSourcePath,
     css: [
-      'tracker-table.css',
-      'reading-message-panels.css',
-      'home-mercy.css',
-      'main-area.css',
-      'preferences.css'
+      'features/readings/tracker-table.css',
+      'features/readings/reading-message-panels.css',
+      'features/readings/group-management.css',
+      'features/readings/preferences.css'
     ],
     js: [
-      'reading-edit-mode.js',
-      'weekly-table-image.js',
-      'tracker-table.js',
-      'reading-message-panels.js',
-      'home-mercy.js',
-      'main-area.js'
+      'features/readings/reading-edit-mode.js',
+      'features/readings/weekly-table-image.js',
+      'features/readings/tracker-table.js',
+      'features/readings/reading-message-panels.js',
+      'features/readings/group-management.js'
     ]
   },
   statistics: {
+    sourceRoot: clientSourcePath,
     css: [
-      'user-cards.css',
-      'longest-series.css',
-      'stats-section.css',
-      'monthly.css'
+      'features/readings/analytics/user-cards.css',
+      'features/readings/analytics/longest-series.css',
+      'features/readings/analytics/stats-section.css',
+      'features/readings/analytics/monthly.css'
     ],
     js: [
-      'user-cards.js',
-      'longest-series.js',
-      'stats-section.js',
-      'monthly.js'
+      'features/readings/analytics/user-cards.js',
+      'features/readings/analytics/longest-series.js',
+      'features/readings/analytics/stats-section.js',
+      'features/readings/analytics/monthly.js'
     ]
   },
   videos: {
+    sourceRoot: path.join(clientSourcePath, 'features', 'videos'),
     css: ['videos.css'],
     js: ['videos.js']
   },
-  mercy: {
-    css: ['quote.css'],
-    js: ['quete.js', 'share-quote.js']
+  tefekkur: {
+    sourceRoot: path.join(clientSourcePath, 'features', 'tefekkur'),
+    css: ['quote.css', 'home-tefekkur.css'],
+    js: ['quote.js', 'share-quote.js', 'home-tefekkur.js']
   },
   articles: {
+    sourceRoot: path.join(clientSourcePath, 'features', 'articles'),
     css: ['articles.css'],
     js: ['articles.js']
   }
 };
 
-function readRequiredFiles(fileNames) {
-  const filePaths = fileNames.map(fileName => path.join(publicPath, fileName));
+function readRequiredFiles(fileNames, sourceRoot = publicPath) {
+  const filePaths = fileNames.map(fileName => path.join(sourceRoot, fileName));
   const missingFiles = filePaths
     .filter(filePath => !fs.existsSync(filePath))
     .map(filePath => path.relative(projectRoot, filePath));
@@ -119,7 +126,7 @@ function updateHtmlAssetVersion(htmlFileName, assetFileName, version) {
 }
 
 async function buildBundle(bundleName, config, manifest) {
-  const cssSource = readRequiredFiles(config.css);
+  const cssSource = readRequiredFiles(config.css, config.sourceRoot);
   if (cssSource) {
     const cssResult = new CleanCSS().minify(cssSource);
     if (cssResult.errors.length > 0) {
@@ -133,7 +140,7 @@ async function buildBundle(bundleName, config, manifest) {
     (config.html || []).forEach(htmlFileName => updateHtmlAssetVersion(htmlFileName, cssFileName, cssVersion));
   }
 
-  const jsSource = readRequiredFiles(config.js);
+  const jsSource = readRequiredFiles(config.js, config.sourceRoot);
   if (jsSource) {
     const jsResult = await minify(jsSource, {
       compress: {

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Namaz vakitleri ve tesbihat içeriklerine RoTaKip üzerinden ulaşın.">
+  <meta name="keywords" content="rotakip, tesbihat, namaz vakitleri, zikir, dua">
+  <meta name="robots" content="index, follow">
+  <link id="canonicalLink" rel="canonical" href="https://rotakip.up.railway.app/tesbihat">
+  <link rel="icon" href="/images/favicon.webp" type="image/x-icon">
+  <title id="page-title">RoTaKip</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/shell.min.css?v=e77dcf79cfb2">
+  <script>
+    if (/^\/grup\/[^/]+\/?$/.test(window.location.pathname)) {
+      document.documentElement.classList.add('initial-group-route-loading');
+    }
+  </script>
+</head>
+<body class="app-shell-body">
+  <div class="groups-sparkle-overlay" aria-hidden="true"></div>
+
+  <div id="cookieConsentBanner" class="cookie-consent-banner">
+    <div class="cookie-content">
+      <div class="cookie-header">
+        <div class="cookie-icon">🍪</div>
+        <h3>Çerez İzni</h3>
+      </div>
+      <p>Bu site, size en iyi deneyimi sunmak için çerezleri kullanmaktadır. Çerezler, tercihlerinizi hatırlamak ve site kullanımınızı analiz etmek için kullanılır.</p>
+      <div class="cookie-buttons">
+        <button id="declineCookies" class="cookie-button decline">Reddet</button>
+        <button id="acceptCookies" class="cookie-button accept cookie-pulsate-button">Kabul Et</button>
+      </div>
+    </div>
+  </div>
+
+  <nav id="appNavigation" class="app-navigation" aria-label="RoTaKip bölümleri">
+    <div class="app-navigation-items">
+      <a class="app-navigation-item" data-route="tesbihat" href="/tesbihat">
+        <i class="fa-solid fa-mosque" aria-hidden="true"></i><span>Tesbihat</span>
+      </a>
+      <a class="app-navigation-item" data-route="tefekkur" href="/tefekkur">
+        <i class="fa-solid fa-star-and-crescent" aria-hidden="true"></i><span>Tefekkür</span>
+      </a>
+      <a class="app-navigation-item" data-route="videos" href="/videolar">
+        <i class="fa-regular fa-circle-play" aria-hidden="true"></i><span>Videolar</span>
+      </a>
+      <a class="app-navigation-item" data-route="articles" href="/makaleler">
+        <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Makaleler</span>
+      </a>
+      <a class="app-navigation-item" data-route="okumalar" href="/gruplar">
+        <i class="fa-solid fa-compass" aria-hidden="true"></i><span>Okumalar</span>
+      </a>
+    </div>
+  </nav>
+
+  <div id="routeStatus" class="route-status" role="status" aria-label="Sayfa yükleniyor" hidden>
+    <div class="route-loader" aria-hidden="true">
+      <div class="route-loader-star">⭐</div>
+      <div class="route-loader-lines">
+        <div class="route-loader-line"><span>Ro</span></div>
+        <div class="route-loader-line"><span>Ta</span></div>
+        <div class="route-loader-line"><span>Kip</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-container app-shell-container">
+    <div id="groupCommonRoot"></div>
+    <main id="tabContent" class="tab-content" tabindex="-1"></main>
+    <div id="footerRoot"></div>
+  </div>
+  <div id="overlayRoot"></div>
+  <button id="scrollToTopBtn" class="scroll-to-top-btn" type="button" title="Yukarı Çık" aria-label="Yukarı çık">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 2L2 12H8V22H16V12H22L12 2Z" fill="currentColor" />
+    </svg>
+  </button>
+
+  <noscript>RoTaKip bölümlerini görüntülemek için JavaScript'i etkinleştirin.</noscript>
+  <script type="module" src="/app/shell-router.js"></script>
+</body>
+</html>

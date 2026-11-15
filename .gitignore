@@ -14,6 +14,17 @@ whatsapp/session/
 *.log
 npm-debug.log*
 
+# Generated frontend assets
+public/*.min.js
+public/*.min.css
+public/assets-manifest.json
+
+# Runtime uploads (directory placeholders remain tracked)
+public/uploads/*
+!public/uploads/.gitkeep
+public/groupImages/*
+!public/groupImages/.gitkeep
+
 # OS & Editor files
 .DS_Store
 Thumbs.db
