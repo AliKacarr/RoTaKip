@@ -333,6 +333,12 @@ window.loadReadingStats = async function loadReadingStats() {
             },
             plugins: [ChartDataLabels]
         });
+        const readingStatsPlaceholder = document.getElementById('readingStatsPlaceholder');
+        const shouldRevealReadingStats = Boolean(readingStatsPlaceholder);
+        readingStatsPlaceholder?.remove();
+        if (shouldRevealReadingStats) {
+            chartContainer?.classList.add('reading-content-reveal');
+        }
 
         // Paylaş butonunu ekle
         if (chartContainer && !document.getElementById('readingStatsShareBtn')) {
@@ -360,6 +366,7 @@ window.loadReadingStats = async function loadReadingStats() {
             );
         }
     } catch (error) {
+        document.getElementById('readingStatsPlaceholder')?.remove();
         console.error('Error loading reading stats:', error);
     }
 }

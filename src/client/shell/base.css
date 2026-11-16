@@ -56,17 +56,11 @@ h1 {
 h3 {
   display: flex;
   align-items: center;
-  margin-top: 30px;
   color: #444444;
   font-size: 26px !important;
-  margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 1px solid #44444423;
   width: 98%;
-}
-
-.monthly-calendar-section h3 {
-  font-size: 24px !important;
 }
 
 /* Unified Toast/Notification Styles */

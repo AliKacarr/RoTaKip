@@ -16,6 +16,7 @@ window.renderLongestSeries = function renderLongestSeries() {
         cancelLongestSeriesAnimation();
         const data = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
             const chart = document.getElementById('longestSeriesChart');
+            const shouldRevealLongestSeries = Boolean(document.getElementById('longestSeriesPlaceholder'));
             chart.style.minHeight = '150px';
             chart.innerHTML = '';
             
@@ -186,6 +187,10 @@ window.renderLongestSeries = function renderLongestSeries() {
                 if (a.barWidth !== b.barWidth) return b.barWidth - a.barWidth;
                 return b.idx - a.idx;
             });
+
+            if (shouldRevealLongestSeries) {
+                chart.classList.add('reading-content-reveal');
+            }
 
             const playAnimation = () => {
                 if (longestSeriesVisibilityObserver) {

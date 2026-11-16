@@ -7,7 +7,11 @@ function setAuthenticatedUserAreasVisibility(isVisible) {
   areas.classList.toggle('show', isVisible);
 }
 
-window.showAuthenticatedUserAreas = function showAuthenticatedUserAreas() {
+window.showAuthenticatedUserAreas = function showAuthenticatedUserAreas(options = {}) {
+  if (options.immediate === true) {
+    setAuthenticatedUserAreasVisibility(true);
+    return;
+  }
   window.requestAnimationFrame(() => setAuthenticatedUserAreasVisibility(true));
 };
 
@@ -15,12 +19,12 @@ window.hideAuthenticatedUserAreas = function hideAuthenticatedUserAreas() {
   setAuthenticatedUserAreasVisibility(false);
 };
 
-window.syncAuthenticatedUserAreas = function syncAuthenticatedUserAreas(isAuthenticated) {
-  if (isAuthenticated) window.showAuthenticatedUserAreas();
+window.syncAuthenticatedUserAreas = function syncAuthenticatedUserAreas(isAuthenticated, options = {}) {
+  if (isAuthenticated) window.showAuthenticatedUserAreas(options);
   else window.hideAuthenticatedUserAreas();
 };
 
-window.initializeReadingJourney = async function initializeReadingJourney() {
+window.initializeReadingJourney = async function initializeReadingJourney(options = {}) {
   if (typeof LocalStorageManager === 'undefined' || !LocalStorageManager.isUserLoggedIn()) return;
   const userInfo = LocalStorageManager.getCurrentUserInfo();
   const store = window.globalDataStore;
@@ -59,14 +63,19 @@ window.initializeReadingJourney = async function initializeReadingJourney() {
     if (currentName) currentName.textContent = current.name;
     if (nextImage) nextImage.src = `/images/${next.img}`;
     if (nextName) nextName.textContent = next.name;
-    if (progressText) progressText.textContent = `${totalReading}/${current.max} ⭐`;
+    if (progressText) {
+      const currentValue = document.createElement('span');
+      currentValue.className = 'user-stats-progress-current';
+      currentValue.textContent = String(totalReading);
+      progressText.replaceChildren(currentValue, `/${current.max} ⭐`);
+    }
     if (progressFill) {
       const range = Math.max(1, current.max - current.min);
       progressFill.style.width = `${Math.min(100, ((totalReading - current.min) / range) * 100)}%`;
     }
   }
 
-  if (typeof window.showAuthenticatedUserAreas === 'function') {
+  if (options.reveal !== false && typeof window.showAuthenticatedUserAreas === 'function') {
     window.showAuthenticatedUserAreas();
   }
 };

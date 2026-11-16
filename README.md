@@ -113,10 +113,10 @@ Grup deneyimi ortak `app-shell.html` kabuğu üzerinde, route'a göre tembel yü
 git clone [repo-url]
 cd reading-tracker
 npm install
-node server.js
+npm start
 ```
 
-Uygulama varsayılan olarak **http://localhost:3000** adresinde açılır (`PORT` ile değiştirilebilir). İsterseniz `npm start` da kullanılabilir.
+Uygulama varsayılan olarak **http://localhost:3000** adresinde açılır (`PORT` ile değiştirilebilir).
 
 ---
 

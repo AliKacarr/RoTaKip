@@ -1,22 +1,221 @@
+<!-- Okuma yolculuğu ve lig bilgileri -->
+    <section class="league-info-section">
+      <div id="authenticatedUserAreas" class="authenticated-user-areas" aria-hidden="true">
+      <div class="authenticated-user-areas-content">
+    <!-- Kullanıcı İstatistik Bilgi Alanı -->
+    <div class="user-stats-info-area">
+      <div class="user-stats-header">
+        <!-- Günlük Görevler Butonu -->
+        <div id="dailyTasksButton" class="daily-tasks-button">
+          <div class="tasks-icon">📋</div>
+          <div class="tasks-text">Günlük Görevler</div>
+        </div>
+
+        <div class="user-stats-title">
+          <i class="fa-regular fa-compass"></i>
+          Okuma Yolculuğum
+        </div>
+
+        <!-- Günlük Hediye Butonu -->
+        <div id="dailyGiftButton" class="daily-gift-button">
+          <div class="gift-icon">🎁</div>
+          <div class="gift-text">Günün Hediyesi</div>
+        </div>
+      </div>
+      <div class="user-stats-content">
+        <div class="confetti-overlay"></div>
+        <!-- Sol Kısım: Giriş Serisi -->
+        <div class="user-stats-left">
+          <div class="user-stats-streak">
+            <div class="user-stats-streak-info">
+              <div class="user-stats-streak-icon">
+                <img src="/images/fire.webp" alt="Ateş">
+              </div>
+              <div class="user-stats-streak-number" id="userLoginStreak">0</div>
+            </div>
+            <div class="user-stats-streak-label">Günlük Giriş Serisi</div>
+          </div>
+        </div>
+
+        <!-- Orta Kısım: Lig Bilgisi -->
+        <div class="user-stats-center">
+          <div class="user-stats-league-progress-container">
+            <!-- Mevcut Lig -->
+            <div class="user-stats-current-league">
+              <img id="currentLeagueImg" src="" alt="Mevcut Liginiz" class="user-stats-league-img">
+              <div class="user-stats-league-name" id="currentLeagueName"></div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="user-stats-league-progress-bar">
+              <div class="user-stats-progress-info">
+                <span id="leagueProgressText"></span>
+              </div>
+              <div class="user-stats-progress-track">
+                <div class="user-stats-progress-fill" id="leagueProgressFill" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Sonraki Lig -->
+            <div class="user-stats-next-league">
+              <img id="nextLeagueImg" src="" alt="Sonraki Liginiz" class="user-stats-league-img">
+              <div class="user-stats-league-name" id="nextLeagueName"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sağ Kısım: Toplam Okuma -->
+        <div class="user-stats-right">
+          <div class="user-stats-reading">
+            <div class="user-stats-reading-info">
+              <div class="user-stats-reading-icon">
+                <img src="/images/yıldız.png" alt="Yıldız">
+              </div>
+              <div class="user-stats-reading-number" id="userTotalReading"></div>
+            </div>
+            <div class="user-stats-reading-label">Toplam Okuma Günü</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      </div>
+    </div>
+      <div id="leagueInfoPlaceholder" class="league-info-placeholder" role="status" aria-label="Lig bilgileri hazırlanıyor">
+        <div class="league-placeholder-items" aria-hidden="true">
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
+        </div>
+        <span class="league-placeholder-description" aria-hidden="true"><i></i><b></b></span>
+      </div>
+      <div class="league-info-bar" style="display: none;">
+        <span class="league-info-item" title="Bronz Ligi: 0 - 4 gün arası okuma">
+          <img src="/images/bronz.webp" alt="Bronz" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Bronz</span>
+          <span class="league-info-range">0+</span>
+        </span>
+        <span class="league-info-item" title="Gümüş Ligi: 5 - 9 gün arası okuma">
+          <img src="/images/gumus.webp" alt="Gümüş" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Gümüş</span>
+          <span class="league-info-range">5+</span>
+        </span>
+        <span class="league-info-item" title="Altın Ligi: 10 - 19 gün arası okuma">
+          <img src="/images/altin.webp" alt="Altın" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Altın</span>
+          <span class="league-info-range">10+</span>
+        </span>
+        <span class="league-info-item" title="İnci Ligi: 20 - 39 gün arası okuma">
+          <img src="/images/inci.webp" alt="İnci" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">İnci</span>
+          <span class="league-info-range">20+</span>
+        </span>
+        <span class="league-info-item" title="Safir Ligi: 40 - 59 gün arası okuma">
+          <img src="/images/safir.webp" alt="Safir" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Safir</span>
+          <span class="league-info-range">40+</span>
+        </span>
+        <span class="league-info-item" title="Zümrüt Ligi: 60 - 99 gün arası okuma">
+          <img src="/images/zumrut.webp" alt="Zümrüt" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Zümrüt</span>
+          <span class="league-info-range">60+</span>
+        </span>
+        <span class="league-info-item" title="Elmas Ligi: 100 - 149 gün arası okuma">
+          <img src="/images/elmas.webp" alt="Elmas" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Elmas</span>
+          <span class="league-info-range">100+</span>
+        </span>
+        <span class="league-info-item" title="Yakut Ligi: 150+ gün okuma">
+          <img src="/images/yakut.webp" alt="Yakut" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Yakut</span>
+          <span class="league-info-range">150+</span>
+        </span>
+        <span class="league-info-item" title="Mercan Ligi: 200 - 364 gün arası okuma">
+          <img src="/images/mercan.webp" alt="Mercan" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Mercan</span>
+          <span class="league-info-range">200+</span>
+        </span>
+        <span class="league-info-item" title="Pırlanta Ligi: 365+ gün arası okuma">
+          <img src="/images/pirlanta.webp" alt="Pırlanta" class="league-info-img" width="45" height="45">
+          <span class="league-info-name">Pırlanta</span>
+          <span class="league-info-range">365+</span>
+        </span>
+        <div class="league-info-description">
+          <img src="/images/info.webp" alt="info"
+            style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;">
+          Toplam okuma gününüz arttıkça daha üst liglere yükselirsiniz
+        </div>
+      </div>
+
+    </section>
+
+<section class="weekly-statistics-section">
 <h3 class="haftalik-istatistikler-title">
   <i class="fa-solid fa-calendar-week" aria-hidden="true"
     style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i>
   Haftalık İstatistikler
 </h3>
 
-<div id="readingEditModeBar" class="reading-edit-mode-bar" hidden>
-  <div class="reading-edit-mode-segment" role="group" aria-label="Okuma düzenleme modu">
-    <button type="button" id="readingEditModeDefault" class="reading-edit-mode-btn is-active" aria-pressed="true">
-      <i class="fa-solid fa-arrows-left-right reading-edit-mode-icon" aria-hidden="true"></i> Gezinme
-    </button>
-    <button type="button" id="readingEditModeStatus" class="reading-edit-mode-btn" aria-pressed="false">
-      <i class="fa-solid fa-bolt reading-edit-mode-icon" aria-hidden="true"></i> Durum
-    </button>
-    <button type="button" id="readingEditModeAmount" class="reading-edit-mode-btn" aria-pressed="false">
-      <i class="fa-solid fa-pen reading-edit-mode-icon" aria-hidden="true"></i> Miktar
-    </button>
+<div id="trackerTablePlaceholder" class="tracker-table-placeholder" role="status" aria-label="Haftalık okuma tablosu hazırlanıyor">
+  <div class="tracker-placeholder-table" aria-hidden="true">
+    <div class="tracker-placeholder-users-pane">
+      <span class="tracker-placeholder-heading"></span>
+      <div class="tracker-placeholder-user-row"><span class="tracker-placeholder-avatar"></span><span class="tracker-placeholder-name"></span></div>
+      <div class="tracker-placeholder-user-row"><span class="tracker-placeholder-avatar"></span><span class="tracker-placeholder-name"></span></div>
+      <div class="tracker-placeholder-user-row"><span class="tracker-placeholder-avatar"></span><span class="tracker-placeholder-name"></span></div>
+      <div class="tracker-placeholder-user-row"><span class="tracker-placeholder-avatar"></span><span class="tracker-placeholder-name"></span></div>
+    </div>
+    <div class="tracker-placeholder-days-pane">
+      <div class="tracker-placeholder-day-head">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="tracker-placeholder-day-grid">
+        <span class="is-read"></span><span></span><span class="is-read"></span><span class="is-missed"></span><span class="is-read"></span><span></span><span class="is-read"></span>
+        <span class="is-read"></span><span class="is-read"></span><span></span><span class="is-read"></span><span></span><span class="is-missed"></span><span class="is-read"></span>
+        <span></span><span class="is-read"></span><span class="is-read"></span><span></span><span class="is-read"></span><span class="is-read"></span><span></span>
+        <span class="is-read"></span><span></span><span class="is-missed"></span><span class="is-read"></span><span class="is-read"></span><span></span><span class="is-read"></span>
+      </div>
+    </div>
+    <div class="tracker-placeholder-summary-pane">
+      <span class="tracker-placeholder-heading"></span>
+      <div class="tracker-placeholder-summary-row"><span></span></div>
+      <div class="tracker-placeholder-summary-row"><span></span></div>
+      <div class="tracker-placeholder-summary-row"><span></span></div>
+      <div class="tracker-placeholder-summary-row"><span></span></div>
+    </div>
   </div>
-  <p class="reading-edit-mode-hint" id="readingEditModeHint">Tabloyu incelemek için sağa veya sola kaydırın.</p>
+  <div class="tracker-placeholder-navigation" aria-hidden="true">
+    <span class="tracker-placeholder-nav-button"></span>
+    <div class="tracker-placeholder-week-actions">
+      <span class="tracker-placeholder-week-label"></span>
+      <span class="tracker-placeholder-share-button"></span>
+    </div>
+    <span class="tracker-placeholder-nav-button"></span>
+  </div>
+</div>
+
+<div id="readingEditModeBar" class="reading-edit-mode-bar" aria-hidden="true">
+  <div class="reading-edit-mode-bar-content">
+    <div class="reading-edit-mode-segment" role="group" aria-label="Okuma düzenleme modu">
+      <button type="button" id="readingEditModeDefault" class="reading-edit-mode-btn is-active" aria-pressed="true">
+        <i class="fa-solid fa-arrows-left-right reading-edit-mode-icon" aria-hidden="true"></i> Gezinme
+      </button>
+      <button type="button" id="readingEditModeStatus" class="reading-edit-mode-btn" aria-pressed="false">
+        <i class="fa-solid fa-bolt reading-edit-mode-icon" aria-hidden="true"></i> Durum
+      </button>
+      <button type="button" id="readingEditModeAmount" class="reading-edit-mode-btn" aria-pressed="false">
+        <i class="fa-solid fa-pen reading-edit-mode-icon" aria-hidden="true"></i> Miktar
+      </button>
+    </div>
+    <p class="reading-edit-mode-hint" id="readingEditModeHint">Tabloyu incelemek için sağa veya sola kaydırın.</p>
+  </div>
 </div>
 
 <div class="tracker-table-shell" style="display: none;">
@@ -93,16 +292,29 @@
         </div>
       </div>
     </div>
+</section>
 
-<section class="reading-message-panels" aria-live="polite">
+<section class="reading-message-panels" aria-live="polite" hidden>
   <div class="reading-message-panels-content"></div>
 </section>
 
-<div class="monthly-calendar-section" style="display: none;">
+<div class="monthly-calendar-section">
       <h3><i class="fa-regular fa-calendar-check"
-          style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Aylık
+          style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Aylık
         İstatistikler</h3>
-      <div class="monthly-calendar-share-container scroll-fade-in">
+      <div id="monthlyCalendarPlaceholder" class="reading-section-placeholder monthly-calendar-placeholder" role="status" aria-label="Aylık takvim hazırlanıyor">
+        <div class="monthly-placeholder-selector" aria-hidden="true">
+          <span class="monthly-placeholder-selector-label"></span>
+          <span class="monthly-placeholder-selector-field"></span>
+        </div>
+        <div class="monthly-placeholder-calendar" aria-hidden="true">
+          <div class="monthly-placeholder-month-head"><span class="monthly-placeholder-share"></span><span class="monthly-placeholder-month-title"></span></div>
+          <div class="monthly-placeholder-weekdays"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="monthly-placeholder-grid"></div>
+        </div>
+        <div class="monthly-placeholder-navigation" aria-hidden="true"><span></span><span></span></div>
+      </div>
+      <div class="monthly-calendar-share-container scroll-fade-in" hidden>
         <div class="monthly-calendar-container">
           <table id="monthlyCalendar" class="monthly-calendar">
             <thead>
@@ -134,7 +346,7 @@
         </div>
       </div>
 
-      <div class="month-navigation">
+      <div class="month-navigation" hidden>
         <button id="prevMonth" class="month-nav-button">
           <span class="month-arrow-icon" style="transform: scaleX(-1);"></span> Önceki Ay
         </button>
@@ -146,28 +358,50 @@
 
 <div class="stats-section">
       <h3><i class="fa-solid fa-ranking-star"
-          style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Okuma
+          style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Okuma
         İstatistikleri
       </h3>
       <div class="chart-container scroll-fade-in">
+        <div id="readingStatsPlaceholder" class="reading-section-placeholder reading-chart-placeholder" role="status" aria-label="Okuma istatistikleri hazırlanıyor">
+          <span class="chart-placeholder-share" aria-hidden="true"></span>
+          <div class="chart-placeholder-legend" aria-hidden="true"><span></span><span></span></div>
+          <div class="chart-placeholder-plot" aria-hidden="true">
+            <div class="chart-placeholder-labels"><span></span><span></span><span></span><span></span></div>
+            <div class="chart-placeholder-bars">
+              <div class="chart-placeholder-row chart-placeholder-row-1"><span class="is-read"></span><span class="is-missed"></span></div>
+              <div class="chart-placeholder-row chart-placeholder-row-2"><span class="is-read"></span><span class="is-missed"></span></div>
+              <div class="chart-placeholder-row chart-placeholder-row-3"><span class="is-read"></span><span class="is-missed"></span></div>
+              <div class="chart-placeholder-row chart-placeholder-row-4"><span class="is-read"></span><span class="is-missed"></span></div>
+            </div>
+          </div>
+          <span class="chart-placeholder-axis-title" aria-hidden="true"></span>
+        </div>
         <canvas id="readingStatsChart"></canvas>
       </div>
     </div>
 
 <div class="longest-series-section">
       <h3><i class="fa-solid fa-bolt"
-          style="font-size: 1.4em !important; font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> En Uzun Okuma
+          style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> En Uzun Okuma
         Serisi</h3>
-      <div id="longestSeriesChart" class="scroll-fade-in"></div>
+      <div id="longestSeriesChart" class="scroll-fade-in">
+        <div id="longestSeriesPlaceholder" class="reading-section-placeholder longest-series-placeholder" role="status" aria-label="En uzun okuma serileri hazırlanıyor">
+          <span class="longest-placeholder-share" aria-hidden="true"></span>
+          <div class="longest-placeholder-row" aria-hidden="true"><span class="longest-placeholder-date"></span><span class="reading-placeholder-ranking reading-placeholder-ranking-1"><i></i><b></b><em></em></span><span class="longest-placeholder-date"></span></div>
+          <div class="longest-placeholder-row" aria-hidden="true"><span class="longest-placeholder-date"></span><span class="reading-placeholder-ranking reading-placeholder-ranking-2"><i></i><b></b><em></em></span><span class="longest-placeholder-date"></span></div>
+          <div class="longest-placeholder-row" aria-hidden="true"><span class="longest-placeholder-date"></span><span class="reading-placeholder-ranking reading-placeholder-ranking-3"><i></i><b></b><em></em></span><span class="longest-placeholder-date"></span></div>
+          <div class="longest-placeholder-row" aria-hidden="true"><span class="longest-placeholder-date"></span><span class="reading-placeholder-ranking reading-placeholder-ranking-4"><i></i><b></b><em></em></span><span class="longest-placeholder-date"></span></div>
+        </div>
+      </div>
     </div>
 
-<div class="user-cards-section" style="display: none;">
+<div class="user-cards-section">
 
-      <div class="user-cards-header" style="display: none;">
-        <h2 class="user-cards-title">
+      <div class="user-cards-header">
+        <h3 class="user-cards-title">
           <i class="fa-solid fa-trophy"></i>
           Liderlik Panosu
-        </h2>
+        </h3>
       </div>
 
       <div class="leaderboard-sort-bar" style="display: none;" aria-label="Liderlik panosu sıralaması">
@@ -181,8 +415,37 @@
         </div>
       </div>
 
-      <div class="user-cards-container" style="display: none;">
-        <!-- Kullanıcı kartları JavaScript ile buraya eklenecek -->
+      <div class="user-cards-container" style="display: flex;">
+        <div id="userCardsPlaceholder" class="user-cards-placeholder" role="status" aria-label="Liderlik panosu hazırlanıyor">
+          <div class="reading-placeholder-card">
+            <div class="card-placeholder-header" aria-hidden="true"><span class="reading-placeholder-avatar"></span><span class="card-placeholder-identity"><i></i><i></i></span><span class="card-placeholder-badge"></span></div>
+            <div class="card-placeholder-summary" aria-hidden="true"><span><i></i><i></i></span><span class="card-placeholder-streak"></span></div>
+            <div class="card-placeholder-progress" aria-hidden="true"><span></span><i></i></div>
+            <span class="card-placeholder-detail card-placeholder-detail-wide" aria-hidden="true"></span>
+            <span class="card-placeholder-detail" aria-hidden="true"></span>
+          </div>
+          <div class="reading-placeholder-card">
+            <div class="card-placeholder-header" aria-hidden="true"><span class="reading-placeholder-avatar"></span><span class="card-placeholder-identity"><i></i><i></i></span><span class="card-placeholder-badge"></span></div>
+            <div class="card-placeholder-summary" aria-hidden="true"><span><i></i><i></i></span><span class="card-placeholder-streak"></span></div>
+            <div class="card-placeholder-progress" aria-hidden="true"><span></span><i></i></div>
+            <span class="card-placeholder-detail card-placeholder-detail-wide" aria-hidden="true"></span>
+            <span class="card-placeholder-detail" aria-hidden="true"></span>
+          </div>
+          <div class="reading-placeholder-card">
+            <div class="card-placeholder-header" aria-hidden="true"><span class="reading-placeholder-avatar"></span><span class="card-placeholder-identity"><i></i><i></i></span><span class="card-placeholder-badge"></span></div>
+            <div class="card-placeholder-summary" aria-hidden="true"><span><i></i><i></i></span><span class="card-placeholder-streak"></span></div>
+            <div class="card-placeholder-progress" aria-hidden="true"><span></span><i></i></div>
+            <span class="card-placeholder-detail card-placeholder-detail-wide" aria-hidden="true"></span>
+            <span class="card-placeholder-detail" aria-hidden="true"></span>
+          </div>
+          <div class="reading-placeholder-card">
+            <div class="card-placeholder-header" aria-hidden="true"><span class="reading-placeholder-avatar"></span><span class="card-placeholder-identity"><i></i><i></i></span><span class="card-placeholder-badge"></span></div>
+            <div class="card-placeholder-summary" aria-hidden="true"><span><i></i><i></i></span><span class="card-placeholder-streak"></span></div>
+            <div class="card-placeholder-progress" aria-hidden="true"><span></span><i></i></div>
+            <span class="card-placeholder-detail card-placeholder-detail-wide" aria-hidden="true"></span>
+            <span class="card-placeholder-detail" aria-hidden="true"></span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -266,9 +529,8 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <section class="automation-section scroll-fade-in">
+      <div class="automation-section scroll-fade-in">
         <div class="automation-settings">
           <h3 class="automation-section-title"><i class="fa-solid fa-gears"></i> Otomasyonlar</h3>
 
@@ -369,39 +631,12 @@
             </div>
           </div>
         </div>
-      </section>
+      </div>
+      </div>
 
       <!-- Alt Bölüm: Kullanıcı Listesi ve Kullanıcı Ekleme Formu -->
       <div class="bottom-section scroll-fade-in">
-        <div class="left-column">
-          <div class="user-list">
-            <div class="join-requests-section">
-              <h3><i class="fa-solid fa-envelope" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
-                Katılma İstekleri</h3>
-              <div id="joinRequestsList" class="join-requests-list">
-                <!-- Katılma istekleri buraya yüklenecek -->
-              </div>
-            </div>
-
-            <div id="userManagementLists">
-              <section class="managed-user-section">
-                <h3><i class="fa-solid fa-users" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
-                  Aktif Kullanıcılar</h3>
-                <ul id="userList" class="managed-user-list"></ul>
-              </section>
-              <section class="managed-user-section passive-user-section">
-                <h3><i class="fa-solid fa-user-slash" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
-                  Pasif Kullanıcılar</h3>
-                <ul id="passiveUserList" class="managed-user-list" hidden></ul>
-                <div id="passiveUserListEmpty" class="no-join-requests">
-                  <i class="fa-solid fa-exclamation-circle"></i> Kullanıcıları gizlemek veya yeniden görünür yapmak için Aktif/Pasif seçeneğini kullanabilirsiniz.
-                </div>
-              </section>
-            </div>
-          </div>
-        </div>
-
-        <div class="right-column">
+        <div class="user-onboarding-column">
           <!-- Add the Add User section -->
           <form id="newUserForm" enctype="multipart/form-data">
             <div class="new-user-invite-section">
@@ -471,6 +706,34 @@
             </div>
           </form>
         </div>
+
+        <div class="user-management-column">
+          <div class="user-list">
+            <div class="join-requests-section">
+              <h3><i class="fa-solid fa-envelope" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                Katılma İstekleri</h3>
+              <div id="joinRequestsList" class="join-requests-list">
+                <!-- Katılma istekleri buraya yüklenecek -->
+              </div>
+            </div>
+
+            <div id="userManagementLists">
+              <section class="managed-user-section">
+                <h3><i class="fa-solid fa-users" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                  Aktif Kullanıcılar</h3>
+                <ul id="userList" class="managed-user-list"></ul>
+              </section>
+              <section class="managed-user-section passive-user-section">
+                <h3><i class="fa-solid fa-user-slash" style="font-size: 1.2em; padding-left:4px; padding-right: 8px;"></i>
+                  Pasif Kullanıcılar</h3>
+                <ul id="passiveUserList" class="managed-user-list" hidden></ul>
+                <div id="passiveUserListEmpty" class="no-join-requests">
+                  <i class="fa-solid fa-exclamation-circle"></i> Kullanıcıları gizlemek veya yeniden görünür yapmak için Aktif/Pasif seçeneğini kullanabilirsiniz.
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -479,5 +742,144 @@
         <h3 id="ayarlar"><i class="fa-classic fa-solid fa-sliders fa-fw"
             style="font-size: 1.2em !important; padding-left:2px; padding-right: 8px;"></i>Tercihler</h3>
         <div class="onesignal-customlink-container"></div>
+      </div>
+    </div>
+
+<div id="dailyGiftModal" class="daily-gift-modal" style="display: none;">
+      <div class="daily-gift-overlay"></div>
+      <div class="daily-gift-content">
+        <div class="daily-gift-header">
+          <h2 class="daily-gift-title" id="esmaulhusnaName">Esmaül Hüsna</h2>
+          <button class="daily-gift-close" id="dailyGiftClose">×</button>
+        </div>
+        <div class="daily-gift-body">
+          <div class="daily-gift-description" id="esmaulhusnaDescription">
+            Açıklama yükleniyor...
+          </div>
+          <div class="daily-gift-video-container">
+            <a href="#" id="esmaulhusnaVideoLink" class="daily-gift-video-link" target="_blank">
+              <div class="daily-gift-video-thumbnail-container">
+                <img id="esmaulhusnaVideoThumbnail" class="daily-gift-video-thumbnail" src="" alt="Video Thumbnail"
+                  style="display: none;">
+                <span class="daily-gift-play-icon"><i class="fa-solid fa-play"></i></span>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="daily-gift-footer">
+          <p class="daily-gift-quote">
+            En güzel isimler Allah'ındır; bu güzel isimlerle O'na dua edin, O'nun isimleri hakkında doğru inançtan
+            sapanları kendi başlarına bırakın. Onlar yaptıklarının cezasını çekecekler! (A'râf Sûresi, 180)
+          </p>
+        </div>
+      </div>
+    </div>
+
+<div id="dailyTasksModal" class="daily-tasks-modal" style="display: none;">
+      <div class="daily-tasks-overlay"></div>
+      <div class="daily-tasks-content">
+        <div class="daily-tasks-header">
+          <h2 class="daily-tasks-title">
+            <i class="fa-solid fa-list-check"></i>
+            Günlük Görevler
+          </h2>
+          <button class="daily-tasks-close" id="dailyTasksClose">×</button>
+        </div>
+
+        <div class="daily-tasks-body">
+
+          <!-- Görev İlerleme Alanı -->
+          <div class="daily-tasks-progress-area">
+            <div class="daily-tasks-progress-bar">
+              <div class="daily-tasks-progress-fill" id="dailyTasksProgressFill"></div>
+            </div>
+            <div class="daily-tasks-progress-text" id="dailyTasksProgressText">0/3 Görev Tamamlandı</div>
+          </div>
+
+          <!-- Görev Listesi -->
+          <div class="daily-tasks-list">
+            <!-- Okuma Görevi -->
+            <div class="daily-task-item" data-task="reading">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günlük Okumanı Tamamla</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskReading" class="daily-task-check">
+                <label for="taskReading" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+
+            <!-- Hediye Görevi -->
+            <div class="daily-task-item" data-task="gift">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-gift"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günün Hediyesini Al</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskGift" class="daily-task-check">
+                <label for="taskGift" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+
+            <!-- Video Görevi -->
+            <div class="daily-task-item" data-task="video">
+              <div class="daily-task-content">
+                <div class="daily-task-icon">
+                  <i class="fa-solid fa-play"></i>
+                </div>
+                <div class="daily-task-info">
+                  <div class="daily-task-title">Günün Videosunu İzle</div>
+                </div>
+              </div>
+              <div class="daily-task-checkbox">
+                <input type="checkbox" id="taskVideo" class="daily-task-check">
+                <label for="taskVideo" class="daily-task-check-label">
+                  <i class="fa-solid fa-check"></i>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Günün Videosu -->
+          <div class="daily-tasks-video-section">
+            <h3 class="daily-tasks-video-section-title">
+              <i class="fa-solid fa-play-circle"></i>
+              Günün Videosu
+            </h3>
+            <div class="daily-tasks-video-container">
+              <a href="https://youtu.be/bOB9k0eG_SY?si=0gSTbJtJmbWt6MZL" id="dailyTasksVideoLink"
+                class="daily-tasks-video-link" target="_blank">
+                <div class="daily-tasks-video-thumbnail-container">
+                  <img id="dailyTasksVideoThumbnail" class="daily-tasks-video-thumbnail" src="/images/video_default.png"
+                    alt="Günün Videosu">
+                  <div class="daily-tasks-video-overlay">
+                    <div class="daily-tasks-video-play-icon">
+                      <i class="fa-solid fa-play"></i>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Hatırlatma -->
+          <div class="daily-tasks-reminder-section">
+            <p id="dailyTasksReminderText" class="daily-tasks-reminder-text">Yükleniyor...</p>
+          </div>
+        </div>
+
       </div>
     </div>

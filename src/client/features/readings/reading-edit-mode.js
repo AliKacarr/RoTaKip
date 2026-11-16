@@ -127,41 +127,36 @@
   window.setReadingEditMode = setReadingEditMode;
   window.cancelAmountCellEdit = cancelAmountCellEdit;
 
-  window.showAuthenticatedUserAreas = function showAuthenticatedUserAreas() {
-    var areas = $('authenticatedUserAreas');
+  window.showReadingEditModeBar = function showReadingEditModeBar() {
     var modeBar = $('readingEditModeBar');
-    if (modeBar) modeBar.hidden = false;
-    if (!areas) return;
-    requestAnimationFrame(function () {
-      areas.setAttribute('aria-hidden', 'false');
-      areas.classList.add('show');
-    });
+    if (modeBar) {
+      modeBar.classList.add('show');
+      modeBar.setAttribute('aria-hidden', 'false');
+    }
   };
 
-  window.hideAuthenticatedUserAreas = function hideAuthenticatedUserAreas() {
-    var areas = $('authenticatedUserAreas');
+  window.hideReadingEditModeBar = function hideReadingEditModeBar() {
     var modeBar = $('readingEditModeBar');
-    if (modeBar) modeBar.hidden = true;
+    if (modeBar) {
+      modeBar.classList.remove('show');
+      modeBar.setAttribute('aria-hidden', 'true');
+    }
     cancelAmountCellEdit();
     window.readingEditMode = 'default';
     updateSegmentButtons();
     updateHint();
-    if (areas) {
-      areas.setAttribute('aria-hidden', 'true');
-      areas.classList.remove('show');
-    }
   };
-
-  window.showReadingEditModeBar = window.showAuthenticatedUserAreas;
-  window.hideReadingEditModeBar = window.hideAuthenticatedUserAreas;
 
   window.syncReadingEditModeBarVisibility = function syncReadingEditModeBarVisibility() {
     var loggedIn =
       typeof LocalStorageManager !== 'undefined' && LocalStorageManager.isUserLoggedIn();
     if (!loggedIn) {
-      window.hideAuthenticatedUserAreas();
+      window.hideReadingEditModeBar();
     } else {
-      window.showAuthenticatedUserAreas();
+      window.showReadingEditModeBar();
+    }
+    if (typeof window.syncAuthenticatedUserAreas === 'function') {
+      window.syncAuthenticatedUserAreas(loggedIn);
     }
   };
 

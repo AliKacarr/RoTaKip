@@ -915,9 +915,8 @@ async function changeUserAuthority(userId, newAuthority) {
             }
 
             if (newAuthority === 'admin' && currentUserInfo && currentUserInfo.userAuthority === 'admin') {
-                // Sayfayı yenile veya admin indicator'ı güncelle
-                if (typeof showAdminIndicator === 'function') {
-                    showAdminIndicator();
+                if (typeof window.syncGroupManagementVisibility === 'function') {
+                    window.syncGroupManagementVisibility();
                 }
             }
         } else {
@@ -2184,10 +2183,32 @@ async function deleteGroup() {
     }
 }
 
+window.syncGroupManagementVisibility = function syncGroupManagementVisibility() {
+    const managementRoot = document.querySelector('.main-area');
+    if (!managementRoot) return;
+
+    const isAdmin = LocalStorageManager.isAdmin();
+    managementRoot.style.display = isAdmin ? 'flex' : 'none';
+
+    if (typeof window.syncReadingEditModeBarVisibility === 'function') {
+        window.syncReadingEditModeBarVisibility();
+    }
+    if (!isAdmin) return;
+
+    if (typeof window.initScrollFadeInElements === 'function') {
+        window.initScrollFadeInElements();
+    }
+    renderUserList();
+    loadGroupSettings();
+    managementRoot.classList.add('reading-content-reveal');
+};
+
 // Event listener'ları shell fragmenti sonradan eklendiğinde de bağla.
 window.initializeGroupManagement = function initializeGroupManagement() {
     const managementRoot = document.querySelector('.main-area');
-    if (!managementRoot || managementRoot.dataset.managementBound === 'true') return;
+    if (!managementRoot) return;
+    window.syncGroupManagementVisibility();
+    if (managementRoot.dataset.managementBound === 'true') return;
     managementRoot.dataset.managementBound = 'true';
     // Grup ayarları butonları
     const saveGroupBtn = document.querySelector('.save-group-btn');
@@ -2280,11 +2301,6 @@ window.initializeGroupManagement = function initializeGroupManagement() {
         });
     }
 
-    // Admin girişi yapıldığında grup ayarlarını yükle
-    if (LocalStorageManager.isUserLoggedIn()) {
-        loadGroupSettings();
-    }
-
     // Karakter sınırı kontrolü event listener'ları
     const groupNameInput = document.getElementById('groupName');
     const groupDescriptionInput = document.getElementById('groupDescription');
@@ -2335,10 +2351,12 @@ window.initializeGroupManagement = function initializeGroupManagement() {
 
 };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', window.initializeGroupManagement, { once: true });
-} else {
-    window.initializeGroupManagement();
+if (!document.body.classList.contains('app-shell-body')) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.initializeGroupManagement, { once: true });
+    } else {
+        window.initializeGroupManagement();
+    }
 }
 
 // Katılma isteklerini yükle

@@ -2,19 +2,14 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="description" content="Namaz vakitleri ve tesbihat içeriklerine RoTaKip üzerinden ulaşın.">
-  <meta name="keywords" content="rotakip, tesbihat, namaz vakitleri, zikir, dua">
+  <meta name="description" content="RoTaKip ile okuma alışkanlıklarınızı ve grup ilerlemenizi takip edin; tesbihat, tefekkür, videolar ve makaleler gibi içeriklere tek yerden ulaşın.">
+  <meta name="keywords" content="rotakip, okuma takibi, okuma grupları, okuma alışkanlığı, tesbihat, tefekkür, videolar, makaleler">
   <meta name="robots" content="index, follow">
   <link id="canonicalLink" rel="canonical" href="https://rotakip.up.railway.app/tesbihat">
   <link rel="icon" href="/images/favicon.webp" type="image/x-icon">
   <title id="page-title">RoTaKip</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/shell.min.css?v=e77dcf79cfb2">
-  <script>
-    if (/^\/grup\/[^/]+\/?$/.test(window.location.pathname)) {
-      document.documentElement.classList.add('initial-group-route-loading');
-    }
-  </script>
+  <link rel="stylesheet" href="/shell.min.css?v=323df83bd29c">
 </head>
 <body class="app-shell-body">
   <div class="groups-sparkle-overlay" aria-hidden="true"></div>
@@ -36,10 +31,10 @@
   <nav id="appNavigation" class="app-navigation" aria-label="RoTaKip bölümleri">
     <div class="app-navigation-items">
       <a class="app-navigation-item" data-route="tesbihat" href="/tesbihat">
-        <i class="fa-solid fa-mosque" aria-hidden="true"></i><span>Tesbihat</span>
+        <i class="fa-regular fa-moon" aria-hidden="true"></i><span>Tesbihat</span>
       </a>
       <a class="app-navigation-item" data-route="tefekkur" href="/tefekkur">
-        <i class="fa-solid fa-star-and-crescent" aria-hidden="true"></i><span>Tefekkür</span>
+        <i class="fa-regular fa-star" aria-hidden="true"></i><span>Tefekkür</span>
       </a>
       <a class="app-navigation-item" data-route="videos" href="/videolar">
         <i class="fa-regular fa-circle-play" aria-hidden="true"></i><span>Videolar</span>
@@ -48,7 +43,7 @@
         <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Makaleler</span>
       </a>
       <a class="app-navigation-item" data-route="okumalar" href="/gruplar">
-        <i class="fa-solid fa-compass" aria-hidden="true"></i><span>Okumalar</span>
+        <i class="fa-regular fa-compass" aria-hidden="true"></i><span>Okumalar</span>
       </a>
     </div>
   </nav>
@@ -65,9 +60,8 @@
   </div>
 
   <div class="main-container app-shell-container">
-    <div id="groupCommonRoot"></div>
     <main id="tabContent" class="tab-content" tabindex="-1"></main>
-    <div id="footerRoot"></div>
+    <div id="footerRoot" hidden></div>
   </div>
   <div id="overlayRoot"></div>
   <button id="scrollToTopBtn" class="scroll-to-top-btn" type="button" title="Yukarı Çık" aria-label="Yukarı çık">

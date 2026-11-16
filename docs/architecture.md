@@ -19,8 +19,14 @@ src/
     shared/         Birden fazla özelliğin kullandığı kod ve stiller
     shell/          Uygulama kabuğunun kaynak stilleri
   server/
-    modules/        Sunucu iş kuralları; özellik bazında ayrılır
-    integrations/   ERP ve benzeri dış sistem bağlantıları
+    start.js        Süreç başlangıcı, bağlantılar ve zamanlanmış işler
+    app.js          İnce composition root; middleware, servis ve router montajı
+    config/         Ortam, veritabanı ve oturum yapılandırması
+    middleware/     HTTP, rate-limit ve hata middleware'leri
+    jobs/           Zamanlanmış arka plan görevleri
+    modules/        Auth, grup, kullanıcı, okuma gibi özellik sınırları
+    integrations/   Dropbox, ERP ve OneSignal bağlantıları
+    shared/         Tarih ve doğrulama gibi çerçeveden bağımsız yardımcılar
 
 public/
   app/              Tarayıcıda doğrudan çalışan ESM shell modülleri
@@ -42,6 +48,9 @@ tests/
 - Kod ve teknik dosya adları İngilizcedir. Türkçe ürün rotaları ve kullanıcı metinleri korunur.
 - Bir özellik kendi JavaScript ve CSS kaynaklarını aynı özellik klasöründe tutar.
 - Paylaşılan kod yalnızca gerçekten birden fazla özellik tarafından kullanılıyorsa `shared/` altına taşınır.
+- Grup üst çubuğu gibi ekranda görünen route öğeleri ilgili route fragmentinde tutulur; shell içinde ayrı bir görünür kök oluşturulmaz.
+- Bir route'a özgü markup kendi `public/fragments/<route>.html` dosyasında, CSS ve JavaScript ise o route'un özellik paketinde bulunur.
+- Grup giriş ve profil pencereleri `common-overlays.html` içinde, yalnız grup rotası açıldığında yüklenir. Tek özelliğe ait modallar ilgili özellik fragmentinde kalır.
 - Build çıktıları elle düzenlenmez. `npm run build:assets` ile yeniden üretilir.
 - Kullanıcı yüklemeleri kaynak kodla birlikte sürümlenmez.
 
@@ -52,13 +61,20 @@ Yeni bir sunucu özelliği mümkün olduğunda şu sınırları kullanır:
 ```text
 modules/example/
   example.routes.js       HTTP rotaları
-  example.controller.js   İstek ve yanıt dönüşümü
   example.service.js      İş kuralları
-  example.repository.js   Veritabanı erişimi
-  example.schema.js       Mongoose şemaları
+  example.models.js       Mongoose şemaları ve modelleri
+  example.middleware.js   Özelliğe özel middleware (gerekiyorsa)
 ```
 
-Küçük özelliklerde gereksiz boş katmanlar oluşturulmaz. Bir dosya tek başına yeterliyse modül klasöründe tek dosya olarak kalabilir.
+Rota dosyaları HTTP sözleşmesini, servis dosyaları iş kurallarını, model dosyaları veri tanımlarını taşır. Küçük özelliklerde gereksiz boş katmanlar oluşturulmaz. Bir dosya tek başına yeterliyse modül klasöründe tek dosya olarak kalabilir.
+
+## Bağımlılık Yönü
+
+- `app.js` bütün modülleri oluşturur ve açık bir bağımlılık bağlamıyla router'lara verir.
+- Özellik modülleri başka bir özelliğin rota dosyasını çağırmaz.
+- Dış servis erişimi yalnızca `integrations/` altında tutulur.
+- Genel yardımcılar Express veya Mongoose'a bağlı değilse `shared/` altında tutulur.
+- `app.js` içine iş kuralı veya doğrudan endpoint eklenmez; mimari testi dosyayı 250 satırın altında ve doğrudan `app.get/post` çağrılarından arınmış tutar.
 
 ## Build ve Test
 
@@ -66,6 +82,6 @@ Küçük özelliklerde gereksiz boş katmanlar oluşturulmaz. Bir dosya tek baş
 - `npm test`: `tests/` altındaki bütün `*.test.js` dosyalarını otomatik keşfeder.
 - `npm run lint`: kaynak kodun statik analizini çalıştırır.
 
-## Geçiş İlkesi
+## Uygulama Yaşam Döngüsü
 
-`server.js` halen uygulamanın ana giriş dosyasıdır. Yeni kod doğrudan bu dosyayı büyütmek yerine `src/server/modules` veya `src/server/integrations` altında oluşturulur. Mevcut rotalar davranış değişikliği yapılmadan, test kapsamı eşliğinde kademeli olarak modüllere taşınır.
+`src/server/start.js` süreç girişidir; veritabanını, indeksleri, entegrasyonları ve zamanlanmış işleri başlatır, kapanış sinyallerinde kaynakları temizler. `src/server/app.js` yalnızca Express uygulamasını oluşturur ve bağımlılıkları özellik router'larına bağlar. Yeni kod sorumluluğuna göre `modules/`, `middleware/`, `jobs/`, `integrations/` veya `shared/` altında oluşturulur.

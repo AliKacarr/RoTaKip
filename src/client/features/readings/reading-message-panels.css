@@ -3,9 +3,16 @@
   margin: 10px 0;
 }
 
+.reading-message-panels:not(:has(> .reading-message-panels-content > *)) {
+  display: none;
+}
+
 .reading-message-panels-content {
   display: flow-root;
   width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .reading-message-panels-content:empty {
@@ -17,7 +24,6 @@
 .everyone-read-message,
 .reading-streak-message,
 .weak-link-message {
-    width: 93%;
     max-width: 1200px;
     border-radius: 10px;
     line-height: 1.7;

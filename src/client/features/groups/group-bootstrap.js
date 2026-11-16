@@ -181,13 +181,13 @@ LocalStorageManager.currentUser = null;
 window.getGroupIdFromUrl = function getGroupIdFromUrl() {
   const path = window.location.pathname;
 
-  // Kanonik format: /grup/catikati23/
+  // Kanonik format: /grup/grup-kimligi/
   const canonicalMatch = path.match(/^\/grup\/([^/?]+)\/?$/i);
   if (canonicalMatch) {
     return decodeURIComponent(canonicalMatch[1]);
   }
   
-  // Yeni format: /groupid=catikati23
+  // Eski format: /groupid=grup-kimligi
   const groupIdMatch = path.match(/\/groupid=([^\/\?]+)/);
   if (groupIdMatch) {
     const decodedGroupId = decodeURIComponent(groupIdMatch[1]);
@@ -227,7 +227,7 @@ window.getInviteParams = function getInviteParams() {
 // Global grup ID değişkeni
 window.groupid = getGroupIdFromUrl();
 window.currentGroupData = null;
-window.initialAllData = null;
+if (!Object.hasOwn(window, 'initialAllData')) window.initialAllData = null;
 window.erpSyncEnabled = false;
 window.erpSyncVersion = 0;
 let erpSyncRefreshStarted = false;
@@ -277,11 +277,6 @@ async function initializeAuthSystem() {
   const currentPath = window.location.pathname;
   if (currentPath === '/login-logs.html' || currentPath === '/access-logs.html') {
     return true;
-  }
-  
-  // Navigasyon butonlarını oluştur
-  if (typeof createNavigationButtons === 'function') {
-    createNavigationButtons();
   }
   
   // Eski sürümden kalan, güvenilir olmayan kimlik alanlarını temizle.
@@ -380,8 +375,8 @@ async function initializeAuthSystem() {
       window.updateProfileButton();
     }
 
-    if (typeof showAdminIndicator === 'function') {
-      showAdminIndicator();
+    if (typeof window.syncGroupManagementVisibility === 'function') {
+      window.syncGroupManagementVisibility();
     }
     
     return true;
@@ -704,6 +699,8 @@ window.initializeGroupPage = async function initializeGroupPage() {
           this.userReadingCounts = new Map(); // userId -> okudum count
           this.userUnreadCounts = new Map(); // userId -> okumadım count
           this.longestStreaks = []; // [{ userId, name, profileImage, streak, startDate, endDate }]
+          this.longestStreaksReady = false;
+          this.longestStreaksPromise = null;
         }
 
         async init(groupId) {
@@ -724,7 +721,6 @@ window.initializeGroupPage = async function initializeGroupPage() {
           if (currentUser) Object.assign(currentUser, sessionUser);
           this.stats = Array.isArray(data.stats) ? data.stats : [];
           this._rebuildIndexes();
-          await this._buildLongestStreaks();
         }
 
         _rebuildIndexes() {
@@ -734,6 +730,8 @@ window.initializeGroupPage = async function initializeGroupPage() {
           this.statRecordIndex.clear();
           this.userReadingCounts.clear();
           this.userUnreadCounts.clear();
+          this.longestStreaksReady = false;
+          this.longestStreaksPromise = null;
 
           for (const u of this.users) {
             const userId = String(u._id);
@@ -833,6 +831,18 @@ window.initializeGroupPage = async function initializeGroupPage() {
           }
           results.sort((a, b) => b.streak - a.streak);
           this.longestStreaks = results;
+          this.longestStreaksReady = true;
+          return results;
+        }
+
+        ensureLongestStreaks() {
+          if (this.longestStreaksReady) return Promise.resolve(this.longestStreaks);
+          if (!this.longestStreaksPromise) {
+            this.longestStreaksPromise = Promise.resolve()
+              .then(() => this._buildLongestStreaks())
+              .finally(() => { this.longestStreaksPromise = null; });
+          }
+          return this.longestStreaksPromise;
         }
 
         getLongestStreaks() { return this.longestStreaks.slice(); }
@@ -1211,101 +1221,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const documentHeight = document.documentElement.scrollHeight;
         const windowHeight = window.innerHeight;
         const distanceFromBottom = documentHeight - (scrollPosition + windowHeight);
-        
-        // Admin butonları ve scroll to top butonunu kontrol et
-        const adminIndicator = document.querySelector('.admin-indicator');
-        const scrollToMainButton = document.querySelector('.scroll-to-main-button');
-        const quotesButton = document.querySelector('.quotes-button');
-        const videosButton = document.querySelector('.videos-button');
-        const articlesButton = document.querySelector('.articles-button');
-        
-        // Sayfanın sonuna 300px kala butonları gizle
-        if (distanceFromBottom < 300) {
-          // Butonları gizle
-          if (adminIndicator && adminIndicator.classList.contains('show')) {
-            adminIndicator.classList.add('hidden');
-            adminIndicator.classList.remove('show');
-          }
-          if (scrollToMainButton && scrollToMainButton.classList.contains('show')) {
-            scrollToMainButton.classList.add('hidden');
-            scrollToMainButton.classList.remove('show');
-          }
-          if (quotesButton && quotesButton.classList.contains('show')) {
-            quotesButton.classList.add('hidden');
-            quotesButton.classList.remove('show');
-          }
-          if (videosButton && videosButton.classList.contains('show')) {
-            videosButton.classList.add('hidden');
-            videosButton.classList.remove('show');
-          }
-          if (articlesButton && articlesButton.classList.contains('show')) {
-            articlesButton.classList.add('hidden');
-            articlesButton.classList.remove('show');
-          }
-          if (!scrollToTopBtn.classList.contains('hidden')) {
-            scrollToTopBtn.classList.add('hidden');
-            scrollToTopBtn.classList.remove('show');
-          }
-        } else {
-          // Butonları göster (sadece giriş yapılmış kullanıcılar için admin butonları)
-          const isLoggedIn = LocalStorageManager.isUserLoggedIn();
-          const userInfo = isLoggedIn ? LocalStorageManager.getCurrentUserInfo() : null;
-          
-          // Önce scrollToMainButton'ı kontrol et (admin-indicator pozisyonunu etkiler)
-          if (scrollToMainButton) {
-            if (isLoggedIn && userInfo && userInfo.userAuthority === 'admin') {
-              if (!scrollToMainButton.classList.contains('show')) {
-                scrollToMainButton.classList.remove('hidden');
-                scrollToMainButton.classList.add('show');
-              }
-            } else {
-              if (!scrollToMainButton.classList.contains('hidden')) {
-                scrollToMainButton.classList.add('hidden');
-                scrollToMainButton.classList.remove('show');
-              }
-            }
-          }
-          // Sonra adminIndicator'ı kontrol et (scrollToMainButton durumuna göre pozisyon ayarlanır)
-          if (adminIndicator) {
-            if (isLoggedIn) {
-              if (!adminIndicator.classList.contains('show')) {
-                adminIndicator.classList.remove('hidden');
-                adminIndicator.classList.add('show');
-              }
-            } else {
-              if (!adminIndicator.classList.contains('hidden')) {
-                adminIndicator.classList.add('hidden');
-                adminIndicator.classList.remove('show');
-              }
-            }
-          }
-          if (quotesButton && !quotesButton.classList.contains('show')) {
-            quotesButton.classList.remove('hidden');
-            quotesButton.classList.add('show');
-          }
-          if (videosButton && !videosButton.classList.contains('show')) {
-            videosButton.classList.remove('hidden');
-            videosButton.classList.add('show');
-          }
-          if (articlesButton && !articlesButton.classList.contains('show')) {
-            articlesButton.classList.remove('hidden');
-            articlesButton.classList.add('show');
-          }
-          
-          // Scroll to top butonunu orijinal mantıkla yönet
-          if (scrollPosition > 1000) {
-            if (!scrollToTopBtn.classList.contains('show')) {
-              scrollToTopBtn.classList.add('show');
-              scrollToTopBtn.classList.remove('hidden');
-            }
-          } else {
-            if (!scrollToTopBtn.classList.contains('hidden')) {
-              scrollToTopBtn.classList.remove('show');
-              scrollToTopBtn.classList.add('hidden');
-            }
-          }
-        }
-        
+        const shouldShow = scrollPosition > 1000 && distanceFromBottom >= 300;
+
+        scrollToTopBtn.classList.toggle('show', shouldShow);
+        scrollToTopBtn.classList.toggle('hidden', !shouldShow);
         scrollTimeout = null;
       }, 500);
     });

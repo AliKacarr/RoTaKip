@@ -534,8 +534,20 @@ window.loadMonthlyCalendar = function loadMonthlyCalendar() {
         generateCalendar(currentMonth, currentYear, false);
     };
 
-    // Try to populate users initially if the table is already loaded
-    setTimeout(populateUserSelector, 500);
+    // Veri deposu ve haftalık tablo bu aşamada hazırdır. Takvimi doldurduktan
+    // sonra placeholder ile gerçek içeriği aynı görev içinde değiştir.
+    populateUserSelector();
+    const monthlyContent = document.querySelector('.monthly-calendar-share-container');
+    const monthNavigation = document.querySelector('.month-navigation');
+    const monthlyPlaceholder = document.getElementById('monthlyCalendarPlaceholder');
+    const shouldRevealMonthlyContent = Boolean(monthlyPlaceholder);
+    monthlyContent?.removeAttribute('hidden');
+    monthNavigation?.removeAttribute('hidden');
+    monthlyPlaceholder?.remove();
+    if (shouldRevealMonthlyContent) {
+        monthlyContent?.classList.add('reading-content-reveal');
+        monthNavigation?.classList.add('reading-content-reveal');
+    }
 
     // Paylaş butonu için event listener ekle
     const monthShareBtn = document.getElementById('monthShareBtn');

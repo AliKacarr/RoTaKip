@@ -2,33 +2,46 @@
     display: flex;
     flex-direction: column;
     gap: 40px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     padding: 20px;
-    margin-bottom: 20px;
     position: relative;
+    box-sizing: border-box;
+    overflow-x: clip;
 }
-
 .top-section {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    flex-wrap: nowrap;
-    justify-content: space-around;
-    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .bottom-section {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .group-settings {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
+    box-sizing: content-box;
+    width: 415px;
+    max-width: calc(100% - 50px);
+    min-width: 0;
+    margin: 0;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border-radius: 12px;
     border: 1px solid #e1e8ed;
@@ -37,18 +50,16 @@
 }
 
 
-.left-column {
+.user-management-column {
     display: flex;
     flex-direction: column;
-    flex: 1.1 1 0;
-    min-width: 0;
 }
 
-.right-column {
+.user-onboarding-column {
     display: flex;
     flex-direction: column;
-    flex: 0.9 1 0;
     min-width: 0;
+    max-width: 100%;
     gap: 24px;
 }
 
@@ -92,13 +103,16 @@ ul#passiveUserList[hidden] {
 .user-container {
     display: flex;
     align-items: flex-start;
+    flex-wrap: wrap;
     gap: 15px;
+    width: 100%;
+    min-width: 0;
 }
 
 .user-container li {
     flex: 1;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     font-size: 18px;
     background: aliceblue;
@@ -109,7 +123,10 @@ ul#passiveUserList[hidden] {
     position: relative;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    width: 260px;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .user-container li:hover {
@@ -182,10 +199,9 @@ ul#passiveUserList li span {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    flex: 0 0 300px;
-    width: 300px;
+    width: 290px;
     min-width: 0;
-    max-width: 300px;
+    max-width: 100%;
 }
 
 .managed-user-card-column > li {
@@ -556,8 +572,7 @@ ul#passiveUserList li span {
 /* Kullanıcı Ekleme Formu - Site Temasına Uygun */
 #newUserForm {
     position: relative;
-    padding: 20px;
-    padding-bottom: 24px;
+    padding: 24px;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border-radius: 12px;
     border: 1px solid #e1e8ed;
@@ -574,14 +589,14 @@ ul#passiveUserList li span {
 #newUserForm h3 {
     color: #34495e;
     margin: 0 0 24px 0;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 600;
     padding-bottom: 12px;
     border-bottom: 2px solid #27ae60;
 }
 
 .form-left-column {
-    width: 100%;
+    width: 415px;
     min-width: 0;
     max-width: none;
     box-sizing: border-box;
@@ -591,7 +606,7 @@ ul#passiveUserList li span {
 }
 
 .form-right-column {
-    width: 100%;
+    width: 415px;
     min-width: 0;
     max-width: none;
     box-sizing: border-box;
@@ -1013,21 +1028,22 @@ input[type="file"] {
 .group-top-section {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 20px;
     align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
 }
 
 /* Sol Alt Sütun: Grup Resmi ve Adı */
-.group-left-sub-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* Sağ Alt Sütun: Açıklama ve Görünürlük */
+.group-left-sub-column,
 .group-right-sub-column {
-    flex: 1;
+    flex: 1 1 415px;
+    width: 415px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -1035,25 +1051,23 @@ input[type="file"] {
 
 .automation-section {
     display: flex;
-    flex-direction: row;
+    flex: 0 1 auto;
     align-items: flex-start;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    gap: 20px;
-    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
 }
 
 .automation-settings {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
+    width: 415px;
+    max-width: calc(100% - 50px);
+    margin: 0;
     padding: 24px;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 1px solid #e1e8ed;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    box-sizing: border-box;
+    box-sizing: content-box;
 }
 
 .automation-settings h3.automation-section-title {
@@ -1070,18 +1084,26 @@ input[type="file"] {
 
 /* Otomasyon Ayarları ve İşlemler */
 .group-right-column {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
     width: 100%;
     min-width: 0;
     gap: 24px 20px;
     box-sizing: border-box;
-    align-items: stretch;
+    align-items: flex-start;
 }
 
 .automation-settings-column,
 .automation-actions-column {
-    display: contents;
+    display: flex;
+    flex: 1 1 415px;
+    width: 415px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .group-action-buttons {
@@ -1139,6 +1161,7 @@ input[type="file"] {
 .group-image-container {
     display: flex;
     align-items: flex-start;
+    flex-wrap: wrap;
     gap: 15px;
     margin-top: 15px;
 }
@@ -1185,14 +1208,17 @@ input[type="file"] {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex: 1;
+    flex: 1 1 190px;
     height: 100px;
-    width: 190px;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
     justify-content: space-between;
 }
 
 .top-buttons {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     align-items: center;
 }
@@ -1601,6 +1627,9 @@ input[type="file"] {
 
 .group-actions {
     display: flex;
+    width: 415px;
+    max-width: 100%;
+    box-sizing: border-box;
     flex-direction: row;
     gap: 15px;
     align-items: center;
@@ -1809,7 +1838,7 @@ input[type="file"] {
 
 .new-user-invite-section {
     box-sizing: border-box;
-    width: 100%;
+    width: 415px;
     margin: 0 0 40px;
 }
 
@@ -1822,6 +1851,7 @@ input[type="file"] {
 
 .invite-controls {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     align-items: center;
 }
@@ -1912,6 +1942,7 @@ input[type="file"] {
 
 /* Katılma İstekleri Bölümü */
 .join-requests-section {
+    width: 415px;
     margin: 0 0 40px;
 }
 
@@ -2067,6 +2098,10 @@ input[type="file"] {
     font-size: 19px;
 }
 
+#userManagementLists{
+    width: 415px;
+}
+
 /* Yoğun yönetim satırlarında ölçüleri sabit ve taşmasız tut. */
 #userManagementLists .profil-image-user-name {
     font-size: 18px;
@@ -2126,4 +2161,87 @@ input[type="file"] {
     white-space: normal;
     overflow-wrap: break-word;
     line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+    .main-area {
+        gap: 24px;
+        padding: 12px;
+    }
+
+    .top-section,
+    .bottom-section,
+    .automation-section,
+    .group-top-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .user-management-column,
+    .user-onboarding-column,
+    .group-left-sub-column,
+    .group-right-sub-column,
+    .automation-settings-column,
+    .automation-actions-column {
+        flex-basis: auto;
+        width: 100%;
+    }
+
+    .group-settings,
+    .automation-settings,
+    .user-list,
+    #newUserForm {
+        padding: 16px;
+    }
+
+    .group-settings,
+    .automation-settings {
+        max-width: calc(100% - 34px);
+    }
+
+    .member-records-form,
+    .group-action-buttons {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .invite-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .invite-selected-btn {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+
+    .group-image-preview {
+        flex: 0 0 88px;
+        width: 88px;
+        height: 88px;
+    }
+
+    .group-image-actions {
+        flex-basis: 150px;
+    }
+
+    .user-selects {
+        flex: 1 1 110px;
+        width: auto;
+        min-width: min(110px, 100%);
+    }
+
+    .join-request-item {
+        grid-template-columns: 40px minmax(0, 1fr);
+    }
+
+    .join-request-actions {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .join-request-actions .join-request-btn {
+        flex: 1 1 0;
+        justify-content: center;
+        min-width: 0;
+    }
 }

@@ -32,33 +32,44 @@ const bundles = {
     sourceRoot: clientSourcePath,
     css: [
       'features/groups/admin-modal.css',
-      'features/daily-gift/daily-gift.css',
       'features/profile/profile-modal.css'
     ],
     js: [
       'features/groups/league-config.js',
       'features/groups/group-bootstrap.js',
-      'features/groups/admin-modal.js',
-      'features/daily-gift/daily-gift.js',
-      'features/readings/reading-journey.js',
       'shared/share-utils.js'
     ]
+  },
+  'group-ui': {
+    sourceRoot: clientSourcePath,
+    css: [],
+    js: ['features/groups/admin-modal.js']
   },
   okumalar: {
     sourceRoot: clientSourcePath,
     css: [
+      'features/readings/loading-placeholders.css',
+      'features/readings/league-info.css',
+      'features/readings/statistics-layout.css',
       'features/readings/tracker-table.css',
       'features/readings/reading-message-panels.css',
-      'features/readings/group-management.css',
+      'features/readings/reading-journey.css',
+      'features/daily-gift/daily-gift.css',
       'features/readings/preferences.css'
     ],
     js: [
       'features/readings/reading-edit-mode.js',
+      'features/readings/reading-journey.js',
+      'features/daily-gift/daily-gift.js',
       'features/readings/weekly-table-image.js',
       'features/readings/tracker-table.js',
-      'features/readings/reading-message-panels.js',
-      'features/readings/group-management.js'
+      'features/readings/reading-message-panels.js'
     ]
+  },
+  management: {
+    sourceRoot: clientSourcePath,
+    css: ['features/readings/group-management.css'],
+    js: ['features/readings/group-management.js']
   },
   statistics: {
     sourceRoot: clientSourcePath,

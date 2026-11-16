@@ -2,15 +2,15 @@
   "name": "reading-tracker",
   "version": "1.0.0",
   "description": "Book reading tracker application",
-  "main": "server.js",
+  "main": "src/server/start.js",
   "engines": {
     "node": "22.x"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node src/server/start.js",
     "build:assets": "node scripts/build-assets.js",
     "predev": "npm run build:assets",
-    "dev": "node --watch server.js",
+    "dev": "node --watch src/server/start.js",
     "test": "node --test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

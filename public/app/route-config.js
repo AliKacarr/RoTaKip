@@ -1,7 +1,7 @@
 export const ROUTES = Object.freeze({
   okumalar: {
     name: 'okumalar',
-    fragment: '/fragments/okumalar.html',
+    fragment: ['/fragments/group-header.html', '/fragments/okumalar.html'],
     title: 'Okumalar',
     requiresGroup: true
   },

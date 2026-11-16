@@ -5,231 +5,6 @@
 // Global flag for join request success
 let isJoinRequestSuccess = false;
 
-// Create navigation buttons function (her zaman görünür)
-window.createNavigationButtons = function createNavigationButtons() {
-    // Yeni shell kendi sabit menüsünü kullanır. Eski yüzen kısayollar yalnız
-    // geriye dönük bağımsız sayfa kullanımında oluşturulur.
-    if (document.body.classList.contains('app-shell-body')) return;
-
-    // Create articles button if it doesn't exist
-    let articlesButton = document.querySelector('.articles-button');
-    if (!articlesButton) {
-        articlesButton = document.createElement('div');
-        articlesButton.className = 'articles-button';
-        articlesButton.innerHTML = '<i class="fa-regular fa-newspaper"></i> Makaleler';
-    
-        // Buton tıklanınca .articles alanını ekranın ortasına kaydır
-        articlesButton.addEventListener('click', function() {
-            const articlesSection = document.querySelector('.articles');
-            if (articlesSection) {
-                const sectionTop = articlesSection.getBoundingClientRect().top + window.pageYOffset;
-                const sectionHeight = articlesSection.offsetHeight;
-                const windowHeight = window.innerHeight;
-    
-                // Ortalamak için scroll hedefini hesapla
-                const scrollTarget = sectionTop - (windowHeight / 2) + (sectionHeight / 2);
-    
-                window.scrollTo({
-                    top: scrollTarget,
-                    behavior: 'smooth'
-                });
-            }
-        });
-    
-        document.body.appendChild(articlesButton);
-    }
-    
-    // Create videos button if it doesn't exist
-let videosButton = document.querySelector('.videos-button');
-if (!videosButton) {
-    videosButton = document.createElement('div');
-    videosButton.className = 'videos-button';
-    videosButton.innerHTML = '<i class="fa-regular fa-circle-play"></i> Videolar';
-
-    // Add click event to scroll to top of videos section (do NOT center)
-    videosButton.addEventListener('click', function() {
-        const videosSection = document.querySelector('.videos');
-        if (videosSection) {
-            const sectionTop = videosSection.getBoundingClientRect().top + window.pageYOffset;
-
-            window.scrollTo({
-                top: sectionTop,
-                behavior: 'smooth'
-            });
-        }
-    });
-
-    document.body.appendChild(videosButton);
-}
-
-// Create quotes button if it doesn't exist
-let quotesButton = document.querySelector('.quotes-button');
-if (!quotesButton) {
-    quotesButton = document.createElement('div');
-    quotesButton.className = 'quotes-button';
-    quotesButton.innerHTML = '<i class="fa-solid fa-star-and-crescent"></i> Vecizeler';
-
-    // Add click event to scroll to quotes section (centered)
-    quotesButton.addEventListener('click', function() {
-        const quotesSection = document.querySelector('.quote');
-        if (quotesSection) {
-            const sectionTop = quotesSection.getBoundingClientRect().top + window.pageYOffset;
-            const sectionHeight = quotesSection.offsetHeight;
-            const windowHeight = window.innerHeight;
-            const scrollTarget = sectionTop - (windowHeight / 2) + (sectionHeight / 2);
-
-            window.scrollTo({
-                top: scrollTarget,
-                behavior: 'smooth'
-            });
-        }
-    });
-
-    document.body.appendChild(quotesButton);
-}
-
-    // Create scroll to main area button if it doesn't exist
-    let scrollToMainButton = document.querySelector('.scroll-to-main-button');
-    if (!scrollToMainButton) {
-        scrollToMainButton = document.createElement('div');
-        scrollToMainButton.className = 'scroll-to-main-button';
-        scrollToMainButton.innerHTML = '<i class="fa-solid fa-gear"></i> Grup Ayarları';
-
-        // Add click event to scroll to main area
-        scrollToMainButton.addEventListener('click', function() {
-            const mainArea = document.querySelector('.main-area');
-            if (mainArea) {
-                mainArea.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-
-        document.body.appendChild(scrollToMainButton);
-    }
-
-    // Create admin indicator if it doesn't exist
-    let adminIndicator = document.querySelector('.admin-indicator');
-    if (!adminIndicator) {
-        adminIndicator = document.createElement('div');
-        adminIndicator.className = 'admin-indicator';
-        
-        // Add click event to open admin info panel
-        adminIndicator.addEventListener('click', function () {
-            showAdminInfoPanel();
-        });
-
-        document.body.appendChild(adminIndicator);
-    }
-}
-
-async function showAdminIndicator() { 
-        // Üç navigasyon butonunu göster
-        const quotesButton = document.querySelector('.quotes-button');
-        const videosButton = document.querySelector('.videos-button');
-        const articlesButton = document.querySelector('.articles-button');
-        
-        if (quotesButton) {
-            quotesButton.classList.add('show');
-            quotesButton.classList.remove('hidden');
-        }
-        if (videosButton) {
-            videosButton.classList.add('show');
-            videosButton.classList.remove('hidden');
-        }
-        if (articlesButton) {
-            articlesButton.classList.add('show');
-            articlesButton.classList.remove('hidden');
-        }
-        
-    // Check if user is logged in and valid
-    if (!LocalStorageManager.isUserLoggedIn()) {
-        // Çıkış yapmış kullanıcı için tüm elementleri gizle
-        const adminIndicator = document.querySelector('.admin-indicator');
-        const mainArea = document.querySelector('.main-area');
-        const scrollToMainButton = document.querySelector('.scroll-to-main-button');
-
-        if (typeof window.syncReadingEditModeBarVisibility === 'function') {
-            window.syncReadingEditModeBarVisibility();
-        }
-        
-        if (adminIndicator) {
-            adminIndicator.classList.remove('show');
-            adminIndicator.classList.add('hidden');
-        }
-        if (mainArea) mainArea.style.display = 'none';
-        if (scrollToMainButton) {
-            scrollToMainButton.classList.remove('show');
-            scrollToMainButton.classList.add('hidden');
-        }
-        
-        return;
-    }
-    
-    const userInfo = LocalStorageManager.getCurrentUserInfo();
-    if (!userInfo) return;
-
-    if (typeof window.syncReadingEditModeBarVisibility === 'function') {
-        window.syncReadingEditModeBarVisibility();
-    }
-    
-    let scrollToMainButton = document.querySelector('.scroll-to-main-button');
-    
-    // Scroll butonunu göster (sadece admin yetkisi olan kullanıcılar için)
-    if (scrollToMainButton) {
-        if (userInfo.userAuthority === 'admin') {
-            scrollToMainButton.classList.add('show');
-            scrollToMainButton.classList.remove('hidden');
-        } else {
-            scrollToMainButton.classList.remove('show');
-            scrollToMainButton.classList.add('hidden');
-        }
-    }
-
-    // Get admin indicator (already created in createNavigationButtons)
-    let adminIndicator = document.querySelector('.admin-indicator');
-    
-    // Update admin indicator content based on user authority
-    if (adminIndicator) {
-        const displayName = userInfo.name && userInfo.name !== 'null' ? userInfo.name : '';
-        adminIndicator.innerHTML = userInfo.userAuthority === 'admin' ? 
-            `<i class="fa-solid fa-user-shield"></i> <span class="user-name">${displayName}</span>` : 
-            `<i class="fa-solid fa-user"></i> <span class="admin-user-name">${displayName}</span>`;
-        if (
-            scrollToMainButton &&
-            scrollToMainButton.classList.contains('show')
-        ) {
-            adminIndicator.style.bottom = '314px';
-        } else {
-            adminIndicator.style.bottom = '243px';
-        }
-        adminIndicator.classList.add('show');
-        adminIndicator.classList.remove('hidden');
-    }
-
-    // Sadece admin yetkisi olan kullanıcılar için main-area göster
-    const mainArea = document.querySelector('.main-area');
-    if (mainArea && userInfo.userAuthority === 'admin') {
-        mainArea.style.display = 'flex';
-
-        if (typeof window.initScrollFadeInElements === 'function') {
-            window.initScrollFadeInElements();
-        }
-        
-        // Admin girişi yapıldığında user list'i yükle
-        if (typeof renderUserList === 'function') {
-            renderUserList();
-        }
-        
-        // Grup ayarlarını da yükle (sadece admin için)
-        if (typeof loadGroupSettings === 'function') {
-            loadGroupSettings();
-        }
-    }
-}
-
-
 window.initializeAdminModal = function initializeAdminModal() {
 
     const adminLogin = document.getElementById('secretAdminLogin');
@@ -955,9 +730,8 @@ window.initializeAdminModal = function initializeAdminModal() {
 
                     if (typeof loadTrackerTable === 'function') loadTrackerTable();
                     
-                    if (typeof showAdminIndicator === 'function') {
-                        showAdminIndicator();
-                        console.log('Admin indicator - hoşgeldin paneli');
+                    if (typeof window.syncGroupManagementVisibility === 'function') {
+                        window.syncGroupManagementVisibility();
                     }
 
                     // Reload data
@@ -1205,38 +979,9 @@ window.initializeAdminModal = function initializeAdminModal() {
                     profileImagePreview.src = data.profileImage;
                 }
 
-                // 3. YETKİ VE NAVİGASYON GÜNCELLEMELERİ
-                // adminIndicator güncelle
-                if (typeof showAdminIndicator === 'function') {
-                    showAdminIndicator();
-                }
-
-                // Beş butona show sınıfını ekle
-                const adminIndicator = document.querySelector('.admin-indicator');
-                const scrollToMainButton = document.querySelector('.scroll-to-main-button');
-                const quotesButton = document.querySelector('.quotes-button');
-                const videosButton = document.querySelector('.videos-button');
-                const articlesButton = document.querySelector('.articles-button');
-                
-                if (adminIndicator) {
-                    adminIndicator.classList.add('show');
-                    adminIndicator.classList.remove('hidden');
-                }
-                if (scrollToMainButton && data.authority === 'admin') {
-                    scrollToMainButton.classList.add('show');
-                    scrollToMainButton.classList.remove('hidden');
-                }
-                if (quotesButton) {
-                    quotesButton.classList.add('show');
-                    quotesButton.classList.remove('hidden');
-                }
-                if (videosButton) {
-                    videosButton.classList.add('show');
-                    videosButton.classList.remove('hidden');
-                }
-                if (articlesButton) {
-                    articlesButton.classList.add('show');
-                    articlesButton.classList.remove('hidden');
+                // 3. YETKİ GÜNCELLEMELERİ
+                if (typeof window.syncGroupManagementVisibility === 'function') {
+                    window.syncGroupManagementVisibility();
                 }
 
                 // Profil butonunu güncelle
@@ -1895,7 +1640,9 @@ async function performLogoutFromProfile() {
     closePrivateGroupLogoutModal();
     closeProfileModal();
 
-    showAdminIndicator();
+    if (typeof window.syncGroupManagementVisibility === 'function') {
+        window.syncGroupManagementVisibility();
+    }
 
     showToast('Çıkış yapıldı!', 'success');
 

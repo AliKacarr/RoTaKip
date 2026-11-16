@@ -149,6 +149,9 @@ window.loadUserCards = async function loadUserCards() {
     container.querySelectorAll('.user-card[data-user-id]').forEach(card => {
       existingCards.set(card.getAttribute('data-user-id'), card);
     });
+    const userCardsPlaceholder = document.getElementById('userCardsPlaceholder');
+    const shouldRevealUserCards = Boolean(userCardsPlaceholder);
+    userCardsPlaceholder?.remove();
 
     // Güncel kullanıcı ID'lerini tut
     const currentUserIds = orderedUsers.map(u => u._id);
@@ -165,8 +168,6 @@ window.loadUserCards = async function loadUserCards() {
       if (!stats || stats.length === 0) return 0;
       const statMap = {};
       stats.forEach(s => { statMap[s.date] = s.status; });
-      const allDates = Object.keys(statMap).sort();
-      if (allDates.length === 0) return 0;
 
       const today = new Date();
       const year = today.getFullYear();
@@ -279,13 +280,6 @@ window.loadUserCards = async function loadUserCards() {
       if (section) {
         section.style.display = 'block';
         section.classList.add('visible');
-      }
-
-      // League info bar'ı da göster
-      let leagueInfoBar = document.querySelector('.league-info-bar');
-      if (leagueInfoBar) {
-        leagueInfoBar.style.display = 'flex';
-        observeRevealToggle(leagueInfoBar);
       }
 
       if (sortBar) {
@@ -422,8 +416,7 @@ window.loadUserCards = async function loadUserCards() {
       }
     });
 
-    const leagueInfoBar = document.querySelector('.league-info-bar');
-    if (leagueInfoBar) leagueInfoBar.style.display = 'flex';
+    if (shouldRevealUserCards) container.classList.add('reading-content-reveal');
 
   } catch (error) {
     console.error('Kullanıcı kartları yüklenirken hata oluştu:', error);

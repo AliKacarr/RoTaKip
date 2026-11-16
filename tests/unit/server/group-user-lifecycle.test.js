@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const {
   deleteGroupUser,
   passivateGroupUser
-} = require('../../../src/server/modules/users/group-user-lifecycle');
+} = require('../../../src/server/modules/users/group-user-lifecycle.service');
 
 test('silme kullanıcıyı ve ilişkili bütün verileri temizler', async () => {
   const calls = [];

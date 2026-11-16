@@ -1,6 +1,6 @@
 .monthly-calendar-section {
   border-radius: 10px;
-  padding: 12px 22px;
+  padding: 20px;
   width: 100%;
   max-width: 95%;
   overflow: hidden;
@@ -13,6 +13,11 @@
   margin-top: 15px;
   margin-bottom: 10px;
   padding: 10px 0;
+}
+
+.month-navigation[hidden],
+.monthly-calendar-share-container[hidden] {
+  display: none !important;
 }
 
 .monthly-calendar-container {

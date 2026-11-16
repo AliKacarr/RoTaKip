@@ -24,20 +24,13 @@
 }
 
 .user-cards-title {
-    font-size: 35px;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0;
-    display: flex;
-    align-items: center;
+    font-size: 35px !important;
     justify-content: center;
-    border-bottom: 1px solid #44444423;
-    gap: 12px;
 }
 
 .user-cards-title i {
     color: #f39c12;
-    font-size: 0.9em;
+    padding: 0 10px 0 5px;
 }
 
 .user-cards-container {
@@ -536,68 +529,3 @@
     color: #ffc107;
 }
 
-.league-info-bar {
-    width: 97%;
-    max-width: 1200px;
-    background: #74e2ff;
-    border-radius: 14px;
-    margin: 10px auto 18px auto;
-    padding-top: 20px;
-    padding-bottom: 55px;
-    justify-content: space-evenly;
-    display: flex;
-    position: relative;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    font-size: 1.08em;
-    opacity: 1;
-    transform: none;
-}
-
-.league-info-bar.visible {
-    opacity: 1;
-    transform: none;
-}
-
-.league-info-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-right: 0;
-}
-
-.league-info-range {
-    font-size: 21px;
-    color: #666;
-    margin-top: 1px;
-    font-weight: 500;
-    line-height: 1.1;
-}
-
-.league-info-img {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    border: 1.5px solid #ffffff30;
-}
-
-.league-info-name {
-    font-weight: 600;
-    color: #333;
-    font-size: 1em;
-    margin-top: 2px;
-}
-
-.league-info-description {
-    position: absolute;
-    bottom: 12px;
-    text-align: center;
-    font-size: 1em;
-    color: #333;
-    font-style: italic;
-    width: 100%;
-    left: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}

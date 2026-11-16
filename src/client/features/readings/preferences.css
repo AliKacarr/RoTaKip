@@ -26,6 +26,7 @@
     height: 0;
     overflow: hidden;
     opacity: 0;
+    padding: 20px;
     transition: height 0.45s ease, opacity 0.3s ease;
     will-change: height, opacity;
 }
@@ -36,10 +37,6 @@
 
 .onesignal-settings-content {
     min-height: 0;
-}
-
-#ayarlar {
-    margin-top: 10px;
 }
 
 @media (prefers-reduced-motion: reduce) {

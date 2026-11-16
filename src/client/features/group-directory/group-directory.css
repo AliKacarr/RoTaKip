@@ -117,6 +117,7 @@ body.index-navigation-body {
 }
 
 .app-navigation-item i {
+    color: #111;
     font-size: 38px;
 }
 
@@ -137,13 +138,12 @@ body.index-navigation-body {
     color: #111;
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
-    transform: scale(1.08);
 }
 
 .app-navigation-item.is-active:hover,
 .app-navigation-item.is-active:focus-visible {
     color: #111;
-    background: transparent;
+    background: rgba(17, 17, 17, 0.06);
 }
 
 @media (max-width: 1180px) {

@@ -47,7 +47,10 @@ body.app-shell-body { padding-left: var(--app-nav-width); }
   text-align: center;
   transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
 }
-.app-navigation-item i { font-size: 38px; }
+.app-navigation-item i {
+  color: #111;
+  font-size: 38px;
+}
 .app-navigation-item:hover,
 .app-navigation-item:focus-visible {
   color: #111;
@@ -63,12 +66,11 @@ body.app-shell-body { padding-left: var(--app-nav-width); }
   color: #111;
   font-family: "Font Awesome 6 Free";
   font-weight: 900;
-  transform: scale(1.08);
 }
 .app-navigation-item.is-active:hover,
 .app-navigation-item.is-active:focus-visible {
   color: #111;
-  background: transparent;
+  background: rgba(17, 17, 17, 0.06);
 }
 .app-shell-container {
   display: flex;
@@ -124,6 +126,24 @@ body.app-shell-body { padding-left: var(--app-nav-width); }
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
 }
+.tab-view-okumalar.is-resuming {
+  transform: none;
+  animation: none;
+}
+.tab-view-okumalar.is-resuming.visible {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+.tab-view-okumalar.is-resuming .reading-content-reveal,
+.tab-view-okumalar.is-resuming .tracker-table-layout,
+.tab-view-okumalar.is-resuming .week-navigation,
+.tab-view-okumalar.is-resuming .authenticated-user-areas,
+.tab-view-okumalar.is-resuming .scroll-fade-in {
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+}
 .tab-view-videos,
 .tab-view-tesbihat,
 .tab-view-tefekkur,
@@ -152,9 +172,6 @@ body.app-shell-body { padding-left: var(--app-nav-width); }
   transition: opacity 240ms ease, visibility 240ms ease;
 }
 .route-status[hidden] { display: none; }
-html.initial-group-route-loading .app-shell-container { visibility: hidden; }
-html.initial-group-route-loading .route-status[hidden] { display: flex; }
-html.initial-group-route-loading body { overflow: hidden; }
 .route-status.is-leaving {
   opacity: 0;
   visibility: hidden;
@@ -220,8 +237,6 @@ body.route-is-loading { overflow: hidden; }
   text-align: center;
 }
 .route-error a { color: var(--app-nav-accent); font-weight: 800; }
-.reading-message-panels { margin: 10px 0; }
-
 @media (min-width: 1181px) {
   body.app-shell-body .cookie-consent-banner {
     left: calc(var(--app-nav-width) + 40px);

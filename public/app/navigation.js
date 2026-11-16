@@ -2,26 +2,30 @@ import { groupRoutePath } from './route-config.js';
 
 const LAST_GROUP_KEY = 'rotakip:last-group-id';
 
-function sessionGet(key) {
-  try { return sessionStorage.getItem(key); } catch (_error) { return null; }
+function persistentGet(key) {
+  try { return localStorage.getItem(key); } catch (_error) { return null; }
 }
 
-function sessionSet(key, value) {
-  try { sessionStorage.setItem(key, value); } catch (_error) { /* navigation remains usable */ }
+function persistentSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (_error) {
+    return false;
+  }
 }
 
 export function rememberGroup(groupId) {
-  if (groupId) sessionSet(LAST_GROUP_KEY, groupId);
+  if (groupId) persistentSet(LAST_GROUP_KEY, groupId);
 }
 
 export function getRememberedGroup() {
-  return sessionGet(LAST_GROUP_KEY);
+  return persistentGet(LAST_GROUP_KEY);
 }
 
 export function configureNavigation(route, onNavigate) {
   const nav = document.getElementById('appNavigation');
   if (!nav) return;
-  if (route.groupId) rememberGroup(route.groupId);
   const groupId = route.groupId || getRememberedGroup();
 
   const okumalar = nav.querySelector('[data-route="okumalar"]');

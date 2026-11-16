@@ -37,6 +37,9 @@ let timelineScrollTimer = null;
 let timelineIsShifting = false;
 let timelineIsSharing = false;
 let timelineHasPositioned = false;
+let timelineSavedScrollLeft = null;
+let timelineIsRestoringPosition = false;
+let timelineRestoreReleaseTimer = null;
 let timelineScrollBound = false;
 let timelineDragStartX = 0;
 let timelineDragStartScrollLeft = 0;
@@ -489,8 +492,8 @@ function updateLeagueProgress(totalReading) {
 
         // En üst lig tamamlandığında sayısal sınır yerine kutlama mesajı göster.
         progressText.innerHTML = isHighestLeagueComplete
-            ? '<span style="font-weight: 700;">Harikasınız!</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>'
-            : `<span style="font-weight: 700; ">${totalReading}</span><span style="font-weight: 500;">/${currentLeague.max}</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>`;
+            ? '<span class="user-stats-progress-current">Harikasınız!</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>'
+            : `<span class="user-stats-progress-current">${totalReading}</span><span style="font-weight: 500;">/${currentLeague.max}</span> <span style="text-shadow: 0 0 1px #f55,0 0 1px #ff4500;">⭐</span>`;
 
         // Progress bar'ı animasyonlu olarak doldur
         setTimeout(() => {
@@ -715,6 +718,7 @@ async function loadTrackerTable(options = {}) {
     initializeTimelineWindow();
     const dates = getTimelineDates();
     const analysisDates = getSevenDaysEndingAt(timelineReferenceDate || getTodayDateKey());
+    const seasonKey = getWeekSeasonKey(analysisDates);
     currentWeekDisplay.textContent = formatDateRange(analysisDates);
     setTimelineTodayButtonVisibility(timelineReferenceDate || getTodayDateKey());
     const data = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
@@ -731,12 +735,21 @@ async function loadTrackerTable(options = {}) {
     const statsArray = Array.isArray(stats) ? stats : [];
     const statMap = {};
     const amountMap = {};
+    const allTimeAmountsByUser = new Map();
+    const seasonAmountsByUser = new Map();
     for (let s of statsArray) {
-        if (!statMap[s.userId]) statMap[s.userId] = {};
-        if (!amountMap[s.userId]) amountMap[s.userId] = {};
-        statMap[s.userId][s.date] = s.status;
+        const userId = String(s.userId);
+        if (!statMap[userId]) statMap[userId] = {};
+        if (!amountMap[userId]) amountMap[userId] = {};
+        statMap[userId][s.date] = s.status;
         const amt = parseFiniteAmount(s.amount);
-        if (amt != null) amountMap[s.userId][s.date] = amt;
+        if (amt != null) {
+            amountMap[userId][s.date] = amt;
+            allTimeAmountsByUser.set(userId, (allTimeAmountsByUser.get(userId) || 0) + amt);
+            if (String(s.date || '').slice(0, 7) === seasonKey) {
+                seasonAmountsByUser.set(userId, (seasonAmountsByUser.get(userId) || 0) + amt);
+            }
+        }
     }
     timelineLastUsers = users;
     timelineLastStats = statsArray;
@@ -771,7 +784,6 @@ async function loadTrackerTable(options = {}) {
     }
 
     const totalUsers = users.length;
-    const seasonKey = getWeekSeasonKey(analysisDates);
     timelineDisplayedSeasonKey = seasonKey;
     const seasonLabel = getWeekSeasonLabel(analysisDates);
     const seasonParts = seasonLabel.split(' ');
@@ -818,7 +830,7 @@ async function loadTrackerTable(options = {}) {
     let grandAmountTotal = 0;
     let grandStreakTotal = 0;
     for (let user of users) {
-        grandAmountTotal += sumUserAmounts(statsArray, user._id, seasonKey);
+        grandAmountTotal += seasonAmountsByUser.get(String(user._id)) || 0;
         grandStreakTotal += calculateStreak(statMap[user._id] || {});
     }
     let summaryHeadHTML = `<tr><th class="col-total-amount col-season">${seasonHtml}</th>`
@@ -851,8 +863,9 @@ async function loadTrackerTable(options = {}) {
         const isCurrentUser = currentUserInfo && currentUserInfo.userId === user._id;
         const currentUserClass = isCurrentUser ? ' current-user-row' : '';
 
-        const userSeasonAmount = sumUserAmounts(statsArray, user._id, seasonKey);
-        const userAllTimeAmount = sumUserAmounts(statsArray, user._id);
+        const userId = String(user._id);
+        const userSeasonAmount = seasonAmountsByUser.get(userId) || 0;
+        const userAllTimeAmount = allTimeAmountsByUser.get(userId) || 0;
         let userRow = `<tr class="user-row${currentUserClass}" data-user-id="${user._id}"><td class="user-item" data-user-id="${user._id}" style="background: ${league.bg};"><div class="user-item-content">`;
         const profileImage = window.safeImageSrc(user.profileImage);
         userRow += `<img src="${window.escapeHtml(profileImage)}" alt="${window.escapeHtml(user.name)}" class="tracker-profile-image tracker-profile-image-loading" onload="this.classList.remove('tracker-profile-image-loading')" onerror="this.classList.remove('tracker-profile-image-loading'); this.src='/images/default.png'" />`;
@@ -936,16 +949,20 @@ async function loadTrackerTable(options = {}) {
         });
     });
     const weekNav = document.querySelector('.week-navigation');
+    const deferPrimaryReveal = trackerTableShell?.classList.contains('is-primary-reveal-pending') === true;
     if (weekNav) {
         weekNav.style.display = 'flex';
-        // Week navigation animasyonunu tetikle
-        setTimeout(() => {
-            weekNav.classList.add('visible');
-        }, 50);
+        if (deferPrimaryReveal) weekNav.classList.add('visible');
+        else {
+            // Bağımsız yenilemelerde mevcut giriş hareketini koru.
+            setTimeout(() => {
+                weekNav.classList.add('visible');
+            }, 50);
+        }
     }
     trackerTableLayout.classList.remove('is-visible');
 
-    setTimeout(() => {
+    const revealTrackerLayout = () => {
         trackerTableLayout.classList.add('is-visible');
 
         // Sadece ilk yüklemede sayfanın en üstüne kaydır
@@ -953,7 +970,9 @@ async function loadTrackerTable(options = {}) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             isFirstLoad = false;
         }
-    }, 20);
+    };
+    if (deferPrimaryReveal) revealTrackerLayout();
+    else setTimeout(revealTrackerLayout, 20);
 
     // Kullanıcı istatistik alanını güncelle (giriş serisi hesaplaması ile)
     if (!options.timelineRefresh) {
@@ -1365,10 +1384,10 @@ function setupTimelineScrolling() {
     if (!tableArea || timelineScrollBound) return;
     timelineScrollBound = true;
     tableArea.addEventListener('scroll', function () {
-        if (timelineIsShifting || timelineIsSharing) return;
+        if (timelineIsShifting || timelineIsSharing || timelineIsRestoringPosition) return;
         clearTimeout(timelineScrollTimer);
         timelineScrollTimer = setTimeout(function () {
-            if (timelineIsShifting || timelineIsSharing) return;
+            if (timelineIsShifting || timelineIsSharing || timelineIsRestoringPosition) return;
             const referenceDate = getTimelineRightmostVisibleDate();
             updateTimelineSummaries(referenceDate);
 
@@ -1468,8 +1487,7 @@ currentWeekDisplay.addEventListener('click', () => {
 });
 
 function calculateStreak(userStats) {
-    const allDates = Object.keys(userStats).sort();
-    if (allDates.length === 0) return 0;
+    if (!userStats) return 0;
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -2302,16 +2320,38 @@ window.initializeTrackerTableInteractions = function initializeTrackerTableInter
     initializeTrackerShareActions();
 };
 
+window.captureTrackerTableScrollPosition = function captureTrackerTableScrollPosition() {
+    if (!tableArea) return;
+    timelineSavedScrollLeft = tableArea.scrollLeft;
+};
+
 window.refreshTrackerTableLayout = function refreshTrackerTableLayout() {
+    clearTimeout(timelineScrollTimer);
+    timelineScrollTimer = null;
+    clearTimeout(timelineRestoreReleaseTimer);
+    timelineIsRestoringPosition = true;
     return new Promise(function (resolve) {
         requestAnimationFrame(function () {
             requestAnimationFrame(function () {
+                if (tableArea && timelineSavedScrollLeft != null) {
+                    const maxScrollLeft = Math.max(0, tableArea.scrollWidth - tableArea.clientWidth);
+                    tableArea.scrollTo({
+                        left: Math.min(timelineSavedScrollLeft, maxScrollLeft),
+                        behavior: 'auto'
+                    });
+                }
                 syncTrackerSummaryRowHeights();
                 updateTimelineSummaries(getTimelineRightmostVisibleDate());
                 if (timelineScrollHint?.classList.contains('is-visible')) {
                     positionTimelineScrollHint();
                 }
-                resolve();
+                timelineRestoreReleaseTimer = setTimeout(function () {
+                    clearTimeout(timelineScrollTimer);
+                    timelineScrollTimer = null;
+                    timelineIsRestoringPosition = false;
+                    timelineRestoreReleaseTimer = null;
+                    resolve();
+                }, 150);
             });
         });
     });
