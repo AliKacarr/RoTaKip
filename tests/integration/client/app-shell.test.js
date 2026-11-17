@@ -104,6 +104,7 @@ test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir
   assert.match(shellStyles, /\.app-navigation-icon i\s*\{[^}]*color:\s*#111/s);
   assert.match(shellStyles, /\.app-navigation-icon\s*\{[^}]*width:\s*1em;[^}]*height:\s*1em;[^}]*font-size:\s*38px/s);
   assert.match(shellStyles, /\.app-navigation-icon i\s*\{[^}]*position:\s*absolute;[^}]*opacity:\s*1;[^}]*transition:\s*opacity 160ms ease-out/s);
+  assert.match(shellStyles, /\.app-navigation-icon \.app-navigation-icon-filled\s*\{[^}]*opacity:\s*0;[^}]*transform:\s*translateY\(1px\)/s);
   assert.match(shellStyles, /\.app-navigation\.icons-ready \.app-navigation-item\.is-active \.app-navigation-icon-outline\s*\{[^}]*opacity:\s*0[\s\S]*?\.app-navigation\.icons-ready \.app-navigation-item\.is-active \.app-navigation-icon-filled\s*\{[^}]*opacity:\s*1/s);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item:hover,\s*\n\.app-navigation-item:focus-visible/);
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*-webkit-tap-highlight-color:\s*transparent/s);
