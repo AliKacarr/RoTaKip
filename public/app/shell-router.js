@@ -1,7 +1,7 @@
 import { ROUTES, ROUTE_ASSETS, canonicalPath, resolveRoute } from './route-config.js';
 import { createFragmentView, fetchFragment, mountFragment, preloadFragment } from './fragment-loader.js';
 import { loadAssetManifest, loadBundleScripts, loadBundleStyles, preloadBundle } from './asset-loader.js';
-import { loadGroupData, resolveGroupContext } from './group-context.js';
+import { invalidateGroupContext, loadGroupData, resolveGroupContext } from './group-context.js';
 import {
   configureNavigation,
   getRememberedReadingPath,
@@ -53,6 +53,12 @@ let mountedGroupId = null;
 let navigationSequence = 0;
 let routeTransitionLoader = null;
 let okumalarStylesEnabled = false;
+
+window.invalidateRoTaKipGroupCache = function invalidateRoTaKipGroupCache(groupId) {
+  if (!groupId) return;
+  invalidateGroupContext(groupId);
+  groupWarmups.clear();
+};
 
 function setOkumalarStylesEnabled(enabled) {
   okumalarStylesEnabled = enabled === true;
@@ -134,13 +140,16 @@ function removeRouteTransitionLoader(loader = routeTransitionLoader) {
   }
 }
 
-function showRouteTransitionLoader(label) {
+function showRouteTransitionLoader(label, options = {}) {
   removeRouteTransitionLoader();
   const loader = document.createElement('div');
   loader.className = 'initial-tab-loader route-transition-loader';
   loader.setAttribute('role', 'status');
   loader.setAttribute('aria-label', label);
   loader.dataset.shownAt = String(window.performance.now());
+  loader.dataset.minimumVisibleMs = String(
+    Math.max(0, Number(options.minimumVisibleMs ?? ROUTE_TRANSITION_MIN_VISIBLE_MS) || 0)
+  );
   loader.innerHTML = `
     <div class="route-loader" aria-hidden="true">
       <div class="route-loader-star">⭐</div>
@@ -165,8 +174,9 @@ function hideRouteTransitionLoader(loader) {
   }
   return new Promise(resolve => {
     const shownAt = Number(loader.dataset.shownAt) || window.performance.now();
+    const minimumVisibleMs = Number(loader.dataset.minimumVisibleMs) || 0;
     const elapsed = window.performance.now() - shownAt;
-    const waitBeforeFade = Math.max(0, ROUTE_TRANSITION_MIN_VISIBLE_MS - elapsed);
+    const waitBeforeFade = Math.max(0, minimumVisibleMs - elapsed);
     window.setTimeout(() => {
       if (!loader.isConnected) {
         removeRouteTransitionLoader(loader);
@@ -289,6 +299,11 @@ async function ensureGroupCommon(route, context, data) {
   mountedGroupId = route.groupId;
   window.__rotakipResolvedGroupContext = context;
   window.initialAllData = data || null;
+  window.applyResolvedGroupContext?.(context);
+  if (data && window.globalDataStore?.groupId === route.groupId
+    && typeof window.globalDataStore.replaceData === 'function') {
+    window.globalDataStore.replaceData(route.groupId, data);
+  }
   return true;
 }
 
@@ -490,11 +505,15 @@ async function initOkumalarTab() {
     prepareBeforeReveal: true,
     readyForPrefetch,
     async resume() {
-      if (typeof window.refreshTrackerTableLayout === 'function') {
-        await window.refreshTrackerTableLayout();
-      } else if (typeof window.loadTrackerTable === 'function') {
-        await window.loadTrackerTable();
-      }
+      const context = window.__rotakipResolvedGroupContext;
+      revealReadingAuthControls(context?.isAuthenticated === true);
+      const trackerRefresh = (async () => {
+        if (typeof window.loadTrackerTable === 'function') await window.loadTrackerTable();
+        if (typeof window.refreshTrackerTableLayout === 'function') {
+          await window.refreshTrackerTableLayout();
+        }
+      })();
+      await Promise.all([trackerRefresh, prepareReadingPrimaryContent()]);
       this.readyForPrefetch = runOkumalarBackgroundWork();
     }
   };
@@ -670,6 +689,9 @@ async function navigate(url, options = {}) {
     window.location.assign(url.href);
     return;
   }
+  const leavesMountedGroup = Boolean(mountedGroupId)
+    && (!route.requiresGroup || route.groupId !== mountedGroupId);
+  if (leavesMountedGroup) window.invalidateRoTaKipGroupCache(mountedGroupId);
   if (route.requiresGroup) resetOkumalarViewForGroup(route.groupId);
   setScrollToTopEnabled(route.requiresGroup);
   if (!options.fromPopState) history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`);
@@ -680,8 +702,7 @@ async function navigate(url, options = {}) {
   const useInitialTabLoader = hasInitialTabLoader();
   const useOkumalarTransitionLoader = !useInitialTabLoader
     && !isInitialNavigation
-    && route.name === 'okumalar'
-    && !targetWasReady;
+    && route.name === 'okumalar';
   const useGroupsTransitionLoader = !useInitialTabLoader
     && !isInitialNavigation
     && route.name === 'groups';
@@ -691,7 +712,8 @@ async function navigate(url, options = {}) {
     || useGroupsTransitionLoader;
   const transitionLoader = useOkumalarTransitionLoader || useGroupsTransitionLoader
     ? showRouteTransitionLoader(
-      useGroupsTransitionLoader ? 'Gruplar hazırlanıyor' : 'Okumalar hazırlanıyor'
+      useGroupsTransitionLoader ? 'Gruplar hazırlanıyor' : 'Okumalar hazırlanıyor',
+      { minimumVisibleMs: targetWasReady ? 0 : ROUTE_TRANSITION_MIN_VISIBLE_MS }
     )
     : null;
   if (useFullScreenLoader) showStatus();
@@ -832,6 +854,7 @@ async function navigate(url, options = {}) {
 }
 
 window.navigateRoTaKip = path => navigate(new URL(path, window.location.origin));
+window.refreshRoTaKipRoute = () => navigate(new URL(window.location.href), { fromPopState: true });
 
 async function start() {
   await loadAssetManifest();

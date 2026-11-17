@@ -1,22 +1,17 @@
-.reading-message-panels {
-  width: 100%;
-  margin: 10px 0;
-}
-
 .reading-message-panels:not(:has(> .reading-message-panels-content > *)) {
-  display: none;
+    display: none;
 }
 
 .reading-message-panels-content {
-  display: flow-root;
-  width: 100%;
-  margin: 0 auto;
-  padding: 20px;
-  box-sizing: border-box;
+    display: flow-root;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .reading-message-panels-content:empty {
-  display: none;
+    display: none;
 }
 
 .league-promotion-message,

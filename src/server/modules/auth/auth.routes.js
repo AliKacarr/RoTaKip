@@ -131,4 +131,3 @@ function registerAuthRoutes(app, dependencies) {
 module.exports = {
   registerAuthRoutes
 };
-

@@ -60,4 +60,3 @@ async function sendOneSignalNotification(message, source = 'vecize') {
 module.exports = {
   sendOneSignalNotification
 };
-

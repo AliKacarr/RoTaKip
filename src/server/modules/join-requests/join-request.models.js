@@ -24,4 +24,3 @@ const JoinRequest = mongoose.model('JoinRequest', joinRequestSchema, 'jointogrou
 module.exports = {
   JoinRequest
 };
-

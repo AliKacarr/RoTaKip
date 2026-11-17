@@ -668,6 +668,7 @@ window.initializeAdminModal = function initializeAdminModal() {
                         updateData.groupName,
                         updateData.name
                     );
+                    window.invalidateRoTaKipGroupCache?.(updateData.groupId);
 
                     // Grafikler / özetler globalDataStore üzerinden; sayfa yenilemeden senkronize et
                     if (window.globalDataStore && updateData.userId != null) {
@@ -924,6 +925,7 @@ window.initializeAdminModal = function initializeAdminModal() {
 
                 // 1. ÖNCE: Veri kaydetme ve temel işlemler
                 LocalStorageManager.loginUser(data.groupId, data.userId, data.authority, username, data.groupName, data.name);
+                window.invalidateRoTaKipGroupCache?.(data.groupId);
                 window.currentSessionUser = {
                     _id: data.userId,
                     authority: data.authority,
@@ -951,7 +953,15 @@ window.initializeAdminModal = function initializeAdminModal() {
                 groupsAuthLoginForm.reset();
 
                 if (requiresPrivateGroupBootstrap) {
-                    window.location.reload();
+                    window.resetRoTaKipGroupBootstrap?.(data.groupId, { preserveSession: true });
+                    if (typeof window.refreshRoTaKipRoute === 'function') {
+                        window.refreshRoTaKipRoute().catch(error => {
+                            console.error('Özel grup girişinden sonra rota yenilenemedi:', error);
+                            window.location.reload();
+                        });
+                    } else {
+                        window.location.reload();
+                    }
                     return;
                 }
 
@@ -1637,6 +1647,7 @@ async function performLogoutFromProfile() {
         return false;
     }
     LocalStorageManager.logoutUser();
+    window.invalidateRoTaKipGroupCache?.(window.groupid);
     closePrivateGroupLogoutModal();
     closeProfileModal();
 

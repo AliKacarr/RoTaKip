@@ -279,4 +279,3 @@ function registerInvitationRoutes(app, dependencies) {
 module.exports = {
   registerInvitationRoutes
 };
-

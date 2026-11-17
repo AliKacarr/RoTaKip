@@ -595,4 +595,3 @@ function registerUserRoutes(app, dependencies) {
 module.exports = {
   registerUserRoutes
 };
-

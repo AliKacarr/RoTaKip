@@ -387,4 +387,3 @@ function registerReadingRoutes(app, dependencies) {
 module.exports = {
   registerReadingRoutes
 };
-

@@ -37,4 +37,3 @@ module.exports = {
   LoginLog,
   SiteActivityLog
 };
-

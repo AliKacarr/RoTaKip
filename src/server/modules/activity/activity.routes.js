@@ -328,4 +328,3 @@ function registerActivityRoutes(app, dependencies) {
 module.exports = {
   registerActivityRoutes
 };
-

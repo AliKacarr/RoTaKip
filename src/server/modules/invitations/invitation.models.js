@@ -19,4 +19,3 @@ const Invite = mongoose.model('Invite', inviteSchema);
 module.exports = {
   Invite
 };
-

@@ -416,4 +416,3 @@ module.exports = {
   uploadToDropbox,
   uploadToDropboxWithRetry
 };
-

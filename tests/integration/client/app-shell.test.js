@@ -403,6 +403,7 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(router, /const routeStyleLinks = await loadBundleStyles\(ROUTE_ASSETS\[route\.name\]\.styles\)[\s\S]*?route\.name === 'groups'[\s\S]*?link\.disabled = false[\s\S]*?await activateView\(route\)/);
   assert.match(readClient('shell/shell.css'), /\.tab-view\.is-preparing-return\s*\{[^}]*visibility:\s*hidden/s);
   assert.match(router, /window\.navigateRoTaKip = path => navigate\(new URL\(path, window\.location\.origin\)\)/);
+  assert.match(router, /window\.refreshRoTaKipRoute = \(\) => navigate\(new URL\(window\.location\.href\), \{ fromPopState: true \}\)/);
   assert.match(navigation, /route\.navigationName \|\| route\.name/);
   assert.doesNotMatch(navigation, /missingGroup === 'true'/);
   assert.match(directory, /function navigateFromGroupDirectory\(path\)[\s\S]*?window\.navigateRoTaKip\(path\)/);
@@ -446,8 +447,15 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(router, /function resetOkumalarViewForGroup\(nextGroupId\)[\s\S]*?resetTrackerTimelineForGroup\?\.\(\)[\s\S]*?viewCache\.get\('okumalar'\)[\s\S]*?lifecycleCache\.delete\(okumalarView\)[\s\S]*?groupWarmups\.clear\(\)/);
   assert.match(router, /if \(route\.requiresGroup\) resetOkumalarViewForGroup\(route\.groupId\)/);
   assert.match(router, /const groupChanged = Boolean\(mountedGroupId && mountedGroupId !== route\.groupId\)[\s\S]*?resetRoTaKipGroupBootstrap\?\.\(route\.groupId\)/);
+  assert.match(router, /window\.invalidateRoTaKipGroupCache = function[\s\S]*?invalidateGroupContext\(groupId\)[\s\S]*?groupWarmups\.clear\(\)[\s\S]*?leavesMountedGroup[\s\S]*?invalidateRoTaKipGroupCache\(mountedGroupId\)/);
+  assert.match(router, /applyResolvedGroupContext\?\.\(context\)[\s\S]*?globalDataStore\.replaceData\(route\.groupId, data\)/);
   assert.doesNotMatch(router, /mountedGroupId && mountedGroupId !== route\.groupId\)[\s\S]{0,100}?window\.location\.assign/);
-  assert.match(readClient('features/groups/group-bootstrap.js'), /window\.resetRoTaKipGroupBootstrap = function[\s\S]*?window\.rotakipGroupBootstrapPromise = null[\s\S]*?LocalStorageManager\.logoutUser\(\)/);
+  assert.match(readClient('features/groups/group-bootstrap.js'), /window\.resetRoTaKipGroupBootstrap = function[\s\S]*?window\.rotakipGroupBootstrapPromise = null[\s\S]*?options\.preserveSession !== true[\s\S]*?LocalStorageManager\.logoutUser\(\)/);
+  assert.match(readClient('features/groups/group-bootstrap.js'), /window\.applyResolvedGroupContext = function[\s\S]*?LocalStorageManager\.loginUser\([\s\S]*?LocalStorageManager\.logoutUser\(\)[\s\S]*?syncGroupManagementVisibility/);
+  assert.match(readClient('features/groups/group-bootstrap.js'), /replaceData\(groupId, data\)[\s\S]*?this\.groupId = groupId[\s\S]*?this\._rebuildIndexes\(\)/);
+  assert.match(readClient('features/groups/admin-modal.js'), /LocalStorageManager\.loginUser\([\s\S]*?invalidateRoTaKipGroupCache\?\.[\s\S]*?LocalStorageManager\.logoutUser\(\)[\s\S]*?invalidateRoTaKipGroupCache\?\./);
+  assert.match(readClient('features/groups/admin-modal.js'), /if \(requiresPrivateGroupBootstrap\)[\s\S]*?resetRoTaKipGroupBootstrap\?\.\(data\.groupId, \{ preserveSession: true \}\)[\s\S]*?refreshRoTaKipRoute\(\)\.catch[\s\S]*?window\.location\.reload\(\)/);
+  assert.match(directory, /case 'accepted':[\s\S]*?invalidateRoTaKipGroupCache\?\.\(groupId\)/);
   assert.match(directory, /window\.RoTaKipGroupsTab = \{[\s\S]*?init: initializeGroupDirectory[\s\S]*?resume\(\)[\s\S]*?destroy\(\)/);
   assert.match(directory, /renderGroups\(\)[\s\S]*?if \(!groupsGrid \|\| !noResults\) return/);
   assert.match(directory, /async refreshForResume\(\)[\s\S]*?resumeRefreshPromise[\s\S]*?LocalStorageManager\.refreshMemberships\(\)[\s\S]*?const publicGroups[\s\S]*?this\.groups = \[\.\.\.userGroups, \.\.\.publicGroups\][\s\S]*?groupsGrid'\)\?\.replaceChildren\(\)[\s\S]*?renderGroups\(\{ animateEntrance: false \}\)/);
@@ -513,10 +521,11 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(router, /const cachedView = viewCache\.get\(cacheKey\)[\s\S]*?const view = await cachedView[\s\S]*?viewCache\.set\(cacheKey, view\)/);
   assert.match(router, /const useInitialTabLoader = hasInitialTabLoader\(\)[\s\S]*?const revealAfterLifecycle = useFullScreenLoader[\s\S]*?\|\| useInitialTabLoader[\s\S]*?\|\| useOkumalarTransitionLoader[\s\S]*?\|\| useGroupsTransitionLoader/);
   assert.match(router, /const useOkumalarTransitionLoader = !useInitialTabLoader[\s\S]*?const useGroupsTransitionLoader = !useInitialTabLoader/);
-  assert.match(router, /useOkumalarTransitionLoader[\s\S]*?!isInitialNavigation[\s\S]*?route\.name === 'okumalar'[\s\S]*?!targetWasReady/);
+  assert.match(router, /useOkumalarTransitionLoader[\s\S]*?!isInitialNavigation[\s\S]*?route\.name === 'okumalar'/);
   assert.match(router, /useGroupsTransitionLoader = !useInitialTabLoader[\s\S]*?&& !isInitialNavigation[\s\S]*?route\.name === 'groups'/);
   assert.match(router, /useGroupsTransitionLoader \? 'Gruplar hazırlanıyor' : 'Okumalar hazırlanıyor'/);
   assert.match(router, /ROUTE_TRANSITION_MIN_VISIBLE_MS = 1000[\s\S]*?waitBeforeFade[\s\S]*?loader\.classList\.add\('is-leaving'\)/);
+  assert.match(router, /loader\.dataset\.minimumVisibleMs[\s\S]*?minimumVisibleMs - elapsed[\s\S]*?minimumVisibleMs: targetWasReady \? 0 : ROUTE_TRANSITION_MIN_VISIBLE_MS/);
   assert.match(router, /function keepInitialTabLoaderVisible\(\)[\s\S]*?classList\.remove\('is-leaving'\)[\s\S]*?function hideInitialTabLoader\(expectedSequence = null\)[\s\S]*?expectedSequence !== navigationSequence[\s\S]*?keepInitialTabLoaderVisible\(\)[\s\S]*?resolve\(false\)/);
   assert.match(router, /async function revealRouteAfterLoader\(view, options = \{\}\)[\s\S]*?hideInitialTabLoader\(options\.sequence\)[\s\S]*?options\.sequence !== navigationSequence[\s\S]*?await revealRouteContent\(view\)/);
   assert.match(router, /const sequence = \+\+navigationSequence;\s*keepInitialTabLoaderVisible\(\);\s*removeRouteTransitionLoader\(\)/);
@@ -550,7 +559,8 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(okumalarInit, /portalOkumalarOverlays\(\)/);
   assert.match(router, /function portalOkumalarOverlays\(\)[\s\S]*?dailyGiftModal[\s\S]*?dailyTasksModal[\s\S]*?overlayRoot\.appendChild\(modal\)/);
   assert.match(okumalarInit, /resume\(\)[\s\S]*?runOkumalarBackgroundWork\(\)/);
-  assert.match(okumalarInit, /prepareBeforeReveal:\s*true[\s\S]*?resume\(\)[\s\S]*?refreshTrackerTableLayout/);
+  assert.match(okumalarInit, /prepareBeforeReveal:\s*true[\s\S]*?resume\(\)[\s\S]*?await window\.loadTrackerTable\(\)[\s\S]*?await window\.refreshTrackerTableLayout\(\)/);
+  assert.match(okumalarInit, /resume\(\)[\s\S]*?revealReadingAuthControls[\s\S]*?Promise\.all\(\[trackerRefresh, prepareReadingPrimaryContent\(\)\]\)/);
   assert.doesNotMatch(okumalarInit, /captureTrackerTableScrollPosition/);
   assert.doesNotMatch(readClient('features/readings/tracker-table.js'), /timelineSavedScrollLeft|timelineRestoreReleaseTimer|captureTrackerTableScrollPosition/);
   assert.match(readClient('features/readings/tracker-table.js'), /refreshTrackerTableLayout[\s\S]*?timelineIsRestoringPosition = true[\s\S]*?scrollTimelineDateIntoRightEdge\(todayKey, false\)[\s\S]*?timelineIsRestoringPosition = false/);
@@ -562,7 +572,8 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(router, /loadAssetGroup[\s\S]*?Promise\.allSettled\(\[[\s\S]*?loadBundleStyles/);
   assert.match(router, /function prepareReadingPrimaryContent\(\)[\s\S]*?window\.renderReadingMessagePanels[\s\S]*?window\.initializeReadingJourney\?\.\(\{ reveal: false \}\)/);
   assert.match(router, /function revealReadingPrimaryContent\(isAuthenticated\)[\s\S]*?revealLeagueInfoBar\(\{ animate: false \}\)[\s\S]*?messagePanels\.hidden = false[\s\S]*?if \(hasInitialTabLoader\(\)\)[\s\S]*?revealReadingAuthControls\(isAuthenticated\)[\s\S]*?requestAnimationFrame[\s\S]*?revealTargets\.forEach\(element => element\.classList\.add\('reading-content-reveal'\)\)[\s\S]*?revealReadingAuthControls\(isAuthenticated\)/);
-  assert.match(readClient('features/readings/tracker-table.js'), /deferPrimaryReveal[\s\S]*?weekNav\.classList\.add\('visible'\)[\s\S]*?if \(deferPrimaryReveal\) revealTrackerLayout\(\)/);
+  assert.match(readClient('features/readings/tracker-table.js'), /deferPrimaryReveal[\s\S]*?weekNav\.classList\.add\('visible'\)[\s\S]*?isRestoringBeforeRouteReveal[\s\S]*?if \(deferPrimaryReveal \|\| isRestoringBeforeRouteReveal\) revealTrackerLayout\(\)/);
+  assert.match(readClient('features/readings/tracker-table.js'), /await new Promise\(resolve => \{[\s\S]*?requestAnimationFrame[\s\S]*?updateTimelineSummaries[\s\S]*?resolve\(\)/);
   assert.match(readClient('features/readings/tracker-table.css'), /\.tracker-table-layout\s*\{[\s\S]*?transform:\s*translateY\(20px\)[\s\S]*?\.week-navigation\s*\{[\s\S]*?transform:\s*translateY\(20px\)/);
   assert.doesNotMatch(router, /function runOkumalarBackgroundWork\(\)[\s\S]*?\['okuma mesajları'/);
   assert.match(router, /Promise\.allSettled\(tasks\.map/);

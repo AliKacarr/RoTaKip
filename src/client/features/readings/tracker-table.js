@@ -961,6 +961,8 @@ async function loadTrackerTable(options = {}) {
         }
     }
     trackerTableLayout.classList.remove('is-visible');
+    const isRestoringBeforeRouteReveal = trackerTableLayout
+        ?.classList.contains('is-restoring-position') === true;
 
     const revealTrackerLayout = () => {
         trackerTableLayout.classList.add('is-visible');
@@ -971,7 +973,7 @@ async function loadTrackerTable(options = {}) {
             isFirstLoad = false;
         }
     };
-    if (deferPrimaryReveal) revealTrackerLayout();
+    if (deferPrimaryReveal || isRestoringBeforeRouteReveal) revealTrackerLayout();
     else setTimeout(revealTrackerLayout, 20);
 
     // Kullanıcı istatistik alanını güncelle (giriş serisi hesaplaması ile)
@@ -988,13 +990,16 @@ async function loadTrackerTable(options = {}) {
 
     setupTrackerSummaryRowSync();
     setupTimelineScrolling();
-    requestAnimationFrame(function () {
-        if (!timelineHasPositioned) {
-            scrollTimelineDateIntoRightEdge(timelineReferenceDate || getTodayDateKey(), false);
-            timelineHasPositioned = true;
-        }
-        updateTimelineSummaries(getTimelineRightmostVisibleDate());
-        scheduleTimelineScrollHint();
+    await new Promise(resolve => {
+        requestAnimationFrame(function () {
+            if (!timelineHasPositioned) {
+                scrollTimelineDateIntoRightEdge(timelineReferenceDate || getTodayDateKey(), false);
+                timelineHasPositioned = true;
+            }
+            updateTimelineSummaries(getTimelineRightmostVisibleDate());
+            scheduleTimelineScrollHint();
+            resolve();
+        });
     });
 }
 

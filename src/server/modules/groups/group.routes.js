@@ -733,4 +733,3 @@ function registerGroupRoutes(app, dependencies) {
 module.exports = {
   registerGroupRoutes
 };
-

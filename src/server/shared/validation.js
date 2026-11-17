@@ -39,4 +39,3 @@ module.exports = {
   isValidReadingDate,
   isValidText
 };
-

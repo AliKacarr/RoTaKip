@@ -115,4 +115,3 @@ function createActivityService({ getSessionMembership }) {
 module.exports = {
   createActivityService
 };
-

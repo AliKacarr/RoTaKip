@@ -126,4 +126,3 @@ function registerAdminAuthRoutes(app, dependencies) {
 module.exports = {
   registerAdminAuthRoutes
 };
-

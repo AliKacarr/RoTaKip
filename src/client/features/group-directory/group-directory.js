@@ -1012,6 +1012,7 @@ class GroupsPage {
             if (result.success) {
                 // Yeni sistem ile admin girişi yap
                 LocalStorageManager.loginUser(result.group.groupId, result.userId, 'admin', adminUserName, result.group.groupName, adminName);
+                window.invalidateRoTaKipGroupCache?.(result.group.groupId);
                 
                 this.closeCreateModal();
                 navigateFromGroupDirectory(`/grup/${encodeURIComponent(result.group.groupId)}/`);
@@ -1279,6 +1280,7 @@ class GroupsPage {
                         
                     case 'accepted':
                         LocalStorageManager.removeJoinRequest(groupId);
+                        window.invalidateRoTaKipGroupCache?.(groupId);
                         membershipChanged = true;
                         this.showSuccessMessage(
                             `"${data.groupName || 'Bilinmeyen Grup'}" grubuna katılma isteğiniz kabul edildi!`

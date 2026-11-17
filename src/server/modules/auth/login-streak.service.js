@@ -53,4 +53,3 @@ async function handleLoginStreak(user, groupId) {
 module.exports = {
   handleLoginStreak
 };
-

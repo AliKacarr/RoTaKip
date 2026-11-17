@@ -232,7 +232,7 @@ window.erpSyncEnabled = false;
 window.erpSyncVersion = 0;
 let erpSyncRefreshStarted = false;
 
-window.resetRoTaKipGroupBootstrap = function resetRoTaKipGroupBootstrap(groupId) {
+window.resetRoTaKipGroupBootstrap = function resetRoTaKipGroupBootstrap(groupId, options = {}) {
   window.groupid = groupId || getGroupIdFromUrl();
   window.currentGroupData = null;
   window.currentSessionUser = null;
@@ -243,7 +243,33 @@ window.resetRoTaKipGroupBootstrap = function resetRoTaKipGroupBootstrap(groupId)
   window.erpSyncEnabled = false;
   window.erpSyncVersion = 0;
   erpSyncRefreshStarted = false;
-  LocalStorageManager.logoutUser();
+  if (options.preserveSession !== true) LocalStorageManager.logoutUser();
+};
+
+window.applyResolvedGroupContext = function applyResolvedGroupContext(context) {
+  if (!context || context.groupId !== window.groupid) return;
+
+  const group = context.group || null;
+  const user = context.user || null;
+  window.currentGroupData = group;
+  window.currentGroupVisibility = group?.visibility || 'public';
+  window.currentSessionUser = user;
+
+  if (user) {
+    LocalStorageManager.loginUser(
+      context.groupId,
+      user._id,
+      user.authority,
+      user.username,
+      group?.groupName || '',
+      user.name
+    );
+  } else {
+    LocalStorageManager.logoutUser();
+  }
+
+  window.updateProfileButton?.();
+  window.syncGroupManagementVisibility?.();
 };
 
 window.normalizeAmountType = function normalizeAmountType(value) {
@@ -718,13 +744,17 @@ window.initializeGroupPage = async function initializeGroupPage() {
         }
 
         async init(groupId) {
-          this.groupId = groupId;
           let data = window.initialAllData;
           if (!data || !data.group || data.group.groupId !== groupId) {
             const res = await fetch(`/api/all-data/${groupId}`);
             data = await res.json();
           }
           window.initialAllData = null;
+          this.replaceData(groupId, data);
+        }
+
+        replaceData(groupId, data) {
+          this.groupId = groupId;
           window.erpSyncEnabled = data.erpSyncEnabled === true;
           window.erpSyncVersion = Number.isSafeInteger(data.erpSyncVersion) && data.erpSyncVersion >= 0
             ? data.erpSyncVersion

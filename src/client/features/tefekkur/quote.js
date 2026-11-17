@@ -119,7 +119,7 @@ function initializeTefekkurTab() {
     // Tüm yenileme butonlarını seç
 
     const refreshQuoteButtons = document.querySelectorAll('.refresh-quote');
-    
+
     // Her buton için animasyonu başlat
     refreshQuoteButtons.forEach(button => {
         const icon = button.querySelector('i');
@@ -146,15 +146,15 @@ function initializeTefekkurTab() {
                 // Mevcut yüksekliği kaydet
                 const currentHeight = this.offsetHeight;
                 this.style.height = currentHeight - 4 + 'px';
-                
+
                 // Metni panoya kopyala
                 await navigator.clipboard.writeText(this.textContent);
-                
+
                 // Kopyalandı bildirimi göster
                 const originalText = this.textContent;
                 this.textContent = '✓ Kopyalandı!';
                 this.style.color = '#4CAF50';
-                
+
                 // 1.5 saniye sonra orijinal metne geri dön
                 setTimeout(() => {
                     this.textContent = originalText;
@@ -171,14 +171,14 @@ function initializeTefekkurTab() {
     });
 
     // Kayarak gelme animasyonu group-bootstrap.js → initScrollFadeInElements
-    
+
     // Mevcut içerikleri görünür yap
     document.querySelectorAll('.quote-text').forEach(element => {
         if (!element.classList.contains('is-loading') && element.innerHTML.trim() !== '') {
             element.classList.add('visible');
         }
     });
-    
+
     const refreshBtn = document.getElementById('refreshQuote');
     if (refreshBtn) {
         refreshBtn.onclick = function () {

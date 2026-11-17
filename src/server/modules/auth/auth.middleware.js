@@ -224,4 +224,3 @@ function createAuthMiddleware(dependencies) {
 module.exports = {
   createAuthMiddleware
 };
-

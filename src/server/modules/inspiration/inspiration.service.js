@@ -50,4 +50,3 @@ async function getRandomVecizeForPush() {
 module.exports = {
   getRandomVecizeForPush
 };
-

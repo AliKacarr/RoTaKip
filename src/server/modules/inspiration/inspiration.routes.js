@@ -169,4 +169,3 @@ function registerInspirationRoutes(app, dependencies) {
 module.exports = {
   registerInspirationRoutes
 };
-

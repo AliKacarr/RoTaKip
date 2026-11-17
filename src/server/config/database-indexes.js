@@ -69,4 +69,3 @@ async function initializeDatabaseIndexes() {
 module.exports = {
   initializeDatabaseIndexes
 };
-
