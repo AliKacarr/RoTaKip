@@ -222,31 +222,7 @@ class ArticlesManager {
     showLoadingState() {
         const container = document.getElementById('articlesContainer');
         if (!container) return;
-
-        const loadingCard = `
-            <div class="article-card article-loading-card">
-                <div class="article-content-wrapper">
-                    <div class="article-card-header">
-                        <div class="article-image article-loading-image" aria-hidden="true"></div>
-                        <div class="article-content article-loading-heading">
-                            <div class="article-loading-category">
-                                <div class="article-loading-line article-loading-line-3"></div>
-                            </div>
-                            <div class="article-loading-title">
-                                <div class="article-loading-line article-loading-line-1"></div>
-                                <div class="article-loading-line article-loading-line-2"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="article-loading-text">
-                        <div class="article-loading-line article-loading-line-5"></div>
-                        <div class="article-loading-line article-loading-line-6"></div>
-                        <div class="article-loading-line article-loading-line-7"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        container.innerHTML = loadingCard.repeat(4);
+        container.replaceChildren();
     }
 
     showEmptyState() {

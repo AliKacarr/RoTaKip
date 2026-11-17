@@ -87,13 +87,12 @@ async function startServer(options = {}) {
   const host = options.host || '0.0.0.0';
 
   registerShutdown();
+  await connectDatabase();
+  await initializeDatabaseIndexes();
   const dropboxInitialization = initializeDropbox();
   dropboxInitialization.catch(error => {
     console.error('Dropbox başlatılamadı:', error);
   });
-
-  const database = await connectDatabase();
-  if (database) await initializeDatabaseIndexes();
   scheduleTokenRefresh(refreshDropboxToken);
   scheduleDailyNotifications({
     getRandomNotification: getRandomVecizeForPush,
@@ -140,8 +139,13 @@ async function startServer(options = {}) {
 }
 
 if (require.main === module) {
-  startServer().catch(error => {
+  startServer().catch(async error => {
     console.error('Sunucu başlatılamadı:', error);
+    try {
+      await stopServer();
+    } catch (cleanupError) {
+      console.error('Başlatma hatasından sonra kaynaklar kapatılamadı:', cleanupError);
+    }
     process.exitCode = 1;
   });
 }

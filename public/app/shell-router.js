@@ -1,23 +1,22 @@
-import { ROUTES, canonicalPath, resolveRoute } from './route-config.js';
-import { createFragmentView, mountFragment, preloadFragment } from './fragment-loader.js';
+import { ROUTES, ROUTE_ASSETS, canonicalPath, resolveRoute } from './route-config.js';
+import { createFragmentView, fetchFragment, mountFragment, preloadFragment } from './fragment-loader.js';
 import { loadAssetManifest, loadBundleScripts, loadBundleStyles, preloadBundle } from './asset-loader.js';
 import { loadGroupData, resolveGroupContext } from './group-context.js';
-import { configureNavigation, getRememberedGroup, rememberGroup } from './navigation.js';
-import { initializeScrollManager, resetRouteScroll } from './scroll-manager.js';
+import {
+  configureNavigation,
+  getRememberedReadingPath,
+  rememberReadingPath
+} from './navigation.js';
+import {
+  initializeScrollManager,
+  resetRouteScroll,
+  setScrollToTopEnabled
+} from './scroll-manager.js';
 
 const COMMON_SCRIPTS = ['shell.min.js'];
 const GROUP_COMMON_SCRIPTS = ['group-common.min.js'];
 const GROUP_UI_SCRIPTS = ['group-ui.min.js'];
-const ROUTE_ASSETS = {
-  okumalar: {
-    scripts: ['okumalar.min.js'],
-    styles: ['okumalar.min.css']
-  },
-  tesbihat: { scripts: [], styles: [] },
-  videos: { scripts: ['videos.min.js'], styles: ['videos.min.css'] },
-  tefekkur: { scripts: ['tefekkur.min.js'], styles: ['tefekkur.min.css'] },
-  articles: { scripts: ['articles.min.js'], styles: ['articles.min.css'] }
-};
+const ROUTE_TRANSITION_MIN_VISIBLE_MS = 1000;
 const OKUMALAR_BACKGROUND_ASSETS = {
   statistics: {
     scripts: ['statistics.min.js'],
@@ -35,8 +34,9 @@ const OKUMALAR_BACKGROUND_ASSETS = {
 
 const tabContent = document.getElementById('tabContent');
 const footerRoot = document.getElementById('footerRoot');
+const globalOverlayRoot = document.getElementById('globalOverlayRoot');
 const overlayRoot = document.getElementById('overlayRoot');
-const routeStatus = document.getElementById('routeStatus');
+const initialTabLoader = document.getElementById('initialTabLoader');
 const backgroundViewRoot = document.createElement('div');
 backgroundViewRoot.hidden = true;
 backgroundViewRoot.setAttribute('aria-hidden', 'true');
@@ -46,45 +46,112 @@ const lifecycleCache = new WeakMap();
 const warmedViews = new WeakSet();
 const globalWarmups = new Map();
 const groupWarmups = new Map();
-const placeholderGates = new WeakMap();
-const PLACEHOLDER_DELAY_MS = 200;
-const PLACEHOLDER_MIN_VISIBLE_MS = 450;
+const okumalarStyleLinks = new Set();
 let activeView = null;
 let activeLifecycle = null;
 let mountedGroupId = null;
 let navigationSequence = 0;
-let routeStatusHideTimer = null;
-let routeStatusHideResolve = null;
+let routeTransitionLoader = null;
+let okumalarStylesEnabled = false;
 
-function showStatus() {
-  if (routeStatusHideTimer) window.clearTimeout(routeStatusHideTimer);
-  routeStatusHideTimer = null;
-  if (routeStatusHideResolve) routeStatusHideResolve();
-  routeStatusHideResolve = null;
-  routeStatus.classList.remove('is-leaving');
-  routeStatus.hidden = false;
-  document.body.classList.add('route-is-loading');
-  document.documentElement.classList.remove('initial-group-route-loading');
+function setOkumalarStylesEnabled(enabled) {
+  okumalarStylesEnabled = enabled === true;
+  okumalarStyleLinks.forEach(link => {
+    link.disabled = !okumalarStylesEnabled;
+  });
 }
+
+async function loadOkumalarStyles(fileNames) {
+  const links = await loadBundleStyles(fileNames);
+  links.forEach(link => {
+    okumalarStyleLinks.add(link);
+    link.disabled = !okumalarStylesEnabled;
+  });
+  return links;
+}
+
+function showStatus() {}
 
 function routeUsesFullScreenLoader() {
   return false;
 }
 
 function hideStatus() {
-  document.documentElement.classList.remove('initial-group-route-loading');
-  document.body.classList.remove('route-is-loading');
-  if (routeStatus.hidden) return Promise.resolve();
-  routeStatus.classList.add('is-leaving');
+  return Promise.resolve();
+}
+
+function hasInitialTabLoader() {
+  return Boolean(initialTabLoader?.isConnected);
+}
+
+function hideInitialTabLoader() {
+  document.body.classList.remove('initial-tab-loading');
+  tabContent.classList.remove('is-initial-loading');
+  if (!hasInitialTabLoader()) return Promise.resolve();
+  initialTabLoader.classList.add('is-leaving');
   return new Promise(resolve => {
-    routeStatusHideResolve = resolve;
-    routeStatusHideTimer = window.setTimeout(() => {
-      routeStatus.hidden = true;
-      routeStatus.classList.remove('is-leaving');
-      routeStatusHideTimer = null;
-      routeStatusHideResolve = null;
+    window.setTimeout(() => {
+      initialTabLoader.remove();
       resolve();
-    }, 260);
+    }, 240);
+  });
+}
+
+function removeRouteTransitionLoader(loader = routeTransitionLoader) {
+  if (!loader) return;
+  loader.remove();
+  if (routeTransitionLoader === loader) routeTransitionLoader = null;
+  if (!routeTransitionLoader) {
+    document.body.classList.remove('initial-tab-loading');
+    tabContent.classList.remove('is-initial-loading');
+  }
+}
+
+function showRouteTransitionLoader(label) {
+  removeRouteTransitionLoader();
+  const loader = document.createElement('div');
+  loader.className = 'initial-tab-loader route-transition-loader';
+  loader.setAttribute('role', 'status');
+  loader.setAttribute('aria-label', label);
+  loader.dataset.shownAt = String(window.performance.now());
+  loader.innerHTML = `
+    <div class="route-loader" aria-hidden="true">
+      <div class="route-loader-star">⭐</div>
+      <div class="route-loader-lines">
+        <div class="route-loader-line"><span>Ro</span></div>
+        <div class="route-loader-line"><span>Ta</span></div>
+        <div class="route-loader-line"><span>Kip</span></div>
+      </div>
+    </div>`;
+  document.body.classList.add('initial-tab-loading');
+  tabContent.classList.add('is-initial-loading');
+  footerRoot.hidden = true;
+  tabContent.appendChild(loader);
+  routeTransitionLoader = loader;
+  return loader;
+}
+
+function hideRouteTransitionLoader(loader) {
+  if (!loader?.isConnected) {
+    removeRouteTransitionLoader(loader);
+    return Promise.resolve();
+  }
+  return new Promise(resolve => {
+    const shownAt = Number(loader.dataset.shownAt) || window.performance.now();
+    const elapsed = window.performance.now() - shownAt;
+    const waitBeforeFade = Math.max(0, ROUTE_TRANSITION_MIN_VISIBLE_MS - elapsed);
+    window.setTimeout(() => {
+      if (!loader.isConnected) {
+        removeRouteTransitionLoader(loader);
+        resolve();
+        return;
+      }
+      loader.classList.add('is-leaving');
+      window.setTimeout(() => {
+        removeRouteTransitionLoader(loader);
+        resolve();
+      }, 240);
+    }, waitBeforeFade);
   });
 }
 
@@ -94,11 +161,15 @@ function renderError(error) {
 }
 
 async function ensureShellFragments() {
-  await mountFragment(footerRoot, '/fragments/footer.html');
+  await Promise.all([
+    mountFragment(footerRoot, '/fragments/footer.html'),
+    mountFragment(globalOverlayRoot, '/fragments/global-overlays.html')
+  ]);
   initializeScrollManager();
 }
 
 function getViewCacheKey(route) {
+  if (route.name === 'okumalar') return 'okumalar';
   return route.requiresGroup ? `${route.name}:${route.groupId}` : route.name;
 }
 
@@ -107,10 +178,28 @@ function hasReadyCachedView(route) {
   return Boolean(view && lifecycleCache.has(view));
 }
 
+async function createGroupDirectoryView(route) {
+  const html = await fetchFragment(route.fragment);
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  const contentRoot = parsed.querySelector('.main-container');
+  if (!contentRoot) throw new Error('Okuma Grupları içeriği bulunamadı.');
+  contentRoot.querySelector('.site-footer')?.remove();
+  const extras = Array.from(parsed.body.children)
+    .filter(element => !element.matches('#appNavigation, .main-container, script'));
+  const view = document.createElement('div');
+  view.className = 'tab-view tab-view-groups';
+  view.dataset.view = route.name;
+  view.append(contentRoot, ...extras);
+  return view;
+}
+
 async function getView(route) {
   const cacheKey = getViewCacheKey(route);
   if (!viewCache.has(cacheKey)) {
-    viewCache.set(cacheKey, createFragmentView(route.fragment, route.name));
+    const viewPromise = route.name === 'groups'
+      ? createGroupDirectoryView(route)
+      : createFragmentView(route.fragment, route.name);
+    viewCache.set(cacheKey, viewPromise);
   }
   const cachedView = viewCache.get(cacheKey);
   try {
@@ -127,7 +216,9 @@ async function activateView(route, preparedView = null) {
   const view = preparedView || await getView(route);
   if (activeView && activeView !== view) activeView.remove();
   const isReturningToOkumalar = route.name === 'okumalar' && lifecycleCache.has(view);
+  const isPreparingGroupsFirstLoad = route.name === 'groups' && !lifecycleCache.has(view);
   view.classList.toggle('is-resuming', isReturningToOkumalar);
+  view.classList.toggle('is-preparing-return', isPreparingGroupsFirstLoad);
   view.classList.remove('visible');
   if (view.parentNode !== tabContent) tabContent.appendChild(view);
   activeView = view;
@@ -137,7 +228,8 @@ async function activatePrivateGroupView() {
   const view = await createFragmentView('/fragments/group-header.html', 'okumalar');
   view.dataset.privateGroupAccess = 'true';
   if (activeView && activeView !== view) activeView.remove();
-  tabContent.replaceChildren(view);
+  if (hasInitialTabLoader()) tabContent.appendChild(view);
+  else tabContent.replaceChildren(view);
   activeView = view;
   await revealRouteContent(view, true);
 }
@@ -150,20 +242,30 @@ function updateMetadata(route, groupContext) {
 }
 
 async function ensureGroupCommon(route, context, data) {
-  if (mountedGroupId && mountedGroupId !== route.groupId) {
-    window.location.assign(canonicalPath(route));
-    return false;
-  }
-  if (!mountedGroupId) {
+  const groupChanged = Boolean(mountedGroupId && mountedGroupId !== route.groupId);
+  if (!mountedGroupId || groupChanged) {
     await mountFragment(overlayRoot, '/fragments/common-overlays.html');
-    mountedGroupId = route.groupId;
   }
   overlayRoot.hidden = false;
+  await loadOkumalarStyles(['group-common.min.css']);
+  await loadBundleScripts(GROUP_COMMON_SCRIPTS);
+  if (groupChanged) window.resetRoTaKipGroupBootstrap?.(route.groupId);
+  mountedGroupId = route.groupId;
   window.__rotakipResolvedGroupContext = context;
   window.initialAllData = data || null;
-  await loadBundleStyles(['group-common.min.css']);
-  await loadBundleScripts(GROUP_COMMON_SCRIPTS);
   return true;
+}
+
+function resetOkumalarViewForGroup(nextGroupId) {
+  if (!mountedGroupId || mountedGroupId === nextGroupId) return;
+
+  window.resetTrackerTimelineForGroup?.();
+  const okumalarView = viewCache.get('okumalar');
+  if (okumalarView && !(okumalarView instanceof Promise)) {
+    lifecycleCache.delete(okumalarView);
+    warmedViews.delete(okumalarView);
+  }
+  groupWarmups.clear();
 }
 
 function portalOkumalarOverlays() {
@@ -173,31 +275,33 @@ function portalOkumalarOverlays() {
   });
 }
 
-function removeTrackerTablePlaceholder() {
-  document.getElementById('trackerTablePlaceholder')?.remove();
-}
-
 function revealLeagueInfoBar(options = {}) {
-  const placeholder = document.getElementById('leagueInfoPlaceholder');
   const leagueInfoBar = document.querySelector('.league-info-bar');
   if (!leagueInfoBar) return;
 
+  const shouldAnimate = !leagueInfoBar.classList.contains('visible');
   const section = leagueInfoBar.closest('.league-info-section');
   if (section) section.style.display = 'block';
-  placeholder?.remove();
   leagueInfoBar.style.display = 'flex';
-  if (placeholder && options.animate !== false) {
+  if (shouldAnimate && options.animate !== false) {
     leagueInfoBar.classList.add('reading-content-reveal');
   }
   leagueInfoBar.classList.add('visible');
   return leagueInfoBar;
 }
 
-function stageReadingPrimaryContent() {
+function stageReadingPrimaryContent(isAuthenticated) {
   document.querySelector('.tracker-table-shell')
     ?.classList.add('is-primary-reveal-pending');
   const messagePanels = document.querySelector('.reading-message-panels');
   if (messagePanels) messagePanels.hidden = true;
+  const authenticatedLayoutElements = [
+    document.getElementById('authenticatedUserAreas'),
+    document.getElementById('readingEditModeBar')
+  ].filter(Boolean);
+  authenticatedLayoutElements.forEach(element => {
+    element.classList.toggle('is-initial-reveal-pending', isAuthenticated);
+  });
 }
 
 async function prepareReadingPrimaryContent() {
@@ -210,27 +314,40 @@ async function prepareReadingPrimaryContent() {
     .catch(error => console.warn(`${label} hazırlanamadı:`, error))));
 }
 
+function revealReadingAuthControls(isAuthenticated) {
+  if (typeof window.syncAuthenticatedUserAreas === 'function') {
+    window.syncAuthenticatedUserAreas(isAuthenticated, { immediate: true });
+  }
+  if (isAuthenticated) window.showReadingEditModeBar?.();
+  else window.hideReadingEditModeBar?.();
+
+  const stagedElements = [
+    document.getElementById('authenticatedUserAreas'),
+    document.getElementById('readingEditModeBar')
+  ].filter(element => element?.classList.contains('is-initial-reveal-pending'));
+  stagedElements.forEach(element => element.getBoundingClientRect());
+  stagedElements.forEach(element => element.classList.remove('is-initial-reveal-pending'));
+}
+
 function revealReadingPrimaryContent(isAuthenticated) {
   const trackerShell = document.querySelector('.tracker-table-shell');
   const messagePanels = document.querySelector('.reading-message-panels');
-  const messagePanelCards = messagePanels
-    ? Array.from(messagePanels.querySelectorAll('.reading-message-panels-content > *'))
-    : [];
 
   const leagueInfoBar = revealLeagueInfoBar({ animate: false });
-  const revealTargets = [leagueInfoBar, trackerShell, ...messagePanelCards].filter(Boolean);
+  const revealTargets = [leagueInfoBar, trackerShell].filter(Boolean);
   revealTargets.forEach(element => element.classList.remove('reading-content-reveal'));
-  removeTrackerTablePlaceholder();
   trackerShell?.classList.remove('is-primary-reveal-pending');
   if (messagePanels) {
     messagePanels.hidden = false;
     messagePanels.classList.remove('reading-content-reveal');
   }
+  if (hasInitialTabLoader()) {
+    revealReadingAuthControls(isAuthenticated);
+    return;
+  }
   window.requestAnimationFrame(() => {
     revealTargets.forEach(element => element.classList.add('reading-content-reveal'));
-    if (typeof window.syncAuthenticatedUserAreas === 'function') {
-      window.syncAuthenticatedUserAreas(isAuthenticated, { immediate: true });
-    }
+    revealReadingAuthControls(isAuthenticated);
   });
 }
 
@@ -242,7 +359,7 @@ async function initializeGroupUi() {
 function runOkumalarBackgroundWork() {
   const run = async () => {
     const loadAssetGroup = (label, assets) => Promise.allSettled([
-      loadBundleStyles(assets.styles),
+      loadOkumalarStyles(assets.styles),
       ...assets.scripts.map(fileName => loadBundleScripts([fileName]))
     ]).then(results => {
       results.forEach(result => {
@@ -309,7 +426,7 @@ function runOkumalarBackgroundWork() {
 }
 
 async function initOkumalarTab() {
-  await loadBundleStyles(ROUTE_ASSETS.okumalar.styles);
+  await loadOkumalarStyles(ROUTE_ASSETS.okumalar.styles);
   await loadBundleScripts(ROUTE_ASSETS.okumalar.scripts);
   portalOkumalarOverlays();
   if (new URLSearchParams(window.location.search).has('invite')) await initializeGroupUi();
@@ -319,7 +436,7 @@ async function initOkumalarTab() {
   if (typeof window.syncAuthenticatedUserAreas === 'function') {
     if (!isAuthenticated) window.syncAuthenticatedUserAreas(false);
   }
-  stageReadingPrimaryContent();
+  stageReadingPrimaryContent(isAuthenticated);
   if (typeof window.initializeTrackerTableInteractions === 'function') window.initializeTrackerTableInteractions();
   if (typeof window.initializeDailyGift === 'function') window.initializeDailyGift();
   if (typeof window.setupShareModal === 'function') {
@@ -327,8 +444,6 @@ async function initOkumalarTab() {
     window.setupShareModal('longestSeriesShareModal', 'closeLongestSeriesShareModal');
     window.setupShareModal('readingStatsShareModal', 'closeReadingStatsShareModal');
   }
-  document.querySelectorAll('.monthly-calendar-section, .longest-series-section, .stats-section')
-    .forEach(section => { section.style.display = 'block'; });
   const trackerReady = typeof window.loadTrackerTable === 'function'
     ? window.loadTrackerTable()
     : Promise.resolve();
@@ -338,11 +453,6 @@ async function initOkumalarTab() {
   return {
     prepareBeforeReveal: true,
     readyForPrefetch,
-    destroy() {
-      if (typeof window.captureTrackerTableScrollPosition === 'function') {
-        window.captureTrackerTableScrollPosition();
-      }
-    },
     async resume() {
       if (typeof window.refreshTrackerTableLayout === 'function') {
         await window.refreshTrackerTableLayout();
@@ -356,14 +466,44 @@ async function initOkumalarTab() {
 
 async function initGlobalTab(route) {
   const assets = ROUTE_ASSETS[route.name];
-  await loadBundleStyles(assets.styles);
+  const styleLinks = await loadBundleStyles(assets.styles);
   await loadBundleScripts(assets.scripts);
   const lifecycle = {
+    groups: window.RoTaKipGroupsTab,
     videos: window.RoTaKipVideoTab,
     tefekkur: window.RoTaKipTefekkurTab,
     articles: window.RoTaKipArticlesTab
   }[route.name];
   if (lifecycle && typeof lifecycle.init === 'function') await lifecycle.init();
+  if (route.name === 'groups') {
+    let detachObserver = null;
+    const disableStyles = () => styleLinks.forEach(link => { link.disabled = true; });
+    return {
+      prepareBeforeReveal: false,
+      destroy() {
+        lifecycle?.destroy?.();
+        const view = document.querySelector('.tab-view-groups');
+        detachObserver?.disconnect();
+        if (!view?.isConnected) {
+          disableStyles();
+          return;
+        }
+        detachObserver = new MutationObserver(() => {
+          if (view.isConnected) return;
+          detachObserver.disconnect();
+          detachObserver = null;
+          disableStyles();
+        });
+        detachObserver.observe(document.body, { childList: true, subtree: true });
+      },
+      async resume() {
+        detachObserver?.disconnect();
+        detachObserver = null;
+        styleLinks.forEach(link => { link.disabled = false; });
+        await lifecycle?.resume?.();
+      }
+    };
+  }
   if (lifecycle && typeof lifecycle.resume !== 'function') {
     lifecycle.resume = () => lifecycle.init && lifecycle.init();
   }
@@ -371,7 +511,7 @@ async function initGlobalTab(route) {
 }
 
 function warmGlobalTab(route) {
-  if (route.requiresGroup) return Promise.resolve(null);
+  if (route.requiresGroup || route.name === 'groups') return Promise.resolve(null);
   const cachedView = viewCache.get(getViewCacheKey(route));
   if (cachedView && !(cachedView instanceof Promise) && lifecycleCache.has(cachedView)) {
     return Promise.resolve(lifecycleCache.get(cachedView));
@@ -449,57 +589,7 @@ function revealRouteContent(view, waitForPaint = false) {
   });
 }
 
-function placeholderTime() {
-  return window.performance && typeof window.performance.now === 'function'
-    ? window.performance.now()
-    : Date.now();
-}
-
-function preparePlaceholderGate(target, delay) {
-  if (!target || placeholderGates.has(target)) return;
-  const gate = { shownAt: null, timer: null };
-  const show = () => {
-    gate.timer = null;
-    gate.shownAt = placeholderTime();
-    target.style.visibility = '';
-  };
-  target.style.visibility = 'hidden';
-  if (delay <= 0) show();
-  else gate.timer = window.setTimeout(show, delay);
-  placeholderGates.set(target, gate);
-}
-
-function prepareRoutePlaceholders(route, view, isInitialNavigation) {
-  if (!view || routeUsesFullScreenLoader(route)) return;
-  const targets = [];
-  if (route.name === 'videos') {
-    const container = view.querySelector('#videos');
-    if (container?.querySelector('.loading-card')) targets.push(container);
-  } else if (route.name === 'tefekkur') {
-    targets.push(...view.querySelectorAll('.quote-text.is-loading'));
-  } else if (route.name === 'articles') {
-    const container = view.querySelector('#articlesContainer');
-    if (container?.querySelector('.article-loading-card')) targets.push(container);
-  }
-  const delay = isInitialNavigation ? 0 : PLACEHOLDER_DELAY_MS;
-  targets.forEach(target => {
-    if (target.style.display !== 'none') preparePlaceholderGate(target, delay);
-  });
-}
-
-window.waitForRoutePlaceholder = async function waitForRoutePlaceholder(target) {
-  const gate = target ? placeholderGates.get(target) : null;
-  if (!gate) return;
-  if (gate.timer) {
-    window.clearTimeout(gate.timer);
-    gate.timer = null;
-  } else if (gate.shownAt !== null) {
-    const remaining = PLACEHOLDER_MIN_VISIBLE_MS - (placeholderTime() - gate.shownAt);
-    if (remaining > 0) await new Promise(resolve => window.setTimeout(resolve, remaining));
-  }
-  target.style.visibility = '';
-  placeholderGates.delete(target);
-};
+window.waitForRoutePlaceholder = async function waitForRoutePlaceholder() {};
 
 function connectionAllowsPrefetch() {
   const connection = navigator.connection;
@@ -518,13 +608,14 @@ function schedulePrefetch(route) {
     assets.scripts.forEach(fileName => preloadBundle(fileName, 'script'));
     assets.styles.forEach(fileName => preloadBundle(fileName, 'style'));
     if (target.requiresGroup) {
-      const groupId = getRememberedGroup();
-      if (!groupId) return;
-      prepareGroupTab({ ...target, groupId }).catch(error => {
+      const rememberedRoute = resolveRoute(getRememberedReadingPath());
+      if (!rememberedRoute?.groupId) return;
+      prepareGroupTab(rememberedRoute).catch(error => {
         console.warn(`${target.title} arka planda hazırlanamadı:`, error);
       });
       return;
     }
+    if (target.name === 'groups') return;
     warmGlobalTab(target).catch(error => {
       console.warn(`${target.title} arka planda hazırlanamadı:`, error);
     });
@@ -535,21 +626,40 @@ function schedulePrefetch(route) {
 
 async function navigate(url, options = {}) {
   const sequence = ++navigationSequence;
+  removeRouteTransitionLoader();
   const isInitialNavigation = activeView === null;
   const route = resolveRoute(url.pathname);
   if (!route) {
     window.location.assign(url.href);
     return;
   }
+  if (route.requiresGroup) resetOkumalarViewForGroup(route.groupId);
+  setScrollToTopEnabled(route.requiresGroup);
   if (!options.fromPopState) history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  if (route.name === 'groups') rememberReadingPath(canonicalPath(route));
   const targetWasReady = hasReadyCachedView(route);
   const useFullScreenLoader = routeUsesFullScreenLoader(route)
     && !targetWasReady;
-  const revealAfterLifecycle = useFullScreenLoader;
+  const useInitialTabLoader = isInitialNavigation && hasInitialTabLoader();
+  const useOkumalarTransitionLoader = !isInitialNavigation
+    && route.name === 'okumalar'
+    && !targetWasReady;
+  const useGroupsTransitionLoader = !isInitialNavigation
+    && route.name === 'groups';
+  const revealAfterLifecycle = useFullScreenLoader
+    || useInitialTabLoader
+    || useOkumalarTransitionLoader
+    || useGroupsTransitionLoader;
+  const transitionLoader = useOkumalarTransitionLoader || useGroupsTransitionLoader
+    ? showRouteTransitionLoader(
+      useGroupsTransitionLoader ? 'Gruplar hazırlanıyor' : 'Okumalar hazırlanıyor'
+    )
+    : null;
   if (useFullScreenLoader) showStatus();
   else await hideStatus();
   if (activeLifecycle && typeof activeLifecycle.destroy === 'function') activeLifecycle.destroy();
   activeLifecycle = null;
+  setOkumalarStylesEnabled(route.requiresGroup);
   configureNavigation(route, target => navigate(target));
   resetRouteScroll();
 
@@ -564,7 +674,7 @@ async function navigate(url, options = {}) {
       const criticalScripts = [...GROUP_COMMON_SCRIPTS, ...ROUTE_ASSETS[route.name].scripts];
       const [resolvedContext, , preparedView] = await Promise.all([
         resolveGroupContext(route.groupId),
-        loadBundleStyles(['group-common.min.css', ...ROUTE_ASSETS[route.name].styles]),
+        loadOkumalarStyles(['group-common.min.css', ...ROUTE_ASSETS[route.name].styles]),
         getView(route),
         Promise.all(criticalScripts.map(fileName => preloadBundle(fileName, 'script')))
       ]);
@@ -574,11 +684,12 @@ async function navigate(url, options = {}) {
 
       await activateView(route, preparedView);
       if (sequence !== navigationSequence) return;
-      prepareRoutePlaceholders(route, activeView, isInitialNavigation);
       const deferOkumalarResumeReveal = route.name === 'okumalar'
         && lifecycleCache.has(activeView)
         && !warmedViews.has(activeView);
-      if (!deferOkumalarResumeReveal) await revealRouteContent(activeView, true);
+      if (!deferOkumalarResumeReveal && !revealAfterLifecycle) {
+        await revealRouteContent(activeView, true);
+      }
       groupViewPrepared = true;
 
       if (!groupContext.canRead) {
@@ -587,10 +698,12 @@ async function navigate(url, options = {}) {
         await initializeGroupUi();
         await window.initializeGroupPage();
         await hideStatus();
+        await hideInitialTabLoader();
+        await hideRouteTransitionLoader(transitionLoader);
         return;
       }
 
-      rememberGroup(route.groupId);
+      rememberReadingPath(canonicalPath(route));
 
       const data = await loadGroupData(groupContext);
       if (sequence !== navigationSequence) return;
@@ -601,11 +714,13 @@ async function navigate(url, options = {}) {
     }
 
     if (!groupViewPrepared) {
-      await loadBundleStyles(ROUTE_ASSETS[route.name].styles);
+      const routeStyleLinks = await loadBundleStyles(ROUTE_ASSETS[route.name].styles);
+      if (route.name === 'groups') {
+        routeStyleLinks.forEach(link => { link.disabled = false; });
+      }
       if (sequence !== navigationSequence) return;
       await activateView(route);
       if (sequence !== navigationSequence) return;
-      prepareRoutePlaceholders(route, activeView, isInitialNavigation);
     }
     const hasCachedLifecycle = lifecycleCache.has(activeView);
     if (hasCachedLifecycle) activeLifecycle = lifecycleCache.get(activeView);
@@ -615,24 +730,25 @@ async function navigate(url, options = {}) {
       && activeLifecycle?.prepareBeforeReveal === true
       && typeof activeLifecycle.resume === 'function';
     if (resumeBeforeReveal) {
+      activeView.classList.add('is-preparing-return');
       activeView
         .querySelector('.tracker-table-layout')
         ?.classList.add('is-restoring-position');
       await activeLifecycle.resume();
-      if (sequence !== navigationSequence) return;
+      if (sequence !== navigationSequence) {
+        activeView.querySelector('.tracker-table-layout')?.classList.remove('is-restoring-position');
+        activeView.classList.remove('is-preparing-return');
+        return;
+      }
     }
     if (!revealAfterLifecycle && !activeView.classList.contains('visible')) {
-      await revealRouteContent(activeView, true);
+      await revealRouteContent(activeView, !resumeBeforeReveal);
     }
 
     if (resumeBeforeReveal) {
       const trackerLayout = activeView.querySelector('.tracker-table-layout');
-      try {
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        await window.refreshTrackerTableLayout?.();
-      } finally {
-        trackerLayout?.classList.remove('is-restoring-position');
-      }
+      trackerLayout?.classList.remove('is-restoring-position');
+      activeView.classList.remove('is-preparing-return');
       if (sequence !== navigationSequence) return;
     }
 
@@ -646,9 +762,16 @@ async function navigate(url, options = {}) {
         : await initGlobalTab(route);
       lifecycleCache.set(activeView, activeLifecycle);
     }
+    if (route.name === 'groups') activeView.classList.remove('is-preparing-return');
     await hideStatus();
     if (sequence !== navigationSequence) return;
-    if (revealAfterLifecycle) await revealRouteContent(activeView);
+    if (revealAfterLifecycle) {
+      const revealPromise = revealRouteContent(activeView);
+      if (useInitialTabLoader) await Promise.all([revealPromise, hideInitialTabLoader()]);
+      else if (transitionLoader) await Promise.all([revealPromise, hideRouteTransitionLoader(transitionLoader)]);
+      else await revealPromise;
+    }
+    window.revealPendingReadingMessagePanels?.(activeView);
     tabContent.focus({ preventScroll: true });
     markPrimaryReady();
     if (activeLifecycle?.readyForPrefetch && typeof activeLifecycle.readyForPrefetch.finally === 'function') {
@@ -662,9 +785,13 @@ async function navigate(url, options = {}) {
     if (sequence !== navigationSequence) return;
     console.error('Route yükleme hatası:', error);
     await hideStatus();
+    await hideInitialTabLoader();
+    removeRouteTransitionLoader(transitionLoader);
     renderError(error);
   }
 }
+
+window.navigateRoTaKip = path => navigate(new URL(path, window.location.origin));
 
 async function start() {
   await loadAssetManifest();

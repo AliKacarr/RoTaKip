@@ -72,7 +72,7 @@ to {
 .profile-modal-close-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: 24px;
   color: #ffffff;
   cursor: pointer;
   padding: 10px;
@@ -374,7 +374,7 @@ to {
 .private-group-logout-close-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: 24px;
   color: #ffffff;
   cursor: pointer;
   padding: 10px;
@@ -460,7 +460,6 @@ to {
 }
 
 .private-group-logout-url-row {
-  --private-logout-control-h: 54px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -470,7 +469,7 @@ to {
 
 .private-group-logout-url-input {
   width: 100%;
-  min-height: var(--private-logout-control-h);
+  min-height: 54px;
   height: auto;
   padding: 14px 16px;
   font-size: 20px;
@@ -495,7 +494,7 @@ to {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  min-height: var(--private-logout-control-h);
+  min-height: 54px;
   padding: 14px 20px;
   box-sizing: border-box;
   border: none;
@@ -631,7 +630,7 @@ to {
 .profile-avatar-modal-close-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: 24px;
   color: #ffffff;
   cursor: pointer;
   padding: 10px;
@@ -739,7 +738,7 @@ to {
 .profile-settings-modal-close-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: 24px;
   color: #ffffff;
   cursor: pointer;
   padding: 10px;

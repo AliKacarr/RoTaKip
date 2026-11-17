@@ -10,13 +10,14 @@ function cancelLongestSeriesAnimation() {
     longestSeriesAnimationTimers = [];
 }
 
-window.renderLongestSeries = function renderLongestSeries() {
+window.renderLongestSeries = function renderLongestSeries(options = {}) {
     console.log('🔍 Longest Series Loading...');
     try {
         cancelLongestSeriesAnimation();
         const data = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
             const chart = document.getElementById('longestSeriesChart');
-            const shouldRevealLongestSeries = Boolean(document.getElementById('longestSeriesPlaceholder'));
+            const longestSeriesSection = document.querySelector('.longest-series-section');
+            const shouldRevealLongestSeries = longestSeriesSection?.style.display === 'none';
             chart.style.minHeight = '150px';
             chart.innerHTML = '';
             
@@ -188,9 +189,9 @@ window.renderLongestSeries = function renderLongestSeries() {
                 return b.idx - a.idx;
             });
 
-            if (shouldRevealLongestSeries) {
-                chart.classList.add('reading-content-reveal');
-            }
+            if (longestSeriesSection) longestSeriesSection.style.display = 'block';
+            if (shouldRevealLongestSeries) window.observeReadingScrollReveal?.(longestSeriesSection);
+            else if (options.animateRefresh === true) window.replayReadingContentReveal?.(longestSeriesSection);
 
             const playAnimation = () => {
                 if (longestSeriesVisibilityObserver) {

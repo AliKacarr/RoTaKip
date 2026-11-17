@@ -49,7 +49,7 @@ function animateReadingStatsWhenVisible(chartContainer, chart, okudumData, okuma
     readingStatsVisibilityObserver.observe(chartContainer);
 }
 
-window.loadReadingStats = async function loadReadingStats() {
+window.loadReadingStats = async function loadReadingStats(options = {}) {
     const renderVersion = ++readingStatsRenderVersion;
     cancelReadingStatsAnimation();
     try {
@@ -333,12 +333,11 @@ window.loadReadingStats = async function loadReadingStats() {
             },
             plugins: [ChartDataLabels]
         });
-        const readingStatsPlaceholder = document.getElementById('readingStatsPlaceholder');
-        const shouldRevealReadingStats = Boolean(readingStatsPlaceholder);
-        readingStatsPlaceholder?.remove();
-        if (shouldRevealReadingStats) {
-            chartContainer?.classList.add('reading-content-reveal');
-        }
+        const statsSection = document.querySelector('.stats-section');
+        const shouldRevealReadingStats = statsSection?.style.display === 'none';
+        if (statsSection) statsSection.style.display = 'block';
+        if (shouldRevealReadingStats) window.observeReadingScrollReveal?.(statsSection);
+        else if (options.animateRefresh === true) window.replayReadingContentReveal?.(statsSection);
 
         // Paylaş butonunu ekle
         if (chartContainer && !document.getElementById('readingStatsShareBtn')) {
@@ -352,10 +351,6 @@ window.loadReadingStats = async function loadReadingStats() {
             shareBtn.addEventListener('click', shareReadingStatsChart);
         }
 
-        // stats-section'ı görünür yap
-        const statsSection = document.querySelector('.stats-section');
-        if (statsSection) statsSection.style.display = 'block';
-
         if (chartContainer) {
             animateReadingStatsWhenVisible(
                 chartContainer,
@@ -366,7 +361,6 @@ window.loadReadingStats = async function loadReadingStats() {
             );
         }
     } catch (error) {
-        document.getElementById('readingStatsPlaceholder')?.remove();
         console.error('Error loading reading stats:', error);
     }
 }

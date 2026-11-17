@@ -142,7 +142,7 @@ function registerPublicPageRoutes(app, { publicPath, imageProxyLimiter }) {
   });
 
   app.get('/gruplar', (req, res) => {
-    sendHtmlFile(res, publicPath, 'gruplar.html');
+    sendHtmlFile(res, publicPath, 'app-shell.html');
   });
 
   app.get('/env.js', (req, res) => {

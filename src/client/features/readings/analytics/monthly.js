@@ -1,7 +1,7 @@
 /* exported loadMonthlyCalendar */
 
 // Monthly Calendar Functionality
-window.loadMonthlyCalendar = function loadMonthlyCalendar() {
+window.loadMonthlyCalendar = function loadMonthlyCalendar(options = {}) {
     console.log('🔍 Monthly Calendar Loading...');
     // Elements
     const prevMonthBtn = document.getElementById('prevMonth');
@@ -9,7 +9,7 @@ window.loadMonthlyCalendar = function loadMonthlyCalendar() {
     const monthYearHeader = document.getElementById('monthYearHeader');
     const calendarBody = document.getElementById('calendarBody');
     const monthlyCalendarSection = document.querySelector('.monthly-calendar-section');
-    if (monthlyCalendarSection) monthlyCalendarSection.style.display = 'block';
+    const shouldRevealMonthlyContent = monthlyCalendarSection?.style.display === 'none';
     if (!prevMonthBtn || !nextMonthBtn || !monthYearHeader || !calendarBody) {
         console.error('Aylık takvim için gerekli DOM elemanları bulunamadı.');
         return;
@@ -467,14 +467,17 @@ window.loadMonthlyCalendar = function loadMonthlyCalendar() {
                         if (window.loadTrackerTable) {
                             window.loadTrackerTable();
                         }
+                        if (window.renderReadingMessagePanels) {
+                            void window.renderReadingMessagePanels();
+                        }
                         if (window.loadUserCards) {
-                            window.loadUserCards();
+                            void window.loadUserCards({ animateRefresh: true });
                         }
                         if (window.loadReadingStats) {
-                            window.loadReadingStats();
+                            void window.loadReadingStats({ animateRefresh: true });
                         }
                         if (window.renderLongestSeries) {
-                            window.renderLongestSeries();
+                            window.renderLongestSeries({ animateRefresh: true });
                         }
                     } else {
                         // Veritabanı güncellemesi başarısız olursa UI'ı eski haline döndür
@@ -519,11 +522,6 @@ window.loadMonthlyCalendar = function loadMonthlyCalendar() {
         generateCalendar(currentMonth, currentYear);
     }
 
-    // Show monthly calendar section
-    if (monthlyCalendarSection) {
-        monthlyCalendarSection.style.display = 'block';
-    }
-
     // Expose the update function globally so it can be called from your main script
     window.updateMonthlyCalendar = updateCalendarWithUserData;
     window.refreshMonthlyCalendarForUser = function refreshMonthlyCalendarForUser(userId) {
@@ -532,6 +530,7 @@ window.loadMonthlyCalendar = function loadMonthlyCalendar() {
         if (!selectedOption || String(selectedOption.dataset.userId) !== String(userId)) return;
         selectedUser = selectedOption.value;
         generateCalendar(currentMonth, currentYear, false);
+        window.replayReadingContentReveal?.(monthlyCalendarSection);
     };
 
     // Veri deposu ve haftalık tablo bu aşamada hazırdır. Takvimi doldurduktan
@@ -539,15 +538,11 @@ window.loadMonthlyCalendar = function loadMonthlyCalendar() {
     populateUserSelector();
     const monthlyContent = document.querySelector('.monthly-calendar-share-container');
     const monthNavigation = document.querySelector('.month-navigation');
-    const monthlyPlaceholder = document.getElementById('monthlyCalendarPlaceholder');
-    const shouldRevealMonthlyContent = Boolean(monthlyPlaceholder);
+    if (monthlyCalendarSection) monthlyCalendarSection.style.display = 'block';
     monthlyContent?.removeAttribute('hidden');
     monthNavigation?.removeAttribute('hidden');
-    monthlyPlaceholder?.remove();
-    if (shouldRevealMonthlyContent) {
-        monthlyContent?.classList.add('reading-content-reveal');
-        monthNavigation?.classList.add('reading-content-reveal');
-    }
+    if (shouldRevealMonthlyContent) window.observeReadingScrollReveal?.(monthlyCalendarSection);
+    else if (options.animateRefresh === true) window.replayReadingContentReveal?.(monthlyCalendarSection);
 
     // Paylaş butonu için event listener ekle
     const monthShareBtn = document.getElementById('monthShareBtn');

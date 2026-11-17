@@ -7,7 +7,8 @@ export function loadAssetManifest() {
   if (!manifestPromise) {
     manifestPromise = fetch('/assets-manifest.json', {
       headers: { Accept: 'application/json' },
-      credentials: 'same-origin'
+      credentials: 'same-origin',
+      cache: 'no-store'
     }).then(response => {
       if (!response.ok) throw new Error('Asset manifesti yüklenemedi.');
       return response.json();
@@ -70,7 +71,7 @@ export function loadStyle(href) {
 }
 
 export async function loadBundleStyles(fileNames) {
-  await Promise.all(fileNames.map(async fileName => loadStyle(await resolveAsset(fileName))));
+  return Promise.all(fileNames.map(async fileName => loadStyle(await resolveAsset(fileName))));
 }
 
 export function preloadScript(src) {

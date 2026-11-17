@@ -8,10 +8,41 @@
   <link id="canonicalLink" rel="canonical" href="https://rotakip.up.railway.app/tesbihat">
   <link rel="icon" href="/images/favicon.webp" type="image/x-icon">
   <title id="page-title">RoTaKip</title>
+  <script>
+    (() => {
+      const path = window.location.pathname.replace(/\/$/, '') || '/';
+      const selectedRoute = path === '/gruplar' || path.startsWith('/grup/')
+        ? 'okumalar'
+        : ({
+            '/tesbihat': 'tesbihat',
+            '/tefekkur': 'tefekkur',
+            '/videolar': 'videos',
+            '/makaleler': 'articles'
+          })[path];
+      if (!selectedRoute) return;
+
+      const markActiveNavigation = () => {
+        const navigation = document.getElementById('appNavigation');
+        if (!navigation) return false;
+        const activeLink = navigation.querySelector(`[data-route="${selectedRoute}"]`);
+        if (!activeLink) return false;
+        activeLink.classList.add('is-active');
+        activeLink.setAttribute('aria-current', 'page');
+        navigation.dataset.activeRoute = selectedRoute;
+        return true;
+      };
+
+      const navigationObserver = new MutationObserver(() => {
+        if (markActiveNavigation()) navigationObserver.disconnect();
+      });
+      navigationObserver.observe(document.documentElement, { childList: true, subtree: true });
+    })();
+  </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/shell.min.css?v=323df83bd29c">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/shell.min.css?v=cbb610543c77">
 </head>
-<body class="app-shell-body">
+<body class="app-shell-body initial-tab-loading">
   <div class="groups-sparkle-overlay" aria-hidden="true"></div>
 
   <div id="cookieConsentBanner" class="cookie-consent-banner">
@@ -31,40 +62,41 @@
   <nav id="appNavigation" class="app-navigation" aria-label="RoTaKip bölümleri">
     <div class="app-navigation-items">
       <a class="app-navigation-item" data-route="tesbihat" href="/tesbihat">
-        <i class="fa-regular fa-moon" aria-hidden="true"></i><span>Tesbihat</span>
+        <span class="app-navigation-icon" aria-hidden="true"><i class="fa-regular fa-moon app-navigation-icon-outline"></i><i class="fa-solid fa-moon app-navigation-icon-filled"></i></span><span>Tesbihat</span>
       </a>
       <a class="app-navigation-item" data-route="tefekkur" href="/tefekkur">
-        <i class="fa-regular fa-star" aria-hidden="true"></i><span>Tefekkür</span>
+        <span class="app-navigation-icon" aria-hidden="true"><i class="fa-regular fa-star app-navigation-icon-outline"></i><i class="fa-solid fa-star app-navigation-icon-filled"></i></span><span>Tefekkür</span>
       </a>
       <a class="app-navigation-item" data-route="videos" href="/videolar">
-        <i class="fa-regular fa-circle-play" aria-hidden="true"></i><span>Videolar</span>
+        <span class="app-navigation-icon" aria-hidden="true"><i class="fa-regular fa-circle-play app-navigation-icon-outline"></i><i class="fa-solid fa-circle-play app-navigation-icon-filled"></i></span><span>Videolar</span>
       </a>
       <a class="app-navigation-item" data-route="articles" href="/makaleler">
-        <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Makaleler</span>
+        <span class="app-navigation-icon" aria-hidden="true"><i class="fa-regular fa-newspaper app-navigation-icon-outline"></i><i class="fa-solid fa-newspaper app-navigation-icon-filled"></i></span><span>Makaleler</span>
       </a>
       <a class="app-navigation-item" data-route="okumalar" href="/gruplar">
-        <i class="fa-regular fa-compass" aria-hidden="true"></i><span>Okumalar</span>
+        <span class="app-navigation-icon" aria-hidden="true"><i class="fa-regular fa-compass app-navigation-icon-outline"></i><i class="fa-solid fa-compass app-navigation-icon-filled"></i></span><span>Okumalar</span>
       </a>
     </div>
   </nav>
 
-  <div id="routeStatus" class="route-status" role="status" aria-label="Sayfa yükleniyor" hidden>
-    <div class="route-loader" aria-hidden="true">
-      <div class="route-loader-star">⭐</div>
-      <div class="route-loader-lines">
-        <div class="route-loader-line"><span>Ro</span></div>
-        <div class="route-loader-line"><span>Ta</span></div>
-        <div class="route-loader-line"><span>Kip</span></div>
-      </div>
-    </div>
-  </div>
-
   <div class="main-container app-shell-container">
-    <main id="tabContent" class="tab-content" tabindex="-1"></main>
+    <main id="tabContent" class="tab-content is-initial-loading" tabindex="-1">
+      <div id="initialTabLoader" class="initial-tab-loader" role="status" aria-label="İlk sekme hazırlanıyor">
+        <div class="route-loader" aria-hidden="true">
+          <div class="route-loader-star">⭐</div>
+          <div class="route-loader-lines">
+            <div class="route-loader-line"><span>Ro</span></div>
+            <div class="route-loader-line"><span>Ta</span></div>
+            <div class="route-loader-line"><span>Kip</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
     <div id="footerRoot" hidden></div>
   </div>
+  <div id="globalOverlayRoot"></div>
   <div id="overlayRoot"></div>
-  <button id="scrollToTopBtn" class="scroll-to-top-btn" type="button" title="Yukarı Çık" aria-label="Yukarı çık">
+  <button id="scrollToTopBtn" class="scroll-to-top-btn hidden" type="button" title="Yukarı Çık" aria-label="Yukarı çık" hidden>
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M12 2L2 12H8V22H16V12H22L12 2Z" fill="currentColor" />
     </svg>

@@ -37,8 +37,12 @@ function connectDatabase() {
     })
     .catch(error => {
       console.error('MongoDB bağlantı hatası:', error);
-      return null;
+      throw error;
     });
+}
+
+function isDatabaseConnected() {
+  return mongoose.connection.readyState === 1;
 }
 
 async function closeDatabase() {
@@ -50,6 +54,7 @@ async function closeDatabase() {
 module.exports = {
   closeDatabase,
   connectDatabase,
+  isDatabaseConnected,
   mongooseOptions,
   registerDatabaseLifecycle
 };

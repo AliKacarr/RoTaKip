@@ -3,6 +3,14 @@ let lastQuoteSection = null;
 window.initializeQuoteSharing = function initializeQuoteSharing() {
     const quoteRoot = document.querySelector('.quote');
     if (!quoteRoot || quoteRoot.dataset.sharingBound === 'true') return;
+    const requiredShareControls = [
+        'sharePanel',
+        'closeSharePanel',
+        'downloadImageBtn',
+        'shareWhatsappBtn',
+        'shareTwitterBtn'
+    ].map(id => document.getElementById(id));
+    if (requiredShareControls.some(control => !control)) return;
     quoteRoot.dataset.sharingBound = 'true';
     // Paylaş butonuna tıklandığında
     document.querySelectorAll('.share-quote').forEach(function (btn) {

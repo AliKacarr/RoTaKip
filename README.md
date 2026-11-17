@@ -44,7 +44,6 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 - Giriş ve erişim logları  
 - Zamanlanmış otomatik yedekleme  
 - Admin paneli, katılma isteklerini yönetme  
-- Canlı destek ve kullanıcı iletişimi (**Tawk.to**)  
 - Site trafiği ve kullanım analizi (**Google Analytics**)  
 
 ---
@@ -89,7 +88,7 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 **Frontend:** Vanilla JavaScript, CSS3, Font Awesome  
 
-**Entegrasyonlar:** Whatsapp; Dropbox, OneSignal, YouTube, Google Analytics, Tawk.to canlı destek
+**Entegrasyonlar:** Whatsapp, Dropbox, OneSignal, YouTube, Google Analytics
 
 ---
 

@@ -84,14 +84,14 @@ function lockVideosContainerHeight() {
     const currentHeight = videosContainer.getBoundingClientRect().height;
 
     if (currentHeight > 0) {
-        videosContainer.style.setProperty('--videos-container-locked-height', `${currentHeight}px`);
+        videosContainer.style.minHeight = `${currentHeight}px`;
         videosContainer.classList.add('is-updating');
     }
 }
 
 function unlockVideosContainerHeight() {
     videosContainer.classList.remove('is-updating');
-    videosContainer.style.removeProperty('--videos-container-locked-height');
+    videosContainer.style.minHeight = '';
 }
 
 function waitForVideoThumbnails() {

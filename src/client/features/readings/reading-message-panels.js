@@ -74,8 +74,21 @@
   }
 
   function revealPanel(panel) {
-    panel.classList.add('message-fade-in');
+    panel.classList.add('reading-message-panel-pending');
   }
+
+  window.revealPendingReadingMessagePanels = function revealPendingReadingMessagePanels(root = document) {
+    const panels = Array.from(root.querySelectorAll('.reading-message-panel-pending'));
+    if (panels.length === 0) return;
+    panels.forEach(panel => panel.getBoundingClientRect());
+    window.requestAnimationFrame(() => {
+      panels.forEach(panel => {
+        if (!panel.isConnected) return;
+        panel.classList.remove('reading-message-panel-pending');
+        panel.classList.add('message-fade-in', 'reading-content-reveal');
+      });
+    });
+  };
 
   function enableConfetti(panel) {
     const overlay = panel.querySelector('.confetti-overlay');
@@ -238,5 +251,10 @@
       return todayStat && todayStat.status === 'okudum';
     });
     if (everyoneRead) renderEveryonePanel(container);
+
+    const routeView = container.closest('.tab-view');
+    if (routeView?.classList.contains('visible')) {
+      window.revealPendingReadingMessagePanels(routeView);
+    }
   };
 }());

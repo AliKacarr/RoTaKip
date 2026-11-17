@@ -1,3 +1,4 @@
+(() => {
 /* ==================== LocalStorage Manager ==================== */
 class LocalStorageManager {
     static loginUser(groupId, userId, authority, username, groupName) {
@@ -81,6 +82,14 @@ const CONFIG = {
     MIN_LOAD_INTERVAL_MS: 600
 };
 
+function navigateFromGroupDirectory(path) {
+    if (typeof window.navigateRoTaKip === 'function') {
+        window.navigateRoTaKip(path);
+        return;
+    }
+    window.location.href = path;
+}
+
 /* ==================== Groups Page Manager ==================== */
 class GroupsPage {
     constructor() {
@@ -97,6 +106,8 @@ class GroupsPage {
         
         // State
         this.isLoading = false;
+        this.loadingCompletion = null;
+        this.resumeRefreshPromise = null;
         this.searchQuery = '';
         /** Sunucudaki herkese açık grup toplamı (yalnızca arama boşken /api/groups yanıtından) */
         this.totalPublicGroups = null;
@@ -115,17 +126,87 @@ class GroupsPage {
         // Debounce Timer
         this.searchTimeout = null;
 
-        this.init();
+        this.ready = this.init();
     }
 
-    init() {
+    async init() {
         this.bindEvents();
-        // Önce katılma isteklerini kontrol et, sonra grupları yükle
-        this.checkJoinRequestStatuses().then(() => {
-            this.loadGroups(true); // reset=true ile başlat
-        });
         this.setupInfiniteScroll();
+        // Önce katılma isteklerini kontrol et, sonra grupları yükle
+        await this.checkJoinRequestStatuses();
+        await this.loadGroups(true); // reset=true ile başlat
         // Avatar'lar modal açıldığında lazy-load edilecek
+    }
+
+    async refreshForResume() {
+        if (this.resumeRefreshPromise) return this.resumeRefreshPromise;
+
+        this.resumeRefreshPromise = (async () => {
+            if (this.loadingCompletion) await this.loadingCompletion;
+            this.isLoading = true;
+
+            try {
+                await LocalStorageManager.refreshMemberships();
+                await this.checkJoinRequestStatuses();
+
+                const response = await fetch(
+                    `/api/groups?skip=0&limit=${this.groupsPerPage}&search=${this.searchQuery}`
+                );
+                if (!response.ok) throw new Error('Failed to refresh groups');
+
+                const data = await response.json();
+                const memberships = LocalStorageManager.getMemberships();
+                const userGroupIds = new Set(memberships.map(item => item.groupId));
+                const userGroups = memberships.map(item => ({
+                    groupId: item.groupId,
+                    groupName: item.groupName,
+                    description: item.description,
+                    groupImage: item.groupImage,
+                    visibility: item.visibility,
+                    amountType: item.amountType,
+                    readingEditPolicy: item.readingEditPolicy,
+                    autoMarkUnread: item.autoMarkUnread,
+                    userAuthority: item.authority
+                }));
+                const publicGroups = data.groups.filter(group => !userGroupIds.has(group.groupId));
+                const nextMemberCounts = new Map(
+                    memberships.map(item => [item.groupId, item.memberCount || 0])
+                );
+
+                await Promise.all(publicGroups.map(async group => {
+                    try {
+                        const countResponse = await fetch(`/api/groups/${group.groupId}/member-count`);
+                        const countData = countResponse.ok ? await countResponse.json() : { count: 0 };
+                        nextMemberCounts.set(group.groupId, countData.count || 0);
+                    } catch (error) {
+                        console.error(`Üye sayısı yenilenemedi (${group.groupId}):`, error);
+                        nextMemberCounts.set(group.groupId, 0);
+                    }
+                }));
+
+                this.pendingCardRemovals.forEach(timer => clearTimeout(timer));
+                this.pendingCardRemovals.clear();
+                this.groups = [...userGroups, ...publicGroups];
+                this.filteredGroups = this.groups;
+                this.memberCounts = nextMemberCounts;
+                this.currentPage = 1;
+                this.totalPublicGroups = !this.searchQuery && typeof data.total === 'number'
+                    ? data.total
+                    : null;
+                this.isLoading = false;
+
+                document.getElementById('groupsGrid')?.replaceChildren();
+                this.renderGroups({ animateEntrance: false });
+            } catch (error) {
+                console.error('Gruplar arka planda yenilenemedi:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        })().finally(() => {
+            this.resumeRefreshPromise = null;
+        });
+
+        return this.resumeRefreshPromise;
     }
 
     bindEvents() {
@@ -275,7 +356,10 @@ class GroupsPage {
     }
 
     async loadGroups(reset = false) {
-        if (this.isLoading) return;
+        if (this.isLoading) return this.loadingCompletion;
+
+        let finishLoading;
+        this.loadingCompletion = new Promise(resolve => { finishLoading = resolve; });
 
         // Spinner yalnızca sayfanın ilk, boş yüklenişinde gösterilir. Sonsuz
         // kaydırma istekleri mevcut kartları ve footer konumunu oynatmamalıdır.
@@ -351,6 +435,8 @@ class GroupsPage {
                 this.showLoading(false);
             }
             this.renderGroups();
+            finishLoading();
+            this.loadingCompletion = null;
         }
     }
 
@@ -426,10 +512,11 @@ class GroupsPage {
         });
     }
 
-    renderGroups() {
+    renderGroups(options = {}) {
         const groupsGrid = document.getElementById('groupsGrid');
         const noResults = document.getElementById('noResults');
         const noPublicGroups = document.getElementById('noPublicGroups');
+        if (!groupsGrid || !noResults) return;
         
         // Grupları sırala: 1) Yetki sahibi olduğumuz gruplar, 2) Katılma isteği gönderdiğimiz gruplar, 3) Rastgele gruplar
         const sortedGroups = this.sortGroupsByPriority(this.filteredGroups);
@@ -479,7 +566,8 @@ class GroupsPage {
             const groupId = String(group.groupId);
             if (!cardsById.has(groupId)) {
                 const groupCard = this.createGroupCard(group);
-                const animateEntrance = !groupCard.classList.contains('user-group');
+                const animateEntrance = options.animateEntrance !== false
+                    && !groupCard.classList.contains('user-group');
                 if (animateEntrance) groupCard.classList.add('hide');
                 groupsGrid.appendChild(groupCard);
                 cardsById.set(groupId, groupCard);
@@ -926,7 +1014,7 @@ class GroupsPage {
                 LocalStorageManager.loginUser(result.group.groupId, result.userId, 'admin', adminUserName, result.group.groupName, adminName);
                 
                 this.closeCreateModal();
-                window.location.href = `/grup/${encodeURIComponent(result.group.groupId)}/`;
+                navigateFromGroupDirectory(`/grup/${encodeURIComponent(result.group.groupId)}/`);
             } else {
                 alert(`Grup oluşturulamadı: ${result.error}`);
             }
@@ -941,6 +1029,9 @@ class GroupsPage {
     // Grup kartı oluşturma
     createGroupCard(group) {
         const memberCount = this.memberCounts.get(group.groupId) || 0;
+        const openGroup = () => {
+            navigateFromGroupDirectory(`/grup/${encodeURIComponent(group.groupId)}/`);
+        };
         
         // Kullanıcının grupları için private kontrolü yapma
         const isUserGroup = Object.hasOwn(LocalStorageManager.getGroups(), group.groupId);
@@ -997,7 +1088,9 @@ class GroupsPage {
                 <i class="fas fa-users"></i>
                 <span class="member-count"><span class="memberCount">${memberCount}</span> üye</span>
             </div>
-            ${!isUserGroup ? this.getJoinButtonHtml(group) : ''}
+            ${isUserGroup
+                ? '<button type="button" class="view-group-btn"><i class="fas fa-eye"></i> Grubu Görüntüle</button>'
+                : this.getJoinButtonHtml(group)}
         </div>
     `;
 
@@ -1010,18 +1103,23 @@ class GroupsPage {
                     this.openJoinModal(group);
                 });
             }
+        } else {
+            const viewGroupBtn = card.querySelector('.view-group-btn');
+            viewGroupBtn?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openGroup();
+            });
         }
 
         // Tüm gruplar için tıklama işlevi (private gruplar da dahil)
-        card.addEventListener('click', () => {
-            window.location.href = `/grup/${encodeURIComponent(group.groupId)}/`;
-        });
+        card.addEventListener('click', openGroup);
 
         return card;
     }
 
     showLoading(show, reservePageSpace = false) {
         const loadingSpinner = document.getElementById('loadingSpinner');
+        if (!loadingSpinner) return;
         const groupsSection = loadingSpinner.closest('.groups-section');
 
         loadingSpinner.style.display = show ? 'block' : 'none';
@@ -1459,7 +1557,7 @@ class GroupsPage {
     goToHomePage() {
         if (this.currentJoinGroup) {
             // Grup sayfasına yönlendir
-            window.location.href = `/grup/${encodeURIComponent(this.currentJoinGroup.groupId)}/`;
+            navigateFromGroupDirectory(`/grup/${encodeURIComponent(this.currentJoinGroup.groupId)}/`);
         } else {
             this.closeJoinModal();
         }
@@ -1693,8 +1791,8 @@ async function logHomePageVisit(userName) {
     }
 }
 
-/* ==================== DOM Content Loaded ==================== */
-document.addEventListener('DOMContentLoaded', async function() {
+/* ==================== Lifecycle ==================== */
+async function runGroupDirectoryInitialization() {
     LocalStorageManager.clearCookies();
     await LocalStorageManager.refreshMemberships();
     logHomePageVisit(null);
@@ -1704,6 +1802,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 3. Groups page'i başlat
     groupsPageInstance = new GroupsPage();
+    await groupsPageInstance.ready;
     
     // 4. Ready images modal butonları
     const readyImagesBtn = document.getElementById('readyImagesBtn');
@@ -1793,10 +1892,33 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (typeof window.scheduleGoogleAnalyticsLoad === 'function') {
         window.scheduleGoogleAnalyticsLoad();
     }
-    if (typeof window.scheduleTawkLoad === 'function') {
-        window.scheduleTawkLoad();
-    }
     if (typeof window.scheduleOneSignalLoad === 'function') {
         window.scheduleOneSignalLoad();
     }
-});
+}
+
+let groupDirectoryInitialization = null;
+
+function initializeGroupDirectory() {
+    if (!groupDirectoryInitialization) {
+        groupDirectoryInitialization = runGroupDirectoryInitialization();
+    }
+    return groupDirectoryInitialization;
+}
+
+window.RoTaKipGroupsTab = {
+    init: initializeGroupDirectory,
+    async resume() {
+        await groupsPageInstance?.refreshForResume();
+    },
+    destroy() {}
+};
+
+if (document.body.classList.contains('index-navigation-body')) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeGroupDirectory, { once: true });
+    } else {
+        initializeGroupDirectory();
+    }
+}
+})();

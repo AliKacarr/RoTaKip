@@ -12,7 +12,7 @@
     text-align: center;
     padding: 19px;
     margin: 0 auto;
-    font-size: 1.9rem;
+    font-size: 38px;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -28,7 +28,7 @@
     line-height: 1.3;
     flex: 1;
     min-width: 0;
-    font-size: 1.9rem;
+    font-size: 38px;
 }
 
 #secretAdminLogin img {
@@ -216,7 +216,7 @@
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 30px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     margin-right: 18px;
     backdrop-filter: blur(10px);
@@ -224,7 +224,7 @@
 }
 
 .groups-auth-login-modal-title {
-    font-size: 1.6rem;
+    font-size: 32px;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
@@ -235,7 +235,7 @@
 .groups-auth-login-close-btn {
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 24px;
     color: #ffffff;
     cursor: pointer;
     padding: 10px;
@@ -281,7 +281,7 @@
     position: absolute;
     left: 15px;
     color: #6b7280;
-    font-size: 1rem;
+    font-size: 20px;
     z-index: 2;
     transition: color 0.3s ease;
 }
@@ -291,7 +291,7 @@
     padding: 16px 20px 16px 52px;
     border: 2px solid #bac5d2;
     border-radius: 14px;
-    font-size: 1rem;
+    font-size: 20px;
     transition: all 0.3s ease;
     background: #ffffff;
     outline: none;
@@ -351,7 +351,7 @@
     border: none;
     padding: 18px 25px;
     border-radius: 16px;
-    font-size: 1.1rem;
+    font-size: 22px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -393,7 +393,7 @@
     gap: 12px;
     color: #4b5563;
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 19px;
     font-weight: 600;
     padding: 14px 18px;
     border-radius: 12px;
@@ -418,7 +418,7 @@
     gap: 12px;
     color: #1d4ed8;
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 19px;
     font-weight: 600;
     padding: 14px 18px;
     border-radius: 12px;
@@ -439,7 +439,7 @@
 
 .groups-auth-error-message {
     color: #ef4444;
-    font-size: 0.9rem;
+    font-size: 18px;
     padding: 12px 15px;
     background: #fef2f2;
     border: 1px solid #fecaca;
@@ -455,7 +455,7 @@
 
 .groups-auth-error-message::before {
     content: "⚠️";
-    font-size: 1rem;
+    font-size: 20px;
 }
 
 /* Forgot Password Modal Styles */
@@ -524,14 +524,14 @@
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 30px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     margin-right: 15px;
     border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 .groups-auth-forgot-modal-title {
-    font-size: 1.6rem;
+    font-size: 32px;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
@@ -541,7 +541,7 @@
 .groups-auth-forgot-close-btn {
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 24px;
     color: #ffffff;
     cursor: pointer;
     padding: 10px;
@@ -569,7 +569,7 @@
 
 .groups-auth-forgot-description {
     color: #6b7280;
-    font-size: 1rem;
+    font-size: 20px;
     line-height: 1.6;
     margin-bottom: 30px;
 }
@@ -607,7 +607,7 @@
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.2rem;
+    font-size: 24px;
     flex-shrink: 0;
 }
 
@@ -618,14 +618,14 @@
 
 .groups-auth-forgot-option-content h3 {
     color: #1f2937;
-    font-size: 1.1rem;
+    font-size: 22px;
     font-weight: 600;
     margin: 0 0 8px 0;
 }
 
 .groups-auth-forgot-option-content p {
     color: #6b7280;
-    font-size: 0.95rem;
+    font-size: 19px;
     line-height: 1.5;
     margin: 0 0 10px 0;
 }
@@ -637,7 +637,7 @@
     color: #3B82F6;
     text-decoration: none;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 19px;
     padding: 8px 12px;
     background: #eff6ff;
     border-radius: 6px;
@@ -714,7 +714,7 @@
 .groups-auth-join-close-btn {
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 24px;
     color: #ffffff;
     cursor: pointer;
     padding: 10px;
@@ -781,7 +781,7 @@
 
 .groups-auth-join-group-details h3 {
     color: #ffffff;
-    font-size: 1.25rem;
+    font-size: 25px;
     font-weight: 600;
     margin: 0;
     padding-bottom: 0 !important;
@@ -791,7 +791,7 @@
 
 .groups-auth-join-group-details p {
     color: #ffffff;
-    font-size: 0.875rem;
+    font-size: 18px;
     margin: 5px 0 0;
     font-weight: 400;
     opacity: 0.9;
@@ -808,7 +808,7 @@
     align-items: center;
     gap: 10px;
     color: #374151;
-    font-size: 1.125rem;
+    font-size: 23px;
     font-weight: 600;
     margin: 0 0 20px 0;
     padding-bottom: 10px;
@@ -817,7 +817,7 @@
 
 .groups-auth-join-section-title i {
     color: #667eea;
-    font-size: 1rem;
+    font-size: 20px;
 }
 
 .groups-auth-join-form-group {
@@ -827,7 +827,7 @@
 .groups-auth-join-form-group label {
     display: block;
     color: #4a5568;
-    font-size: 0.95rem;
+    font-size: 19px;
     font-weight: bold;
     width: 100%;
     margin-bottom: 10px;
@@ -836,7 +836,7 @@
 .groups-auth-join-form-label {
     display: block;
     color: #4a5568;
-    font-size: 0.95rem;
+    font-size: 19px;
     font-weight: bold;
     width: 100%;
     margin-bottom: 10px;
@@ -852,7 +852,7 @@
     position: absolute;
     left: 15px;
     color: #6b7280;
-    font-size: 1rem;
+    font-size: 20px;
     z-index: 2;
     transition: color 0.3s ease;
 }
@@ -862,7 +862,7 @@
     padding: 15px 20px 15px 50px;
     border: 2px solid #64b5f6;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 20px;
     transition: all 0.3s ease;
     background: #f8f9ff;
     outline: none;
@@ -915,14 +915,14 @@
 }
 
 .groups-auth-join-file-input-icon {
-    font-size: 1rem;
+    font-size: 20px;
     color: #2196f3;
     flex-shrink: 0;
 }
 
 .groups-auth-join-file-input-text {
     margin-left: 10px;
-    font-size: 0.95rem;
+    font-size: 19px;
     flex: 1;
     color: #1976d2;
     font-weight: 500;
@@ -931,7 +931,7 @@
 .groups-auth-join-file-name {
     color: #0c4a6e;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 19px;
     margin-left: 8px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -986,7 +986,7 @@
     border: 2px solid #38BDF8;
     padding: 15px 25px;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 20px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1011,7 +1011,7 @@
     border: none;
     padding: 14px 28px;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 20px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1100,14 +1100,14 @@
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 2rem;
+    font-size: 40px;
     box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
     margin-right: 15px;
 }
 
 
 .groups-auth-join-success-modal-title {
-    font-size: 1.8rem;
+    font-size: 36px;
     font-weight: 700;
     color: #1f2937;
     margin: 0;
@@ -1117,7 +1117,7 @@
 .groups-auth-join-success-close-btn {
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 24px;
     color: #9ca3af;
     cursor: pointer;
     padding: 10px;
@@ -1155,7 +1155,7 @@
 
 .groups-auth-join-success-message p {
     color: #10823b;
-    font-size: 1.1rem;
+    font-size: 22px;
     font-weight: 500;
     margin: 0;
     line-height: 1.6;
@@ -1173,7 +1173,7 @@
     border: 2px solid #c4c7cd;
     padding: 12px 24px;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 20px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1196,7 +1196,7 @@
     border: none;
     padding: 12px 24px;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 20px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1241,13 +1241,13 @@
     }
     
     .groups-auth-join-success-modal-title {
-        font-size: 1.5rem;
+        font-size: 30px;
     }
     
     .groups-auth-join-success-modal-icon {
         width: 50px;
         height: 50px;
-        font-size: 1.5rem;
+        font-size: 30px;
     }
     
     .groups-auth-join-success-actions {
@@ -1271,17 +1271,17 @@
     }
     
     .groups-auth-join-success-modal-title {
-        font-size: 1.3rem;
+        font-size: 26px;
     }
     
     .groups-auth-join-success-message p {
-        font-size: 1rem;
+        font-size: 20px;
     }
     
     .groups-auth-join-success-cancel-btn,
     .groups-auth-join-success-view-btn {
         padding: 14px 20px;
-        font-size: 0.95rem;
+        font-size: 19px;
     }
 }
 
@@ -1301,7 +1301,7 @@
 
 .groups-auth-info-icon {
     color: #1976d2;
-    font-size: 1.2rem;
+    font-size: 24px;
     margin-top: 2px;
     flex-shrink: 0;
 }
@@ -1313,7 +1313,7 @@
 .groups-auth-info-text p {
     margin: 0;
     color: #1565c0;
-    font-size: 0.95rem;
+    font-size: 19px;
     line-height: 1.5;
     font-weight: 500;
 }
@@ -1326,7 +1326,7 @@
     }
     
     .groups-auth-info-text p {
-        font-size: 0.9rem;
+        font-size: 18px;
     }
 }
 
@@ -1403,7 +1403,7 @@
   right: 16px;
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: 24px;
   color: #ffffff;
   cursor: pointer;
   padding: 10px;
@@ -1898,7 +1898,7 @@
 .groups-auth-join-avatar-close-btn {
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 24px;
     color: #ffffff;
     cursor: pointer;
     padding: 10px;

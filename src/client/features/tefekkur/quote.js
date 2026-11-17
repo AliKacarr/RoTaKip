@@ -11,11 +11,7 @@ const tefekkurContentItems = [
 ];
 
 function tefekkurLoadingMarkup() {
-    return '<div class="quote-loading-placeholder" aria-hidden="true">' +
-        '<span class="quote-loading-line"></span>' +
-        '<span class="quote-loading-line"></span>' +
-        '<span class="quote-loading-line"></span>' +
-        '</div>';
+    return '';
 }
 
 function setTefekkurTextLoading(element, label) {

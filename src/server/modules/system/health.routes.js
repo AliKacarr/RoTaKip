@@ -1,8 +1,13 @@
 'use strict';
 
-function registerHealthRoutes(app) {
+function registerHealthRoutes(app, { isDatabaseConnected }) {
   app.get('/api/health', (req, res) => {
-    res.json({ ok: true, timestamp: Date.now() });
+    const databaseConnected = isDatabaseConnected();
+    res.status(databaseConnected ? 200 : 503).json({
+      ok: databaseConnected,
+      database: databaseConnected ? 'connected' : 'disconnected',
+      timestamp: Date.now()
+    });
   });
 }
 

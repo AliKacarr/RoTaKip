@@ -2200,7 +2200,9 @@ window.syncGroupManagementVisibility = function syncGroupManagementVisibility() 
     }
     renderUserList();
     loadGroupSettings();
-    managementRoot.classList.add('reading-content-reveal');
+    managementRoot
+        .querySelectorAll('.group-settings, .automation-section, .user-onboarding-column, .user-management-column')
+        .forEach(panel => window.observeReadingScrollReveal?.(panel));
 };
 
 // Event listener'ları shell fragmenti sonradan eklendiğinde de bağla.

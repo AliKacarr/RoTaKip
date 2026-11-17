@@ -1,4 +1,12 @@
 export const ROUTES = Object.freeze({
+  groups: {
+    name: 'groups',
+    navigationName: 'okumalar',
+    path: '/gruplar',
+    fragment: '/gruplar.html',
+    title: 'Okuma Grupları',
+    requiresGroup: false
+  },
   okumalar: {
     name: 'okumalar',
     fragment: ['/fragments/group-header.html', '/fragments/okumalar.html'],
@@ -33,6 +41,21 @@ export const ROUTES = Object.freeze({
     title: 'Makaleler',
     requiresGroup: false
   }
+});
+
+export const ROUTE_ASSETS = Object.freeze({
+  groups: {
+    scripts: ['groups-directory.min.js'],
+    styles: ['groups-directory.min.css']
+  },
+  okumalar: {
+    scripts: ['okumalar.min.js'],
+    styles: ['okumalar.min.css']
+  },
+  tesbihat: { scripts: [], styles: [] },
+  videos: { scripts: ['videos.min.js'], styles: ['videos.min.css'] },
+  tefekkur: { scripts: ['tefekkur.min.js'], styles: ['tefekkur.min.css'] },
+  articles: { scripts: ['articles.min.js'], styles: ['articles.min.css'] }
 });
 
 const GROUP_ROUTE_PATTERN = /^\/grup\/([^/]+)\/?$/i;

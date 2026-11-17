@@ -139,6 +139,7 @@
     var modeBar = $('readingEditModeBar');
     if (modeBar) {
       modeBar.classList.remove('show');
+      modeBar.classList.remove('is-initial-reveal-pending');
       modeBar.setAttribute('aria-hidden', 'true');
     }
     cancelAmountCellEdit();

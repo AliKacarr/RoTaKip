@@ -40,6 +40,18 @@
     cursor: pointer;
 }
 
+.reading-message-panel-pending {
+    opacity: 0;
+    transform: translateY(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reading-message-panel-pending {
+        opacity: 1;
+        transform: none;
+    }
+}
+
 .league-promotion-message {
     background: #e6f2ff;
     box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);

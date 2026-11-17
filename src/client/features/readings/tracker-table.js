@@ -37,9 +37,7 @@ let timelineScrollTimer = null;
 let timelineIsShifting = false;
 let timelineIsSharing = false;
 let timelineHasPositioned = false;
-let timelineSavedScrollLeft = null;
 let timelineIsRestoringPosition = false;
-let timelineRestoreReleaseTimer = null;
 let timelineScrollBound = false;
 let timelineDragStartX = 0;
 let timelineDragStartScrollLeft = 0;
@@ -284,8 +282,10 @@ function positionTimelineScrollHint() {
         - (guideRect.top + (guideRect.height / 2));
     const centeredTop = readingRowsCenter - arrowOffsetFromGuideCenter;
     const centeredLeft = tableAreaRect.left - layoutRect.left + (tableAreaRect.width / 2);
-    timelineScrollHint.style.setProperty('--timeline-scroll-hint-top', `${Math.max(0, centeredTop)}px`);
-    timelineScrollHint.style.setProperty('--timeline-scroll-hint-left', `${centeredLeft}px`);
+    timelineScrollHint.style.removeProperty('top');
+    timelineScrollHint.style.removeProperty('left');
+    swipeGuide.style.top = `${Math.max(0, centeredTop)}px`;
+    swipeGuide.style.left = `${centeredLeft}px`;
 }
 
 function bindTimelineScrollHintInteraction() {
@@ -1063,8 +1063,12 @@ function syncTrackerSummaryColumnWidths() {
         Math.ceil(measureTrackerSummaryColumn('.col-streak, .col-streak-heading, .stats-footer-total', streakMin))
     );
     const totalWidth = amountWidth + streakWidth;
-    trackerSummaryTable.style.setProperty('--summary-amount-width', `${amountWidth}px`);
-    trackerSummaryTable.style.setProperty('--summary-streak-width', `${streakWidth}px`);
+    trackerSummaryTable.querySelectorAll('.col-total-amount, .stats-footer-amount').forEach(function (cell) {
+        cell.style.width = `${amountWidth}px`;
+    });
+    trackerSummaryTable.querySelectorAll('.col-streak, .col-streak-heading, .stats-footer-total').forEach(function (cell) {
+        cell.style.width = `${streakWidth}px`;
+    });
     trackerSummaryTable.style.width = `${totalWidth}px`;
     summaryArea.style.width = `${totalWidth}px`;
 }
@@ -1541,13 +1545,13 @@ function schedulePostToggleUiRefresh(userId) {
                     void window.renderReadingMessagePanels();
                 }
                 if (typeof window.loadUserCards === 'function') {
-                    void window.loadUserCards();
+                    void window.loadUserCards({ animateRefresh: true });
                 }
                 if (typeof window.loadReadingStats === 'function') {
-                    void window.loadReadingStats();
+                    void window.loadReadingStats({ animateRefresh: true });
                 }
                 if (typeof window.renderLongestSeries === 'function') {
-                    window.renderLongestSeries();
+                    window.renderLongestSeries({ animateRefresh: true });
                 }
                 if (typeof window.refreshMonthlyCalendarForUser === 'function') {
                     changedUserIds.forEach(window.refreshMonthlyCalendarForUser);
@@ -2320,41 +2324,39 @@ window.initializeTrackerTableInteractions = function initializeTrackerTableInter
     initializeTrackerShareActions();
 };
 
-window.captureTrackerTableScrollPosition = function captureTrackerTableScrollPosition() {
-    if (!tableArea) return;
-    timelineSavedScrollLeft = tableArea.scrollLeft;
+window.resetTrackerTimelineForGroup = function resetTrackerTimelineForGroup() {
+    clearTimeout(timelineScrollTimer);
+    timelineScrollTimer = null;
+    timelineStartDate = null;
+    timelineEndDate = null;
+    timelineReferenceDate = null;
+    timelineHasPositioned = false;
+    timelineIsShifting = false;
+    timelineIsRestoringPosition = false;
+    weekOffset = 0;
+    window.weekOffset = 0;
+    if (tableArea) tableArea.scrollLeft = 0;
 };
 
 window.refreshTrackerTableLayout = function refreshTrackerTableLayout() {
     clearTimeout(timelineScrollTimer);
     timelineScrollTimer = null;
-    clearTimeout(timelineRestoreReleaseTimer);
     timelineIsRestoringPosition = true;
-    return new Promise(function (resolve) {
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () {
-                if (tableArea && timelineSavedScrollLeft != null) {
-                    const maxScrollLeft = Math.max(0, tableArea.scrollWidth - tableArea.clientWidth);
-                    tableArea.scrollTo({
-                        left: Math.min(timelineSavedScrollLeft, maxScrollLeft),
-                        behavior: 'auto'
-                    });
-                }
-                syncTrackerSummaryRowHeights();
-                updateTimelineSummaries(getTimelineRightmostVisibleDate());
-                if (timelineScrollHint?.classList.contains('is-visible')) {
-                    positionTimelineScrollHint();
-                }
-                timelineRestoreReleaseTimer = setTimeout(function () {
-                    clearTimeout(timelineScrollTimer);
-                    timelineScrollTimer = null;
-                    timelineIsRestoringPosition = false;
-                    timelineRestoreReleaseTimer = null;
-                    resolve();
-                }, 150);
-            });
-        });
-    });
+    const todayKey = getTodayDateKey();
+    if (!timelineStartDate || todayKey < timelineStartDate || todayKey > timelineEndDate) {
+        timelineStartDate = addDaysToKey(todayKey, -TIMELINE_INITIAL_PAST_DAYS);
+        timelineEndDate = addDaysToKey(timelineStartDate, TIMELINE_WINDOW_DAYS - 1);
+        replaceTimelineDayColumns();
+    }
+    timelineReferenceDate = todayKey;
+    scrollTimelineDateIntoRightEdge(todayKey, false);
+    syncTrackerSummaryRowHeights();
+    updateTimelineSummaries(todayKey);
+    if (timelineScrollHint?.classList.contains('is-visible')) {
+        positionTimelineScrollHint();
+    }
+    timelineIsRestoringPosition = false;
+    return Promise.resolve();
 };
 
 if (document.readyState === 'loading') {

@@ -146,8 +146,14 @@
     position: relative;
     overflow: hidden;
     transform: none;
+    translate: 0;
     opacity: 1;
-    transition: box-shadow .7s,opacity .5s ease-out,transform .6s ease-out;
+    transition: box-shadow .3s ease,opacity .5s ease-out,transform .6s ease-out,translate .3s ease;
+}
+
+.user-card:hover {
+    translate: 0 -3px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
 }
 
 @media screen and (max-width: 1023px) {
@@ -335,7 +341,6 @@
 }
 
 .user-card.current-user-card:hover {
-    transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(52, 152, 219, 0.35);
 }
 

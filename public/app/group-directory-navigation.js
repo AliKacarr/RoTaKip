@@ -1,5 +1,6 @@
-import { getRememberedGroup } from './navigation.js';
-import { groupRoutePath } from './route-config.js';
+import { getRememberedReadingPath, initializeNavigationIcons } from './navigation.js';
+
+initializeNavigationIcons();
 
 const okumalarLink = document.querySelector('#appNavigation [data-route="okumalar"]');
-if (okumalarLink) okumalarLink.href = groupRoutePath(getRememberedGroup());
+if (okumalarLink) okumalarLink.href = getRememberedReadingPath();

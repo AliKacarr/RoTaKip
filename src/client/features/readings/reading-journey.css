@@ -8,7 +8,7 @@
     transform: translateY(16px);
     visibility: hidden;
     pointer-events: none;
-    transition: grid-template-rows 0.8s ease-out, opacity 0.3s ease-out, transform 0.8s ease-out, visibility 0s linear 0.8s;
+    transition: grid-template-rows 0.8s ease-out, opacity 0.8s ease-out, transform 0.8s ease-out, visibility 0s linear 0.8s;
 }
 
 .authenticated-user-areas.show {
@@ -17,12 +17,22 @@
     transform: translateY(0);
     visibility: visible;
     pointer-events: auto;
-    transition: grid-template-rows 0.8s ease-out, opacity 0.3s ease-out, transform 0.8s ease-out, visibility 0s linear 0s;
+    transition: grid-template-rows 0.8s ease-out, opacity 0.8s ease-out, transform 0.8s ease-out, visibility 0s linear 0s;
 }
 
 .authenticated-user-areas-content {
     min-height: 0;
     overflow: hidden;
+}
+
+.authenticated-user-areas.is-initial-reveal-pending,
+.authenticated-user-areas.is-initial-reveal-pending.show {
+    grid-template-rows: 1fr;
+    opacity: 0;
+    transform: translateY(16px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: none;
 }
 
 /* Kullanıcı İstatistik Bilgi Alanı Stilleri */
@@ -339,4 +349,10 @@
 
 .user-stats-progress-info .user-stats-progress-current {
     font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .authenticated-user-areas {
+        transition: none;
+    }
 }

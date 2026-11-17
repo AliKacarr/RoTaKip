@@ -4,10 +4,11 @@ window.addEventListener('rotakip:amount-type-changed', function () {
   }
 });
 
-window.loadUserCards = async function loadUserCards() {
+window.loadUserCards = async function loadUserCards(options = {}) {
   console.log('🔍 User Cards Loading...');
   const container = document.querySelector('.user-cards-container');
   if (!container) return;
+  const section = document.querySelector('.user-cards-section');
 
   function observeRevealToggle(el) {
     if (el) el.classList.add('visible');
@@ -149,10 +150,6 @@ window.loadUserCards = async function loadUserCards() {
     container.querySelectorAll('.user-card[data-user-id]').forEach(card => {
       existingCards.set(card.getAttribute('data-user-id'), card);
     });
-    const userCardsPlaceholder = document.getElementById('userCardsPlaceholder');
-    const shouldRevealUserCards = Boolean(userCardsPlaceholder);
-    userCardsPlaceholder?.remove();
-
     // Güncel kullanıcı ID'lerini tut
     const currentUserIds = orderedUsers.map(u => u._id);
 
@@ -276,7 +273,6 @@ window.loadUserCards = async function loadUserCards() {
 
 
       // Section'ı göster
-      const section = document.querySelector('.user-cards-section');
       if (section) {
         section.style.display = 'block';
         section.classList.add('visible');
@@ -285,6 +281,7 @@ window.loadUserCards = async function loadUserCards() {
       if (sortBar) {
         sortBar.style.display = 'flex';
         observeRevealToggle(sortBar);
+        window.observeReadingScrollReveal?.(sortBar);
       }
 
       // User cards header'ı da göster
@@ -293,6 +290,8 @@ window.loadUserCards = async function loadUserCards() {
         userCardsHeader.style.display = 'block';
         userCardsHeader.classList.add('visible');
       }
+      const userCardsTitle = document.querySelector('.user-cards-title');
+      window.observeReadingScrollReveal?.(userCardsTitle);
 
       container.style.display = 'flex';
 
@@ -414,9 +413,13 @@ window.loadUserCards = async function loadUserCards() {
           }
         });
       }
-    });
 
-    if (shouldRevealUserCards) container.classList.add('reading-content-reveal');
+      if (options.animateRefresh === true) {
+        window.replayReadingContentReveal?.(card);
+      } else {
+        window.observeReadingScrollReveal?.(card);
+      }
+    });
 
   } catch (error) {
     console.error('Kullanıcı kartları yüklenirken hata oluştu:', error);

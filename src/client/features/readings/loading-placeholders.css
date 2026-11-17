@@ -1,12 +1,3 @@
-:root {
-  --reading-placeholder-base: #e7eaf0;
-  --reading-placeholder-highlight: #f8f9fb;
-  --reading-placeholder-muted: #eef1f5;
-  --reading-placeholder-strong: #d7dce4;
-  --reading-placeholder-border: #d9dee5;
-  --reading-placeholder-surface: #fbfcfd;
-}
-
 .reading-section-placeholder,
 .reading-placeholder-card,
 .reading-section-placeholder *,
@@ -16,7 +7,7 @@
 
 .reading-section-placeholder,
 .reading-placeholder-card {
-  border: 1px solid var(--reading-placeholder-border);
+  border: 1px solid #d9dee5;
   border-radius: 12px;
   background: #fff;
 }
@@ -49,7 +40,7 @@
 .league-placeholder-description i,
 .league-placeholder-description b {
   display: block;
-  background: linear-gradient(100deg, var(--reading-placeholder-base) 30%, var(--reading-placeholder-highlight) 50%, var(--reading-placeholder-base) 70%);
+  background: linear-gradient(100deg, #e7eaf0 30%, #f8f9fb 50%, #e7eaf0 70%);
   background-size: 220% 100%;
   animation: reading-placeholder-shimmer 1.35s ease-in-out infinite;
 }
@@ -63,7 +54,7 @@
   padding: 20px 0 55px;
   overflow: hidden;
   border-radius: 14px;
-  background: var(--reading-placeholder-muted);
+  background: #eef1f5;
 }
 
 .league-placeholder-items {
@@ -84,7 +75,7 @@
 .league-placeholder-item i {
   width: 45px;
   height: 45px;
-  border: 2px solid var(--reading-placeholder-highlight);
+  border: 2px solid #f8f9fb;
   border-radius: 50%;
 }
 
@@ -150,13 +141,13 @@
 .monthly-placeholder-selector-field {
   width: min(200px, 45%);
   height: 51px;
-  border: 1px solid var(--reading-placeholder-border);
+  border: 1px solid #d9dee5;
   border-radius: 8px;
 }
 
 .monthly-placeholder-calendar {
   overflow: hidden;
-  border: 1px solid var(--reading-placeholder-border);
+  border: 1px solid #d9dee5;
   border-radius: 0;
   background: #fff;
 }
@@ -167,8 +158,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--reading-placeholder-muted);
-  border-bottom: 2px solid var(--reading-placeholder-border);
+  background: #eef1f5;
+  border-bottom: 2px solid #d9dee5;
 }
 
 .monthly-placeholder-share {
@@ -189,8 +180,8 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   height: 48px;
-  background: var(--reading-placeholder-strong);
-  border-bottom: 2px solid var(--reading-placeholder-border);
+  background: #d7dce4;
+  border-bottom: 2px solid #d9dee5;
 }
 
 .monthly-placeholder-weekdays span {
@@ -203,10 +194,10 @@
 .monthly-placeholder-grid {
   position: relative;
   height: 570px;
-  background-color: var(--reading-placeholder-surface);
+  background-color: #fbfcfd;
   background-image:
-    repeating-linear-gradient(to right, transparent 0, transparent calc(14.285% - 1px), var(--reading-placeholder-border) calc(14.285% - 1px), var(--reading-placeholder-border) 14.285%),
-    repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.666% - 1px), var(--reading-placeholder-border) calc(16.666% - 1px), var(--reading-placeholder-border) 16.666%);
+    repeating-linear-gradient(to right, transparent 0, transparent calc(14.285% - 1px), #d9dee5 calc(14.285% - 1px), #d9dee5 14.285%),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.666% - 1px), #d9dee5 calc(16.666% - 1px), #d9dee5 16.666%);
   overflow: hidden;
 }
 
@@ -215,13 +206,13 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 7.142857% 50%, var(--reading-placeholder-base) 0 8px, transparent 9px),
-    radial-gradient(circle at 21.428571% 50%, var(--reading-placeholder-base) 0 8px, transparent 9px),
-    radial-gradient(circle at 35.714286% 50%, var(--reading-placeholder-base) 0 8px, transparent 9px),
-    radial-gradient(circle at 50% 50%, var(--reading-placeholder-base) 0 8px, transparent 9px),
-    radial-gradient(circle at 64.285714% 50%, var(--reading-placeholder-base) 0 8px, transparent 9px),
-    radial-gradient(circle at 78.571429% 50%, var(--reading-placeholder-base) 0 8px, transparent 9px),
-    radial-gradient(circle at 92.857143% 50%, var(--reading-placeholder-base) 0 8px, transparent 9px);
+    radial-gradient(circle at 7.142857% 50%, #e7eaf0 0 8px, transparent 9px),
+    radial-gradient(circle at 21.428571% 50%, #e7eaf0 0 8px, transparent 9px),
+    radial-gradient(circle at 35.714286% 50%, #e7eaf0 0 8px, transparent 9px),
+    radial-gradient(circle at 50% 50%, #e7eaf0 0 8px, transparent 9px),
+    radial-gradient(circle at 64.285714% 50%, #e7eaf0 0 8px, transparent 9px),
+    radial-gradient(circle at 78.571429% 50%, #e7eaf0 0 8px, transparent 9px),
+    radial-gradient(circle at 92.857143% 50%, #e7eaf0 0 8px, transparent 9px);
   background-size: 100% 16.666667%;
   background-repeat: repeat-y;
   opacity: .9;
@@ -294,10 +285,10 @@
   width: 16px;
   height: 16px;
   border-radius: 3px;
-  background: var(--reading-placeholder-strong);
+  background: #d7dce4;
 }
 
-.chart-placeholder-legend span:last-child::before { background: var(--reading-placeholder-muted); }
+.chart-placeholder-legend span:last-child::before { background: #eef1f5; }
 
 .chart-placeholder-plot {
   flex: 1;
@@ -326,9 +317,9 @@
 .chart-placeholder-bars {
   position: relative;
   padding: 8px 0;
-  border-left: 1px solid var(--reading-placeholder-border);
-  border-bottom: 1px solid var(--reading-placeholder-border);
-  background-image: repeating-linear-gradient(to right, transparent 0, transparent calc(20% - 1px), var(--reading-placeholder-muted) calc(20% - 1px), var(--reading-placeholder-muted) 20%);
+  border-left: 1px solid #d9dee5;
+  border-bottom: 1px solid #d9dee5;
+  background-image: repeating-linear-gradient(to right, transparent 0, transparent calc(20% - 1px), #eef1f5 calc(20% - 1px), #eef1f5 20%);
 }
 
 .chart-placeholder-row {
@@ -339,8 +330,8 @@
 }
 
 .chart-placeholder-row span { height: 100%; }
-.chart-placeholder-row .is-read { background: var(--reading-placeholder-strong); }
-.chart-placeholder-row .is-missed { background: var(--reading-placeholder-muted); border-radius: 0 5px 5px 0; }
+.chart-placeholder-row .is-read { background: #d7dce4; }
+.chart-placeholder-row .is-missed { background: #eef1f5; border-radius: 0 5px 5px 0; }
 .chart-placeholder-row-1 .is-read { width: 48%; } .chart-placeholder-row-1 .is-missed { width: 18%; }
 .chart-placeholder-row-2 .is-read { width: 67%; } .chart-placeholder-row-2 .is-missed { width: 11%; }
 .chart-placeholder-row-3 .is-read { width: 39%; } .chart-placeholder-row-3 .is-missed { width: 28%; }
@@ -403,7 +394,7 @@
   gap: 10px;
   padding: 0 14px;
   border-radius: 8px;
-  background-color: var(--reading-placeholder-muted);
+  background-color: #eef1f5;
 }
 
 .reading-placeholder-ranking i,
@@ -457,15 +448,15 @@
   align-items: center;
   gap: 14px;
   padding: 22px 104px 22px 28px;
-  background: linear-gradient(90deg, var(--reading-placeholder-muted) 60%, var(--reading-placeholder-surface) 100%);
-  border-bottom: 1px solid var(--reading-placeholder-border);
+  background: linear-gradient(90deg, #eef1f5 60%, #fbfcfd 100%);
+  border-bottom: 1px solid #d9dee5;
 }
 
 .reading-placeholder-avatar {
   flex: 0 0 auto;
   width: 80px;
   height: 80px;
-  border: 4px solid var(--reading-placeholder-strong);
+  border: 4px solid #d7dce4;
   border-radius: 50%;
 }
 
@@ -522,7 +513,7 @@
   height: 16px;
   overflow: hidden;
   border-radius: 8px;
-  background: var(--reading-placeholder-muted);
+  background: #eef1f5;
   animation: none;
 }
 
@@ -532,7 +523,7 @@
   width: 68%;
   height: 100%;
   border-radius: inherit;
-  background: var(--reading-placeholder-strong);
+  background: #d7dce4;
 }
 
 .card-placeholder-progress i { width: 42px; height: 18px; border-radius: 999px; }

@@ -7,6 +7,7 @@ const path = require('path');
 require('./config/env');
 
 const { initializeDatabaseIndexes } = require('./config/database-indexes');
+const { isDatabaseConnected } = require('./config/database');
 const { configureSession } = require('./config/session');
 const dropboxService = require('./integrations/dropbox/dropbox.service');
 const { registerDropboxRoutes } = require('./integrations/dropbox/dropbox.routes');
@@ -129,7 +130,7 @@ registerAdminAuthRoutes(app, routeDependencies);
 registerActivityRoutes(app, routeDependencies);
 registerInspirationRoutes(app, routeDependencies);
 registerJoinRequestRoutes(app, routeDependencies);
-registerHealthRoutes(app);
+registerHealthRoutes(app, { isDatabaseConnected });
 registerProfileRoutes(app, routeDependencies);
 
 app.use(uploadErrorHandler);

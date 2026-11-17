@@ -81,21 +81,6 @@
 
       </div>
     </div>
-      <div id="leagueInfoPlaceholder" class="league-info-placeholder" role="status" aria-label="Lig bilgileri hazırlanıyor">
-        <div class="league-placeholder-items" aria-hidden="true">
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-          <span class="league-placeholder-item"><i></i><b></b><em></em></span>
-        </div>
-        <span class="league-placeholder-description" aria-hidden="true"><i></i><b></b></span>
-      </div>
       <div class="league-info-bar" style="display: none;">
         <span class="league-info-item" title="Bronz Ligi: 0 - 4 gün arası okuma">
           <img src="/images/bronz.webp" alt="Bronz" class="league-info-img" width="45" height="45">
@@ -162,44 +147,6 @@
     style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i>
   Haftalık İstatistikler
 </h3>
-
-<div id="trackerTablePlaceholder" class="tracker-table-placeholder" role="status" aria-label="Haftalık okuma tablosu hazırlanıyor">
-  <div class="tracker-placeholder-table" aria-hidden="true">
-    <div class="tracker-placeholder-users-pane">
-      <span class="tracker-placeholder-heading"></span>
-      <div class="tracker-placeholder-user-row"><span class="tracker-placeholder-avatar"></span><span class="tracker-placeholder-name"></span></div>
-      <div class="tracker-placeholder-user-row"><span class="tracker-placeholder-avatar"></span><span class="tracker-placeholder-name"></span></div>
-      <div class="tracker-placeholder-user-row"><span class="tracker-placeholder-avatar"></span><span class="tracker-placeholder-name"></span></div>
-      <div class="tracker-placeholder-user-row"><span class="tracker-placeholder-avatar"></span><span class="tracker-placeholder-name"></span></div>
-    </div>
-    <div class="tracker-placeholder-days-pane">
-      <div class="tracker-placeholder-day-head">
-        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-      </div>
-      <div class="tracker-placeholder-day-grid">
-        <span class="is-read"></span><span></span><span class="is-read"></span><span class="is-missed"></span><span class="is-read"></span><span></span><span class="is-read"></span>
-        <span class="is-read"></span><span class="is-read"></span><span></span><span class="is-read"></span><span></span><span class="is-missed"></span><span class="is-read"></span>
-        <span></span><span class="is-read"></span><span class="is-read"></span><span></span><span class="is-read"></span><span class="is-read"></span><span></span>
-        <span class="is-read"></span><span></span><span class="is-missed"></span><span class="is-read"></span><span class="is-read"></span><span></span><span class="is-read"></span>
-      </div>
-    </div>
-    <div class="tracker-placeholder-summary-pane">
-      <span class="tracker-placeholder-heading"></span>
-      <div class="tracker-placeholder-summary-row"><span></span></div>
-      <div class="tracker-placeholder-summary-row"><span></span></div>
-      <div class="tracker-placeholder-summary-row"><span></span></div>
-      <div class="tracker-placeholder-summary-row"><span></span></div>
-    </div>
-  </div>
-  <div class="tracker-placeholder-navigation" aria-hidden="true">
-    <span class="tracker-placeholder-nav-button"></span>
-    <div class="tracker-placeholder-week-actions">
-      <span class="tracker-placeholder-week-label"></span>
-      <span class="tracker-placeholder-share-button"></span>
-    </div>
-    <span class="tracker-placeholder-nav-button"></span>
-  </div>
-</div>
 
 <div id="readingEditModeBar" class="reading-edit-mode-bar" aria-hidden="true">
   <div class="reading-edit-mode-bar-content">
@@ -298,22 +245,10 @@
   <div class="reading-message-panels-content"></div>
 </section>
 
-<div class="monthly-calendar-section">
+<div class="monthly-calendar-section" style="display: none;">
       <h3><i class="fa-regular fa-calendar-check"
           style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Aylık
         İstatistikler</h3>
-      <div id="monthlyCalendarPlaceholder" class="reading-section-placeholder monthly-calendar-placeholder" role="status" aria-label="Aylık takvim hazırlanıyor">
-        <div class="monthly-placeholder-selector" aria-hidden="true">
-          <span class="monthly-placeholder-selector-label"></span>
-          <span class="monthly-placeholder-selector-field"></span>
-        </div>
-        <div class="monthly-placeholder-calendar" aria-hidden="true">
-          <div class="monthly-placeholder-month-head"><span class="monthly-placeholder-share"></span><span class="monthly-placeholder-month-title"></span></div>
-          <div class="monthly-placeholder-weekdays"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-          <div class="monthly-placeholder-grid"></div>
-        </div>
-        <div class="monthly-placeholder-navigation" aria-hidden="true"><span></span><span></span></div>
-      </div>
       <div class="monthly-calendar-share-container scroll-fade-in" hidden>
         <div class="monthly-calendar-container">
           <table id="monthlyCalendar" class="monthly-calendar">
@@ -356,46 +291,24 @@
       </div>
     </div>
 
-<div class="stats-section">
+<div class="stats-section" style="display: none;">
       <h3><i class="fa-solid fa-ranking-star"
           style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> Okuma
         İstatistikleri
       </h3>
       <div class="chart-container scroll-fade-in">
-        <div id="readingStatsPlaceholder" class="reading-section-placeholder reading-chart-placeholder" role="status" aria-label="Okuma istatistikleri hazırlanıyor">
-          <span class="chart-placeholder-share" aria-hidden="true"></span>
-          <div class="chart-placeholder-legend" aria-hidden="true"><span></span><span></span></div>
-          <div class="chart-placeholder-plot" aria-hidden="true">
-            <div class="chart-placeholder-labels"><span></span><span></span><span></span><span></span></div>
-            <div class="chart-placeholder-bars">
-              <div class="chart-placeholder-row chart-placeholder-row-1"><span class="is-read"></span><span class="is-missed"></span></div>
-              <div class="chart-placeholder-row chart-placeholder-row-2"><span class="is-read"></span><span class="is-missed"></span></div>
-              <div class="chart-placeholder-row chart-placeholder-row-3"><span class="is-read"></span><span class="is-missed"></span></div>
-              <div class="chart-placeholder-row chart-placeholder-row-4"><span class="is-read"></span><span class="is-missed"></span></div>
-            </div>
-          </div>
-          <span class="chart-placeholder-axis-title" aria-hidden="true"></span>
-        </div>
         <canvas id="readingStatsChart"></canvas>
       </div>
     </div>
 
-<div class="longest-series-section">
+<div class="longest-series-section" style="display: none;">
       <h3><i class="fa-solid fa-bolt"
           style="font-size: 1.4em !important; padding: 0 10px 0 5px;"></i> En Uzun Okuma
         Serisi</h3>
-      <div id="longestSeriesChart" class="scroll-fade-in">
-        <div id="longestSeriesPlaceholder" class="reading-section-placeholder longest-series-placeholder" role="status" aria-label="En uzun okuma serileri hazırlanıyor">
-          <span class="longest-placeholder-share" aria-hidden="true"></span>
-          <div class="longest-placeholder-row" aria-hidden="true"><span class="longest-placeholder-date"></span><span class="reading-placeholder-ranking reading-placeholder-ranking-1"><i></i><b></b><em></em></span><span class="longest-placeholder-date"></span></div>
-          <div class="longest-placeholder-row" aria-hidden="true"><span class="longest-placeholder-date"></span><span class="reading-placeholder-ranking reading-placeholder-ranking-2"><i></i><b></b><em></em></span><span class="longest-placeholder-date"></span></div>
-          <div class="longest-placeholder-row" aria-hidden="true"><span class="longest-placeholder-date"></span><span class="reading-placeholder-ranking reading-placeholder-ranking-3"><i></i><b></b><em></em></span><span class="longest-placeholder-date"></span></div>
-          <div class="longest-placeholder-row" aria-hidden="true"><span class="longest-placeholder-date"></span><span class="reading-placeholder-ranking reading-placeholder-ranking-4"><i></i><b></b><em></em></span><span class="longest-placeholder-date"></span></div>
-        </div>
-      </div>
+      <div id="longestSeriesChart" class="scroll-fade-in"></div>
     </div>
 
-<div class="user-cards-section">
+<div class="user-cards-section" style="display: none;">
 
       <div class="user-cards-header">
         <h3 class="user-cards-title">
@@ -415,38 +328,7 @@
         </div>
       </div>
 
-      <div class="user-cards-container" style="display: flex;">
-        <div id="userCardsPlaceholder" class="user-cards-placeholder" role="status" aria-label="Liderlik panosu hazırlanıyor">
-          <div class="reading-placeholder-card">
-            <div class="card-placeholder-header" aria-hidden="true"><span class="reading-placeholder-avatar"></span><span class="card-placeholder-identity"><i></i><i></i></span><span class="card-placeholder-badge"></span></div>
-            <div class="card-placeholder-summary" aria-hidden="true"><span><i></i><i></i></span><span class="card-placeholder-streak"></span></div>
-            <div class="card-placeholder-progress" aria-hidden="true"><span></span><i></i></div>
-            <span class="card-placeholder-detail card-placeholder-detail-wide" aria-hidden="true"></span>
-            <span class="card-placeholder-detail" aria-hidden="true"></span>
-          </div>
-          <div class="reading-placeholder-card">
-            <div class="card-placeholder-header" aria-hidden="true"><span class="reading-placeholder-avatar"></span><span class="card-placeholder-identity"><i></i><i></i></span><span class="card-placeholder-badge"></span></div>
-            <div class="card-placeholder-summary" aria-hidden="true"><span><i></i><i></i></span><span class="card-placeholder-streak"></span></div>
-            <div class="card-placeholder-progress" aria-hidden="true"><span></span><i></i></div>
-            <span class="card-placeholder-detail card-placeholder-detail-wide" aria-hidden="true"></span>
-            <span class="card-placeholder-detail" aria-hidden="true"></span>
-          </div>
-          <div class="reading-placeholder-card">
-            <div class="card-placeholder-header" aria-hidden="true"><span class="reading-placeholder-avatar"></span><span class="card-placeholder-identity"><i></i><i></i></span><span class="card-placeholder-badge"></span></div>
-            <div class="card-placeholder-summary" aria-hidden="true"><span><i></i><i></i></span><span class="card-placeholder-streak"></span></div>
-            <div class="card-placeholder-progress" aria-hidden="true"><span></span><i></i></div>
-            <span class="card-placeholder-detail card-placeholder-detail-wide" aria-hidden="true"></span>
-            <span class="card-placeholder-detail" aria-hidden="true"></span>
-          </div>
-          <div class="reading-placeholder-card">
-            <div class="card-placeholder-header" aria-hidden="true"><span class="reading-placeholder-avatar"></span><span class="card-placeholder-identity"><i></i><i></i></span><span class="card-placeholder-badge"></span></div>
-            <div class="card-placeholder-summary" aria-hidden="true"><span><i></i><i></i></span><span class="card-placeholder-streak"></span></div>
-            <div class="card-placeholder-progress" aria-hidden="true"><span></span><i></i></div>
-            <span class="card-placeholder-detail card-placeholder-detail-wide" aria-hidden="true"></span>
-            <span class="card-placeholder-detail" aria-hidden="true"></span>
-          </div>
-        </div>
-      </div>
+      <div class="user-cards-container" style="display: flex;"></div>
     </div>
 
 <div class="main-area" style="display: none;">

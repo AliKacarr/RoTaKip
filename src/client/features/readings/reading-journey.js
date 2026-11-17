@@ -5,6 +5,9 @@ function setAuthenticatedUserAreasVisibility(isVisible) {
   if (!areas) return;
   areas.setAttribute('aria-hidden', String(!isVisible));
   areas.classList.toggle('show', isVisible);
+  if (!isVisible) {
+    areas.classList.remove('is-initial-reveal-pending');
+  }
 }
 
 window.showAuthenticatedUserAreas = function showAuthenticatedUserAreas(options = {}) {

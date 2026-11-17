@@ -232,6 +232,20 @@ window.erpSyncEnabled = false;
 window.erpSyncVersion = 0;
 let erpSyncRefreshStarted = false;
 
+window.resetRoTaKipGroupBootstrap = function resetRoTaKipGroupBootstrap(groupId) {
+  window.groupid = groupId || getGroupIdFromUrl();
+  window.currentGroupData = null;
+  window.currentSessionUser = null;
+  window.currentGroupVisibility = null;
+  window.rotakipGroupContextReady = false;
+  window.rotakipGroupBootstrapPromise = null;
+  window.initialAllData = null;
+  window.erpSyncEnabled = false;
+  window.erpSyncVersion = 0;
+  erpSyncRefreshStarted = false;
+  LocalStorageManager.logoutUser();
+};
+
 window.normalizeAmountType = function normalizeAmountType(value) {
   return value === 'dakika' ? 'dakika' : 'sayfa';
 };
@@ -1202,42 +1216,7 @@ window.initScrollFadeInElements = function initScrollFadeInElements() {
 
 document.addEventListener('DOMContentLoaded', window.initScrollFadeInElements);
 
-// Yukarı Çık Butonu Fonksiyonalitesi
 document.addEventListener('DOMContentLoaded', function() {
-  const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-  
-  if (scrollToTopBtn) {
-    let scrollTimeout = null;
-    
-    // Sayfa kaydırma olayını dinle (throttled)
-    window.addEventListener('scroll', function() {
-      // Throttle: Her 100ms'de bir çalış
-      if (scrollTimeout) {
-        return;
-      }
-      
-      scrollTimeout = setTimeout(() => {
-        const scrollPosition = window.pageYOffset;
-        const documentHeight = document.documentElement.scrollHeight;
-        const windowHeight = window.innerHeight;
-        const distanceFromBottom = documentHeight - (scrollPosition + windowHeight);
-        const shouldShow = scrollPosition > 1000 && distanceFromBottom >= 300;
-
-        scrollToTopBtn.classList.toggle('show', shouldShow);
-        scrollToTopBtn.classList.toggle('hidden', !shouldShow);
-        scrollTimeout = null;
-      }, 500);
-    });
-    
-    // Butona tıklandığında sayfanın en üstüne git
-    scrollToTopBtn.addEventListener('click', function() {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    });
-  }
-  
   // Footer-bottom'a tıklanınca pageSessionStartTime bilgisini ve şu anki zamanı göster
   const footerBottom = document.querySelector('.footer-bottom');
   if (footerBottom) {

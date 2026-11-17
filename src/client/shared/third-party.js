@@ -160,26 +160,6 @@ window.scheduleGoogleAnalyticsAfterPrimaryContent = function scheduleGoogleAnaly
     }, { once: true });
 };
 
-window.loadTawkDeferred = async function loadTawkDeferred() {
-    if (window.Tawk_API) return;
-    window.Tawk_API = {};
-    window.Tawk_LoadStart = new Date();
-
-    try {
-        await loadDeferredScriptOnce(
-            'https://embed.tawk.to/68278ccfe4781d19149b3d72/1ird7s2qf',
-            () => Boolean(document.querySelector('script[src*="embed.tawk.to/68278ccfe4781d19149b3d72"]'))
-        );
-    } catch (error) {
-        delete window.Tawk_API;
-        console.error('Tawk.to yüklenemedi:', error);
-    }
-};
-
-window.scheduleTawkLoad = function scheduleTawkLoad() {
-    runAfterPageLoadWhenIdle(() => window.loadTawkDeferred());
-};
-
 window.loadOneSignalDeferred = async function loadOneSignalDeferred() {
     if (window.oneSignalDeferredLoadStarted) return;
     window.oneSignalDeferredLoadStarted = true;

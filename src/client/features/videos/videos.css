@@ -27,7 +27,6 @@
 
 .videos-container.is-updating {
     box-sizing: border-box;
-    min-height: var(--videos-container-locked-height);
 }
 
 /* Mobil uyumluluk */

@@ -15,6 +15,11 @@ const bundles = {
     js: ['shared/third-party.js', 'features/group-directory/group-directory.js'],
     html: ['gruplar.html']
   },
+  'groups-directory': {
+    sourceRoot: clientSourcePath,
+    css: ['features/group-directory/group-directory.css'],
+    js: ['features/group-directory/group-directory.js']
+  },
   shell: {
     sourceRoot: clientSourcePath,
     css: [
@@ -48,7 +53,7 @@ const bundles = {
   okumalar: {
     sourceRoot: clientSourcePath,
     css: [
-      'features/readings/loading-placeholders.css',
+      'features/readings/reading-reveal.css',
       'features/readings/league-info.css',
       'features/readings/statistics-layout.css',
       'features/readings/tracker-table.css',
@@ -58,6 +63,7 @@ const bundles = {
       'features/readings/preferences.css'
     ],
     js: [
+      'features/readings/reading-reveal.js',
       'features/readings/reading-edit-mode.js',
       'features/readings/reading-journey.js',
       'features/daily-gift/daily-gift.js',

@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 const { registerContentRoutes } = require('../../../src/server/modules/content/content.routes');
+const { registerHealthRoutes } = require('../../../src/server/modules/system/health.routes');
 const { registerPublicPageRoutes } = require('../../../src/server/modules/pages/page.routes');
 const { isSafeGroupId } = require('../../../src/server/shared/group-id');
 
@@ -61,6 +62,25 @@ test('grup kimliği prototip anahtarlarını ve geçersiz karakterleri reddeder'
   assert.equal(isSafeGroupId('../bozok'), false);
 });
 
+test('sağlık endpointi veritabanı durumunu HTTP durumuna yansıtır', () => {
+  [
+    { connected: true, expectedStatus: 200, expectedDatabase: 'connected' },
+    { connected: false, expectedStatus: 503, expectedDatabase: 'disconnected' }
+  ].forEach(({ connected, expectedStatus, expectedDatabase }) => {
+    const app = createFakeApp();
+    registerHealthRoutes(app, { isDatabaseConnected: () => connected });
+    const route = app.routes.find(item => item.path === '/api/health');
+    const response = createResponse();
+
+    route.handlers.at(-1)({}, response);
+
+    assert.equal(response.statusCode, expectedStatus);
+    assert.equal(response.body.ok, connected);
+    assert.equal(response.body.database, expectedDatabase);
+    assert.equal(typeof response.body.timestamp, 'number');
+  });
+});
+
 test('grup sayfası geçerli kimlikte uygulama kabuğunu sunar', () => {
   const app = createFakeApp();
   const publicPath = path.resolve('public');
@@ -76,6 +96,22 @@ test('grup sayfası geçerli kimlikte uygulama kabuğunu sunar', () => {
   assert.equal(response.statusCode, 200);
   assert.equal(response.filePath, path.join(publicPath, 'app-shell.html'));
   assert.equal(response.headers['Cache-Control'], 'no-cache, max-age=0, must-revalidate');
+});
+
+test('grup dizini shell kabuğunu sunar', () => {
+  const app = createFakeApp();
+  const publicPath = path.resolve('public');
+  registerPublicPageRoutes(app, {
+    publicPath,
+    imageProxyLimiter: (_req, _res, next) => next()
+  });
+
+  const shellRoute = app.routes.find(item => item.path === '/gruplar');
+  const shellResponse = createResponse();
+  shellRoute.handlers.at(-1)({}, shellResponse);
+
+  assert.equal(shellResponse.filePath, path.join(publicPath, 'app-shell.html'));
+  assert.equal(app.routes.some(item => item.path === '/gruplar-embedded'), false);
 });
 
 test('grup sayfası geçersiz kimliği reddeder', () => {
