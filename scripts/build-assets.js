@@ -6,59 +6,111 @@ const { minify } = require('terser');
 
 const projectRoot = path.resolve(__dirname, '..');
 const publicPath = path.join(projectRoot, 'public');
+const clientSourcePath = path.join(projectRoot, 'src', 'client');
 
 const bundles = {
   index: {
-    css: ['index.css', 'footer.css'],
-    js: ['third-party.js', 'index.js']
+    sourceRoot: clientSourcePath,
+    css: ['features/group-directory/group-directory.css', 'shared/footer.css'],
+    js: ['shared/third-party.js', 'features/group-directory/group-directory.js'],
+    html: ['gruplar.html']
   },
-  groups: {
+  'groups-directory': {
+    sourceRoot: clientSourcePath,
+    css: ['features/group-directory/group-directory.css'],
+    js: ['features/group-directory/group-directory.js']
+  },
+  shell: {
+    sourceRoot: clientSourcePath,
     css: [
-      'style.css',
-      'tracker-table.css',
-      'user-cards.css',
-      'admin-modal.css',
-      'daily-gift.css',
-      'quote.css',
-      'stats-section.css',
-      'longest-series.css',
-      'monthly.css',
-      'videos.css',
-      'main-area.css',
-      'preferences.css',
-      'articles.css',
-      'footer.css',
-      'groups-footer.css',
-      'profile-modal.css',
-      'cookies.css',
-      'share-modal.css'
+      'shell/base.css',
+      'shared/footer.css',
+      'shell/group-footer.css',
+      'shared/cookies.css',
+      'shared/share-modal.css',
+      'shell/shell.css'
+    ],
+    js: ['shared/third-party.js', 'shared/cookies.js'],
+    html: ['app-shell.html']
+  },
+  'group-common': {
+    sourceRoot: clientSourcePath,
+    css: [
+      'features/groups/admin-modal.css',
+      'features/profile/profile-modal.css'
     ],
     js: [
-      'third-party.js',
-      'league-config.js',
-      'script.js',
-      'admin-modal.js',
-      'reading-edit-mode.js',
-      'weekly-table-image.js',
-      'tracker-table.js',
-      'user-cards.js',
-      'daily-gift.js',
-      'longest-series.js',
-      'stats-section.js',
-      'monthly.js',
-      'quete.js',
-      'videos.js',
-      'main-area.js',
-      'articles.js',
-      'share-quote.js',
-      'share-utils.js',
-      'cookies.js'
+      'features/groups/league-config.js',
+      'features/groups/group-bootstrap.js',
+      'shared/share-utils.js'
     ]
+  },
+  'group-ui': {
+    sourceRoot: clientSourcePath,
+    css: [],
+    js: ['features/groups/admin-modal.js']
+  },
+  okumalar: {
+    sourceRoot: clientSourcePath,
+    css: [
+      'features/readings/reading-reveal.css',
+      'features/readings/league-info.css',
+      'features/readings/statistics-layout.css',
+      'features/readings/tracker-table.css',
+      'features/readings/reading-message-panels.css',
+      'features/readings/reading-journey.css',
+      'features/daily-gift/daily-gift.css',
+      'features/readings/preferences.css'
+    ],
+    js: [
+      'features/readings/reading-reveal.js',
+      'features/readings/reading-edit-mode.js',
+      'features/readings/reading-journey.js',
+      'features/daily-gift/daily-gift.js',
+      'features/readings/weekly-table-image.js',
+      'features/readings/tracker-table.js',
+      'features/readings/reading-message-panels.js'
+    ]
+  },
+  management: {
+    sourceRoot: clientSourcePath,
+    css: ['features/readings/group-management.css'],
+    js: ['features/readings/group-management.js']
+  },
+  statistics: {
+    sourceRoot: clientSourcePath,
+    css: [
+      'features/readings/analytics/user-cards.css',
+      'features/readings/analytics/longest-series.css',
+      'features/readings/analytics/stats-section.css',
+      'features/readings/analytics/monthly.css'
+    ],
+    js: [
+      'features/readings/analytics/user-cards.js',
+      'features/readings/analytics/longest-series.js',
+      'features/readings/analytics/stats-section.js',
+      'features/readings/analytics/monthly.js'
+    ]
+  },
+  videos: {
+    sourceRoot: path.join(clientSourcePath, 'features', 'videos'),
+    css: ['videos.css'],
+    js: ['videos.js']
+  },
+  tefekkur: {
+    sourceRoot: path.join(clientSourcePath, 'features', 'tefekkur'),
+    css: ['quote.css', 'home-tefekkur.css'],
+    js: ['quote.js', 'share-quote.js', 'home-tefekkur.js']
+  },
+  articles: {
+    sourceRoot: path.join(clientSourcePath, 'features', 'articles'),
+    css: ['articles.css'],
+    js: ['articles.js']
   }
 };
 
-function readRequiredFiles(fileNames) {
-  const filePaths = fileNames.map(fileName => path.join(publicPath, fileName));
+function readRequiredFiles(fileNames, sourceRoot = publicPath) {
+  const filePaths = fileNames.map(fileName => path.join(sourceRoot, fileName));
   const missingFiles = filePaths
     .filter(filePath => !fs.existsSync(filePath))
     .map(filePath => path.relative(projectRoot, filePath));
@@ -90,8 +142,8 @@ function updateHtmlAssetVersion(htmlFileName, assetFileName, version) {
   }
 }
 
-async function buildBundle(bundleName, config) {
-  const cssSource = readRequiredFiles(config.css);
+async function buildBundle(bundleName, config, manifest) {
+  const cssSource = readRequiredFiles(config.css, config.sourceRoot);
   if (cssSource) {
     const cssResult = new CleanCSS().minify(cssSource);
     if (cssResult.errors.length > 0) {
@@ -100,10 +152,12 @@ async function buildBundle(bundleName, config) {
 
     const cssFileName = `${bundleName}.min.css`;
     fs.writeFileSync(path.join(publicPath, cssFileName), cssResult.styles);
-    updateHtmlAssetVersion(`${bundleName}.html`, cssFileName, contentHash(cssResult.styles));
+    const cssVersion = contentHash(cssResult.styles);
+    manifest[cssFileName] = `${cssFileName}?v=${cssVersion}`;
+    (config.html || []).forEach(htmlFileName => updateHtmlAssetVersion(htmlFileName, cssFileName, cssVersion));
   }
 
-  const jsSource = readRequiredFiles(config.js);
+  const jsSource = readRequiredFiles(config.js, config.sourceRoot);
   if (jsSource) {
     const jsResult = await minify(jsSource, {
       compress: {
@@ -117,14 +171,22 @@ async function buildBundle(bundleName, config) {
 
     const jsFileName = `${bundleName}.min.js`;
     fs.writeFileSync(path.join(publicPath, jsFileName), jsResult.code);
-    updateHtmlAssetVersion(`${bundleName}.html`, jsFileName, contentHash(jsResult.code));
+    const jsVersion = contentHash(jsResult.code);
+    manifest[jsFileName] = `${jsFileName}?v=${jsVersion}`;
+    (config.html || []).forEach(htmlFileName => updateHtmlAssetVersion(htmlFileName, jsFileName, jsVersion));
   }
 }
 
 async function buildAssets() {
+  const manifest = {};
   for (const [bundleName, config] of Object.entries(bundles)) {
-    await buildBundle(bundleName, config);
+    await buildBundle(bundleName, config, manifest);
   }
+  fs.writeFileSync(
+    path.join(publicPath, 'assets-manifest.json'),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    'utf8'
+  );
   console.log('Frontend asset paketleri oluşturuldu.');
 }
 

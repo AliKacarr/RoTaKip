@@ -1,0 +1,2865 @@
+/* exported deleteUser, saveUserName, editUserName, changeUserImage,
+   toggleDeleteButton, cancelEditUserName, cancelSettings, changeUserAuthority, changeUserVisibility,
+   inviteSelectedUser, acceptJoinRequest, rejectJoinRequest */
+
+// Global değişkenler
+let renderUserListTimeout = null;
+const VISIBILITY_RELOAD_DELAY_MS = 3000;
+let visibilityReloadTimer = null;
+let pendingVisibilityUpdates = 0;
+let hasSavedVisibilityChange = false;
+
+function deferVisibilityReload() {
+    if (visibilityReloadTimer) {
+        window.clearTimeout(visibilityReloadTimer);
+        visibilityReloadTimer = null;
+    }
+    if (!hasSavedVisibilityChange || pendingVisibilityUpdates > 0) return;
+
+    visibilityReloadTimer = window.setTimeout(() => {
+        window.location.reload();
+    }, VISIBILITY_RELOAD_DELAY_MS);
+}
+
+function getManagedUserContainer(userId) {
+    return document.querySelector(
+        `#userManagementLists .user-container[data-user-id="${userId}"]`
+    );
+}
+
+// Mesaj kuyruğu sistemi
+let messageQueue = [];
+let isShowingMessage = false;
+
+// Mesaj kuyruğunu işle
+function processMessageQueue() {
+    if (messageQueue.length === 0) {
+        isShowingMessage = false;
+        return;
+    }
+
+    isShowingMessage = true;
+    const { message, type } = messageQueue.shift();
+
+    // Mevcut bildirimleri kaldır
+    const existingNotifications = document.querySelectorAll('.notification-toast, .success-message, .error-message');
+    existingNotifications.forEach(notification => notification.remove());
+
+    // Yeni bildirim oluştur
+    const notification = document.createElement('div');
+    notification.className = `notification-toast notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+    // Stil CSS'ten gelecek
+
+    document.body.appendChild(notification);
+
+    // 3 saniye sonra kaldır, sonra kuyruktaki sonraki mesajı göster
+    setTimeout(() => {
+        notification.classList.add('notification-hide');
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                notification.remove();
+            }
+            // Kuyruktaki sonraki mesajı göster (2 saniye bekle - daha uzun aralık)
+            setTimeout(() => {
+                processMessageQueue();
+            }, 2000);
+        }, 500);
+    }, 3000);
+}
+
+newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonksiyonu
+    e.preventDefault();
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('gruba_yeni_kullanıcı_ekleme');
+    }
+
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Yeni kullanıcı ekleme');
+        return;
+    }
+
+    const input = document.getElementById('newUserInput');
+    const imageInput = document.getElementById('profileImage');
+    const authorityInput = document.getElementById('newUserAuthority');
+    const visibilityInput = document.getElementById('newUserVisibility');
+    const submitBtn = document.querySelector('#newUserForm button[type="submit"]');
+    const name = input.value.trim();
+    const authority = authorityInput ? authorityInput.value : 'member';
+    const visibility = visibilityInput ? visibilityInput.value : 'aktif';
+
+    if (!name) return;
+
+    // Loading göstergesi
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.textContent = 'Ekleniyor...';
+    submitBtn.disabled = true;
+
+    try {
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('authority', authority);
+        formData.append('visibility', visibility);
+
+        if (imageInput.files.length > 0) {
+            formData.append('profileImage', imageInput.files[0]);
+        }
+        if (selectedAddUserAvatarPath) {
+            formData.append('selectedAvatarPath', selectedAddUserAvatarPath);
+        }
+
+        // Kullanıcıyı ekle (yeni sistem: önce uploads klasörüne, sonra Dropbox)
+        formData.append('useTempFolder', 'true'); // uploads klasörünü kullan
+        const response = await fetch(`/api/add-user/${window.groupid}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Kullanıcı ekleme başarısız');
+        }
+
+        const result = await response.json();
+
+        // Form alanlarını temizle
+        input.value = '';
+        imageInput.value = '';
+        if (authorityInput) authorityInput.value = 'member';
+        if (visibilityInput) visibilityInput.value = 'aktif';
+        if (uploadBtn) {
+            uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
+        }
+        setImagePreviewVisible(false);
+
+        // Input-profile-image'i varsayılan resme döndür
+        inputProfileImage.src = '/images/default.png';
+
+        // Add-user-input-profile-image'i de varsayılan resme döndür
+        const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
+        if (addUserInputProfileImage) {
+            addUserInputProfileImage.src = '/images/default.png';
+        }
+
+        // Avatar seçimini sıfırla
+        selectedAddUserAvatarPath = null;
+
+        // GlobalDataStore'u güncelle
+        if (visibility === 'aktif' && window.globalDataStore) {
+            // Yeni kullanıcıyı users array'ine ekle
+            window.globalDataStore.users.push(result.user);
+            // Index'leri yeniden oluştur
+            window.globalDataStore._rebuildIndexes();
+            // En uzun serileri yeniden hesapla
+            await window.globalDataStore._buildLongestStreaks();
+        }
+
+        // UI'ı güncelle (yerel resim ile başlar, Dropbox yüklemesi arka planda olur)
+        if (LocalStorageManager.isAdmin()) {
+            renderUserList();
+        }
+        loadTrackerTable();
+        loadUserCards();
+        loadReadingStats();
+        renderLongestSeries();
+        showSuccessMessage('Kullanıcı başarıyla eklendi!');
+        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
+
+    } catch (error) {
+        console.error('Kullanıcı ekleme hatası:', error);
+        showErrorMessage('Kullanıcı eklenirken hata oluştu!');
+    } finally {
+        // Loading göstergesini kaldır
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+    }
+});
+
+async function deleteUser(id) {     //Kullanıcıyı silme fonksiyonu
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('gruptan_kullanıcı_silme');
+    }
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı silme');
+        return;
+    }
+
+    // Find the user name for the confirmation message
+    const userContainer = getManagedUserContainer(id);
+    if (!userContainer) {
+        console.error('User container not found for userId:', id);
+        return;
+    }
+    const userElement = userContainer.querySelector('li');
+    const userName = userElement ? userElement.querySelector('.profil-image-user-name').textContent : 'this user';
+
+    // Toplam kullanıcı ve yönetici sayısını güncel sunucu verisinden kontrol et
+    const userCounts = await getUserCounts();
+    if (!userCounts) {
+        showErrorMessage('Kullanıcı bilgileri alınamadı. Lütfen tekrar deneyin.');
+        return;
+    }
+    // Kendi hesabını silme kontrolü
+    const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
+    const isDeletingSelf = currentUserInfo && currentUserInfo.userId === id;
+
+    // Son aktif yönetici, gruptaki kullanıcı sayısından bağımsız olarak kendi hesabını silemez.
+    // Genel silme onayını göstermeden doğrudan açıklayıcı uyarıyı göster.
+    if (isDeletingSelf && userCounts.activeAdmin <= 1) {
+        showErrorMessage('Gruptaki son aktif yönetici sizsiniz. Grubunuzu grup ayarlarından silebilirsiniz.');
+        return;
+    }
+
+    let confirmMessage;
+
+    if (isDeletingSelf) {
+        confirmMessage = `Kendi hesabınızı silmek istediğinizi onaylıyor musunuz?\n\n` +
+            `Bu işlem sonrasında otomatik olarak çıkış yapacaksınız ve hesabınız tamamen silinecektir.\n\n` +
+            `Bu işlem geri alınamaz!`;
+    } else {
+        confirmMessage = `Kullanıcıyı silmek istediğinize emin misiniz: ->  ${userName}  <- Bu işlem geri alınamaz.`;
+    }
+
+    // Ask for confirmation before deleting
+    const confirmed = confirm(confirmMessage);
+
+    if (confirmed) {
+        // Loading göstergesi
+        const deleteBtn = document.querySelector(`li[data-user-id="${id}"] .delete-user-btn`);
+        if (deleteBtn) {
+            deleteBtn.textContent = 'Siliniyor...';
+            deleteBtn.disabled = true;
+        }
+
+        try {
+            const response = await fetch(`/api/delete-user/${window.groupid}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                showErrorMessage(result.error || 'Kullanıcı silinemedi.');
+                return;
+            }
+
+            // Eğer grup silindi ise ana sayfaya yönlendir
+            if (result.groupDeleted) {
+                showSuccessMessage('Kullanıcı ve grup silindi. Ana sayfaya yönlendiriliyorsunuz...');
+                LocalStorageManager.logoutUser();
+                setTimeout(() => {
+                    window.location.href = '/gruplar';
+                }, 1500);
+                return;
+            }
+
+            // Eğer kendi hesabını sildiyse
+            if (isDeletingSelf) {
+                showSuccessMessage('Hesabınız silindi. Çıkış yapılıyor...');
+                // LocalStorage'dan çıkış yap
+                LocalStorageManager.logoutUser();
+                // Sayfayı yenile
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                return;
+            }
+
+            // GlobalDataStore'u güncelle
+            if (window.globalDataStore) {
+                // Kullanıcıyı users array'inden kaldır
+                window.globalDataStore.users = window.globalDataStore.users.filter(u => u._id !== id);
+                // Kullanıcının tüm istatistiklerini kaldır
+                window.globalDataStore.stats = window.globalDataStore.stats.filter(s => s.userId !== id);
+                // Index'leri yeniden oluştur
+                window.globalDataStore._rebuildIndexes();
+                // En uzun serileri yeniden hesapla
+                await window.globalDataStore._buildLongestStreaks();
+            }
+
+            if (LocalStorageManager.isAdmin()) {
+                renderUserList();
+            }
+            loadTrackerTable();
+            loadUserCards();
+            loadReadingStats();
+            renderLongestSeries();
+            showSuccessMessage('Kullanıcı başarıyla silindi!');
+            if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
+        } catch (error) {
+            console.error('Kullanıcı silme hatası:', error);
+            showErrorMessage('Kullanıcı silinirken hata oluştu!');
+        } finally {
+            // Loading göstergesini kaldır
+            if (deleteBtn) {
+                deleteBtn.textContent = 'Sil';
+                deleteBtn.disabled = false;
+            }
+        }
+    }
+}
+
+async function saveUserName(userId) {   //Kullanıcı adını güncelleme fonksiyonu
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('kullanıcı_listesinden_kullanıcı_adi_değiştirme');
+    }
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı adı güncelleme');
+        return;
+    }
+
+    const userContainer = getManagedUserContainer(userId);
+    if (!userContainer) {
+        console.error('User container not found for userId:', userId);
+        return;
+    }
+    const userItem = userContainer.querySelector('li');
+    if (!userItem) {
+        console.error('1-User item not found in container for userId:', userId);
+        return;
+    }
+    const nameSpan = userItem.querySelector('.profil-image-user-name');
+    const nameInput = userItem.querySelector('.edit-name-input');
+    const saveButton = userItem.querySelector('.save-name-button');
+
+    const newName = nameInput.value.trim();
+    if (!newName) {
+        showErrorMessage('Kullanıcı adı boş olamaz!');
+        return; // Don't save empty names
+    }
+
+    saveButton.disabled = true;
+
+    try {
+        // Update the user name in the database
+        const response = await fetch(`/api/update-user/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, name: newName })
+        });
+
+        if (!response.ok) {
+            throw new Error('Kullanıcı adı güncellenemedi');
+        }
+
+        // Hide input, save button and cancel button, show name span, edit button and settings button
+        nameSpan.style.display = 'inline-block';
+        nameInput.style.display = 'none';
+        saveButton.style.display = 'none';
+
+        const cancelButton = userItem.querySelector('.cancel-edit-button');
+        if (cancelButton) {
+            cancelButton.style.display = 'none';
+        }
+
+        // Show edit button and settings button
+        const editButton = userItem.querySelector('.edit-name-button');
+        if (editButton) {
+            editButton.style.display = 'inline-block';
+        }
+
+        const settingsButton = userItem.querySelector('.settings-button');
+        if (settingsButton) {
+            settingsButton.style.display = 'inline-block';
+        }
+
+        // Update the name span with new name
+        nameSpan.textContent = newName;
+
+        // GlobalDataStore'u güncelle
+        if (window.globalDataStore) {
+            // Kullanıcı adını güncelle
+            const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (userIndex !== -1) {
+                window.globalDataStore.users[userIndex].name = newName;
+                // Index'leri yeniden oluştur
+                window.globalDataStore._rebuildIndexes();
+            }
+        }
+
+        // Profile image'ı normal haline döndür
+        const profileImage = userItem.querySelector('.user-profile-image');
+        if (profileImage) {
+            profileImage.style.border = '';
+            profileImage.style.boxShadow = '';
+            profileImage.style.transform = '';
+            profileImage.style.transition = '';
+        }
+
+        // Update other components that might show the user name
+        loadTrackerTable();
+        loadUserCards();
+        loadReadingStats();
+        renderLongestSeries();
+        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
+
+        // Update user select dropdown for invites (only the dropdown, not the entire list)
+        updateUserSelectDropdownForSingleUser(userId, newName);
+
+        saveButton.disabled = false;
+        showSuccessMessage('Kullanıcı adı başarıyla güncellendi!');
+
+    } catch (error) {
+        console.error('Kullanıcı adı güncelleme hatası:', error);
+        showErrorMessage('Kullanıcı adı güncellenirken hata oluştu!');
+
+        // Reset button state
+        saveButton.disabled = false;
+
+        // Hide cancel button and show edit button and settings button again on error
+        const cancelButton = userItem.querySelector('.cancel-edit-button');
+        if (cancelButton) {
+            cancelButton.style.display = 'none';
+        }
+
+        const editButton = userItem.querySelector('.edit-name-button');
+        if (editButton) {
+            editButton.style.display = 'inline-block';
+        }
+
+        const settingsButton = userItem.querySelector('.settings-button');
+        if (settingsButton) {
+            settingsButton.style.display = 'inline-block';
+        }
+    }
+}
+
+function editUserName(userId) {     //Kullanıcı adını düzenleme fonksiyonu
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı adı düzenleme');
+        return;
+    }
+
+    const userContainer = getManagedUserContainer(userId);
+    if (!userContainer) {
+        console.error('User container bulunamadı, userId:', userId);
+        return;
+    }
+
+    const userItem = userContainer.querySelector('li');
+    if (!userItem) {
+        console.error('Li element bulunamadı, userId:', userId);
+        return;
+    }
+
+    const nameSpan = userItem.querySelector('.profil-image-user-name');
+    const nameInput = userItem.querySelector('.edit-name-input');
+    const editButton = userItem.querySelector('.edit-name-button');
+    const saveButton = userItem.querySelector('.save-name-button');
+    const cancelButton = userItem.querySelector('.cancel-edit-button');
+    const settingsButton = userItem.querySelector('.settings-button');
+    const profileImage = userItem.querySelector('.user-profile-image');
+
+    // Hide name span, edit button and settings button, show input, save button and cancel button
+    if (nameSpan) nameSpan.style.display = 'none';
+    if (editButton) editButton.style.display = 'none';
+    if (settingsButton) settingsButton.style.display = 'none';
+    if (nameInput) nameInput.style.display = 'inline-block';
+    if (saveButton) saveButton.style.display = 'inline-block';
+    if (cancelButton) cancelButton.style.display = 'inline-block';
+
+    // Profile image'ı belirgin hale getir
+    if (profileImage) {
+        profileImage.style.border = '1px solid rgb(0 13 255)';
+        profileImage.style.boxShadow = '0 0 5px rgba(78, 84, 200, 0.5)'
+        profileImage.style.transition = 'all 0.3s ease';
+    }
+
+    // Focus on input and select text
+    if (nameInput) {
+        nameInput.focus();
+        nameInput.select();
+    }
+}
+
+function changeUserImage(userId) {     //Kullanıcı resmi değiştirme fonksiyonu
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı resmi değiştirme');
+        return;
+    }
+
+    avatarSelectionContext = { mode: 'existing-user', userId };
+    toggleAddUserAvatarModal();
+}
+
+// File input display handler
+const profileImageInput = document.getElementById('profileImage');
+const uploadBtn = document.getElementById('uploadBtn');
+const imagePreview = document.getElementById('imagePreview');
+const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+const closePreviewButton = document.getElementById('closePreview');
+const inputProfileImage = document.getElementById('imagePreview'); // imagePreview element'ini kullan
+
+function setImagePreviewVisible(isVisible) {
+    if (!imagePreviewContainer) return;
+
+    imagePreviewContainer.style.display = isVisible ? 'flex' : 'none';
+    const previewColumn = imagePreviewContainer.closest('.form-right-column');
+    if (previewColumn) {
+        previewColumn.classList.toggle('is-visible', isVisible);
+    }
+}
+
+// Add User Avatar Selection
+let selectedAddUserAvatarPath = null; // Kullanıcı ekleme için seçilen avatar yolu
+let avatarSelectionContext = { mode: 'add-user', userId: null }; // add-user | existing-user
+
+// Upload butonu event listener
+if (uploadBtn) {
+    uploadBtn.addEventListener('click', function () {
+        if (profileImageInput) {
+            profileImageInput.click();
+        }
+    });
+}
+
+// Avatar seç butonu event listener
+const addUserAvatarBtn = document.getElementById('addUserAvatarBtn');
+if (addUserAvatarBtn) {
+    addUserAvatarBtn.addEventListener('click', () => {
+        if (typeof logUnauthorizedAccess === 'function') {
+            logUnauthorizedAccess('Kullanıcı ekleme avatar seçimi');
+        }
+        toggleAddUserAvatarModal();
+    });
+}
+
+// Sil butonu event listener
+const addUserRemoveBtn = document.getElementById('addUserRemoveBtn');
+if (addUserRemoveBtn) {
+    addUserRemoveBtn.addEventListener('click', function () {
+        if (typeof logUnauthorizedAccess === 'function') {
+            logUnauthorizedAccess('Kullanıcı ekleme resim silme');
+        }
+
+        // Profil önizlemesini varsayılan resme döndür
+        const previewImg = document.getElementById('addUserInputProfileImage');
+        if (previewImg) {
+            previewImg.src = '/images/default.png';
+        }
+
+        // Dosya input'unu temizle
+        if (profileImageInput) {
+            profileImageInput.value = '';
+        }
+
+        // Avatar seçimini sıfırla
+        selectedAddUserAvatarPath = null;
+
+        // Resim önizleme container'ını gizle
+        setImagePreviewVisible(false);
+
+        // Buton metnini sıfırla
+        if (uploadBtn) {
+            uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
+        }
+
+    });
+}
+
+// inputProfileImage tıklanınca file seçim işlemi
+if (inputProfileImage) {
+    inputProfileImage.addEventListener('click', function () {
+        const fileInputLabel = document.querySelector('label.custom-file-input');
+        if (fileInputLabel) {
+            fileInputLabel.click();
+        }
+    });
+}
+
+// addUserInputProfileImage tıklanınca file seçim işlemi
+const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
+if (addUserInputProfileImage) {
+    addUserInputProfileImage.addEventListener('click', function () {
+        if (profileImageInput) {
+            profileImageInput.click();
+        }
+    });
+}
+
+function resetImagePreview() {    // Resim önizleme kapatma fonksiyonu
+    setImagePreviewVisible(false);
+    if (uploadBtn) {
+        uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
+    }
+    profileImageInput.value = ''; // Input değerini de temizle
+
+    // Input-profile-image'i varsayılan resme döndür
+    inputProfileImage.src = '/images/default.png';
+
+    // Add-user-input-profile-image'i de varsayılan resme döndür
+    const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
+    if (addUserInputProfileImage) {
+        addUserInputProfileImage.src = '/images/default.png';
+    }
+
+    // Avatar seçimini de sıfırla
+    selectedAddUserAvatarPath = null;
+}
+
+if (closePreviewButton) {
+    closePreviewButton.addEventListener('click', function (e) {
+        e.preventDefault();
+        resetImagePreview();
+    });
+}
+
+if (profileImageInput) {
+    profileImageInput.addEventListener('change', function () {
+        if (this.files.length > 0) {
+            if (uploadBtn) {
+                uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Değiştir';
+            }
+
+            // Resim ön izlemesi göster
+            const file = this.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                // Ana önizleme alanını güncelle
+                imagePreview.src = e.target.result;
+                setImagePreviewVisible(true);
+
+                // Input-profile-image'i güncelle
+                inputProfileImage.src = e.target.result;
+
+                // Add-user-input-profile-image'i de güncelle
+                const addUserInputProfileImage = document.getElementById('addUserInputProfileImage');
+                if (addUserInputProfileImage) {
+                    addUserInputProfileImage.src = e.target.result;
+                }
+
+                // Avatar seçimini sıfırla (tek seçim mantığı)
+                selectedAddUserAvatarPath = null;
+            }
+
+            reader.readAsDataURL(file);
+        } else {
+            resetImagePreview();
+        }
+    });
+}
+
+function showSuccessMessage(message) {
+    // Mesajı kuyruğa ekle
+    messageQueue.push({ message, type: 'success' });
+
+    // Eğer şu anda mesaj gösterilmiyorsa, kuyruktan mesaj göster
+    if (!isShowingMessage) {
+        processMessageQueue();
+    }
+}
+
+function showErrorMessage(message) {
+    // Mesajı kuyruğa ekle
+    messageQueue.push({ message, type: 'error' });
+
+    // Eğer şu anda mesaj gösterilmiyorsa, kuyruktan mesaj göster
+    if (!isShowingMessage) {
+        processMessageQueue();
+    }
+}
+
+function toggleDeleteButton(userId) {     //Kullanıcı silme butonunu açma fonksiyonu
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı silme butonu açma');
+        return;
+    }
+
+    const userContainer = getManagedUserContainer(userId);
+    if (!userContainer) {
+        console.error('User container bulunamadı, userId:', userId);
+        return;
+    }
+
+    const userItem = userContainer.querySelector('li');
+    if (!userItem) {
+        console.error('Li element bulunamadı, userId:', userId);
+        return;
+    }
+
+    const deleteButton = userItem.querySelector('.delete-button');
+    const settingsButton = userItem.querySelector('.settings-button');
+    const cancelButton = userItem.querySelector('.cancel-settings-button');
+    const editButton = userItem.querySelector('.edit-name-button');
+
+    if (deleteButton && deleteButton.style.display === 'none') {
+        if (deleteButton) deleteButton.style.display = 'inline-block';
+        if (settingsButton) settingsButton.style.display = 'none';
+        if (editButton) editButton.style.display = 'none';
+        if (cancelButton) cancelButton.style.display = 'inline-block';
+    } else {
+        if (settingsButton) settingsButton.style.display = 'inline-block';
+        if (editButton) editButton.style.display = 'inline-block';
+        if (deleteButton) deleteButton.style.display = 'none';
+        if (cancelButton) cancelButton.style.display = 'none';
+    }
+}
+
+function cancelEditUserName(userId) {     //Kullanıcı adı düzenleme iptal fonksiyonu
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı adı düzenleme iptal');
+        return;
+    }
+
+    const userContainer = getManagedUserContainer(userId);
+    if (!userContainer) {
+        console.error('User container not found for userId:', userId);
+        return;
+    }
+    const userItem = userContainer.querySelector('li');
+    if (!userItem) {
+        console.error('4-User item not found in container for userId:', userId);
+        return;
+    }
+    const nameSpan = userItem.querySelector('.profil-image-user-name');
+    const nameInput = userItem.querySelector('.edit-name-input');
+    const editButton = userItem.querySelector('.edit-name-button');
+    const saveButton = userItem.querySelector('.save-name-button');
+    const cancelButton = userItem.querySelector('.cancel-edit-button');
+    const settingsButton = userItem.querySelector('.settings-button');
+    const profileImage = userItem.querySelector('.user-profile-image');
+
+    // Reset to original state: hide input, save and cancel buttons, show name span, edit button and settings button
+    nameSpan.style.display = 'inline-block';
+    nameInput.style.display = 'none';
+    saveButton.style.display = 'none';
+    cancelButton.style.display = 'none';
+    editButton.style.display = 'inline-block';
+    settingsButton.style.display = 'inline-block';
+
+    // Profile image'ı normal haline döndür
+    if (profileImage) {
+        profileImage.style.border = '';
+        profileImage.style.boxShadow = '';
+        profileImage.style.transform = '';
+        profileImage.style.transition = '';
+    }
+
+    // Reset input value to original name
+    nameInput.value = nameSpan.textContent;
+}
+
+function cancelSettings(userId) {     //Ayarlar iptal fonksiyonu
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Ayarlar iptal');
+        return;
+    }
+
+    const userContainer = getManagedUserContainer(userId);
+    if (!userContainer) {
+        console.error('User container not found for userId:', userId);
+        return;
+    }
+    const userItem = userContainer.querySelector('li');
+    if (!userItem) {
+        console.error('5-User item not found in container for userId:', userId);
+        return;
+    }
+    const deleteButton = userItem.querySelector('.delete-button');
+    const settingsButton = userItem.querySelector('.settings-button');
+    const cancelButton = userItem.querySelector('.cancel-settings-button');
+    const editButton = userItem.querySelector('.edit-name-button');
+
+    // Reset to original state: hide delete and cancel buttons, show settings button and edit button
+    deleteButton.style.display = 'none';
+    cancelButton.style.display = 'none';
+    settingsButton.style.display = 'inline-block';
+    editButton.style.display = 'inline-block';
+}
+
+// Güncel aktif yönetici sayısını kontrol eden yardımcı fonksiyon
+async function getUserCounts() {
+    try {
+        const response = await fetch(`/api/users/${window.groupid}`);
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const users = Array.isArray(data.users) ? data.users : [];
+        return {
+            activeAdmin: users.filter(user =>
+                user.authority === 'admin' && user.visibility !== 'pasif'
+            ).length
+        };
+    } catch (error) {
+        console.error('Kullanıcı sayıları alınırken hata:', error);
+        return null;
+    }
+}
+
+// Aktif yönetici sayısını kontrol eden yardımcı fonksiyon
+async function getActiveAdminCount() {
+    try {
+        const response = await fetch(`/api/users/${window.groupid}`);
+        if (!response.ok) return 0;
+
+        const data = await response.json();
+        return data.users.filter(user =>
+            user.authority === 'admin' && user.visibility !== 'pasif'
+        ).length;
+    } catch (error) {
+        console.error('Admin sayısı alınırken hata:', error);
+        return 0;
+    }
+}
+
+// Kullanıcı yetkisini değiştirme fonksiyonu
+async function changeUserAuthority(userId, newAuthority) {
+    // Check if user is authenticated and has admin rights
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı yetkisi değiştirme denemesi');
+        return;
+    }
+
+    // Aktif yönetici sayısını kontrol et
+    const currentActiveAdminCount = await getActiveAdminCount();
+    const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
+
+    // Eğer son aktif yönetici kendisini üyeye çevirmeye çalışıyorsa engelle
+    if (currentUserInfo && currentUserInfo.userId === userId &&
+        currentUserInfo.userAuthority === 'admin' && newAuthority === 'member' &&
+        currentActiveAdminCount <= 1) {
+        showErrorMessage('Grupta en az bir aktif yönetici bulunmalıdır.');
+        // Combobox'ı eski değerine geri döndür
+        const authoritySelect = getManagedUserContainer(userId)?.querySelector('.authority-select');
+        if (authoritySelect) {
+            authoritySelect.value = 'admin';
+        }
+        return;
+    }
+
+    // Kendi yetkisini değiştirme kontrolü (admin sayısı kontrolünden sonra)
+    if (currentUserInfo && currentUserInfo.userId === userId) {
+        // Kendi yetkisini değiştirmek istiyor
+        const currentAuthority = currentUserInfo.userAuthority;
+        const newAuthorityText = newAuthority === 'admin' ? 'Yönetici' : 'Üye';
+        const currentAuthorityText = currentAuthority === 'admin' ? 'Yönetici' : 'Üye';
+
+        if (currentAuthority === newAuthority) {
+            // Aynı yetkiye değiştirmeye çalışıyor, combobox'ı eski değerine döndür
+            const authoritySelect = getManagedUserContainer(userId)?.querySelector('.authority-select');
+            if (authoritySelect) {
+                authoritySelect.value = currentAuthority;
+            }
+            return;
+        }
+
+        // Kendi yetkisini değiştirmek istediğini onayla
+        const confirmed = confirm(
+            `Kendi yetkinizi "${currentAuthorityText}" den "${newAuthorityText}" ye değiştirmek istediğinizi onaylıyor musunuz?\n\n` +
+            `Bu işlem sonrasında yetkiniz değişecek ve bazı işlemler için yeniden giriş yapmanız gerekebilir.`
+        );
+
+        if (!confirmed) {
+            // Onaylanmadı, combobox'ı eski değerine döndür
+            const authoritySelect = getManagedUserContainer(userId)?.querySelector('.authority-select');
+            if (authoritySelect) {
+                authoritySelect.value = currentAuthority;
+            }
+            return;
+        }
+    }
+
+    try {
+        const response = await fetch(`/api/update-user-authority/${window.groupid}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: userId,
+                authority: newAuthority
+            })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            showSuccessMessage(`Kullanıcı yetkisi başarıyla ${newAuthority === 'admin' ? 'Yönetici' : 'Üye'} olarak güncellendi!`);
+
+            // GlobalDataStore'u güncelle
+            if (window.globalDataStore) {
+                // Kullanıcının yetkisini güncelle
+                const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+                if (userIndex !== -1) {
+                    window.globalDataStore.users[userIndex].authority = newAuthority;
+                    // Index'leri yeniden oluştur
+                    window.globalDataStore._rebuildIndexes();
+                }
+            }
+
+            // Eğer kendi yetkisini değiştirdiyse
+            if (currentUserInfo && currentUserInfo.userId === userId) {
+                // Kendi yetkisi değişti, otomatik çıkış yap
+                setTimeout(() => {
+                    showSuccessMessage('Yetkiniz değiştirildi. Sayfa yenileniyor...');
+                    // LocalStorage'dan çıkış yap
+                    LocalStorageManager.logoutUser();
+                    // Sayfayı yenile
+                    window.location.reload();
+                }, 1500);
+                return;
+            }
+
+            if (newAuthority === 'admin' && currentUserInfo && currentUserInfo.userAuthority === 'admin') {
+                if (typeof window.syncGroupManagementVisibility === 'function') {
+                    window.syncGroupManagementVisibility();
+                }
+            }
+        } else {
+            throw new Error(result.error || 'Yetki güncellenemedi');
+        }
+    } catch (error) {
+        console.error('Yetki güncelleme hatası:', error);
+        showErrorMessage(error.message || 'Yetki güncellenirken hata oluştu!');
+
+        // Hata durumunda combobox'ı eski değerine geri döndür
+        const authoritySelect = getManagedUserContainer(userId)?.querySelector('.authority-select');
+        if (authoritySelect) {
+            // Eski değeri geri yükle (API'den alınan değer)
+            fetch(`/api/users/${window.groupid}`)
+                .then(res => res.json())
+                .then(data => {
+                    const user = data.users.find(u => u._id === userId);
+                    if (user) {
+                        authoritySelect.value = user.authority;
+                    }
+                });
+        }
+    }
+}
+
+// Görünürlük seçimi değişir değişmez kaydet; ad düzenleme butonlarına bağlı değildir.
+async function changeUserVisibility(userId, newVisibility, selectElement) {
+    if (!LocalStorageManager.isAdmin()) {
+        logUnauthorizedAccess('Kullanıcı görünürlüğü değiştirme denemesi');
+        return;
+    }
+
+    const select = selectElement || getManagedUserContainer(userId)?.querySelector('.visibility-select');
+    const previousVisibility = select?.dataset.currentValue || (newVisibility === 'aktif' ? 'pasif' : 'aktif');
+    if (!['aktif', 'pasif'].includes(newVisibility) || newVisibility === previousVisibility) return;
+
+    // Yeni bir seçim yapıldığı anda mevcut yenileme sayacını durdur. Kayıt
+    // tamamlanınca tüm bekleyen istekler bittiyse sayaç yeniden başlayacak.
+    if (visibilityReloadTimer) {
+        window.clearTimeout(visibilityReloadTimer);
+        visibilityReloadTimer = null;
+    }
+    pendingVisibilityUpdates += 1;
+    if (select) select.disabled = true;
+    try {
+        const response = await fetch(`/api/update-user-visibility/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, visibility: newVisibility })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.error || 'Kullanıcı görünürlüğü güncellenemedi');
+        }
+
+        if (select) {
+            select.dataset.currentValue = newVisibility;
+            select.value = newVisibility;
+        }
+        hasSavedVisibilityChange = true;
+        showSuccessMessage(
+            `Kullanıcı ${newVisibility === 'aktif' ? 'aktif' : 'pasif'} olarak kaydedildi.`
+        );
+    } catch (error) {
+        console.error('Kullanıcı görünürlüğü güncelleme hatası:', error);
+        if (select) {
+            select.value = previousVisibility;
+            select.dataset.currentValue = previousVisibility;
+        }
+        showErrorMessage(error.message || 'Kullanıcı görünürlüğü güncellenemedi!');
+    } finally {
+        pendingVisibilityUpdates = Math.max(0, pendingVisibilityUpdates - 1);
+        if (select) select.disabled = false;
+        // all-data yalnızca aktif kullanıcıları içerdiğinden son değişiklikten
+        // sonra tablo, kart, istatistik ve sayaçları birlikte yenile.
+        deferVisibilityReload();
+    }
+}
+
+// Kullanıcı seçim kutusunu güncelle
+function updateUserSelectDropdown(users) {
+    const userSelect = document.getElementById('userSelectForInvite');
+    if (!userSelect) return;
+
+    // Mevcut seçimi temizle (ilk seçenek hariç)
+    userSelect.innerHTML = '<option value="">Kullanıcı seçiniz...</option>';
+
+    // Kullanıcıları seçim kutusuna ekle
+    users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user._id;
+        option.textContent = user.name;
+        userSelect.appendChild(option);
+    });
+}
+
+// Tek bir kullanıcının adını dropdown'da güncelle (performans için)
+function updateUserSelectDropdownForSingleUser(userId, newName) {
+    const userSelect = document.getElementById('userSelectForInvite');
+    if (!userSelect) return;
+
+    // İlgili kullanıcının option'ını bul ve güncelle
+    const options = userSelect.querySelectorAll('option');
+    options.forEach(option => {
+        if (option.value === userId) {
+            option.textContent = newName;
+        }
+    });
+}
+
+// Seçili kullanıcıyı davet et
+async function inviteSelectedUser() {
+    // Kullanıcı davet etme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Kullanıcı davet etme');
+    }
+
+    const userSelect = document.getElementById('userSelectForInvite');
+    const inviteBtn = document.querySelector('.invite-selected-btn');
+
+    if (!userSelect || !inviteBtn) {
+        showErrorMessage('Davet sistemi bulunamadı!');
+        return;
+    }
+
+    const selectedUserId = userSelect.value;
+    if (!selectedUserId) {
+        showErrorMessage('Lütfen davet edilecek kullanıcıyı seçiniz!');
+        return;
+    }
+
+    // Kullanıcı adını al
+    const selectedUserName = userSelect.options[userSelect.selectedIndex].textContent;
+
+    // Butonu devre dışı bırak
+    inviteBtn.disabled = true;
+    const originalText = inviteBtn.innerHTML;
+    inviteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    try {
+        // Davet token'ı oluştur
+        const response = await fetch(`/api/create-invite/${window.groupid}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: selectedUserId })
+        });
+
+        if (!response.ok) {
+            throw new Error('Davet token oluşturulamadı');
+        }
+
+        const data = await response.json();
+        const { inviteToken, groupName } = data;
+
+        // Grup URL'lerini oluştur
+        const baseUrl = window.location.origin;
+        const quickLoginUrl = `${baseUrl}/grup/${encodeURIComponent(window.groupid)}/?quick-login&invite=${inviteToken}`;
+        // Davet metnini oluştur
+        const inviteText = `*${groupName} okuma grubu*
+
+*• Katılma linkiniz:*
+${quickLoginUrl}`;
+
+        // Panoya kopyala
+        await navigator.clipboard.writeText(inviteText);
+
+        // Web Share API'yi dene
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `RoTaKip - ${groupName} Daveti`,
+                    text: inviteText,
+                });
+                showSuccessMessage(`${selectedUserName} için davet linki panoya kopyalandı!`);
+            } catch (shareError) {
+                showSuccessMessage(`${selectedUserName} için davet linki panoya kopyalandı!`);
+            }
+        } else {
+            showSuccessMessage(`${selectedUserName} için davet linki panoya kopyalandı!`);
+        }
+
+        // Seçimi temizle
+        userSelect.value = '';
+
+    } catch (error) {
+        console.error('Davet hatası:', error);
+        showErrorMessage('Davet linki oluşturulamadı. Lütfen tekrar deneyin.');
+    } finally {
+        // Butonu eski haline döndür
+        inviteBtn.disabled = false;
+        inviteBtn.innerHTML = originalText;
+    }
+}
+
+// renderUserList için debounce mekanizması
+function getIstanbulDateParts(date = new Date()) {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Istanbul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    return Object.fromEntries(
+        formatter.formatToParts(date)
+            .filter(part => part.type !== 'literal')
+            .map(part => [part.type, Number(part.value)])
+    );
+}
+
+function addUtcMonthsClamped(date, monthCount) {
+    const targetMonthStart = new Date(Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth() + monthCount,
+        1
+    ));
+    const targetMonthLastDay = new Date(Date.UTC(
+        targetMonthStart.getUTCFullYear(),
+        targetMonthStart.getUTCMonth() + 1,
+        0
+    )).getUTCDate();
+
+    return new Date(Date.UTC(
+        targetMonthStart.getUTCFullYear(),
+        targetMonthStart.getUTCMonth(),
+        Math.min(date.getUTCDate(), targetMonthLastDay)
+    ));
+}
+
+function getLastLoginDisplay(lastLoginDate, now = new Date()) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(lastLoginDate || ''));
+    if (!match) {
+        return {
+            text: 'Son giriş bilgisi yok',
+            title: 'Son giriş bilgisi yok',
+            isEmpty: true
+        };
+    }
+
+    const [, yearText, monthText, dayText] = match;
+    const year = Number(yearText);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const loginDate = new Date(Date.UTC(year, month - 1, day));
+    const isValidDate = loginDate.getUTCFullYear() === year
+        && loginDate.getUTCMonth() === month - 1
+        && loginDate.getUTCDate() === day;
+
+    if (!isValidDate) {
+        return {
+            text: 'Son giriş bilgisi yok',
+            title: 'Son giriş tarihi geçersiz',
+            isEmpty: true
+        };
+    }
+
+    const todayParts = getIstanbulDateParts(now);
+    const today = new Date(Date.UTC(todayParts.year, todayParts.month - 1, todayParts.day));
+    const dayMs = 24 * 60 * 60 * 1000;
+    const differenceInDays = Math.floor((today - loginDate) / dayMs);
+    const formattedDate = loginDate.toLocaleDateString('tr-TR', {
+        timeZone: 'UTC',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+    if (differenceInDays <= 0) {
+        return {
+            text: 'Bugün',
+            title: formattedDate,
+            isEmpty: false
+        };
+    }
+    if (differenceInDays === 1) {
+        return {
+            text: 'Dün',
+            title: formattedDate,
+            isEmpty: false
+        };
+    }
+    if (differenceInDays < 30) {
+        return {
+            text: `${differenceInDays} gün önce`,
+            title: formattedDate,
+            isEmpty: false
+        };
+    }
+
+    let totalMonths = (today.getUTCFullYear() - loginDate.getUTCFullYear()) * 12
+        + today.getUTCMonth() - loginDate.getUTCMonth();
+    let monthAnchor = addUtcMonthsClamped(loginDate, totalMonths);
+    if (monthAnchor > today) {
+        totalMonths -= 1;
+        monthAnchor = addUtcMonthsClamped(loginDate, totalMonths);
+    }
+
+    const remainingDays = Math.floor((today - monthAnchor) / dayMs);
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    const parts = [];
+    if (years > 0) parts.push(`${years} yıl`);
+    if (months > 0) parts.push(`${months} ay`);
+    if (remainingDays > 0) parts.push(`${remainingDays} gün`);
+
+    return {
+        text: `${parts.join(' ')} önce`,
+        title: formattedDate,
+        isEmpty: false
+    };
+}
+
+function renderUserList() {
+    // Sadece admin yetkisi kontrolü
+    if (!LocalStorageManager.isAdmin()) {
+        return;
+    }
+
+    // Debounce: Eğer zaten bir render işlemi varsa iptal et
+    if (renderUserListTimeout) {
+        clearTimeout(renderUserListTimeout);
+    }
+
+    // 100ms sonra render işlemini başlat
+    renderUserListTimeout = setTimeout(() => {
+        performRenderUserList();
+        // Katılma isteklerini de yükle
+        loadJoinRequests();
+    }, 100);
+}
+
+function performRenderUserList() {
+    const userList = document.getElementById('userList');
+    const passiveUserList = document.getElementById('passiveUserList');
+    const passiveEmpty = document.getElementById('passiveUserListEmpty');
+    if (!userList || !passiveUserList) {
+        console.error('Aktif/pasif kullanıcı listesi bulunamadı');
+        return;
+    }
+
+    const prevScrollTop = userList.scrollTop; // scroll pozisyonunu koru
+    const prevPassiveScrollTop = passiveUserList.scrollTop;
+
+    fetch(`/api/users/${window.groupid}`)
+        .then(res => {
+            if (!res.ok) throw new Error('Kullanıcı listesi alınamadı');
+            return res.json();
+        })
+        .then(data => {
+            const users = Array.isArray(data.users) ? data.users : [];
+
+            userList.innerHTML = '';
+            passiveUserList.innerHTML = '';
+
+            users.forEach((user) => {
+                const userProfileImage = window.safeImageSrc(user.profileImage);
+                const safeUserName = window.escapeHtml(user.name);
+                const lastLogin = getLastLoginDisplay(user.lastLoginDate);
+                const lastLoginClass = lastLogin.isEmpty ? ' is-empty' : '';
+                const liHTML = `<div class="kullanıcı-item"><img src="${window.escapeHtml(userProfileImage)}" alt="${safeUserName}" class="user-profile-image user-profile-image-loading" loading="lazy" decoding="async" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${safeUserName}</span><input type="text" class="edit-name-input" value="${safeUserName}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
+
+                // Kullanıcı container'ı oluştur
+                const userContainer = document.createElement('div');
+                userContainer.className = 'user-container';
+                userContainer.setAttribute('data-user-id', user._id);
+
+                // Li elementini oluştur ve container'a ekle
+                const li = document.createElement('li');
+                li.setAttribute('data-user-id', user._id); // data-user-id attribute'u ekle
+
+                // Giriş yapılan kullanıcı için özel class ekle
+                const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
+                if (currentUserInfo && String(currentUserInfo.userId) === String(user._id)) {
+                    li.classList.add('current-user');
+                }
+
+                li.innerHTML = liHTML;
+                const userCardColumn = document.createElement('div');
+                userCardColumn.className = 'managed-user-card-column';
+                userCardColumn.appendChild(li);
+
+                const lastLoginElement = document.createElement('div');
+                lastLoginElement.className = `user-last-login${lastLoginClass}`;
+                lastLoginElement.title = lastLogin.title;
+                lastLoginElement.innerHTML = `<i class="fa-regular fa-clock" aria-hidden="true"></i><span>${window.escapeHtml(lastLogin.text)}</span>`;
+                userCardColumn.appendChild(lastLoginElement);
+                userContainer.appendChild(userCardColumn);
+
+                const selectGroup = document.createElement('div');
+                selectGroup.className = 'user-selects';
+
+                const authoritySelect = document.createElement('select');
+                authoritySelect.className = 'authority-select';
+                authoritySelect.id = `userAuthority-${user._id}`;
+                authoritySelect.name = `userAuthority-${user._id}`;
+                authoritySelect.setAttribute('onchange', `changeUserAuthority('${user._id}', this.value)`);
+                authoritySelect.setAttribute('title', 'Kullanıcı Yetkisi');
+                authoritySelect.setAttribute('aria-label', `${user.name} kullanıcı yetkisi`);
+                authoritySelect.innerHTML = `
+                    <option value="member" ${user.authority === 'member' ? 'selected' : ''}>Üye</option>
+                    <option value="admin" ${user.authority === 'admin' ? 'selected' : ''}>Yönetici</option>
+                `;
+                selectGroup.appendChild(authoritySelect);
+
+                const visibility = user.visibility === 'pasif' ? 'pasif' : 'aktif';
+                const visibilitySelect = document.createElement('select');
+                visibilitySelect.className = 'visibility-select';
+                visibilitySelect.id = `userVisibility-${user._id}`;
+                visibilitySelect.name = `userVisibility-${user._id}`;
+                visibilitySelect.title = 'Kullanıcı Görünürlüğü';
+                visibilitySelect.setAttribute('aria-label', `${user.name} kullanıcı görünürlüğü`);
+                visibilitySelect.dataset.currentValue = visibility;
+                visibilitySelect.innerHTML = `
+                    <option value="aktif" ${visibility === 'aktif' ? 'selected' : ''}>Aktif</option>
+                    <option value="pasif" ${visibility === 'pasif' ? 'selected' : ''}>Pasif</option>
+                `;
+                visibilitySelect.addEventListener('change', function () {
+                    changeUserVisibility(String(user._id), this.value, this);
+                });
+                selectGroup.appendChild(visibilitySelect);
+                userContainer.appendChild(selectGroup);
+
+                (visibility === 'pasif' ? passiveUserList : userList).appendChild(userContainer);
+            });
+
+            userList.scrollTop = prevScrollTop; // scroll pozisyonunu geri yükle
+            passiveUserList.scrollTop = prevPassiveScrollTop;
+            const hasPassiveUsers = passiveUserList.children.length > 0;
+            passiveUserList.hidden = !hasPassiveUsers;
+            if (passiveEmpty) passiveEmpty.hidden = hasPassiveUsers;
+
+            // Pasif kullanıcılar davet ve normal site seçimlerinde gösterilmez.
+            updateUserSelectDropdown(users.filter(user => user.visibility !== 'pasif'));
+        })
+        .catch(error => {
+            console.error('Kullanıcı listesi yüklenirken hata:', error);
+        });
+}
+
+function updateGroupAmountTypeInfo(amountType) {
+    const normalizedType = amountType === 'dakika' ? 'dakika' : 'sayfa';
+    const icon = document.getElementById('groupAmountTypeIcon');
+    const info = document.querySelector('#groupAmountTypeInfo span');
+    if (icon) {
+        icon.className = normalizedType === 'dakika'
+            ? 'fa-solid fa-clock visibility-icon public'
+            : 'fa-solid fa-file-lines visibility-icon public';
+    }
+    if (info) {
+        info.textContent = `Okuma miktarları ${normalizedType} olarak gösterilir.`;
+    }
+}
+
+let groupAmountTypeSaveQueue = Promise.resolve();
+
+async function saveGroupAmountType(amountType, previousAmountType) {
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    const select = document.getElementById('groupAmountTypeSelect');
+    const normalizedType = amountType === 'dakika' ? 'dakika' : 'sayfa';
+    updateGroupAmountTypeInfo(normalizedType);
+
+    try {
+        const response = await fetch(`/api/update-group-amount-type/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amountType: normalizedType })
+        });
+        const data = await response.json().catch(function () { return {}; });
+        if (!response.ok) {
+            throw new Error(data.error || 'Okuma birimi güncellenemedi');
+        }
+
+        if (typeof window.setCurrentAmountType === 'function') {
+            window.setCurrentAmountType(data.group && data.group.amountType);
+        } else {
+            window.currentGroupData = {
+                ...(window.currentGroupData || {}),
+                amountType: normalizedType
+            };
+        }
+        showSuccessMessage(`Okuma birimi ${normalizedType} olarak güncellendi.`);
+    } catch (error) {
+        console.error('Okuma birimi güncelleme hatası:', error);
+        const fallbackType = previousAmountType === 'dakika' ? 'dakika' : 'sayfa';
+        if (select) select.value = fallbackType;
+        updateGroupAmountTypeInfo(fallbackType);
+        showErrorMessage(error.message || 'Okuma birimi güncellenirken hata oluştu!');
+    }
+}
+
+function normalizeReadingEditPolicyValue(value) {
+    return value === 'today' || value === 'today_yesterday' ? value : 'all';
+}
+
+function updateReadingEditPolicyInfo(policy) {
+    const normalizedPolicy = normalizeReadingEditPolicyValue(policy);
+    const icon = document.getElementById('readingEditPolicyIcon');
+    const info = document.querySelector('#readingEditPolicyInfo span');
+    const config = {
+        all: {
+            icon: 'fa-solid fa-calendar-days visibility-icon public',
+            text: 'Bugün ve geçmişteki tüm kayıtlar düzenlenebilir.'
+        },
+        today: {
+            icon: 'fa-solid fa-calendar-day visibility-icon public',
+            text: 'Üyeler yalnızca bugünün kayıtlarını düzenleyebilir.'
+        },
+        today_yesterday: {
+            icon: 'fa-solid fa-calendar-week visibility-icon public',
+            text: 'Üyeler yalnızca bugünün ve dünün kayıtlarını düzenleyebilir.'
+        }
+    }[normalizedPolicy];
+    if (icon) icon.className = config.icon;
+    if (info) info.textContent = config.text;
+}
+
+let readingEditPolicySaveQueue = Promise.resolve();
+
+async function saveReadingEditPolicy(policy, previousPolicy) {
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    const select = document.getElementById('readingEditPolicySelect');
+    const normalizedPolicy = normalizeReadingEditPolicyValue(policy);
+    updateReadingEditPolicyInfo(normalizedPolicy);
+
+    try {
+        const response = await fetch(`/api/update-reading-edit-policy/${window.groupid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ readingEditPolicy: normalizedPolicy })
+        });
+        const data = await response.json().catch(function () { return {}; });
+        if (!response.ok) {
+            throw new Error(data.error || 'Düzenleme aralığı güncellenemedi');
+        }
+
+        if (typeof window.setCurrentReadingEditPolicy === 'function') {
+            window.setCurrentReadingEditPolicy(data.group && data.group.readingEditPolicy);
+        } else {
+            window.currentGroupData = {
+                ...(window.currentGroupData || {}),
+                readingEditPolicy: normalizedPolicy
+            };
+        }
+        showSuccessMessage('Düzenleme aralığı güncellendi.');
+    } catch (error) {
+        console.error('Düzenleme aralığı güncelleme hatası:', error);
+        const fallbackPolicy = normalizeReadingEditPolicyValue(previousPolicy);
+        if (select) select.value = fallbackPolicy;
+        updateReadingEditPolicyInfo(fallbackPolicy);
+        showErrorMessage(error.message || 'Düzenleme aralığı güncellenirken hata oluştu!');
+    }
+}
+
+// Grup bilgilerini yükle
+async function loadGroupSettings() {
+    if (!LocalStorageManager.isUserLoggedIn()) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/group/${window.groupid}`);
+        if (response.ok) {
+            const data = await response.json();
+            const group = data.group;
+            window.currentGroupVisibility = group.visibility || 'public';
+
+            // Form alanlarını doldur
+            document.getElementById('groupName').value = group.groupName || '';
+            document.getElementById('groupDescription').value = group.description || '';
+            document.getElementById('groupVisibility').value = group.visibility || 'public';
+            const amountType = group.amountType === 'dakika' ? 'dakika' : 'sayfa';
+            const readingEditPolicy = normalizeReadingEditPolicyValue(group.readingEditPolicy);
+            window.currentGroupData = {
+                ...(window.currentGroupData || {}),
+                ...group,
+                amountType,
+                readingEditPolicy
+            };
+            const groupAmountTypeSelect = document.getElementById('groupAmountTypeSelect');
+            if (groupAmountTypeSelect) {
+                groupAmountTypeSelect.value = amountType;
+            }
+            updateGroupAmountTypeInfo(amountType);
+            const readingEditPolicySelect = document.getElementById('readingEditPolicySelect');
+            if (readingEditPolicySelect) {
+                readingEditPolicySelect.value = readingEditPolicy;
+            }
+            updateReadingEditPolicyInfo(readingEditPolicy);
+            const autoMarkUnreadSelect = document.getElementById('autoMarkUnreadSelect');
+            if (autoMarkUnreadSelect) {
+                autoMarkUnreadSelect.value = group.autoMarkUnread !== false ? 'true' : 'false';
+            }
+            const inactiveMemberActionSelect = document.getElementById('inactiveMemberActionSelect');
+            const inactiveMemberAction = ['delete', 'passive'].includes(group.inactiveMemberAction)
+                ? group.inactiveMemberAction
+                : 'none';
+            if (inactiveMemberActionSelect) {
+                inactiveMemberActionSelect.value = inactiveMemberAction;
+            }
+
+            // Grup resmini ayarla
+            const groupImage = document.getElementById('currentGroupImage');
+            const removeBtn = document.querySelector('.group-image-remove-btn');
+
+            if (group.groupImage) {
+                groupImage.src = group.groupImage;
+                removeBtn.style.display = 'flex';
+            } else {
+                groupImage.src = '/images/open-book.webp';
+                removeBtn.style.display = 'none';
+            }
+
+            // Görünürlük ve otomatik okumadı ikonlarını güncelle
+            updateVisibilityIcon(group.visibility || 'public');
+            updateAutoMarkUnreadIcon(group.autoMarkUnread !== false);
+            updateInactiveMemberActionIcon(inactiveMemberAction);
+            captureSavedGroupSettings();
+        }
+    } catch (error) {
+        console.error('Grup ayarları yüklenirken hata:', error);
+    }
+}
+
+// Karakter sınırı kontrolü
+function checkCharacterLimit(event) {
+    const input = event.target;
+    const currentLength = input.value.length;
+    const maxLength = parseInt(input.getAttribute('maxlength'));
+
+    if (currentLength >= maxLength) {
+        // Fazla karakter durumunda uyarı göster
+        if (input.id === 'groupName') {
+            showErrorMessage('Grup adı en fazla 40 karakter olabilir!');
+        } else if (input.id === 'groupDescription') {
+            showErrorMessage('Grup açıklaması en fazla 200 karakter olabilir!');
+        }
+
+        // Fazla karakterleri kes
+        input.value = input.value.substring(0, maxLength);
+    }
+}
+
+// Görünürlük ikonunu güncelle
+function updateVisibilityIcon(visibility) {
+    const icon = document.getElementById('visibilityIcon');
+    const info = document.getElementById('visibilityInfo');
+    const infoSpan = info ? info.querySelector('span') : null;
+
+    if (!icon) return;
+
+    // Mevcut sınıfları temizle
+    icon.classList.remove('public', 'private');
+    if (info) info.classList.remove('public', 'private');
+
+    // Yeni sınıfı ekle
+    icon.classList.add(visibility);
+    if (info) info.classList.add(visibility);
+
+    // İkonu değiştir
+    if (visibility === 'public') {
+        icon.className = 'fa-solid fa-eye visibility-icon public';
+        if (infoSpan) infoSpan.textContent = 'Herkes bu grubu görüntüleyebilir.';
+    } else {
+        icon.className = 'fa-solid fa-eye-slash visibility-icon private';
+        if (infoSpan) infoSpan.textContent = 'Sadece üyeler grubu görüntüleyebilir.';
+    }
+}
+
+// Otomatik okumadı ikonunu ve açıklamasını güncelle
+function updateAutoMarkUnreadIcon(isAutoMark) {
+    const icon = document.getElementById('autoMarkUnreadIcon');
+    const info = document.getElementById('autoMarkUnreadInfo');
+    const infoSpan = info ? info.querySelector('span') : null;
+
+    if (!icon) return;
+
+    const isActive = (isAutoMark === true || isAutoMark === 'true');
+
+    icon.classList.remove('public', 'private');
+    if (info) info.classList.remove('public', 'private');
+
+    if (isActive) {
+        icon.className = 'fa-solid fa-user-clock visibility-icon public';
+        if (info) info.classList.add('public');
+        if (infoSpan) infoSpan.textContent = 'Okumayanlar her sabah 06:00\'da işaretlenir.';
+    } else {
+        icon.className = 'fa-solid fa-user-slash visibility-icon private';
+        if (info) info.classList.add('private');
+        if (infoSpan) infoSpan.textContent = 'Okumayanları otomatik işaretleme kapalı.';
+    }
+}
+
+function updateInactiveMemberActionIcon(action) {
+    const icon = document.getElementById('inactiveMemberActionIcon');
+    const info = document.getElementById('inactiveMemberActionInfo');
+    const infoSpan = info ? info.querySelector('span') : null;
+
+    if (!icon) return;
+
+    icon.classList.remove('public', 'private');
+    if (info) info.classList.remove('public', 'private');
+
+    if (action === 'delete') {
+        icon.className = 'fa-solid fa-user-xmark visibility-icon private';
+        if (info) info.classList.add('private');
+        if (infoSpan) infoSpan.textContent = 'Bu üyeler gruptan kalıcı olarak silinir.';
+    } else if (action === 'passive') {
+        icon.className = 'fa-solid fa-user-slash visibility-icon private';
+        if (info) info.classList.add('private');
+        if (infoSpan) infoSpan.textContent = 'Bu üyelerin görünürlüğü pasif olarak değiştirilir.';
+    } else {
+        icon.className = 'fa-solid fa-circle-pause visibility-icon public';
+        if (info) info.classList.add('public');
+        if (infoSpan) infoSpan.textContent = 'Okumayanlar için otomatik işlem kapalı.';
+    }
+}
+
+let automationSettingsSaveTimer = null;
+let automationSettingsSaveChain = Promise.resolve();
+
+function getScheduledSettingSuccessMessage(changedSetting, settings) {
+    if (changedSetting === 'autoMarkUnread') {
+        return settings.autoMarkUnread
+            ? 'Otomatik "✖" İşaretleme Aktif'
+            : 'Otomatik "✖" İşaretleme Pasif';
+    }
+
+    if (settings.inactiveMemberAction === 'delete') {
+        return 'Okumayan Üyeleri Otomatik Silme Aktif';
+    }
+    if (settings.inactiveMemberAction === 'passive') {
+        return 'Okumayan Üyeleri Otomatik Pasife Alma Aktif';
+    }
+    return 'Okumayan Üyeler Otomasyonu Kapalı';
+}
+
+async function saveAutomationSettings(settings, successMessage) {
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/update-group-automation/${window.groupid}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Ayarlar kaydedilemedi');
+        }
+
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('grup_ayarlarindan_zamanlanmis_ayarlari_degistirme');
+        }
+        showSuccessMessage(successMessage);
+    } catch (error) {
+        console.error('Zamanlanmış grup ayarları kaydetme hatası:', error);
+        showErrorMessage('Ayar kaydedilemedi!');
+    }
+}
+
+function scheduleAutomationSettingsSave(changedSetting) {
+    clearTimeout(automationSettingsSaveTimer);
+    automationSettingsSaveTimer = setTimeout(() => {
+        const autoMarkUnreadSelect = document.getElementById('autoMarkUnreadSelect');
+        const inactiveMemberActionSelect = document.getElementById('inactiveMemberActionSelect');
+        if (!autoMarkUnreadSelect || !inactiveMemberActionSelect) return;
+
+        const settings = {
+            autoMarkUnread: autoMarkUnreadSelect.value === 'true',
+            inactiveMemberAction: inactiveMemberActionSelect.value
+        };
+        const successMessage = getScheduledSettingSuccessMessage(changedSetting, settings);
+        automationSettingsSaveChain = automationSettingsSaveChain.then(
+            () => saveAutomationSettings(settings, successMessage),
+            () => saveAutomationSettings(settings, successMessage)
+        );
+    }, 300);
+}
+
+// Hazır görseller modal'ını aç/kapat
+async function toggleReadyImagesModal() {
+    // Hazır görseller modal açma işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Hazır görseller modal açma');
+    }
+
+    const modal = document.getElementById('readyImagesModal');
+    if (modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto'; // Scroll'u geri aç
+    } else {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Scroll'u kapat
+        if (modal.dataset.avatarsLoaded !== '1') {
+            await loadAvatarOptions();
+            modal.dataset.avatarsLoaded = '1';
+        }
+    }
+}
+
+// Hazır avatar seçeneklerini yükle
+async function loadAvatarOptions() {
+    try {
+        const response = await fetch('/api/group-avatars');
+        if (response.ok) {
+            const avatars = await response.json();
+            const avatarGrid = document.getElementById('avatarGrid');
+
+            avatarGrid.innerHTML = '';
+
+            if (avatars.length === 0) {
+                avatarGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #6c757d;">
+                        <i class="fa-solid fa-images" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                        <p>Henüz hazır görsel bulunmuyor.</p>
+                        <small>groupAvatars klasörüne resim dosyaları ekleyin.</small>
+                    </div>
+                `;
+                return;
+            }
+
+            avatars.forEach(avatar => {
+                const avatarItem = document.createElement('div');
+                avatarItem.className = 'avatar-item';
+                avatarItem.dataset.avatarPath = avatar.path;
+
+                avatarItem.innerHTML = `
+                    <img src="${avatar.path}" alt="Avatar">
+                    <div class="check-icon">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                `;
+
+                avatarItem.addEventListener('click', () => selectAvatar(avatar.path, avatarItem));
+                avatarGrid.appendChild(avatarItem);
+            });
+        } else {
+            console.error('Avatar seçenekleri yüklenemedi');
+        }
+    } catch (error) {
+        console.error('Avatar yükleme hatası:', error);
+    }
+}
+
+// Avatar seç
+function selectAvatar(avatarPath, avatarElement) {
+    // Önceki seçimi kaldır
+    document.querySelectorAll('.avatar-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+
+    // Yeni seçimi işaretle
+    avatarElement.classList.add('selected');
+
+    // Grup resmini güncelle
+    const currentGroupImage = document.getElementById('currentGroupImage');
+    currentGroupImage.src = avatarPath;
+
+    // Sil butonunu göster (hazır avatar seçildi, artık bir resim var)
+    const removeBtn = document.querySelector('.group-image-remove-btn');
+    removeBtn.style.display = 'flex';
+
+    // Modal'ı kapat
+    toggleReadyImagesModal();
+
+    // Grup resmini güncelle (sunucuya gönder)
+    updateGroupImageFromAvatar(avatarPath);
+}
+
+// Hazır avatar ile grup resmini güncelle
+async function updateGroupImageFromAvatar(avatarPath) {
+    try {
+        const response = await fetch(`/api/update-group-image-from-avatar/${window.groupid}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                avatarPath: avatarPath
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+
+            // secretAdminLogin resmini de güncelle
+            const secretAdminLoginImages = document.querySelectorAll('.secretAdminLoginImage');
+            secretAdminLoginImages.forEach(img => {
+                img.src = result.imageUrl;
+            });
+
+            showSuccessMessage('Grup resmi başarıyla güncellendi!');
+        } else {
+            console.error('Grup resmi güncellenemedi');
+            showErrorMessage('Grup resmi güncellenirken hata oluştu!');
+        }
+    } catch (error) {
+        console.error('Avatar güncelleme hatası:', error);
+        showErrorMessage('Avatar güncellenirken hata oluştu!');
+    }
+}
+
+let savedGroupSettings = null;
+
+function readGroupSettingsThatRequireSave() {
+    const groupNameInput = document.getElementById('groupName');
+    const groupDescriptionInput = document.getElementById('groupDescription');
+    const groupVisibilitySelect = document.getElementById('groupVisibility');
+    if (!groupNameInput || !groupDescriptionInput || !groupVisibilitySelect) return null;
+
+    return {
+        groupName: groupNameInput.value.trim(),
+        description: groupDescriptionInput.value.trim(),
+        visibility: groupVisibilitySelect.value
+    };
+}
+
+function setGroupSettingsDirty(isDirty) {
+    const saveBtn = document.querySelector('.save-group-btn');
+    if (!saveBtn) return;
+
+    saveBtn.classList.toggle('has-unsaved-changes', isDirty);
+    saveBtn.title = isDirty ? 'Kaydedilmemiş grup ayarları var' : '';
+}
+
+function captureSavedGroupSettings() {
+    savedGroupSettings = readGroupSettingsThatRequireSave();
+    setGroupSettingsDirty(false);
+}
+
+function updateGroupSettingsDirtyState() {
+    const currentSettings = readGroupSettingsThatRequireSave();
+    if (!currentSettings || !savedGroupSettings) return;
+
+    const isDirty = Object.keys(savedGroupSettings).some(
+        key => currentSettings[key] !== savedGroupSettings[key]
+    );
+    setGroupSettingsDirty(isDirty);
+}
+
+// Grup ayarlarını kaydet
+async function saveGroupSettings() {
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('grup_ayarlarindan_diger_ayarlari_degistirme');
+    }
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    // Grup bilgilerini kaydetme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Grup bilgilerini kaydetme');
+    }
+
+    const groupName = document.getElementById('groupName').value.trim();
+    const groupDescription = document.getElementById('groupDescription').value.trim();
+    const groupVisibility = document.getElementById('groupVisibility').value;
+    const autoMarkUnreadSelect = document.getElementById('autoMarkUnreadSelect');
+    const autoMarkUnread = autoMarkUnreadSelect ? (autoMarkUnreadSelect.value === 'true') : true;
+    const inactiveMemberActionSelect = document.getElementById('inactiveMemberActionSelect');
+    const inactiveMemberAction = inactiveMemberActionSelect
+        ? inactiveMemberActionSelect.value
+        : 'none';
+
+    if (!groupName) {
+        showErrorMessage('Grup adı boş olamaz!');
+        return;
+    }
+
+    // Grup adı karakter sınırı kontrolü
+    if (groupName.length > 40) {
+        showErrorMessage('Grup adı en fazla 40 karakter olabilir!');
+        return;
+    }
+
+    // Grup açıklaması karakter sınırı kontrolü
+    if (groupDescription.length > 200) {
+        showErrorMessage('Grup açıklaması en fazla 200 karakter olabilir!');
+        return;
+    }
+
+    const saveBtn = document.querySelector('.save-group-btn');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Kaydediliyor...';
+    saveBtn.disabled = true;
+
+    try {
+        const response = await fetch(`/api/update-group/${window.groupid}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                groupName,
+                description: groupDescription,
+                visibility: groupVisibility,
+                autoMarkUnread,
+                inactiveMemberAction
+            })
+        });
+
+        if (response.ok) {
+            window.currentGroupVisibility = groupVisibility;
+            savedGroupSettings = {
+                groupName,
+                description: groupDescription,
+                visibility: groupVisibility
+            };
+            updateGroupSettingsDirtyState();
+            showSuccessMessage('Grup ayarları başarıyla kaydedildi!');
+            // Sayfa başlığını güncelle
+            if (typeof updatePageTitle === 'function') {
+                updatePageTitle();
+            }
+        } else {
+            throw new Error('Grup ayarları kaydedilemedi');
+        }
+    } catch (error) {
+        console.error('Grup ayarları kaydetme hatası:', error);
+        showErrorMessage('Grup ayarları kaydedilirken hata oluştu!');
+    } finally {
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+    }
+}
+
+// Grup resmini değiştir
+async function changeGroupImage() {
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('grup_ayarlarindan_grup_resmi_guncelleme');
+    }
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    const fileInput = document.getElementById('groupImage');
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('groupImage', file);
+
+    const changeBtn = document.querySelector('.change-image-btn');
+    const originalText = changeBtn.innerHTML;
+    changeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    changeBtn.disabled = true;
+
+    try {
+        const response = await fetch(`/api/update-group-image/${window.groupid}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const groupImage = document.getElementById('currentGroupImage');
+
+            groupImage.src = data.imageUrl;
+            document.querySelector('.group-image-remove-btn').style.display = 'flex';
+
+            // secretAdminLogin'deki grup resmini de güncelle
+            const secretAdminImage = document.querySelector('.secretAdminLogin img');
+            const secretAdminLoginImage = document.querySelector('.secretAdminLoginImage');
+            if (secretAdminImage) {
+                secretAdminImage.src = data.imageUrl;
+            }
+            if (secretAdminLoginImage) {
+                secretAdminLoginImage.src = data.imageUrl;
+            }
+
+            showSuccessMessage('Grup resmi başarıyla güncellendi!');
+        } else {
+            throw new Error('Grup resmi güncellenemedi');
+        }
+    } catch (error) {
+        console.error('Grup resmi güncelleme hatası:', error);
+        showErrorMessage('Grup resmi güncellenirken hata oluştu!');
+    } finally {
+        changeBtn.innerHTML = originalText;
+        changeBtn.disabled = false;
+        fileInput.value = ''; // Input'u temizle
+    }
+}
+
+// Grup resmini kaldır
+async function removeGroupImage() {
+    if (typeof window.logActionForAudit === 'function') {
+        window.logActionForAudit('grup_ayarlarindan_grup_resmi_guncelleme');
+    }
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    const confirmed = confirm('Grup resmini kaldırmak istediğinize emin misiniz?');
+    if (!confirmed) return;
+
+    const removeBtn = document.querySelector('.group-image-remove-btn');
+    const originalText = removeBtn.innerHTML;
+    removeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    removeBtn.disabled = true;
+
+    try {
+        const response = await fetch(`/api/remove-group-image/${window.groupid}`, {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            document.getElementById('currentGroupImage').src = '/images/open-book.webp';
+            document.querySelector('.group-image-remove-btn').style.display = 'none';
+
+            // secretAdminLogin'deki grup resmini de güncelle
+            const secretAdminImage = document.querySelector('.secretAdminLogin img');
+            const secretAdminLoginImage = document.querySelector('.secretAdminLoginImage');
+            if (secretAdminImage) {
+                secretAdminImage.src = '/images/open-book.webp';
+            }
+            if (secretAdminLoginImage) {
+                secretAdminLoginImage.src = '/images/open-book.webp';
+            }
+
+            showSuccessMessage('Grup resmi başarıyla kaldırıldı!');
+        } else {
+            throw new Error('Grup resmi kaldırılamadı');
+        }
+    } catch (error) {
+        console.error('Grup resmi kaldırma hatası:', error);
+        showErrorMessage('Grup resmi kaldırılırken hata oluştu!');
+    } finally {
+        removeBtn.innerHTML = originalText;
+        removeBtn.disabled = false;
+    }
+}
+
+// Grubu paylaş
+async function shareGroup() {
+    try {
+        // Grup adını al
+        const groupName = document.getElementById('groupName').value || 'Grup';
+
+        // URL formatını oluştur
+        const groupUrl = `${window.location.origin}/grup/${encodeURIComponent(window.groupid)}/`;
+
+        // Paylaşım metnini oluştur
+        const shareText = `RoTaKip ${groupName}\n${groupUrl}`;
+
+        // Her durumda panoya kopyala
+        await navigator.clipboard.writeText(shareText);
+
+        // Web Share API'yi de dene (eğer varsa)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `RoTaKip ${groupName}`,
+                    text: shareText, // Tam metni paylaş
+                });
+                showSuccessMessage('Grup davet linki panoya kopyalandı!');
+            } catch (shareError) {
+                // Web Share API iptal edilirse sadece panoya kopyalama mesajı göster
+                showSuccessMessage('Grup davet linki panoya kopyalandı!');
+            }
+        } else {
+            // Web Share API yoksa sadece panoya kopyalama mesajı göster
+            showSuccessMessage('Grup davet linki panoya kopyalandı!');
+        }
+
+    } catch (error) {
+        console.error('Paylaşım hatası:', error);
+        showErrorMessage('Link kopyalanamadı. Lütfen manuel olarak kopyalayın.');
+    }
+}
+
+// Grubu sil
+async function deleteGroup() {
+    // Admin kontrolü
+    if (!LocalStorageManager.isAdmin()) {
+        showErrorMessage('Bu işlem için admin yetkisi gereklidir!');
+        return;
+    }
+
+    if (!window.groupid) {
+        showErrorMessage('Grup ID bulunamadı!');
+        return;
+    }
+
+    const groupName = document.getElementById('groupName').value || 'Bu grup';
+    const confirmed = confirm(`"${groupName}" grubunu silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz ve tüm grup verileri (kullanıcılar, okuma kayıtları, vb.) kalıcı olarak silinecektir.`);
+
+    if (!confirmed) {
+        return;
+    }
+
+    const deleteBtn = document.querySelector('.danger-toggle-btn');
+    if (!deleteBtn) {
+        showErrorMessage('Sil butonu bulunamadı!');
+        return;
+    }
+
+    const originalText = deleteBtn.innerHTML;
+    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Siliniyor...';
+    deleteBtn.disabled = true;
+
+    try {
+        const userInfo = LocalStorageManager.getCurrentUserInfo();
+        const actorUserName = userInfo?.userName || null;
+        const deviceInfo = {
+            userAgent: navigator.userAgent,
+            screenWidth: window.screen.width,
+            screenHeight: window.screen.height
+        };
+
+        const response = await fetch(`/api/delete-group/${window.groupid}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userName: actorUserName || null,
+                deviceInfo
+            })
+        });
+
+        if (response.ok) {
+            showSuccessMessage('Grup başarıyla silindi!');
+
+            // Yeni sistem ile çıkış yap
+            LocalStorageManager.logoutUser();
+
+            setTimeout(() => {
+                window.location.href = '/gruplar';
+            }, 1500);
+        } else {
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (parseError) {
+                errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
+            }
+            throw new Error(errorData.message || 'Grup silinemedi');
+        }
+    } catch (error) {
+        console.error('Grup silme hatası:', error);
+        showErrorMessage('Grup silinirken hata oluştu: ' + error.message);
+    } finally {
+        deleteBtn.innerHTML = originalText;
+        deleteBtn.disabled = false;
+    }
+}
+
+window.syncGroupManagementVisibility = function syncGroupManagementVisibility() {
+    const managementRoot = document.querySelector('.main-area');
+    if (!managementRoot) return;
+
+    const isAdmin = LocalStorageManager.isAdmin();
+    managementRoot.style.display = isAdmin ? 'flex' : 'none';
+
+    if (typeof window.syncReadingEditModeBarVisibility === 'function') {
+        window.syncReadingEditModeBarVisibility();
+    }
+    if (!isAdmin) return;
+
+    if (typeof window.initScrollFadeInElements === 'function') {
+        window.initScrollFadeInElements();
+    }
+    renderUserList();
+    loadGroupSettings();
+    managementRoot
+        .querySelectorAll('.group-settings, .automation-section, .user-onboarding-column, .user-management-column')
+        .forEach(panel => window.observeReadingScrollReveal?.(panel));
+};
+
+// Event listener'ları shell fragmenti sonradan eklendiğinde de bağla.
+window.initializeGroupManagement = function initializeGroupManagement() {
+    const managementRoot = document.querySelector('.main-area');
+    if (!managementRoot) return;
+    window.syncGroupManagementVisibility();
+    if (managementRoot.dataset.managementBound === 'true') return;
+    managementRoot.dataset.managementBound = 'true';
+    // Grup ayarları butonları
+    const saveGroupBtn = document.querySelector('.save-group-btn');
+    const changeImageBtn = document.querySelector('.change-image-btn');
+    const removeImageBtn = document.querySelector('.group-image-remove-btn');
+    const deleteGroupBtn = document.querySelector('.danger-toggle-btn');
+    const groupImageInput = document.getElementById('groupImage');
+
+    if (saveGroupBtn) {
+        saveGroupBtn.addEventListener('click', saveGroupSettings);
+    }
+
+    if (changeImageBtn) {
+        changeImageBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            groupImageInput.click();
+        });
+    }
+
+    if (groupImageInput) {
+        groupImageInput.addEventListener('change', changeGroupImage);
+    }
+
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', removeGroupImage);
+    }
+
+    const shareGroupBtn = document.querySelector('.share-group-btn');
+    if (shareGroupBtn) {
+        shareGroupBtn.addEventListener('click', shareGroup);
+    }
+
+    if (deleteGroupBtn) {
+        deleteGroupBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            deleteGroup();
+        });
+    }
+
+    // Görünürlük değiştiğinde ikonu güncelle
+    const groupVisibilitySelect = document.getElementById('groupVisibility');
+    if (groupVisibilitySelect) {
+        groupVisibilitySelect.addEventListener('change', function () {
+            updateVisibilityIcon(this.value);
+            updateGroupSettingsDirtyState();
+        });
+    }
+
+    // Otomatik okumadı seçimi değiştiğinde ikonu güncelle
+    const autoMarkUnreadSelectEl = document.getElementById('autoMarkUnreadSelect');
+    if (autoMarkUnreadSelectEl) {
+        autoMarkUnreadSelectEl.addEventListener('change', function () {
+            updateAutoMarkUnreadIcon(this.value);
+            scheduleAutomationSettingsSave('autoMarkUnread');
+        });
+    }
+
+    const inactiveMemberActionSelectEl = document.getElementById('inactiveMemberActionSelect');
+    if (inactiveMemberActionSelectEl) {
+        inactiveMemberActionSelectEl.addEventListener('change', function () {
+            updateInactiveMemberActionIcon(this.value);
+            scheduleAutomationSettingsSave('inactiveMemberAction');
+        });
+    }
+
+    const groupAmountTypeSelectEl = document.getElementById('groupAmountTypeSelect');
+    if (groupAmountTypeSelectEl) {
+        groupAmountTypeSelectEl.addEventListener('change', function () {
+            const nextAmountType = this.value;
+            groupAmountTypeSaveQueue = groupAmountTypeSaveQueue.then(function () {
+                const previousAmountType = typeof window.getCurrentAmountType === 'function'
+                    ? window.getCurrentAmountType()
+                    : 'sayfa';
+                return saveGroupAmountType(nextAmountType, previousAmountType);
+            });
+        });
+    }
+
+    const readingEditPolicySelectEl = document.getElementById('readingEditPolicySelect');
+    if (readingEditPolicySelectEl) {
+        readingEditPolicySelectEl.addEventListener('change', function () {
+            const nextPolicy = this.value;
+            readingEditPolicySaveQueue = readingEditPolicySaveQueue.then(function () {
+                const previousPolicy = typeof window.getCurrentReadingEditPolicy === 'function'
+                    ? window.getCurrentReadingEditPolicy()
+                    : 'all';
+                return saveReadingEditPolicy(nextPolicy, previousPolicy);
+            });
+        });
+    }
+
+    // Karakter sınırı kontrolü event listener'ları
+    const groupNameInput = document.getElementById('groupName');
+    const groupDescriptionInput = document.getElementById('groupDescription');
+
+    if (groupNameInput) {
+        groupNameInput.addEventListener('input', function (event) {
+            checkCharacterLimit(event);
+            updateGroupSettingsDirtyState();
+        });
+    }
+
+    if (groupDescriptionInput) {
+        groupDescriptionInput.addEventListener('input', function (event) {
+            checkCharacterLimit(event);
+            updateGroupSettingsDirtyState();
+        });
+    }
+
+    // Modal dışına tıklandığında kapat
+    const readyImagesModal = document.getElementById('readyImagesModal');
+    if (readyImagesModal) {
+        readyImagesModal.addEventListener('click', function (e) {
+            if (e.target === readyImagesModal) {
+                toggleReadyImagesModal();
+            }
+        });
+    }
+
+    // Add user avatar modal dışına tıklandığında kapat
+    const addUserAvatarModal = document.getElementById('addUserAvatarModal');
+    if (addUserAvatarModal) {
+        addUserAvatarModal.addEventListener('click', function (e) {
+            if (e.target === addUserAvatarModal) {
+                toggleAddUserAvatarModal();
+            }
+        });
+    }
+
+    // ESC tuşu ile modal'ı kapat
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('readyImagesModal');
+            if (modal && modal.classList.contains('show')) {
+                toggleReadyImagesModal();
+            }
+        }
+    });
+
+};
+
+if (!document.body.classList.contains('app-shell-body')) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.initializeGroupManagement, { once: true });
+    } else {
+        window.initializeGroupManagement();
+    }
+}
+
+// Katılma isteklerini yükle
+async function loadJoinRequests() {
+    try {
+        const groupId = window.groupid;
+        if (!groupId) return;
+
+        const response = await fetch(`/api/join-requests/${groupId}`);
+        if (!response.ok) {
+            throw new Error('Katılma istekleri yüklenemedi');
+        }
+
+        const data = await response.json();
+        displayJoinRequests(data.requests);
+
+    } catch (error) {
+        console.error('Katılma istekleri yükleme hatası:', error);
+    }
+}
+
+// Katılma isteklerini görüntüle
+function displayJoinRequests(requests) {
+    const joinRequestsList = document.getElementById('joinRequestsList');
+
+    if (!requests || requests.length === 0) {
+        joinRequestsList.innerHTML = '<div class="no-join-requests"><i class="fa-solid fa-exclamation-circle"></i> Gruba katılma isteği bulunmamakta.</div>';
+        return;
+    }
+
+    joinRequestsList.innerHTML = requests.map(request => {
+        const requestDate = new Date(request.createdAt).toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `
+            <div class="join-request-item" data-request-id="${request._id}">
+                <img src="${window.escapeHtml(window.safeImageSrc(request.profileImage))}"
+                     alt="${window.escapeHtml(request.userName)}"
+                     class="join-request-avatar"
+                     onerror="this.src='/images/default.png'">
+                <div class="join-request-info">
+                    <div class="join-request-name">${window.escapeHtml(request.name)}</div>
+                    <div class="join-request-date">${requestDate}</div>
+                </div>
+                <div class="join-request-actions">
+                    <button class="join-request-btn reject" onclick="rejectJoinRequest('${request._id}')">
+                            <i class="fa-solid fa-times"></i>
+                            Reddet
+                        </button>
+                    <button class="join-request-btn accept" onclick="acceptJoinRequest('${request._id}')">
+                        <i class="fa-solid fa-check"></i>
+                        Kabul Et
+                    </button>
+                    
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Katılma isteğini kabul et
+async function acceptJoinRequest(requestId) {
+    // Katılma isteği kabul etme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Katılma isteği kabul etme');
+    }
+
+    try {
+        const response = await fetch(`/api/accept-join-request/${requestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Katılma isteği kabul edilemedi');
+        }
+
+        const data = await response.json();
+
+        // Başarı mesajı göster
+        showSuccessMessage(data.message);
+
+        // İsteği listeden kaldır
+        const requestItem = document.querySelector(`[data-request-id="${requestId}"]`);
+        if (requestItem) {
+            requestItem.remove();
+        }
+
+        // GlobalDataStore'u güncelle ve render işlemlerini bekle
+        if (window.globalDataStore && data.user) {
+            // Yeni kullanıcıyı users array'ine ekle
+            window.globalDataStore.users.push(data.user);
+            // Index'leri yeniden oluştur
+            window.globalDataStore._rebuildIndexes();
+            // En uzun serileri yeniden hesapla
+            await window.globalDataStore._buildLongestStreaks();
+
+            // GlobalDataStore güncellendikten SONRA tüm alanları yenile
+            renderUserList();
+            loadTrackerTable();
+            loadUserCards();
+            loadReadingStats();
+            renderLongestSeries();
+            if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
+        }
+
+        // Eğer hiç istek kalmadıysa mesaj göster
+        const remainingRequests = document.querySelectorAll('.join-request-item');
+        if (remainingRequests.length === 0) {
+            const joinRequestsList = document.getElementById('joinRequestsList');
+            joinRequestsList.innerHTML = '<div class="no-join-requests"><i class="fa-solid fa-exclamation-circle"></i> Gruba katılma isteği bulunmamakta.</div>';
+        }
+
+    } catch (error) {
+        console.error('Katılma isteği kabul etme hatası:', error);
+        showNotification('Katılma isteği kabul edilirken hata oluştu', 'error');
+    }
+}
+
+// Katılma isteğini reddet
+async function rejectJoinRequest(requestId) {
+    if (!confirm('Bu katılma isteğini reddetmek istediğinizden emin misiniz?')) {
+        return;
+    }
+
+    // Katılma isteği reddetme işlemini logla
+    if (typeof logUnauthorizedAccess === 'function') {
+        logUnauthorizedAccess('Katılma isteği reddetme');
+    }
+
+    try {
+        const response = await fetch(`/api/reject-join-request/${requestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Katılma isteği reddedilemedi');
+        }
+
+        const data = await response.json();
+
+        // Başarı mesajı göster
+        showSuccessMessage(data.message);
+
+        // İsteği listeden kaldır
+        const requestItem = document.querySelector(`[data-request-id="${requestId}"]`);
+        if (requestItem) {
+            requestItem.remove();
+        }
+
+        // Eğer hiç istek kalmadıysa mesaj göster
+        const remainingRequests = document.querySelectorAll('.join-request-item');
+        if (remainingRequests.length === 0) {
+            const joinRequestsList = document.getElementById('joinRequestsList');
+            joinRequestsList.innerHTML = '<div class="no-join-requests"><i class="fa-solid fa-exclamation-circle"></i> Gruba katılma isteği bulunmamakta.</div>';
+        }
+
+    } catch (error) {
+        console.error('Katılma isteği reddetme hatası:', error);
+        showErrorMessage('Katılma isteği reddedilirken hata oluştu');
+    }
+}
+
+// Bildirim gösterme fonksiyonu (kuyruk sistemi ile)
+function showNotification(message, type = 'info') {
+    // Mesajı kuyruğa ekle
+    messageQueue.push({ message, type });
+
+    // Eğer şu anda mesaj gösterilmiyorsa, kuyruktan mesaj göster
+    if (!isShowingMessage) {
+        processMessageQueue();
+    }
+}
+
+// Add User Avatar Modal Functions
+async function toggleAddUserAvatarModal() {
+    const modal = document.getElementById('addUserAvatarModal');
+    ensureExistingUserUploadAreaInAvatarModal();
+    const headerTitle = modal ? modal.querySelector('.modal-header h3') : null;
+    const uploadWrap = modal ? modal.querySelector('.existing-user-upload-wrap') : null;
+    if (headerTitle) {
+        if (avatarSelectionContext.mode === 'existing-user') {
+            headerTitle.innerHTML = '<i class="fa-solid fa-user"></i> Profil Resmi';
+        } else {
+            headerTitle.innerHTML = '<i class="fa-solid fa-images"></i> Avatar Seç';
+        }
+    }
+    if (uploadWrap) {
+        uploadWrap.style.display = avatarSelectionContext.mode === 'existing-user' ? 'block' : 'none';
+    }
+    if (modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+        avatarSelectionContext = { mode: 'add-user', userId: null };
+    } else {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        if (modal.dataset.avatarsLoaded !== '1') {
+            await loadAddUserAvatarOptions();
+            modal.dataset.avatarsLoaded = '1';
+        }
+    }
+}
+
+async function updateExistingUserImageFromAvatar(userId, avatarPath) {
+    try {
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('kullanıcı_listesinden_profil_resmi_degistirme');
+        }
+        const response = await fetch('/api/update-user-avatar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId,
+                groupId: window.groupid,
+                avatarPath
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Avatar güncellenemedi');
+        }
+
+        if (window.globalDataStore) {
+            const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (userIndex !== -1) {
+                window.globalDataStore.users[userIndex].profileImage = avatarPath;
+                window.globalDataStore._rebuildIndexes();
+                await window.globalDataStore._buildLongestStreaks();
+            }
+        }
+
+        const userContainer = getManagedUserContainer(userId);
+        if (userContainer) {
+            const userImage = userContainer.querySelector('.user-profile-image');
+            if (userImage) {
+                userImage.src = avatarPath;
+            }
+        }
+
+        loadTrackerTable();
+        loadUserCards();
+        loadReadingStats();
+        renderLongestSeries();
+        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
+        showSuccessMessage('Kullanıcı avatarı başarıyla güncellendi!');
+    } catch (error) {
+        console.error('Kullanıcı avatar güncelleme hatası:', error);
+        showErrorMessage('Avatar güncellenirken hata oluştu!');
+    }
+}
+
+async function updateExistingUserImageFromFile(userId, file) {
+    try {
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('kullanıcı_listesinden_profil_resmi_degistirme');
+        }
+        const userContainer = getManagedUserContainer(userId);
+        const userItem = userContainer ? userContainer.querySelector('li') : null;
+        if (userItem) {
+            const userImage = userItem.querySelector('.user-profile-image');
+            if (userImage) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    userImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        const formData = new FormData();
+        formData.append('userId', userId);
+        formData.append('profileImage', file);
+        formData.append('useTempFolder', 'true');
+
+        const response = await fetch(`/api/update-user-image/${window.groupid}/${userId}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Resim güncelleme başarısız');
+        }
+
+        const result = await response.json();
+        if (window.globalDataStore) {
+            const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (userIndex !== -1) {
+                window.globalDataStore.users[userIndex].profileImage = result.imageUrl;
+                window.globalDataStore._rebuildIndexes();
+                await window.globalDataStore._buildLongestStreaks();
+            }
+        }
+
+        loadTrackerTable();
+        loadUserCards();
+        loadReadingStats();
+        renderLongestSeries();
+        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
+        showSuccessMessage('Kullanıcı resmi başarıyla güncellendi!');
+    } catch (error) {
+        console.error('Resim güncelleme hatası:', error);
+        showErrorMessage('Resim güncellenirken hata oluştu!');
+    }
+}
+
+async function removeExistingUserImage(userId) {
+    try {
+        if (typeof window.logActionForAudit === 'function') {
+            window.logActionForAudit('kullanıcı_listesinden_profil_resmi_degistirme');
+        }
+        const response = await fetch('/api/remove-user-profile-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId,
+                groupId: window.groupid
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Profil resmi silinemedi');
+        }
+
+        if (window.globalDataStore) {
+            const userIndex = window.globalDataStore.users.findIndex(u => u._id === userId);
+            if (userIndex !== -1) {
+                window.globalDataStore.users[userIndex].profileImage = '/images/default.png';
+                window.globalDataStore._rebuildIndexes();
+                await window.globalDataStore._buildLongestStreaks();
+            }
+        }
+
+        const userContainer = getManagedUserContainer(userId);
+        if (userContainer) {
+            const userImage = userContainer.querySelector('.user-profile-image');
+            if (userImage) {
+                userImage.src = '/images/default.png';
+            }
+        }
+
+        loadTrackerTable();
+        loadUserCards();
+        loadReadingStats();
+        renderLongestSeries();
+        if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
+        showSuccessMessage('Kullanıcı profil resmi kaldırıldı!');
+    } catch (error) {
+        console.error('Profil resmi kaldırma hatası:', error);
+        showErrorMessage('Profil resmi kaldırılırken hata oluştu!');
+    }
+}
+
+function ensureExistingUserUploadAreaInAvatarModal() {
+    const modal = document.getElementById('addUserAvatarModal');
+    if (!modal) return;
+    const modalBody = modal.querySelector('.modal-body');
+    if (!modalBody) return;
+
+    let uploadWrap = modalBody.querySelector('.existing-user-upload-wrap');
+    if (!uploadWrap) {
+        uploadWrap = document.createElement('div');
+        uploadWrap.className = 'existing-user-upload-wrap';
+        uploadWrap.innerHTML = `
+            <div class="existing-user-upload-row">
+                <div class="existing-user-current-image-wrap">
+                    <img class="existing-user-current-image" src="/images/default.png" alt="Mevcut profil resmi">
+                </div>
+                <div class="existing-user-actions">
+                    <button type="button" class="existing-user-upload-btn">
+                        <i class="fa-solid fa-upload"></i> Cihazdan resim seç
+                    </button>
+                    <button type="button" class="existing-user-remove-btn">
+                        <i class="fa-solid fa-trash"></i> Profil resmini kaldır
+                    </button>
+                </div>
+            </div>
+            <input type="file" class="existing-user-upload-input" accept="image/*">
+        `;
+        modalBody.insertBefore(uploadWrap, modalBody.firstChild);
+    }
+
+    const currentImagePreview = uploadWrap.querySelector('.existing-user-current-image');
+    const uploadBtn = uploadWrap.querySelector('.existing-user-upload-btn');
+    const uploadInput = uploadWrap.querySelector('.existing-user-upload-input');
+    const removeBtn = uploadWrap.querySelector('.existing-user-remove-btn');
+
+    if (currentImagePreview) {
+        const { mode, userId } = avatarSelectionContext;
+        if (mode === 'existing-user' && userId) {
+            let profileImage = '/images/default.png';
+            if (window.globalDataStore && Array.isArray(window.globalDataStore.users)) {
+                const currentUser = window.globalDataStore.users.find(u => u._id === userId);
+                if (currentUser && currentUser.profileImage) {
+                    profileImage = currentUser.profileImage;
+                }
+            } else {
+                const userContainer = getManagedUserContainer(userId);
+                const userImage = userContainer ? userContainer.querySelector('.user-profile-image') : null;
+                if (userImage && userImage.src) {
+                    profileImage = userImage.src;
+                }
+            }
+            currentImagePreview.src = profileImage;
+        } else {
+            currentImagePreview.src = '/images/default.png';
+        }
+    }
+
+    if (uploadBtn && uploadInput && !uploadBtn.dataset.bound) {
+        uploadBtn.dataset.bound = '1';
+        uploadBtn.addEventListener('click', () => uploadInput.click());
+        uploadInput.addEventListener('change', async function () {
+            if (!this.files || this.files.length === 0) return;
+            const { mode, userId } = avatarSelectionContext;
+            if (mode !== 'existing-user' || !userId) return;
+            await updateExistingUserImageFromFile(userId, this.files[0]);
+            this.value = '';
+            toggleAddUserAvatarModal();
+        });
+    }
+    if (removeBtn && !removeBtn.dataset.bound) {
+        removeBtn.dataset.bound = '1';
+        removeBtn.addEventListener('click', async () => {
+            const { mode, userId } = avatarSelectionContext;
+            if (mode !== 'existing-user' || !userId) return;
+            await removeExistingUserImage(userId);
+            toggleAddUserAvatarModal();
+        });
+    }
+}
+
+async function loadAddUserAvatarOptions() {
+    const avatarGrid = document.getElementById('addUserAvatarGrid');
+    if (!avatarGrid) return;
+
+    try {
+        // userAvatars klasöründeki resimleri yükle
+        const response = await fetch('/api/user-avatars');
+        const avatars = await response.json();
+
+        avatarGrid.innerHTML = '';
+
+        avatars.forEach((avatar, index) => {
+            const avatarItem = document.createElement('div');
+            avatarItem.className = 'avatar-item';
+            avatarItem.innerHTML = `
+                <img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">
+            `;
+
+            avatarItem.addEventListener('click', async function () {
+                const avatarPath = `/userAvatars/${avatar}`;
+
+                if (avatarSelectionContext.mode === 'existing-user' && avatarSelectionContext.userId) {
+                    await updateExistingUserImageFromAvatar(avatarSelectionContext.userId, avatarPath);
+                    toggleAddUserAvatarModal();
+                    return;
+                }
+
+                // Seçili avatar'ı kullanıcı ekleme önizlemesine uygula
+                const previewImg = document.getElementById('addUserInputProfileImage');
+                if (previewImg) {
+                    previewImg.src = avatarPath;
+
+                    // Avatar yolunu kaydet
+                    selectedAddUserAvatarPath = avatarPath;
+
+                    // Dosya yükleme işlemini sıfırla (tek seçim mantığı)
+                    if (profileImageInput) {
+                        profileImageInput.value = '';
+                    }
+                    if (uploadBtn) {
+                        uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i>Yükle';
+                    }
+                    setImagePreviewVisible(false);
+                }
+
+                // Modal'ı kapat
+                toggleAddUserAvatarModal();
+            });
+
+            avatarGrid.appendChild(avatarItem);
+        });
+    } catch (error) {
+        console.error('Avatar yükleme hatası:', error);
+        avatarGrid.innerHTML = '<p>Avatar yüklenirken hata oluştu.</p>';
+    }
+}

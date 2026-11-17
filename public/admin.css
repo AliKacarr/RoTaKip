@@ -430,7 +430,7 @@ body {
 
 .admin-page-title {
     text-align: center;
-    font-size: clamp(1.25rem, 4vw, 1.875rem);
+    font-size: clamp(20px, 4vw, 30px);
     margin: 0 0 16px 0;
     color: #333;
     line-height: 1.25;
@@ -468,7 +468,7 @@ body {
 
 .admin-groups-screen-title {
     margin: 0;
-    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    font-size: clamp(18px, 3vw, 24px);
     color: #333;
 }
 

@@ -31,24 +31,14 @@ export default defineConfig([
   },
   {
     files: ['**/*.js'],
-    ignores: ['public/**'],
+    ignores: ['public/**', 'src/client/**'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: globals.node
     }
   },
   {
-    files: ['anket/**/*.js'],
-    languageOptions: {
-      sourceType: 'commonjs',
-      globals: {
-        ...globals.node,
-        document: 'readonly'
-      }
-    }
-  },
-  {
-    files: ['public/**/*.js'],
+    files: ['public/**/*.js', 'src/client/**/*.js'],
     languageOptions: {
       sourceType: 'script',
       globals: {
@@ -61,6 +51,16 @@ export default defineConfig([
     rules: {
       // Birden fazla script aynı sayfada paylaşılıyor; no-undef burası için gürültü
       'no-undef': 'off'
+    }
+  },
+  {
+    files: ['public/app/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: globals.browser
+    },
+    rules: {
+      'no-undef': 'error'
     }
   }
 ]);

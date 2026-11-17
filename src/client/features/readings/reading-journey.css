@@ -1,0 +1,358 @@
+/* Giriş yapan kullanıcıya ait ortak alan. Analiz veya Ana Sayfa ilk açılsa da
+   oturum doğrulanana kadar kapalı kalır. */
+.authenticated-user-areas {
+    display: grid;
+    grid-template-rows: 0fr;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(20px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: grid-template-rows 0.8s ease-out, opacity 0.6s ease-out, transform 0.6s ease-out, visibility 0s linear 0.8s;
+}
+
+.authenticated-user-areas.show {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: grid-template-rows 0.8s ease-out, opacity 0.6s ease-out, transform 0.6s ease-out, visibility 0s linear 0s;
+}
+
+.authenticated-user-areas-content {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.authenticated-user-areas.is-initial-reveal-pending,
+.authenticated-user-areas.is-initial-reveal-pending.show {
+    grid-template-rows: 1fr;
+    opacity: 0;
+    transform: translateY(20px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: none;
+}
+
+/* Kullanıcı İstatistik Bilgi Alanı Stilleri */
+.user-stats-info-area {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 20px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.user-stats-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e40af;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-stats-title i {
+    font-size: 30px;
+    color: #3b82f6;
+}
+
+.user-stats-content {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border-radius: 15px;
+    padding: 30px 35px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.10);
+    border: 3px solid rgba(59, 130, 246, 0.35);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.user-stats-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3B82F6, #60A5FA, #3B82F6);
+    background-size: 200% 100%;
+    animation: userStatsGradientShift 3s ease-in-out infinite;
+    z-index: 2;
+}
+
+.user-stats-content .confetti-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('images/confeti.webp');
+    background-size: auto;
+    background-repeat: repeat;
+    background-position: center;
+    z-index: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.user-stats-content .confetti-overlay.show {
+    animation: confetti-show 3s ease-in-out forwards;
+}
+
+.user-stats-content > .user-stats-left,
+.user-stats-content > .user-stats-center,
+.user-stats-content > .user-stats-right {
+    position: relative;
+    z-index: 1;
+}
+
+/* Sol Kısım: Giriş Serisi */
+.user-stats-left {
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+.user-stats-streak {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: white;
+}
+
+.user-stats-streak-icon {
+    width: 42px;
+    height: 42px;
+    filter: drop-shadow(0 2px 4px rgba(255, 69, 0, 0.4));
+    animation: userStatsStreakPulse 4s ease-in-out infinite;
+}
+
+.user-stats-streak-icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.user-stats-streak-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.user-stats-streak-number {
+    font-size: 33px;
+    font-weight: 700;
+    line-height: 1;
+    color: #dc2626;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.user-stats-streak-label {
+    font-size: 22px;
+    font-weight: 500;
+    color: #242933;
+    opacity: 0.8;
+    text-align: center;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Orta Kısım: Lig Bilgisi */
+.user-stats-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.user-stats-league-progress-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.user-stats-current-league,
+.user-stats-next-league {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 60px;
+}
+
+.user-stats-league-img {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.user-stats-league-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.user-stats-league-progress-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.user-stats-progress-info {
+    text-align: center;
+}
+
+.user-stats-progress-info span {
+    font-size: 23px;
+    font-weight: 600;
+    color: #374151;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.user-stats-progress-track {
+    height: 11px;
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.user-stats-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #60a5fa, #3b82f6);
+    border-radius: 4px;
+    transition: width 0.8s ease-in-out;
+    position: relative;
+    overflow: hidden;
+    width: 0%; /* Başlangıçta 0% */
+}
+
+.user-stats-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: userStatsProgressShine 2s ease-in-out infinite;
+}
+
+/* Sağ Kısım: Toplam Okuma */
+.user-stats-right {
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+.user-stats-reading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: white;
+}
+
+.user-stats-reading-icon {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
+    animation: userStatsReadingPulse 3s ease-in-out infinite;
+}
+
+.user-stats-reading-icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.user-stats-reading-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.user-stats-reading-number {
+    font-size: 33px;
+    font-weight: 700;
+    line-height: 1;
+    color: #1e40af;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.user-stats-reading-label {
+    font-size: 22px;
+    font-weight: 500;
+    color: #242933;
+    opacity: 0.8;
+    text-align: center;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Animasyonlar */
+@keyframes userStatsGradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes userStatsStreakPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes userStatsReadingPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes userStatsProgressShine {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.user-stats-progress-info .user-stats-progress-current {
+    font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .authenticated-user-areas {
+        transition: none;
+    }
+}

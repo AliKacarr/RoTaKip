@@ -1,0 +1,1922 @@
+.group-page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#secretAdminLogin {
+    cursor: pointer;
+    max-width: 500px;
+    min-height: 55px;
+    margin: auto;
+    text-align: center;
+    padding: 19px;
+    margin: 0 auto;
+    font-size: 38px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    justify-content: center;
+    flex-wrap: nowrap;
+}
+
+#secretAdminLogin h2 {
+    max-width: 390px;
+    word-wrap: break-word;
+    white-space: normal;
+    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
+    font-size: 38px;
+}
+
+#secretAdminLogin img {
+    flex-shrink: 0;
+    align-self: center;
+    height: 1.6em;
+    width: 1.6em;
+    border-radius: 6px;
+    position: relative;
+}
+
+.showGroups {
+    background: #b1e5f1;
+    border: 1px solid #c9c9c9;
+    border-radius: 8px;
+    padding: 13px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: 600;
+    color: #4e54c8;
+    box-shadow: 0 2px 8px rgba(78, 84, 200, 0.08);
+    margin-left: 20px;
+    margin-top: 5px;
+    letter-spacing: 0.4px;
+    transition: all 0.3s ease;
+}
+
+.showGroups:hover {
+    background: #a8dce5;
+    border-color: #c0c0c0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(78, 84, 200, 0.15);
+}
+
+.showGroups:active {
+    background: #9dd8e8;
+    border-color: #b8b8b8;
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(78, 84, 200, 0.1);
+}
+
+.profileButton {
+    background: #e1cff7;
+    border: 1px solid #d4bfed;
+    border-radius: 8px;
+    padding: 13px 22px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: 600;
+    color: #373fd6;
+    box-shadow: 0 2px 8px rgba(78, 84, 200, 0.08);
+    margin-top: 5px;
+    margin-right: 20px;
+    max-width: 200px;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    flex-shrink: 0;
+    letter-spacing: 0.4px;
+    transition: all 0.3s ease;
+}
+
+.profileButton:hover {
+    background: #d7c3f4;
+    border-color: #d0b7ea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(78, 84, 200, 0.15);
+}
+
+.profileButton:active {
+    background: #d1b5f0;
+    border-color: #c4a8e6;
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(78, 84, 200, 0.1);
+}
+
+.profileButtonText {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 150px !important;
+    display: inline-block !important;
+    line-height: 1 !important;
+    height: auto !important;
+    flex-shrink: 1 !important;
+}
+
+.showGroups > i,
+.profileButton > i {
+    font-size: 24px !important;
+}
+
+.error-message {
+    color: #e74c3c;
+    margin-top: 15px;
+    font-size: 18px;
+    text-align: center;
+    min-height: 20px;
+}
+
+/* Bu pencerelerin HTML'i grup ortak alanında bulunur. Ana Sayfa paketi
+   yüklenmeden açılan Analiz sekmesinde normal içerik olarak görünmemelidir. */
+.ready-images-modal:not(.show) {
+    display: none !important;
+}
+
+/* Modern Groups Auth Login Modal Styles */
+.groups-auth-login-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    overflow: auto;
+    justify-content: center;
+    align-items: center;
+    animation: groupsAuthModalFadeIn 0.3s ease-out;
+}
+
+.groups-auth-login-modal.show {
+    display: flex;
+}
+
+.groups-auth-login-modal-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    border-radius: 24px;
+    width: 90%;
+    max-width: 480px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: groupsAuthModalSlideIn 0.4s ease-out;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(20px);
+}
+
+.groups-auth-login-modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #3B82F6, #60A5FA, #3B82F6);
+    background-size: 200% 100%;
+    animation: groupsAuthGradientShift 3s ease-in-out infinite;
+}
+
+@keyframes groupsAuthGradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.groups-auth-login-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px 35px 25px 35px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-bottom: none;
+    position: relative;
+    border-radius: 24px 24px 0 0;
+}
+
+.groups-auth-login-modal-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 30px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    margin-right: 18px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.groups-auth-login-modal-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    flex: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.groups-auth-login-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.groups-auth-login-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.groups-auth-login-modal-body {
+    padding: 35px;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    border-radius: 0 0 24px 24px;
+}
+
+.groups-auth-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.groups-auth-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.groups-auth-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.groups-auth-input-icon {
+    position: absolute;
+    left: 15px;
+    color: #6b7280;
+    font-size: 20px;
+    z-index: 2;
+    transition: color 0.3s ease;
+}
+
+.groups-auth-form-input {
+    width: 100%;
+    padding: 16px 20px 16px 52px;
+    border: 2px solid #bac5d2;
+    border-radius: 14px;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    outline: none;
+    font-family: inherit;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.groups-auth-form-input:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 6px 20px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+    transform: translateY(-1px);
+}
+
+.groups-auth-form-input:focus + .groups-auth-input-icon,
+.groups-auth-input-container:focus-within .groups-auth-input-icon {
+    color: #3B82F6;
+}
+
+.groups-auth-form-input::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+}
+
+.groups-auth-password-toggle {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.groups-auth-password-toggle:hover {
+    background: rgba(107, 114, 128, 0.1);
+    color: #374151;
+    transform: scale(1.05);
+}
+
+.groups-auth-login-actions {
+    margin-top: 10px;
+}
+
+.groups-auth-login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+    color: white;
+    border: none;
+    padding: 18px 25px;
+    border-radius: 16px;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    border: 2px solid #1D4ED8;
+    position: relative;
+    overflow: hidden;
+}
+
+.groups-auth-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(59, 130, 246, 0.6);
+    background: linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%);
+    border-color: #1E40AF;
+}
+
+.groups-auth-login-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.groups-auth-login-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #d8d8d8;
+}
+
+.groups-auth-forgot-password-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #4b5563;
+    text-decoration: none;
+    font-size: 19px;
+    font-weight: 600;
+    padding: 14px 18px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
+    border: 2px solid #bac5d2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.groups-auth-forgot-password-link:hover {
+    color: #1f2937;
+    background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%);
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
+
+.groups-auth-join-group-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #1d4ed8;
+    text-decoration: none;
+    font-size: 19px;
+    font-weight: 600;
+    padding: 14px 18px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+    border: 2px solid #60a5fa;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.groups-auth-join-group-link:hover {
+    color: #1D4ED8;
+    background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    text-decoration: none;
+}
+
+.groups-auth-error-message {
+    color: #ef4444;
+    font-size: 18px;
+    padding: 12px 15px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.groups-auth-error-message.show {
+    display: flex;
+}
+
+.groups-auth-error-message::before {
+    content: "⚠️";
+    font-size: 20px;
+}
+
+/* Forgot Password Modal Styles */
+.groups-auth-forgot-modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    overflow: auto;
+    justify-content: center;
+    align-items: center;
+    animation: groupsAuthModalFadeIn 0.3s ease-out;
+}
+
+.groups-auth-forgot-modal.show {
+    display: flex;
+}
+
+.groups-auth-forgot-modal-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: groupsAuthModalSlideIn 0.4s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.groups-auth-forgot-modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b);
+    background-size: 200% 100%;
+    animation: groupsAuthGradientShift 3s ease-in-out infinite;
+}
+
+.groups-auth-forgot-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px 30px 20px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px 20px 0 0;
+    position: relative;
+}
+
+.groups-auth-forgot-modal-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 30px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    margin-right: 15px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.groups-auth-forgot-modal-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    flex: 1;
+}
+
+.groups-auth-forgot-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.groups-auth-forgot-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.groups-auth-forgot-modal-body {
+    padding: 0 30px 30px;
+}
+
+.groups-auth-forgot-content {
+    text-align: center;
+}
+
+.groups-auth-forgot-description {
+    color: #6b7280;
+    font-size: 20px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.groups-auth-forgot-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.groups-auth-forgot-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    background: #f8fafc;
+    border: 1px solid #cbd4df;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.groups-auth-forgot-option:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.groups-auth-forgot-option-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.groups-auth-forgot-option-content {
+    flex: 1;
+    text-align: left;
+}
+
+.groups-auth-forgot-option-content h3 {
+    color: #1f2937;
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.groups-auth-forgot-option-content p {
+    color: #6b7280;
+    font-size: 19px;
+    line-height: 1.5;
+    margin: 0 0 10px 0;
+}
+
+.groups-auth-support-email {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #3B82F6;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 19px;
+    padding: 8px 12px;
+    background: #eff6ff;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.groups-auth-support-email:hover {
+    background: #dbeafe;
+    color: #2563EB;
+    text-decoration: none;
+    transform: scale(1.05);
+}
+
+/* Animations */
+@keyframes groupsAuthModalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes groupsAuthModalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* Join Group Modal Styles */
+.groups-auth-join-modal {
+    display: none;
+    position: fixed;
+    z-index: 1002;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    overflow: auto;
+    justify-content: center;
+    align-items: center;
+    animation: groupsAuthModalFadeIn 0.3s ease-out;
+}
+
+.groups-auth-join-modal.show {
+    display: flex;
+}
+
+.groups-auth-join-modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    animation: groupsAuthModalSlideIn 0.3s ease-out;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.groups-auth-join-modal-content::before {
+    content: none;
+}
+
+.groups-auth-join-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.groups-auth-join-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.groups-auth-join-modal-body {
+    padding: 0;
+    overflow: visible;
+    flex: 1;
+}
+
+/* Grup Bilgileri Bölümü */
+.groups-auth-join-info-section {
+    padding: 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px 20px 0 0;
+    margin-bottom: 0;
+    position: relative;
+}
+
+.groups-auth-join-form-content {
+    padding: 25px 30px;
+}
+
+.groups-auth-join-group-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    padding-right: 42px;
+}
+
+.groups-auth-join-group-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.groups-auth-join-group-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.groups-auth-join-group-details h3 {
+    color: #ffffff;
+    font-size: 25px;
+    font-weight: 600;
+    margin: 0;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+    width: auto !important;
+}
+
+.groups-auth-join-group-details p {
+    color: #ffffff;
+    font-size: 18px;
+    margin: 5px 0 0;
+    font-weight: 400;
+    opacity: 0.9;
+}
+
+/* Form Bölümleri */
+.groups-auth-join-form-section {
+    margin-bottom: 20px;
+    padding-top: 5px;
+}
+
+.groups-auth-join-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #374151;
+    font-size: 23px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.groups-auth-join-section-title i {
+    color: #667eea;
+    font-size: 20px;
+}
+
+.groups-auth-join-form-group {
+    margin-bottom: 25px;
+}
+
+.groups-auth-join-form-group label {
+    display: block;
+    color: #4a5568;
+    font-size: 19px;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.groups-auth-join-form-label {
+    display: block;
+    color: #4a5568;
+    font-size: 19px;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.groups-auth-join-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.groups-auth-join-input-icon {
+    position: absolute;
+    left: 15px;
+    color: #6b7280;
+    font-size: 20px;
+    z-index: 2;
+    transition: color 0.3s ease;
+}
+
+.groups-auth-join-form-input {
+    width: 100%;
+    padding: 15px 20px 15px 50px;
+    border: 2px solid #64b5f6;
+    border-radius: 12px;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    background: #f8f9ff;
+    outline: none;
+    font-family: inherit;
+    box-shadow: 0 2px 8px rgba(100, 181, 246, 0.15);
+}
+
+.groups-auth-join-form-input:focus {
+    border-color: #42a5f5;
+    box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.25);
+    background: white;
+    transform: translateY(-1px);
+}
+
+.groups-auth-join-form-input:focus + .groups-auth-join-input-icon,
+.groups-auth-join-input-container:focus-within .groups-auth-join-input-icon {
+    color: #2196f3;
+}
+
+.groups-auth-join-form-input::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+}
+
+/* File Input Styling */
+.groups-auth-join-file-input-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 70px 15px 15px;
+    border: 2px solid #64b5f6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #e3f2fd;
+    color: #1976d2;
+    font-weight: 500;
+    position: relative;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(100, 181, 246, 0.15);
+}
+
+.groups-auth-join-file-input-label:hover {
+    border-color: #42a5f5;
+    background: #bbdefb;
+    color: #1976d2;
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.25);
+    transform: translateY(-1px);
+}
+
+.groups-auth-join-file-input-icon {
+    font-size: 20px;
+    color: #2196f3;
+    flex-shrink: 0;
+}
+
+.groups-auth-join-file-input-text {
+    margin-left: 10px;
+    font-size: 19px;
+    flex: 1;
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.groups-auth-join-file-name {
+    color: #0c4a6e;
+    font-weight: 500;
+    font-size: 19px;
+    margin-left: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+#groupsAuthJoinProfileImageInput {
+    display: none;
+}
+
+/* Password Toggle */
+.groups-auth-join-password-toggle {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.groups-auth-join-password-toggle:hover {
+    background: rgba(107, 114, 128, 0.1);
+    color: #374151;
+    transform: scale(1.05);
+}
+
+/* Butonlar */
+.groups-auth-join-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.groups-auth-join-cancel-btn {
+    flex: 1;
+    background: white;
+    color: #38a8f8;
+    border: 2px solid #38BDF8;
+    padding: 15px 25px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.groups-auth-join-cancel-btn:hover {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38a8f8;
+    border-color: #38BDF8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+}
+
+.groups-auth-join-submit-btn {
+    flex: 2;
+    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    border: 2px solid #2563EB;
+}
+
+.groups-auth-join-submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5);
+    background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+    border-color: #1D4ED8;
+}
+
+.groups-auth-join-submit-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+/* Join Request Success Modal Styles */
+.groups-auth-join-success-modal {
+    display: none;
+    position: fixed;
+    z-index: 1003;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    overflow: auto;
+    justify-content: center;
+    align-items: center;
+    animation: groupsAuthModalFadeIn 0.3s ease-out;
+}
+
+.groups-auth-join-success-modal.show {
+    display: flex;
+}
+
+.groups-auth-join-success-modal-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    width: 450px;
+    max-width: 90%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: groupsAuthModalSlideIn 0.4s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.groups-auth-join-success-modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+    background-size: 200% 100%;
+    animation: groupsAuthGradientShift 3s ease-in-out infinite;
+}
+
+.groups-auth-join-success-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px 30px 20px 30px;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    position: relative;
+}
+
+.groups-auth-join-success-modal-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 40px;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    margin-right: 15px;
+}
+
+
+.groups-auth-join-success-modal-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+    flex: 1;
+}
+
+.groups-auth-join-success-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.groups-auth-join-success-close-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #6b7280;
+}
+
+.groups-auth-join-success-modal-body {
+    padding: 30px;
+    text-align: center;
+}
+
+.groups-auth-join-success-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.groups-auth-join-success-message {
+    padding: 20px;
+    background: #f0fdf4;
+    border: 1px solid #b2c9ba;
+    border-radius: 12px;
+}
+
+.groups-auth-join-success-message p {
+    color: #10823b;
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.groups-auth-join-success-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.groups-auth-join-success-cancel-btn {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 2px solid #c4c7cd;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.groups-auth-join-success-cancel-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+    transform: translateY(-2px);
+}
+
+.groups-auth-join-success-view-btn {
+    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 140px;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    border: 2px solid #2563EB;
+}
+
+.groups-auth-join-success-view-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5);
+    background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+    border-color: #1D4ED8;
+}
+
+.groups-auth-join-success-view-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+/* Responsive Design for Success Modal */
+@media (max-width: 768px) {
+    .groups-auth-join-success-modal-content {
+        width: 100%;
+        max-width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    .groups-auth-join-success-modal-header {
+        padding: 20px 25px 15px 25px;
+    }
+    
+    .groups-auth-join-success-modal-body {
+        padding: 25px;
+    }
+    
+    .groups-auth-join-success-modal-title {
+        font-size: 30px;
+    }
+    
+    .groups-auth-join-success-modal-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 30px;
+    }
+    
+    .groups-auth-join-success-actions {
+        flex-direction: column;
+    }
+    
+    .groups-auth-join-success-cancel-btn,
+    .groups-auth-join-success-view-btn {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .groups-auth-join-success-modal-header {
+        padding: 15px 20px 10px 20px;
+    }
+    
+    .groups-auth-join-success-modal-body {
+        padding: 20px;
+    }
+    
+    .groups-auth-join-success-modal-title {
+        font-size: 26px;
+    }
+    
+    .groups-auth-join-success-message p {
+        font-size: 20px;
+    }
+    
+    .groups-auth-join-success-cancel-btn,
+    .groups-auth-join-success-view-btn {
+        padding: 14px 20px;
+        font-size: 19px;
+    }
+}
+
+
+/* Bilgilendirme mesajı stilleri */
+.groups-auth-login-info-message {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border: 1px solid #bbdefb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+}
+
+.groups-auth-info-icon {
+    color: #1976d2;
+    font-size: 24px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.groups-auth-info-text {
+    flex: 1;
+}
+
+.groups-auth-info-text p {
+    margin: 0;
+    color: #1565c0;
+    font-size: 19px;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+/* Mobil uyumluluk */
+@media (max-width: 768px) {
+    .groups-auth-login-info-message {
+        padding: 14px;
+        margin-bottom: 16px;
+    }
+    
+    .groups-auth-info-text p {
+        font-size: 18px;
+    }
+}
+
+/* Welcome Invite Modal Styles */
+.welcome-invite-modal {
+  display: none;
+  position: fixed;
+  z-index: 10001;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  justify-content: center;
+  align-items: center;
+  animation: welcomeInviteModalFadeIn 0.3s ease-out;
+}
+
+.welcome-invite-modal.show {
+  display: flex;
+}
+
+.welcome-invite-modal-content {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+  border-radius: 24px;
+  width: 90%;
+  max-width: 500px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  animation: welcomeInviteModalSlideIn 0.4s ease;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+@media (max-width: 1023px) {
+  .welcome-invite-modal-content,
+  .groups-auth-login-modal-content,
+  .groups-auth-join-success-modal-content,
+  .groups-auth-forgot-modal-content,
+  .groups-auth-join-modal-content {  
+    scale: 1.3;
+  }
+}
+
+.welcome-invite-modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3B82F6, #60A5FA, #3B82F6);
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 20px 20px 0 0;
+}
+
+@keyframes welcomeInviteModalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.welcome-invite-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.welcome-invite-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.welcome-invite-modal-body {
+  padding: 0;
+  position: relative;
+  overflow-y: auto;
+}
+
+.welcome-invite-content {
+  text-align: center;
+}
+
+.welcome-invite-form-content {
+  padding: 24px;
+}
+
+.welcome-invite-group-info {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: linear-gradient(135deg,#667eea 0,#764ba2 100%);
+  padding: 20px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.welcome-invite-group-avatar {
+  margin-left: 10px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.welcome-invite-group-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.welcome-invite-group-details {
+  flex: 1;
+  text-align: left;
+}
+
+.welcome-invite-group-details h3 {
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  text-shadow: none;
+  padding-bottom: 0 !important;
+  border-bottom: none !important;
+  max-width: 90% !important;
+}
+
+.welcome-user-name {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 5px 0 12px 0;
+  display: block;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(33, 150, 243, 0.1);
+}
+
+
+/* Welcome Form Styles */
+.welcome-invite-form {
+  background: rgba(255, 255, 255, 0.4);
+  padding: 20px 20px 5px 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+
+.welcome-form-group {
+  margin-bottom: 20px;
+}
+
+.welcome-form-group label {
+  color: #555;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  margin-left: 5px;
+  display: flex;
+  text-shadow: none;
+}
+
+.welcome-form-label {
+  color: #555;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  margin-left: 5px;
+  display: flex;
+  text-shadow: none;
+}
+
+/* Bilgi mesajları için stiller */
+.welcome-info-message {
+  margin-top: 4px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.welcome-info-icon {
+  color: #666;
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-left: 5px;
+}
+
+.welcome-info-text p {
+  margin: 0;
+  color: #666;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.welcome-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.welcome-input-icon {
+  position: absolute;
+  left: 16px;
+  color: #666;
+  font-size: 20px;
+  z-index: 2;
+}
+
+.welcome-form-input {
+  width: 100%;
+  padding: 16px 22px 16px 52px;
+  border: 2px solid #cbcbcb;
+  border-radius: 16px;
+  background: #fff;
+  color: #333;
+  font-size: 19px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.welcome-form-input::placeholder {
+  color: #999;
+}
+
+.welcome-form-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.welcome-password-toggle {
+  position: absolute;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.welcome-password-toggle:hover {
+  color: #333;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Profile Image Styles */
+.welcome-profile-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.welcome-profile-preview {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgb(69 62 229 / 50%);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+  flex-shrink: 0;
+}
+
+.welcome-profile-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.welcome-profile-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.welcome-button-row {
+  display: flex;
+  gap: 8px;
+}
+
+.welcome-upload-btn {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  border: 1px solid rgb(51 129 12 / 30%);
+  padding: 14px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  justify-content: center;
+  flex: 2;
+}
+
+.welcome-remove-btn {
+  background: linear-gradient(135deg, #F87171, #EF4444);
+  color: white;
+  border: 1px solid rgb(248 113 113 / 30%);
+  padding: 14px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(248, 113, 113, 0.3);
+  justify-content: center;
+  flex: 1;
+}
+
+.welcome-avatar-btn {
+  background: #3B82F6;
+  color: white;
+  border: 1px solid rgb(37 99 235 / 30%);
+  padding: 14px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  justify-content: center;
+  width: 100%;
+}
+
+.welcome-upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.welcome-remove-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(248, 113, 113, 0.4);
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+}
+
+.welcome-avatar-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  background: #2563EB;
+}
+
+.welcome-invite-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.welcome-invite-join-btn,
+.welcome-invite-cancel-btn {
+  padding: 18px 32px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: -0.01em;
+  height: 45px;
+}
+
+.welcome-invite-join-btn {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: white;
+  border: 2px solid #2563EB;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  flex: 3;
+}
+
+.welcome-invite-join-btn:hover {
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.welcome-invite-join-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.welcome-invite-cancel-btn {
+  background: #F8F9FA;
+  color: #6B7280;
+  border: 2px solid #b7c2d2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  flex: 2;
+}
+
+.welcome-invite-cancel-btn:hover {
+  background: #E5E7EB;
+  color: #374151;
+  border-color: #9CA3AF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-invite-cancel-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Animations */
+@keyframes welcomeInviteModalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* User Avatar Modal - Higher z-index */
+#userAvatarModal,
+#addUserAvatarModal {
+  z-index: 10010 !important;
+}
+
+/* Welcome Invite Modal Mobile Responsive */
+@media (max-width: 768px) {
+  .welcome-invite-modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .welcome-invite-modal-body {
+    padding: 25px;
+  }
+  
+  .welcome-invite-group-info {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+  
+  .welcome-invite-group-avatar {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .welcome-invite-group-details {
+    text-align: center;
+  }
+  
+  .welcome-invite-group-details h3 {
+    font-size: 20px;
+  }
+  
+  .welcome-invite-actions {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .welcome-invite-join-btn,
+  .welcome-invite-cancel-btn {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  /* Bilgi mesajları mobil uyumluluk */
+  .welcome-info-text p {
+    font-size: 16px;
+  }
+  
+  .welcome-info-icon {
+    font-size: 16px;
+  }
+}
+
+/* Groups Auth Join Avatar Button Styles */
+.groups-auth-join-avatar-btn {
+  background: #fff;
+  color: #1976d2;
+  border: 2px solid #64b5f6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  transition: all 0.3s ease;
+  height: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  overflow: hidden;
+  min-width: 40px;
+  width: 40px;
+}
+
+.groups-auth-join-avatar-btn:hover {
+  background: #f5fbff;
+  border-color: #42a5f5;
+  transform: translateY(-50%) translateY(-2px);
+  box-shadow: 0 2px 6px rgba(66, 165, 245, 0.4);
+}
+
+.groups-auth-join-avatar-btn:active {
+  transform: translateY(-50%);
+  box-shadow: 0 2px 4px rgba(66, 165, 245, 0.3);
+}
+
+#groupsAuthJoinAvatarModal {
+  z-index: 10010 !important;
+}
+
+.groups-auth-join-avatar-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.groups-auth-join-avatar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.groups-auth-join-input-container .groups-auth-join-file-input-label {
+  padding: 15px 70px 15px 15px; /* Increased right padding for avatar button */
+  margin: 0;
+}

@@ -1,0 +1,756 @@
+/* User Stats Header */
+.user-stats-header {
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  margin-top: 2px;
+  padding: 0; 
+}
+
+/* Günlük Görevler Butonu */
+.daily-tasks-button {
+  background: linear-gradient(135deg, #22c55e, #27d366);
+  border-radius: 50px;
+  padding: 14px 21px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  border: 2px solid #20bc59; 
+}
+
+.daily-tasks-button:hover {
+  transform: translateY(-2px);
+}
+
+.daily-tasks-button .tasks-icon {
+  font-size: 24px;
+  animation: tasksBounce 3s infinite;
+}
+
+.daily-tasks-button .tasks-text {
+  color: white;
+  font-weight: 600;
+  font-size: 21px;
+}
+
+@keyframes tasksBounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+}
+
+/* Günlük Hediye Butonu */
+.daily-gift-button {
+  background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+  border: 2px solid #ff7777;
+  border-radius: 50px;
+  padding: 14px 21px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row; /* Hediye solda, yazı sağda */
+  align-items: center;
+  gap: 8px; /* Boşluk */
+  transition: all 0.3s ease;
+}
+
+.daily-gift-button:hover {
+  transform: translateY(-2px);
+}
+
+.daily-gift-button .gift-icon {
+  font-size: 24px;
+  animation: giftBounce 3s infinite;
+}
+
+.daily-gift-button .gift-text {
+  color: white;
+  font-weight: 600;
+  font-size: 21px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+
+@keyframes giftBounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-3px); }
+}
+
+/* Günlük Hediye Modal */
+.daily-gift-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.daily-gift-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.daily-gift-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.daily-gift-content {
+  position: relative;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 30px;
+  width: 95%;
+  max-width: 600px; /* Yataylığı artırdık */
+  min-height: 600px; /* Yüksekliği azalttık */
+  overflow-y: visible;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  animation: daily-gift-modalFadeIn 0.4s ease-out;
+}
+
+
+@keyframes daily-gift-modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes daily-gift-slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.daily-gift-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px 35px 25px;
+  border-bottom: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  border-radius: 30px 30px 0 0;
+  animation: daily-gift-slideIn 0.4s ease-out 0.1s both;
+}
+
+.daily-gift-title {
+  color: #ffffff;
+  font-size: 28px !important;
+  font-weight: 900;
+  margin: 0;
+  text-align: center;
+  flex: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+}
+
+.daily-gift-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.daily-gift-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.daily-gift-body {
+  padding: 30px 35px;
+  background: #ffffff;
+  animation: daily-gift-slideIn 0.4s ease-out 0.2s both;
+}
+
+.daily-gift-description {
+  color: #475569;
+  font-size: 21px !important;
+  line-height: 1.8;
+  text-align: center;
+  margin-bottom: 30px;
+  font-style: italic;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.daily-gift-video-container {
+  text-align: center;
+}
+
+.daily-gift-video-thumbnail {
+  width: 100%;
+  max-width: 500px; /* Yataylığı artırdık */
+  height: 280px; /* Yüksekliği artırdık */
+  min-height: 280px; /* Minimum yükseklik */
+  border-radius: 20px;
+  object-fit: cover;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  animation: daily-gift-slideIn 0.4s ease-out 0.25s both;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  aspect-ratio: 16/9; /* Video oranını koruyor */
+}
+
+
+/* Video thumbnail container for play button */
+.daily-gift-video-thumbnail-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 500px; /* Yataylığı artırdık */
+  min-height: 280px; /* Yüksekliği artırdık */
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2);
+  aspect-ratio: 16/9; /* Video oranını koruyor */
+}
+
+/* Play button overlay (videos.css'den uyarlandı) */
+.daily-gift-play-icon {
+  font-family: "DejaVu Sans", "Arial Unicode MS", "Noto Sans Symbols", "Courier New", monospace;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #3b82f6;
+  font-size: 40px;
+  opacity: 0.9;
+  pointer-events: none;
+  text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease-out;
+}
+
+.daily-gift-video-thumbnail-container:hover .daily-gift-play-icon {
+  font-size: 44px;
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.2) 100%);
+  opacity: 1;
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+.daily-gift-video-link {
+  text-decoration: none;
+  display: inline-block;
+}
+
+
+.daily-gift-footer {
+  display: flex;
+  padding: 30px 35px 35px;
+  border-top: 2px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 0 0 30px 30px;
+  animation: daily-gift-slideIn 0.4s ease-out 0.3s both;
+}
+
+.daily-gift-quote {
+  color: #475569;
+  font-size: 22px !important;
+  line-height: 1.7;
+  text-align: center;
+  margin: 0;
+  font-style: italic;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== GÜNLÜK GÖREVLER MODAL ===== */
+
+/* Günlük Görevler Modal */
+.daily-tasks-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  overflow-y: auto;
+}
+
+.daily-tasks-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.daily-tasks-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.daily-tasks-content {
+  position: relative;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 30px;
+  width: 95%;
+  max-width: 600px;
+  max-height: 85vh;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  overflow-y: auto;
+  animation: daily-tasks-modalFadeIn 0.4s ease-out;
+}
+
+@keyframes daily-tasks-modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.daily-tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px 35px 25px;
+  border-bottom: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  animation: daily-tasks-slideIn 0.4s ease-out 0.1s both;
+}
+
+.daily-tasks-title {
+  color: #ffffff;
+  font-size: 26px !important;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+  flex: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+  gap: 10px;
+}
+
+.daily-tasks-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.daily-tasks-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.daily-tasks-body {
+  padding: 40px;
+  background: #ffffff;
+  animation: daily-tasks-slideIn 0.4s ease-out 0.2s both;
+}
+
+@keyframes daily-tasks-slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* Görev Listesi */
+.daily-tasks-list {
+  margin-bottom: 35px;
+}
+
+.daily-task-item {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  gap: 15px;
+  padding: 18px;
+  background: #fefeff;
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 15px;
+}
+
+.daily-task-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: #cbd5e1;
+  transition: all 0.3s ease;
+}
+
+.daily-task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #94a3b8;
+}
+
+.daily-task-item.completed {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: #22c55e;
+}
+
+.daily-task-item.completed::before {
+  background: #22c55e;
+}
+
+.daily-task-checkbox {
+  position: relative;
+}
+
+.daily-task-check {
+  display: none;
+}
+
+.daily-task-check-label {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #94a3b8;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.daily-task-check-label i {
+  color: #ffffff;
+  font-size: 18px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.3s ease;
+}
+
+.daily-task-check:checked + .daily-task-check-label {
+  background: #22c55e;
+  border-color: #22c55e;
+  transform: scale(1.1);
+}
+
+.daily-task-check:checked + .daily-task-check-label i {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.daily-task-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.daily-task-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+}
+
+.daily-task-item.completed .daily-task-icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+/* Görev türüne göre farklı renkler */
+.daily-task-item[data-task="reading"] .daily-task-icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.daily-task-item[data-task="gift"] .daily-task-icon {
+  background: linear-gradient(135deg, #ec4899, #be185d);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.daily-task-item[data-task="video"] .daily-task-icon {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Tamamlanan görevler için özel renkler */
+.daily-task-item[data-task="reading"].completed .daily-task-icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.daily-task-item[data-task="gift"].completed .daily-task-icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.daily-task-item[data-task="video"].completed .daily-task-icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.daily-task-info {
+  flex: 1;
+}
+
+.daily-task-title {
+  font-size: 20px;
+  font-weight: 620;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Günün Videosu Bölümü */
+
+.daily-tasks-video-section-title {
+  color: #1e293b;
+  font-size: 24px !important;
+  font-weight: 600;
+  margin: 0 0 15px 0;
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+  border-bottom: 1px solid #44444433;
+  gap: 10px;
+}
+
+
+.daily-tasks-video-section-title i {
+  color: #3b82f6;
+}
+
+.daily-tasks-video-container {
+  text-align: center;
+}
+
+.daily-tasks-video-link {
+  text-decoration: none;
+  display: inline-block;
+  width: 100%;
+  max-width: 500px;
+}
+
+.daily-tasks-video-thumbnail-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 500px;
+  min-height: 280px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2);
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.daily-tasks-video-thumbnail-container:hover {
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.daily-tasks-video-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 17px;
+}
+
+.daily-tasks-video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 17px;
+  transition: all 0.3s ease;
+}
+
+.daily-tasks-video-thumbnail-container:hover .daily-tasks-video-overlay {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7));
+}
+
+.daily-tasks-video-play-icon {
+  font-family: "DejaVu Sans", "Arial Unicode MS", "Noto Sans Symbols", "Courier New", monospace;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #3b82f6;
+  font-size: 40px;
+  opacity: 0.9;
+  pointer-events: none;
+  text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease-out;
+}
+
+.daily-tasks-video-thumbnail-container:hover .daily-tasks-video-play-icon {
+  font-size: 44px;
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.2) 100%);
+  opacity: 1;
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+
+
+/* Bildirim Animasyonları */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Görev İlerleme Alanı */
+.daily-tasks-progress-area {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 0 0 30px 0;
+  padding: 0;
+}
+
+.daily-tasks-progress-bar {
+  flex: 1;
+  height: 20px;
+  margin-left: 2px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.daily-tasks-progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-radius: 8px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+.daily-tasks-progress-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+/* Hatırlatma Bölümü */
+.daily-tasks-reminder-section {
+  margin-top: 20px;
+  padding: 20px 15px 0;
+  background: #ffffff;
+  border-top: 1px solid #44444450;
+}
+
+.daily-tasks-reminder-text {
+  display: flex;
+  font-size: 20px !important;
+  line-height: 1.7;
+  font-weight: 500;
+  color: #343d4b;
+  margin: 0;
+  font-style: italic;
+  text-align: center;
+}
