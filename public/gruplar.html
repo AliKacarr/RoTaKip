@@ -12,7 +12,7 @@
     <link rel="canonical" href="https://rotakip.up.railway.app/gruplar">
     <link rel="icon" href="/images/favicon.webp" type="image/x-icon" />
     <title>RoTaKip · Okuma Grupları</title>
-    <link rel="stylesheet" href="index.min.css?v=caeb0bb6fd81">
+    <link rel="stylesheet" href="index.min.css?v=a1b166f3da63">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
@@ -153,7 +153,7 @@
     <!-- Create Group Modal -->
     <div id="createGroupModal" class="modal" style="display: none; opacity: 0; visibility: hidden;">
         <div class="group-modal-content">
-            <div class="modal-header">
+            <div class="groups-directory-modal-header">
                 <div class="modal-title-container">
                     <div class="modal-icon">
                         <i class="fas fa-users-gear"></i>
@@ -166,9 +166,9 @@
             </div>
 
             <!-- Stage 1: Group Information -->
-            <form id="createGroupForm" class="modal-body">
+            <form id="createGroupForm" class="groups-directory-modal-body">
                 <div id="groupInfoStage" class="form-stage">
-                    <div class="form-group">
+                    <div class="groups-directory-form-group">
                         <label>Grup Resmi</label>
                         <div class="input-container">
                             <label for="groupImageInput" class="file-input-label">
@@ -176,13 +176,13 @@
                                 <span class="file-input-text">Bir resim seçin...</span>
                             </label>
                             <input type="file" id="groupImageInput" accept="image/*">
-                            <button type="button" class="ready-images-btn" id="readyImagesBtn">
+                            <button type="button" class="groups-directory-ready-images-btn" id="readyImagesBtn">
                                 ✨
                             </button>
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="groups-directory-form-group">
                         <label for="groupNameInput">Grup İsmi</label>
                         <div class="input-container">
                             <i class="fas fa-layer-group input-icon"></i>
@@ -191,7 +191,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="groups-directory-form-group">
                         <label for="groupDescInput">Grup Açıklaması</label>
                         <div class="input-container">
                             <i class="fas fa-align-left input-icon"></i>
@@ -200,7 +200,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="groups-directory-form-group">
                         <label for="groupVisibilityInput">Grup Görünürlüğü</label>
                         <div class="input-container">
                             <div class="select-wrapper">
@@ -211,7 +211,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="visibility-info" id="createGroupVisibilityInfo">
+                        <div class="groups-directory-visibility-info" id="createGroupVisibilityInfo">
                             <i class="fa-solid fa-info-circle"></i>
                             <span>Herkes bu grubu görüntüleyebilir.</span>
                         </div>
@@ -227,7 +227,7 @@
                             Yönetici Bilgileriniz
                         </h4>
 
-                        <div class="form-group">
+                        <div class="groups-directory-form-group">
                             <label for="adminProfileImageInput">Profil Resmi</label>
                             <div class="input-container">
                                 <label for="adminProfileImageInput" class="file-input-label">
@@ -241,7 +241,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="groups-directory-form-group">
                             <label for="adminUserNameInput">Kullanıcı Adı</label>
                             <div class="input-container">
                                 <i class="fas fa-user input-icon"></i>
@@ -257,7 +257,7 @@
                             Yönetici Girişi Bilgileriniz
                         </h4>
 
-                        <div class="form-group">
+                        <div class="groups-directory-form-group">
                             <label for="adminNameInput">Yönetici Adı</label>
                             <div class="input-container">
                                 <i class="fas fa-id-card input-icon"></i>
@@ -266,7 +266,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="groups-directory-form-group">
                             <label for="adminPasswordInput">Yönetici Şifresi</label>
                             <div class="input-container">
                                 <i class="fas fa-lock input-icon"></i>
@@ -276,7 +276,7 @@
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
-                            <div id="adminPasswordError" class="error-message" style="display: none;"></div>
+                            <div id="adminPasswordError" class="groups-directory-error-message" style="display: none;"></div>
                         </div>
                     </div>
                 </div>
@@ -304,19 +304,19 @@
     </div>
 
     <!-- Hazır Görseller Modal -->
-    <div id="readyImagesModal" class="ready-images-modal">
-        <div class="ready-images-modal-content">
-            <div class="modal-header">
+    <div id="groupsDirectoryReadyImagesModal" class="groups-directory-ready-images-modal">
+        <div class="groups-directory-ready-images-modal-content">
+            <div class="groups-directory-modal-header">
                 <h3>
                     <i class="fas fa-images"></i>
                     Hazır Görseller
                 </h3>
-                <button type="button" class="modal-close-btn" id="closeReadyImagesModal">
+                <button type="button" class="groups-directory-modal-close-btn" id="closeReadyImagesModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="avatar-grid" id="avatarGrid">
+            <div class="groups-directory-modal-body">
+                <div class="groups-directory-avatar-grid" id="groupsDirectoryAvatarGrid">
                     <!-- Avatar resimleri JavaScript ile yüklenecek -->
                 </div>
             </div>
@@ -324,19 +324,19 @@
     </div>
 
     <!-- Admin Avatar Selection Modal -->
-    <div id="adminAvatarModal" class="ready-images-modal">
-        <div class="ready-images-modal-content">
-            <div class="modal-header">
+    <div id="adminAvatarModal" class="groups-directory-ready-images-modal">
+        <div class="groups-directory-ready-images-modal-content">
+            <div class="groups-directory-modal-header">
                 <h3>
                     <i class="fa-solid fa-images"></i>
                     Avatar Seç
                 </h3>
-                <button type="button" class="modal-close-btn" id="closeAdminAvatarModal">
+                <button type="button" class="groups-directory-modal-close-btn" id="closeAdminAvatarModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="avatar-grid" id="adminAvatarGrid">
+            <div class="groups-directory-modal-body">
+                <div class="groups-directory-avatar-grid" id="adminAvatarGrid">
                     <!-- User avatar resimleri JavaScript ile yüklenecek -->
                 </div>
             </div>
@@ -347,7 +347,7 @@
     <div id="joinGroupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="joinGroupName"
         style="display: none; opacity: 0; visibility: hidden;">
         <div class="join-modal-content">
-            <form id="joinGroupForm" class="modal-body">
+            <form id="joinGroupForm" class="groups-directory-modal-body">
                 <div class="join-info-section">
                     <button type="button" class="join-modal-close-btn" id="closeJoinModal"
                         aria-label="Katılma penceresini kapat" title="Kapat">
@@ -371,7 +371,7 @@
                             Kullanıcı Bilgileriniz
                         </h4>
 
-                        <div class="form-group">
+                        <div class="groups-directory-form-group">
                             <label for="joinProfileImageInput">Profil Resmi</label>
                             <div class="input-container">
                                 <label for="joinProfileImageInput" class="file-input-label">
@@ -385,7 +385,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="groups-directory-form-group">
                             <label for="joinUserNameInput">Kullanıcı Adı</label>
                             <div class="input-container">
                                 <i class="fas fa-user input-icon"></i>
@@ -401,7 +401,7 @@
                             Üye Girişi Bilgileriniz
                         </h4>
 
-                        <div class="form-group">
+                        <div class="groups-directory-form-group">
                             <label for="joinMemberNameInput">Üye Adı</label>
                             <div class="input-container">
                                 <i class="fas fa-id-card input-icon"></i>
@@ -410,7 +410,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="groups-directory-form-group">
                             <label for="joinMemberPasswordInput">Üye Şifresi</label>
                             <div class="input-container">
                                 <i class="fas fa-lock input-icon"></i>
@@ -420,7 +420,7 @@
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
-                            <div id="joinPasswordError" class="error-message" style="display: none;"></div>
+                            <div id="joinPasswordError" class="groups-directory-error-message" style="display: none;"></div>
                         </div>
                     </div>
 
@@ -460,19 +460,19 @@
     </div>
 
     <!-- Join Avatar Selection Modal -->
-    <div id="joinAvatarModal" class="ready-images-modal">
-        <div class="ready-images-modal-content">
-            <div class="modal-header">
+    <div id="joinAvatarModal" class="groups-directory-ready-images-modal">
+        <div class="groups-directory-ready-images-modal-content">
+            <div class="groups-directory-modal-header">
                 <h3>
                     <i class="fa-solid fa-images"></i>
                     Avatar Seç
                 </h3>
-                <button type="button" class="modal-close-btn" id="closeJoinAvatarModal">
+                <button type="button" class="groups-directory-modal-close-btn" id="closeJoinAvatarModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="avatar-grid" id="joinAvatarGrid">
+            <div class="groups-directory-modal-body">
+                <div class="groups-directory-avatar-grid" id="joinAvatarGrid">
                     <!-- User avatar resimleri JavaScript ile yüklenecek -->
                 </div>
             </div>
@@ -482,7 +482,7 @@
     <script type="module" src="/app/group-directory-navigation.js"></script>
 
     <!-- Main Script -->
-    <script src="index.min.js?v=5f5033637c5c"></script>
+    <script src="index.min.js?v=cb0b608bd9fc"></script>
 
 </body>
 

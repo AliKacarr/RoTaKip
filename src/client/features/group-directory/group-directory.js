@@ -241,7 +241,7 @@ class GroupsPage {
         });
 
         // Hazır görseller modal'ı için dışına tıklama
-        const readyImagesModal = document.getElementById('readyImagesModal');
+        const readyImagesModal = document.getElementById('groupsDirectoryReadyImagesModal');
         if (readyImagesModal) {
             readyImagesModal.addEventListener('click', (e) => {
                 if (e.target === readyImagesModal) {
@@ -867,7 +867,7 @@ class GroupsPage {
             
             avatars.forEach((avatar, index) => {
                 const avatarItem = document.createElement('div');
-                avatarItem.className = 'avatar-item';
+                avatarItem.className = 'groups-directory-avatar-item';
                 avatarItem.innerHTML = `<img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">`;
                 
                 avatarItem.addEventListener('click', () => this.selectAdminAvatar(avatar));
@@ -1149,7 +1149,7 @@ class GroupsPage {
 
     // Hazır görseller modal'ını aç/kapat
     toggleReadyImagesModal() {
-        const modal = document.getElementById('readyImagesModal');
+        const modal = document.getElementById('groupsDirectoryReadyImagesModal');
         if (modal.classList.contains('show')) {
             this.closeReadyImagesModal();
         } else {
@@ -1158,7 +1158,7 @@ class GroupsPage {
     }
 
     async openReadyImagesModal() {
-        const modal = document.getElementById('readyImagesModal');
+        const modal = document.getElementById('groupsDirectoryReadyImagesModal');
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
         
@@ -1170,7 +1170,7 @@ class GroupsPage {
     }
 
     closeReadyImagesModal() {
-        const modal = document.getElementById('readyImagesModal');
+        const modal = document.getElementById('groupsDirectoryReadyImagesModal');
         modal.classList.remove('show');
         document.body.style.overflow = 'auto';
     }
@@ -1181,7 +1181,7 @@ class GroupsPage {
             const response = await fetch('/api/group-avatars');
             if (response.ok) {
                 const avatars = await response.json();
-                const avatarGrid = document.getElementById('avatarGrid');
+                const avatarGrid = document.getElementById('groupsDirectoryAvatarGrid');
                 
                 avatarGrid.innerHTML = '';
                 
@@ -1198,12 +1198,12 @@ class GroupsPage {
                 
                 avatars.forEach(avatar => {
                     const avatarItem = document.createElement('div');
-                    avatarItem.className = 'avatar-item';
+                    avatarItem.className = 'groups-directory-avatar-item';
                     avatarItem.dataset.avatarPath = avatar.path;
                     
                     avatarItem.innerHTML = `
                         <img src="${avatar.path}" alt="Avatar">
-                        <div class="check-icon">
+                        <div class="groups-directory-avatar-check-icon">
                             <i class="fa-solid fa-check"></i>
                         </div>
                     `;
@@ -1222,7 +1222,7 @@ class GroupsPage {
     // Avatar seç
     selectAvatar(avatarPath, avatarElement) {
         // Önceki seçimi kaldır
-        document.querySelectorAll('.avatar-item').forEach(item => {
+        document.querySelectorAll('.groups-directory-avatar-item').forEach(item => {
             item.classList.remove('selected');
         });
         
@@ -1726,7 +1726,7 @@ class AvatarModalManager {
             
             avatars.forEach((avatar, index) => {
                 const avatarItem = document.createElement('div');
-                avatarItem.className = 'avatar-item';
+                avatarItem.className = 'groups-directory-avatar-item';
                 avatarItem.innerHTML = `<img src="/userAvatars/${avatar}" alt="Avatar ${index + 1}">`;
                 
                 avatarItem.addEventListener('click', () => this.selectJoinAvatar(avatar));

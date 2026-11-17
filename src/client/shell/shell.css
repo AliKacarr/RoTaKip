@@ -186,11 +186,16 @@ body.app-shell-body { padding-left: 132px; }
   animation: none !important;
   transition: none !important;
 }
-.tab-view-groups,
-.tab-view-videos,
-.tab-view-tesbihat,
-.tab-view-tefekkur,
-.tab-view-articles,
+.tab-view-groups:not(.visible),
+.tab-view-videos:not(.visible),
+.tab-view-tesbihat:not(.visible),
+.tab-view-tefekkur:not(.visible),
+.tab-view-articles:not(.visible) {
+  opacity: 0;
+  visibility: hidden;
+  transform: none;
+  animation: none;
+}
 .tab-view-groups.visible,
 .tab-view-videos.visible,
 .tab-view-tesbihat.visible,
@@ -303,17 +308,17 @@ body.app-shell-body { padding-left: 132px; }
 }
 
 .initial-tab-loader {
-  position: absolute;
-  inset: -10px -40px auto;
-  z-index: 20;
+  position: fixed;
+  inset: 0;
+  z-index: 8999;
   display: flex;
   align-items: center;
   justify-content: center;
   width: auto;
-  min-height: calc(100vh - 40px);
+  min-height: 100vh;
   box-sizing: border-box;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 0;
   opacity: 1;
   visibility: visible;
   transition: opacity 240ms ease, visibility 240ms ease;

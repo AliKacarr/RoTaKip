@@ -20,6 +20,13 @@ function collectIds(content) {
   return Array.from(content.matchAll(/\bid=["']([^"']+)["']/g), match => match[1]);
 }
 
+function collectCssClasses(content) {
+  return new Set(Array.from(
+    content.matchAll(/\.([A-Za-z_][A-Za-z0-9_-]*)/g),
+    match => match[1]
+  ));
+}
+
 function assertUniqueIds(files) {
   const ids = collectIds(files.map(readPublic).join('\n'));
   const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
@@ -103,11 +110,11 @@ test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*box-sizing:\s*border-box/s);
   assert.match(shellStyles, /#footerRoot\s*\{[^}]*margin-top:\s*auto/s);
   assert.match(shellStyles, /\.app-shell-container\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*1080px/s);
-  assert.match(shellStyles, /\.initial-tab-loader\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*-10px -40px auto;[^}]*width:\s*auto;[^}]*background:\s*#fff;/s);
+  assert.match(shellStyles, /\.initial-tab-loader\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*z-index:\s*8999;[^}]*min-height:\s*100vh;[^}]*background:\s*#fff;/s);
   assert.match(shellStyles, /body\.initial-tab-loading\s*\{[^}]*overflow:\s*hidden/s);
   assert.doesNotMatch(shellStyles, /html\.initial-group-route-loading/);
   assert.match(shellStyles, /\.app-navigation\s*\{[^}]*z-index:\s*9000/s);
-  assert.match(shellStyles, /\.initial-tab-loader\s*\{[^}]*z-index:\s*20/s);
+  assert.match(shellStyles, /\.app-navigation\s*\{[^}]*z-index:\s*9000[\s\S]*?\.initial-tab-loader\s*\{[^}]*z-index:\s*8999/s);
   assert.match(shellStyles, /\.tab-view\.visible\s*\{[^}]*tab-view-enter/s);
   assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?body\.app-shell-body\s*\{[^}]*padding-bottom:\s*calc\(128px \+ env\(safe-area-inset-bottom, 0px\)\)/s);
   assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation\s*\{[^}]*padding:\s*0 0 env\(safe-area-inset-bottom, 0px\);[^}]*border-top:\s*0/s);
@@ -382,8 +389,10 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   const router = readPublic('app/shell-router.js');
   const navigation = readPublic('app/navigation.js');
   const routes = readPublic('app/route-config.js');
+  const directoryHtml = readPublic('gruplar.html');
   const directory = readClient('features/group-directory/group-directory.js');
   const directoryStyles = readClient('features/group-directory/group-directory.css');
+  const managementStyles = readClient('features/readings/group-management.css');
 
   assert.match(routes, /name: 'groups',[\s\S]*?fragment: '\/gruplar\.html'[\s\S]*?groups-directory\.min\.js[\s\S]*?groups-directory\.min\.css/);
   assert.match(router, /function createGroupDirectoryView\(route\)[\s\S]*?new DOMParser\(\)[\s\S]*?contentRoot\.querySelector\('\.site-footer'\)\?\.remove\(\)[\s\S]*?view\.className = 'tab-view tab-view-groups'/);
@@ -402,14 +411,36 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(directory, /isUserGroup[\s\S]*?class="view-group-btn"[\s\S]*?Grubu Görüntüle/);
   assert.match(directory, /viewGroupBtn\?\.addEventListener\('click',[\s\S]*?e\.stopPropagation\(\)[\s\S]*?openGroup\(\)[\s\S]*?card\.addEventListener\('click', openGroup\)/);
   assert.match(directoryStyles, /\.join-group-btn,[\s\S]*?\.view-group-btn\s*\{[\s\S]*?position:\s*absolute/);
-  assert.match(directoryStyles, /\.tab-view-groups \.ready-images-btn,[\s\S]*?background:\s*#fff;[\s\S]*?width:\s*40px;/);
-  assert.match(readClient('features/readings/group-management.css'), /\.tab-view-okumalar \.ready-images-btn\s*\{[\s\S]*?width:\s*100%;/);
-  assert.doesNotMatch(readClient('features/readings/group-management.css'), /^\.ready-images-btn/m);
-  assert.match(readClient('features/readings/group-management.css'), /#overlayRoot \.ready-images-modal\s*\{/);
+  assert.match(directoryHtml, /class="groups-directory-ready-images-btn"/);
+  assert.match(directoryHtml, /class="groups-directory-form-group"/);
+  assert.match(directoryHtml, /class="groups-directory-ready-images-modal"/);
+  assert.match(directoryHtml, /id="groupsDirectoryReadyImagesModal"/);
+  assert.match(directoryHtml, /id="groupsDirectoryAvatarGrid"/);
+  assert.match(directory, /className = 'groups-directory-avatar-item'/);
+  assert.match(directory, /getElementById\('groupsDirectoryReadyImagesModal'\)/);
+  assert.match(directory, /getElementById\('groupsDirectoryAvatarGrid'\)/);
+  assert.match(directoryStyles, /\.tab-view-groups \.groups-directory-ready-images-btn,[\s\S]*?background:\s*#fff;[\s\S]*?width:\s*40px;/);
+  assert.match(managementStyles, /\.tab-view-okumalar \.ready-images-btn\s*\{[\s\S]*?width:\s*100%;/);
+  assert.doesNotMatch(managementStyles, /^\.ready-images-btn/m);
+  assert.match(managementStyles, /#overlayRoot \.ready-images-modal\s*\{/);
+  const directoryClassNames = collectCssClasses(directoryStyles);
+  const managementClassNames = collectCssClasses(managementStyles);
+  const sharedFeatureClassNames = [...directoryClassNames]
+    .filter(className => managementClassNames.has(className))
+    .sort();
+  assert.deepEqual(sharedFeatureClassNames, ['selected', 'show']);
+  const commonOverlayIds = new Set(collectIds(readPublic('fragments/common-overlays.html')));
+  const sharedDirectoryOverlayIds = collectIds(directoryHtml)
+    .filter(id => commonOverlayIds.has(id));
+  assert.deepEqual(sharedDirectoryOverlayIds, []);
   assert.match(router, /function getViewCacheKey\(route\)[\s\S]*?route\.name === 'okumalar'[\s\S]*?return 'okumalar'/);
   assert.match(router, /const okumalarStyleLinks = new Set\(\)[\s\S]*?function setOkumalarStylesEnabled\(enabled\)[\s\S]*?link\.disabled = !okumalarStylesEnabled/);
   assert.match(router, /async function loadOkumalarStyles\(fileNames\)[\s\S]*?loadBundleStyles\(fileNames\)[\s\S]*?okumalarStyleLinks\.add\(link\)/);
-  assert.match(router, /activeLifecycle = null;[\s\S]*?setOkumalarStylesEnabled\(route\.requiresGroup\)[\s\S]*?configureNavigation/);
+  assert.match(router, /activeLifecycle = null;[\s\S]*?if \(route\.requiresGroup\) setOkumalarStylesEnabled\(true\);[\s\S]*?configureNavigation/);
+  assert.match(router, /function waitForStyleApplication\(styleLinks\)[\s\S]*?requestAnimationFrame\(\(\) => window\.requestAnimationFrame\(resolve\)\)/);
+  assert.match(router, /criticalStyleLinks[\s\S]*?await waitForStyleApplication\(criticalStyleLinks\)[\s\S]*?await activateView\(route, preparedView\)/);
+  assert.match(router, /if \(!groupViewPrepared\)[\s\S]*?await activateView\(route\);[\s\S]*?if \(sequence !== navigationSequence\) return;[\s\S]*?setOkumalarStylesEnabled\(false\)/);
+  assert.doesNotMatch(router, /activeLifecycle = null;\s*setOkumalarStylesEnabled\(route\.requiresGroup\)/);
   assert.match(router, /loadOkumalarStyles\(\['group-common\.min\.css', \.\.\.ROUTE_ASSETS\[route\.name\]\.styles\]\)/);
   assert.match(router, /loadAssetGroup[\s\S]*?loadOkumalarStyles\(assets\.styles\)/);
   assert.match(router, /function resetOkumalarViewForGroup\(nextGroupId\)[\s\S]*?resetTrackerTimelineForGroup\?\.\(\)[\s\S]*?viewCache\.get\('okumalar'\)[\s\S]*?lifecycleCache\.delete\(okumalarView\)[\s\S]*?groupWarmups\.clear\(\)/);
@@ -457,6 +488,7 @@ test('Tefekkür yeni metinleri arka planda hazırlayıp birlikte gösterir', () 
 
 test('bağımsız global sekmeler yukarı kayma efekti kullanmaz', () => {
   const shellStyles = readClient('shell/shell.css');
+  assert.match(shellStyles, /\.tab-view-groups:not\(\.visible\),[\s\S]*?\.tab-view-articles:not\(\.visible\)\s*\{[\s\S]*?opacity:\s*0;[\s\S]*?visibility:\s*hidden;/);
   assert.match(shellStyles, /\.tab-view-videos[\s\S]*?\.tab-view-articles\.visible[\s\S]*?animation:\s*none/);
   assert.doesNotMatch(readClient('features/articles/articles.js'), /renderArticlesWithTransition|translateY\(20px\)/);
 });
@@ -479,12 +511,18 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.doesNotMatch(router, /PLACEHOLDER_DELAY_MS|PLACEHOLDER_MIN_VISIBLE_MS|preparePlaceholderGate/);
   assert.match(router, /function hasReadyCachedView\(route\)[\s\S]*?lifecycleCache\.has\(view\)/);
   assert.match(router, /const cachedView = viewCache\.get\(cacheKey\)[\s\S]*?const view = await cachedView[\s\S]*?viewCache\.set\(cacheKey, view\)/);
-  assert.match(router, /const useInitialTabLoader = isInitialNavigation && hasInitialTabLoader\(\)[\s\S]*?const revealAfterLifecycle = useFullScreenLoader[\s\S]*?\|\| useInitialTabLoader[\s\S]*?\|\| useOkumalarTransitionLoader[\s\S]*?\|\| useGroupsTransitionLoader/);
+  assert.match(router, /const useInitialTabLoader = hasInitialTabLoader\(\)[\s\S]*?const revealAfterLifecycle = useFullScreenLoader[\s\S]*?\|\| useInitialTabLoader[\s\S]*?\|\| useOkumalarTransitionLoader[\s\S]*?\|\| useGroupsTransitionLoader/);
+  assert.match(router, /const useOkumalarTransitionLoader = !useInitialTabLoader[\s\S]*?const useGroupsTransitionLoader = !useInitialTabLoader/);
   assert.match(router, /useOkumalarTransitionLoader[\s\S]*?!isInitialNavigation[\s\S]*?route\.name === 'okumalar'[\s\S]*?!targetWasReady/);
-  assert.match(router, /useGroupsTransitionLoader = !isInitialNavigation[\s\S]*?route\.name === 'groups'/);
-  assert.match(router, /useGroupsTransitionLoader \? 'Gruplar hazırlanıyor' : 'Okumalar hazırlanıyor'[\s\S]*?await Promise\.all\(\[revealPromise, hideRouteTransitionLoader\(transitionLoader\)\]\)/);
+  assert.match(router, /useGroupsTransitionLoader = !useInitialTabLoader[\s\S]*?&& !isInitialNavigation[\s\S]*?route\.name === 'groups'/);
+  assert.match(router, /useGroupsTransitionLoader \? 'Gruplar hazırlanıyor' : 'Okumalar hazırlanıyor'/);
   assert.match(router, /ROUTE_TRANSITION_MIN_VISIBLE_MS = 1000[\s\S]*?waitBeforeFade[\s\S]*?loader\.classList\.add\('is-leaving'\)/);
-  assert.match(router, /if \(revealAfterLifecycle\)[\s\S]*?const revealPromise = revealRouteContent\(activeView\)[\s\S]*?Promise\.all\(\[revealPromise, hideInitialTabLoader\(\)\]\)/);
+  assert.match(router, /function keepInitialTabLoaderVisible\(\)[\s\S]*?classList\.remove\('is-leaving'\)[\s\S]*?function hideInitialTabLoader\(expectedSequence = null\)[\s\S]*?expectedSequence !== navigationSequence[\s\S]*?keepInitialTabLoaderVisible\(\)[\s\S]*?resolve\(false\)/);
+  assert.match(router, /async function revealRouteAfterLoader\(view, options = \{\}\)[\s\S]*?hideInitialTabLoader\(options\.sequence\)[\s\S]*?options\.sequence !== navigationSequence[\s\S]*?await revealRouteContent\(view\)/);
+  assert.match(router, /const sequence = \+\+navigationSequence;\s*keepInitialTabLoaderVisible\(\);\s*removeRouteTransitionLoader\(\)/);
+  assert.match(router, /activatePrivateGroupView\(\{ reveal: !revealAfterLifecycle \}\)[\s\S]*?if \(revealAfterLifecycle\)[\s\S]*?await revealRouteAfterLoader\(activeView, \{ useInitialTabLoader, transitionLoader, sequence \}\)/);
+  assert.match(router, /if \(revealAfterLifecycle\)\s*\{\s*await revealRouteAfterLoader\(activeView, \{ useInitialTabLoader, transitionLoader, sequence \}\);\s*\}/);
+  assert.doesNotMatch(router, /Promise\.all\(\[revealPromise, hide(?:InitialTabLoader|RouteTransitionLoader)/);
   assert.doesNotMatch(router, /CACHED_ROUTE_STATUS_DELAY_MS|scheduleStatus|routeStatusShowTimer/);
   assert.match(router, /window\.waitForRoutePlaceholder\s*=\s*async function/);
   assert.doesNotMatch(router, /prepareRoutePlaceholders/);

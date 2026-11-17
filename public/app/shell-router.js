@@ -70,6 +70,14 @@ async function loadOkumalarStyles(fileNames) {
   return links;
 }
 
+function waitForStyleApplication(styleLinks) {
+  const hasEnabledStyle = styleLinks.some(link => link?.isConnected && !link.disabled);
+  if (!hasEnabledStyle) return Promise.resolve();
+  return new Promise(resolve => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+  });
+}
+
 function showStatus() {}
 
 function routeUsesFullScreenLoader() {
@@ -84,15 +92,34 @@ function hasInitialTabLoader() {
   return Boolean(initialTabLoader?.isConnected);
 }
 
-function hideInitialTabLoader() {
-  document.body.classList.remove('initial-tab-loading');
-  tabContent.classList.remove('is-initial-loading');
-  if (!hasInitialTabLoader()) return Promise.resolve();
+function keepInitialTabLoaderVisible() {
+  if (!hasInitialTabLoader()) return;
+  initialTabLoader.classList.remove('is-leaving');
+  document.body.classList.add('initial-tab-loading');
+  tabContent.classList.add('is-initial-loading');
+}
+
+function hideInitialTabLoader(expectedSequence = null) {
+  if (expectedSequence !== null && expectedSequence !== navigationSequence) {
+    return Promise.resolve(false);
+  }
+  if (!hasInitialTabLoader()) {
+    document.body.classList.remove('initial-tab-loading');
+    tabContent.classList.remove('is-initial-loading');
+    return Promise.resolve(true);
+  }
   initialTabLoader.classList.add('is-leaving');
   return new Promise(resolve => {
     window.setTimeout(() => {
+      if (expectedSequence !== null && expectedSequence !== navigationSequence) {
+        keepInitialTabLoaderVisible();
+        resolve(false);
+        return;
+      }
       initialTabLoader.remove();
-      resolve();
+      document.body.classList.remove('initial-tab-loading');
+      tabContent.classList.remove('is-initial-loading');
+      resolve(true);
     }, 240);
   });
 }
@@ -153,6 +180,15 @@ function hideRouteTransitionLoader(loader) {
       }, 240);
     }, waitBeforeFade);
   });
+}
+
+async function revealRouteAfterLoader(view, options = {}) {
+  if (options.sequence !== undefined && options.sequence !== navigationSequence) return false;
+  if (options.useInitialTabLoader) await hideInitialTabLoader(options.sequence);
+  else if (options.transitionLoader) await hideRouteTransitionLoader(options.transitionLoader);
+  if (options.sequence !== undefined && options.sequence !== navigationSequence) return false;
+  await revealRouteContent(view);
+  return true;
 }
 
 function renderError(error) {
@@ -224,14 +260,14 @@ async function activateView(route, preparedView = null) {
   activeView = view;
 }
 
-async function activatePrivateGroupView() {
+async function activatePrivateGroupView(options = {}) {
   const view = await createFragmentView('/fragments/group-header.html', 'okumalar');
   view.dataset.privateGroupAccess = 'true';
   if (activeView && activeView !== view) activeView.remove();
   if (hasInitialTabLoader()) tabContent.appendChild(view);
   else tabContent.replaceChildren(view);
   activeView = view;
-  await revealRouteContent(view, true);
+  if (options.reveal !== false) await revealRouteContent(view, true);
 }
 
 function updateMetadata(route, groupContext) {
@@ -626,6 +662,7 @@ function schedulePrefetch(route) {
 
 async function navigate(url, options = {}) {
   const sequence = ++navigationSequence;
+  keepInitialTabLoaderVisible();
   removeRouteTransitionLoader();
   const isInitialNavigation = activeView === null;
   const route = resolveRoute(url.pathname);
@@ -640,11 +677,13 @@ async function navigate(url, options = {}) {
   const targetWasReady = hasReadyCachedView(route);
   const useFullScreenLoader = routeUsesFullScreenLoader(route)
     && !targetWasReady;
-  const useInitialTabLoader = isInitialNavigation && hasInitialTabLoader();
-  const useOkumalarTransitionLoader = !isInitialNavigation
+  const useInitialTabLoader = hasInitialTabLoader();
+  const useOkumalarTransitionLoader = !useInitialTabLoader
+    && !isInitialNavigation
     && route.name === 'okumalar'
     && !targetWasReady;
-  const useGroupsTransitionLoader = !isInitialNavigation
+  const useGroupsTransitionLoader = !useInitialTabLoader
+    && !isInitialNavigation
     && route.name === 'groups';
   const revealAfterLifecycle = useFullScreenLoader
     || useInitialTabLoader
@@ -659,7 +698,7 @@ async function navigate(url, options = {}) {
   else await hideStatus();
   if (activeLifecycle && typeof activeLifecycle.destroy === 'function') activeLifecycle.destroy();
   activeLifecycle = null;
-  setOkumalarStylesEnabled(route.requiresGroup);
+  if (route.requiresGroup) setOkumalarStylesEnabled(true);
   configureNavigation(route, target => navigate(target));
   resetRouteScroll();
 
@@ -672,12 +711,14 @@ async function navigate(url, options = {}) {
     let groupViewPrepared = false;
     if (route.requiresGroup) {
       const criticalScripts = [...GROUP_COMMON_SCRIPTS, ...ROUTE_ASSETS[route.name].scripts];
-      const [resolvedContext, , preparedView] = await Promise.all([
+      const [resolvedContext, criticalStyleLinks, preparedView] = await Promise.all([
         resolveGroupContext(route.groupId),
         loadOkumalarStyles(['group-common.min.css', ...ROUTE_ASSETS[route.name].styles]),
         getView(route),
         Promise.all(criticalScripts.map(fileName => preloadBundle(fileName, 'script')))
       ]);
+      if (sequence !== navigationSequence) return;
+      await waitForStyleApplication(criticalStyleLinks);
       if (sequence !== navigationSequence) return;
       groupContext = resolvedContext;
       updateMetadata(route, groupContext);
@@ -694,12 +735,13 @@ async function navigate(url, options = {}) {
 
       if (!groupContext.canRead) {
         await ensureGroupCommon(route, groupContext, null);
-        await activatePrivateGroupView();
+        await activatePrivateGroupView({ reveal: !revealAfterLifecycle });
         await initializeGroupUi();
         await window.initializeGroupPage();
         await hideStatus();
-        await hideInitialTabLoader();
-        await hideRouteTransitionLoader(transitionLoader);
+        if (revealAfterLifecycle) {
+          await revealRouteAfterLoader(activeView, { useInitialTabLoader, transitionLoader, sequence });
+        }
         return;
       }
 
@@ -721,6 +763,7 @@ async function navigate(url, options = {}) {
       if (sequence !== navigationSequence) return;
       await activateView(route);
       if (sequence !== navigationSequence) return;
+      setOkumalarStylesEnabled(false);
     }
     const hasCachedLifecycle = lifecycleCache.has(activeView);
     if (hasCachedLifecycle) activeLifecycle = lifecycleCache.get(activeView);
@@ -766,10 +809,7 @@ async function navigate(url, options = {}) {
     await hideStatus();
     if (sequence !== navigationSequence) return;
     if (revealAfterLifecycle) {
-      const revealPromise = revealRouteContent(activeView);
-      if (useInitialTabLoader) await Promise.all([revealPromise, hideInitialTabLoader()]);
-      else if (transitionLoader) await Promise.all([revealPromise, hideRouteTransitionLoader(transitionLoader)]);
-      else await revealPromise;
+      await revealRouteAfterLoader(activeView, { useInitialTabLoader, transitionLoader, sequence });
     }
     window.revealPendingReadingMessagePanels?.(activeView);
     tabContent.focus({ preventScroll: true });
@@ -785,7 +825,7 @@ async function navigate(url, options = {}) {
     if (sequence !== navigationSequence) return;
     console.error('Route yükleme hatası:', error);
     await hideStatus();
-    await hideInitialTabLoader();
+    await hideInitialTabLoader(sequence);
     removeRouteTransitionLoader(transitionLoader);
     renderError(error);
   }
