@@ -1090,7 +1090,7 @@ class GroupsPage {
                 <span class="member-count"><span class="memberCount">${memberCount}</span> üye</span>
             </div>
             ${isUserGroup
-                ? '<button type="button" class="view-group-btn"><i class="fas fa-eye"></i> Grubu Görüntüle</button>'
+                ? '<button type="button" class="view-group-btn">Grubu Görüntüle</button>'
                 : this.getJoinButtonHtml(group)}
         </div>
     `;

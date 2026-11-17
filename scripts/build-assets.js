@@ -25,7 +25,6 @@ const bundles = {
     css: [
       'shell/base.css',
       'shared/footer.css',
-      'shell/group-footer.css',
       'shared/cookies.css',
       'shared/share-modal.css',
       'shell/shell.css'

@@ -1,9 +1,9 @@
 .site-footer {
   color: #222;
   padding-top: 10px;
-  font-size: 16px;
+  font-size: 21px;
   margin-top: 10px;
-  border-top: 1px solid #44444423;
+  border-top: 1px solid #44444430;
 }
 
 .footer-container {
@@ -27,7 +27,7 @@
 .footer-section h4 {
   color: #2b67c4;
   margin: 0 auto 10px auto;
-  font-size: 18px;
+  font-size: 23px;
   font-weight: bold;
   display: inline-block;
   border-bottom: 2px solid #2b67c4;
@@ -163,18 +163,18 @@
   justify-content: center;
   background: #2b67c4;
   color: #fff;
-  padding: 8px;
+  padding: 13px;
   border-radius: 22px;
   text-decoration: none;
   font-weight: bold;
   transition: background 0.2s;
-  font-size: 14px;
+  font-size: 16px;
   width: 100%;
 }
 
 .footer-section.app-download .app-btn i {
   margin-right: 8px;
-  font-size: 16px;
+  font-size: 21px;
 }
 
 .footer-section.app-download .app-btn:hover {
@@ -192,7 +192,7 @@
   display: flex;
   justify-content: center;
   text-align: center;
-  font-size: 15px;
+  font-size: 20px;
   color: #333;
   border-top: none;
   background: transparent;

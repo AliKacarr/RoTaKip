@@ -94,7 +94,7 @@ test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir
   assert.match(shellStyles, /body\.app-shell-body\s*\{[^}]*padding-left:\s*132px/s);
   assert.match(indexStyles, /\.tab-view-groups \.main-container\s*\{[^}]*padding:\s*20px/s);
   assert.match(indexStyles, /\.tab-view-groups \.main-container\s*\{[^}]*background:\s*#fcfdfe/s);
-  assert.match(indexStyles, /\.group-card\s*\{[^}]*border:\s*1px solid #dbe5ef/s);
+  assert.match(indexStyles, /\.group-card\s*\{[^}]*border:\s*1px solid #b7c5d3/s);
   assert.match(indexStyles, /\.tab-view-groups,[\s\S]*?\.tab-view-groups \*[\s\S]*?box-sizing:\s*border-box/);
   assert.match(shellStyles, /\.app-navigation-item\.is-active\s*\{[^}]*background:\s*transparent/s);
   assert.match(shellStyles, /@media \(hover:\s*hover\) and \(pointer:\s*fine\)[\s\S]*?\.app-navigation-item\.is-active:hover[\s\S]*?background:\s*rgba\(17, 17, 17, 0\.06\)/);
