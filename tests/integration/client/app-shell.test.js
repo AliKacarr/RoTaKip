@@ -98,13 +98,13 @@ test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir
   assert.match(indexStyles, /\.tab-view-groups,[\s\S]*?\.tab-view-groups \*[\s\S]*?box-sizing:\s*border-box/);
   assert.match(shellStyles, /\.app-navigation-item\.is-active\s*\{[^}]*background:\s*transparent/s);
   assert.match(shellStyles, /@media \(hover:\s*hover\) and \(pointer:\s*fine\)[\s\S]*?\.app-navigation-item\.is-active:hover[\s\S]*?background:\s*rgba\(17, 17, 17, 0\.06\)/);
-  assert.match(shellStyles, /\.app-navigation-icon\s*\{[^}]*transform:\s*translateY\(1px\)/s);
+  assert.doesNotMatch(shellStyles, /\.app-navigation-icon(?:\s|\.[^{])*\{[^}]*transform:/s);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item\.is-active \.app-navigation-icon\s*\{[^}]*transform:/s);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item\.is-active \.app-navigation-icon-outline\s*\{[^}]*transform:/s);
   assert.match(shellStyles, /\.app-navigation-icon i\s*\{[^}]*color:\s*#111/s);
   assert.match(shellStyles, /\.app-navigation-icon\s*\{[^}]*width:\s*1em;[^}]*height:\s*1em;[^}]*font-size:\s*38px/s);
   assert.match(shellStyles, /\.app-navigation-icon i\s*\{[^}]*position:\s*absolute;[^}]*opacity:\s*1;[^}]*transition:\s*opacity 160ms ease-out/s);
-  assert.match(shellStyles, /\.app-navigation-icon \.app-navigation-icon-filled\s*\{[^}]*opacity:\s*0;[^}]*transform:\s*translateY\(1px\)/s);
+  assert.match(shellStyles, /\.app-navigation-icon \.app-navigation-icon-filled\s*\{[^}]*opacity:\s*0;/s);
   assert.match(shellStyles, /\.app-navigation\.icons-ready \.app-navigation-item\.is-active \.app-navigation-icon-outline\s*\{[^}]*opacity:\s*0[\s\S]*?\.app-navigation\.icons-ready \.app-navigation-item\.is-active \.app-navigation-icon-filled\s*\{[^}]*opacity:\s*1/s);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item:hover,\s*\n\.app-navigation-item:focus-visible/);
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*-webkit-tap-highlight-color:\s*transparent/s);

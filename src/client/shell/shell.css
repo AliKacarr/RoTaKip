@@ -59,7 +59,6 @@ body.app-shell-body { padding-left: 132px; }
   justify-content: center;
   font-size: 38px;
   line-height: 1;
-  transform: translateY(1px);
 }
 .app-navigation-icon i {
   position: absolute;
@@ -77,7 +76,6 @@ body.app-shell-body { padding-left: 132px; }
 }
 .app-navigation-icon .app-navigation-icon-filled {
   opacity: 0;
-  transform: translateY(1px);
 }
 .app-navigation.icons-ready .app-navigation-item.is-active .app-navigation-icon-outline {
   opacity: 0;
