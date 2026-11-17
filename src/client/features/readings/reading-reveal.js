@@ -15,10 +15,28 @@
     target.classList.remove('is-revealed');
   }
 
+  function getVisibleViewportBottom(viewportHeight) {
+    const navigation = document.querySelector('.app-navigation');
+    if (!navigation) return viewportHeight;
+
+    const navigationRect = navigation.getBoundingClientRect();
+    const navigationStyle = window.getComputedStyle(navigation);
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const isFixedBottomBar = navigationStyle.position === 'fixed'
+      && navigationRect.top > 0
+      && navigationRect.bottom >= viewportHeight - 1
+      && navigationRect.width >= viewportWidth * 0.5;
+
+    return isFixedBottomBar
+      ? Math.max(0, Math.min(navigationRect.top, viewportHeight))
+      : viewportHeight;
+  }
+
   function getViewportVisibility(target) {
     const rect = target.getBoundingClientRect();
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const visibleHeight = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
+    const viewportBottom = getVisibleViewportBottom(viewportHeight);
+    const visibleHeight = Math.max(0, Math.min(rect.bottom, viewportBottom) - Math.max(rect.top, 0));
     const requiredHeight = Math.min(Math.max(rect.height, 1) * 0.1, MAX_REVEAL_VISIBLE_PIXELS);
     return { visibleHeight, requiredHeight };
   }

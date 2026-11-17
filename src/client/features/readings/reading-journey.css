@@ -5,10 +5,10 @@
     grid-template-rows: 0fr;
     width: 100%;
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(20px);
     visibility: hidden;
     pointer-events: none;
-    transition: grid-template-rows 0.8s ease-out, opacity 0.8s ease-out, transform 0.8s ease-out, visibility 0s linear 0.8s;
+    transition: grid-template-rows 0.8s ease-out, opacity 0.6s ease-out, transform 0.6s ease-out, visibility 0s linear 0.8s;
 }
 
 .authenticated-user-areas.show {
@@ -17,7 +17,7 @@
     transform: translateY(0);
     visibility: visible;
     pointer-events: auto;
-    transition: grid-template-rows 0.8s ease-out, opacity 0.8s ease-out, transform 0.8s ease-out, visibility 0s linear 0s;
+    transition: grid-template-rows 0.8s ease-out, opacity 0.6s ease-out, transform 0.6s ease-out, visibility 0s linear 0s;
 }
 
 .authenticated-user-areas-content {
@@ -29,7 +29,7 @@
 .authenticated-user-areas.is-initial-reveal-pending.show {
     grid-template-rows: 1fr;
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(20px);
     visibility: hidden;
     pointer-events: none;
     transition: none;

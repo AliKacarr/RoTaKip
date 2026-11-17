@@ -167,6 +167,33 @@
     transform: none;
 }
 
+.tab-view-okumalar .user-card.reading-scroll-reveal {
+    transition: box-shadow .3s ease, opacity .5s ease-out, transform .6s ease-out, translate .3s ease;
+    will-change: transform, opacity;
+}
+
+.tab-view-okumalar .user-card.reading-scroll-reveal:not(.is-revealed) {
+    opacity: 0;
+    transform: translateY(100px);
+    animation: none;
+}
+
+.tab-view-okumalar .user-card.reading-scroll-reveal.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+    animation: none;
+    will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tab-view-okumalar .user-card.reading-scroll-reveal,
+    .tab-view-okumalar .user-card.reading-scroll-reveal.is-revealed {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+
 .user-card-header {
     background: linear-gradient(90deg, #b2dfdb 60%, #e0f7fa 100%);
     display: flex;
