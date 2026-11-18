@@ -9,8 +9,7 @@ export default defineConfig([
       'whatsapp-analytics-bots/**',
       'public/**/*.min.js',
       'public/OneSignalSDK*.js',
-      'public/groups.min.js',
-      'public/index.min.js'
+      'public/groups.min.js'
     ]
   },
   {

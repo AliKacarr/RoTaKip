@@ -21,6 +21,8 @@ test('app.js ince bir composition root olarak kalır', () => {
 
   assert.ok(lineCount <= 250, `app.js ${lineCount} satır; özellik kodu modüllere taşınmalı`);
   assert.doesNotMatch(appSource, /\bapp\.(?:get|post|put|patch|delete)\s*\(/);
+  assert.doesNotMatch(appSource, /readFileSync[\s\S]*?admin\.html/);
+  assert.match(appSource, /process\.env\.SITE_ACTIVITY_ADMIN_GROUP_ID \|\| 'catikati23'/);
   assert.match(appSource, /registerGroupRoutes\(app, routeDependencies\)/);
   assert.match(appSource, /registerReadingRoutes\(app, routeDependencies\)/);
 });

@@ -149,7 +149,11 @@ function registerPublicPageRoutes(app, { publicPath, imageProxyLimiter }) {
     res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
     res.type('application/javascript');
     const appId = process.env.ONESIGNAL_APP_ID || '';
-    res.send(`window.ONESIGNAL_APP_ID = ${JSON.stringify(appId)};`);
+    const siteActivityAdminGroupId = process.env.SITE_ACTIVITY_ADMIN_GROUP_ID || 'catikati23';
+    res.send([
+      `window.ONESIGNAL_APP_ID = ${JSON.stringify(appId)};`,
+      `window.SITE_ACTIVITY_ADMIN_GROUP_ID = ${JSON.stringify(siteActivityAdminGroupId)};`
+    ].join('\n'));
   });
 
   registerDropboxImageProxy(app, imageProxyLimiter);

@@ -7,18 +7,31 @@ const { minify } = require('terser');
 const projectRoot = path.resolve(__dirname, '..');
 const publicPath = path.join(projectRoot, 'public');
 const clientSourcePath = path.join(projectRoot, 'src', 'client');
+const legacyAssetFiles = ['index.min.css', 'index.min.js'];
 
 const bundles = {
-  index: {
-    sourceRoot: clientSourcePath,
-    css: ['features/group-directory/group-directory.css', 'shared/footer.css'],
-    js: ['shared/third-party.js', 'features/group-directory/group-directory.js'],
-    html: ['gruplar.html']
-  },
   'groups-directory': {
     sourceRoot: clientSourcePath,
     css: ['features/group-directory/group-directory.css'],
     js: ['features/group-directory/group-directory.js']
+  },
+  'access-logs': {
+    sourceRoot: path.join(clientSourcePath, 'features', 'activity-logs'),
+    css: ['access-logs.css'],
+    js: ['access-logs.js'],
+    html: ['access-logs.html']
+  },
+  'login-logs': {
+    sourceRoot: path.join(clientSourcePath, 'features', 'activity-logs'),
+    css: ['login-logs.css'],
+    js: ['login-logs.js'],
+    html: ['login-logs.html']
+  },
+  'site-activity-admin': {
+    sourceRoot: path.join(clientSourcePath, 'features', 'site-activity-admin'),
+    css: ['site-activity-admin.css'],
+    js: ['site-activity-admin.js'],
+    html: ['admin.html']
   },
   shell: {
     sourceRoot: clientSourcePath,
@@ -177,6 +190,9 @@ async function buildBundle(bundleName, config, manifest) {
 }
 
 async function buildAssets() {
+  legacyAssetFiles.forEach(fileName => {
+    fs.rmSync(path.join(publicPath, fileName), { force: true });
+  });
   const manifest = {};
   for (const [bundleName, config] of Object.entries(bundles)) {
     await buildBundle(bundleName, config, manifest);

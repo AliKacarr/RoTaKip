@@ -52,23 +52,23 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 | Ana Sayfa | Haftalık Tablo | Günlük Görevler |
 |:---------:|:--------------:|:---------------:|
-| <img src="public/site_gorselleri/1-%20Ana%20sayfa.png" width="250"> | <img src="public/site_gorselleri/2%20-%20Haftal%C4%B1k%20Tablo.png" width="250"> | <img src="public/site_gorselleri/3%20-%20G%C3%BCnl%C3%BCk%20g%C3%B6revler.png" width="250"> |
+| <img src="docs/assets/screenshots/01-home.png" width="250"> | <img src="docs/assets/screenshots/02-weekly-table.png" width="250"> | <img src="docs/assets/screenshots/03-daily-tasks.png" width="250"> |
 
 | Günün Hediyesi | Profil Ekranı | Kutlama Mesajları |
 |:--------------:|:-------------:|:-----------------:|
-| <img src="public/site_gorselleri/4-%20G%C3%BCn%C3%BCn%20hediyesi.png" width="250"> | <img src="public/site_gorselleri/5-%20Profil%20Ekran%C4%B1.png" width="250"> | <img src="public/site_gorselleri/6%20-%20Kutlama%20Mesajlar%C4%B1.png" width="250"> |
+| <img src="docs/assets/screenshots/04-daily-gift.png" width="250"> | <img src="docs/assets/screenshots/05-profile.png" width="250"> | <img src="docs/assets/screenshots/06-celebration-messages.png" width="250"> |
 
 | Liderlik Panosu | Aylık Takvim | En Uzun Seri Grafiği |
 |:----------------:|:------------:|:--------------------:|
-| <img src="public/site_gorselleri/7%20-%20Liderlik%20panosu.png" width="250"> | <img src="public/site_gorselleri/8%20-%20Ayl%C4%B1k%20takvim.png" width="250"> | <img src="public/site_gorselleri/9%20-En%20uzun%20seri%20%20grafi%C4%9Fi.png" width="250"> |
+| <img src="docs/assets/screenshots/07-leaderboard.png" width="250"> | <img src="docs/assets/screenshots/08-monthly-calendar.png" width="250"> | <img src="docs/assets/screenshots/09-longest-streak-chart.png" width="250"> |
 
 | Okuma Grafiği | Tefekkür | Videolar |
 |:-------------:|:----------------:|:--------:|
-| <img src="public/site_gorselleri/10%20-%20Okuma%20grafi%C4%9Fi.png" width="250"> | <img src="public/site_gorselleri/11%20-%20Rahmet%20Penceresi.png" width="250"> | <img src="public/site_gorselleri/12%20-%20Videolar.png" width="250"> |
+| <img src="docs/assets/screenshots/10-reading-chart.png" width="250"> | <img src="docs/assets/screenshots/11-mercy-window.png" width="250"> | <img src="docs/assets/screenshots/12-videos.png" width="250"> |
 
 | Makaleler | Grup Ayarları | Tercihler |
 |:---------:|:-------------:|:---------:|
-| <img src="public/site_gorselleri/13%20-%20Makaleler.png" width="250"> | <img src="public/site_gorselleri/14-%20Grup%20Ayarlar%C4%B1.png" width="250"> | <img src="public/site_gorselleri/15%20-%20Tercihler.png" width="250"> |
+| <img src="docs/assets/screenshots/13-articles.png" width="250"> | <img src="docs/assets/screenshots/14-group-settings.png" width="250"> | <img src="docs/assets/screenshots/15-preferences.png" width="250"> |
 
 ---
 
@@ -96,13 +96,15 @@ Okuma alışkanlığınızı takip etmek, kullanıcı istatistiklerini görmek v
 
 Kaynak yerleşimi, dosya sahipliği ve geliştirme kuralları için [mimari belgesine](docs/architecture.md) bakın.
 
-Grup deneyimi ortak `app-shell.html` kabuğu üzerinde, route'a göre tembel yüklenen fragment ve asset paketlerinden oluşur. Okuma gruplarını keşfetme ekranı `/gruplar` adresindeki `gruplar.html` dosyasıdır:
+Grup deneyimi ortak `app-shell.html` kabuğu üzerinde, route'a göre tembel yüklenen fragment ve asset paketlerinden oluşur. Okuma gruplarını keşfetme ekranının görünümü `public/fragments/gruplar.html` dosyasıdır ve `/gruplar` rotasında shell içine yüklenir:
 
 - `/grup/:groupId/` — haftalık takip, motivasyon panelleri, grup ayarları, lig kartları, aylık takvim ve grafikler
 - `/tesbihat` — bağımsız Tesbihat sekmesi; `/` bu adrese yönlendirilir (içerik daha sonra eklenecek)
 - `/videolar`, `/tefekkur`, `/makaleler` — grup bağlamından bağımsız içerikler
 
 İstemci kaynakları `src/client/`, shell yönlendirmesi `public/app/`, görünüm HTML'leri `public/fragments/` altındadır. `npm run build` sekmeye özel CSS/JS paketlerini üretir ve içerik hash'lerini `public/assets-manifest.json` içine yazar. Üretilmiş paketler Git tarafından takip edilmez. `/groupid=:groupId` bağlantıları query parametrelerini koruyarak kanonik grup adresine yönlendirilir.
+
+`admin.html`, `access-logs.html` ve `login-logs.html` bağımsız yönetim belgeleridir. Kaynakları `src/client/features/site-activity-admin/` ve `src/client/features/activity-logs/` altında paketlenir; uygulama shell'inin sekme ön yükleme akışına dahil edilmez ve yalnız doğrudan açıldıklarında yüklenir.
 
 ---
 

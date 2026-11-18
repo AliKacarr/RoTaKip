@@ -3,7 +3,7 @@ export const ROUTES = Object.freeze({
     name: 'groups',
     navigationName: 'okumalar',
     path: '/gruplar',
-    fragment: '/gruplar.html',
+    fragment: '/fragments/gruplar.html',
     title: 'Okuma Grupları',
     requiresGroup: false
   },

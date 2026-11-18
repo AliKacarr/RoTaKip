@@ -1,5 +1,5 @@
 import { ROUTES, ROUTE_ASSETS, canonicalPath, resolveRoute } from './route-config.js';
-import { createFragmentView, fetchFragment, mountFragment, preloadFragment } from './fragment-loader.js';
+import { createFragmentView, mountFragment, preloadFragment } from './fragment-loader.js';
 import { loadAssetManifest, loadBundleScripts, loadBundleStyles, preloadBundle } from './asset-loader.js';
 import { invalidateGroupContext, loadGroupData, resolveGroupContext } from './group-context.js';
 import {
@@ -224,27 +224,10 @@ function hasReadyCachedView(route) {
   return Boolean(view && lifecycleCache.has(view));
 }
 
-async function createGroupDirectoryView(route) {
-  const html = await fetchFragment(route.fragment);
-  const parsed = new DOMParser().parseFromString(html, 'text/html');
-  const contentRoot = parsed.querySelector('.main-container');
-  if (!contentRoot) throw new Error('Okuma Grupları içeriği bulunamadı.');
-  contentRoot.querySelector('.site-footer')?.remove();
-  const extras = Array.from(parsed.body.children)
-    .filter(element => !element.matches('#appNavigation, .main-container, script'));
-  const view = document.createElement('div');
-  view.className = 'tab-view tab-view-groups';
-  view.dataset.view = route.name;
-  view.append(contentRoot, ...extras);
-  return view;
-}
-
 async function getView(route) {
   const cacheKey = getViewCacheKey(route);
   if (!viewCache.has(cacheKey)) {
-    const viewPromise = route.name === 'groups'
-      ? createGroupDirectoryView(route)
-      : createFragmentView(route.fragment, route.name);
+    const viewPromise = createFragmentView(route.fragment, route.name);
     viewCache.set(cacheKey, viewPromise);
   }
   const cachedView = viewCache.get(cacheKey);

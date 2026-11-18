@@ -1,10 +1,8 @@
 'use strict';
 
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 
-require('./config/env');
+const { publicPath } = require('./config/env');
 
 const { initializeDatabaseIndexes } = require('./config/database-indexes');
 const { isDatabaseConnected } = require('./config/database');
@@ -57,12 +55,9 @@ const { isSafeGroupId } = require('./shared/group-id');
 const validation = require('./shared/validation');
 
 const app = express();
-const publicPath = path.resolve(__dirname, '../../public');
-const adminHtml = fs.readFileSync(path.join(publicPath, 'admin.html'), 'utf8');
-const adminGroupIdMatch = adminHtml.match(/\bactiveGroupId\s*=\s*['"]([^'"]+)['"]/);
-const SITE_ACTIVITY_ADMIN_GROUP_ID = adminGroupIdMatch?.[1];
+const SITE_ACTIVITY_ADMIN_GROUP_ID = process.env.SITE_ACTIVITY_ADMIN_GROUP_ID || 'catikati23';
 if (!isSafeGroupId(SITE_ACTIVITY_ADMIN_GROUP_ID)) {
-  throw new Error('admin.html içinde geçerli bir activeGroupId tanımlanmalıdır');
+  throw new Error('SITE_ACTIVITY_ADMIN_GROUP_ID geçerli bir grup kimliği olmalıdır');
 }
 const ERP_SKO_GROUP_SET = new Set(erpService.ERP_SKO_GROUPS);
 

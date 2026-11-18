@@ -1,3 +1,4 @@
+/* Bağımsız erişim kayıtları sayfası; yalnız doğrudan açıldığında yüklenir. */
 body {
     background-image: url('../images/arkaplan.webp');
     background-size: cover;
@@ -127,7 +128,6 @@ body {
     background-color: #f0f7ff;
 }
 
-
 .no-logs {
     text-align: center;
     padding: 30px;
@@ -135,17 +135,34 @@ body {
     font-style: italic;
 }
 
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
+}
+
+
 .refresh-button {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #19366f;
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 7px 14px;
+    padding: 8px 24px;
     font-size: 14px;
     cursor: pointer;
     display: flex;
-    align-items: center;
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -167,7 +184,7 @@ body {
     transition: transform 0.5s ease;
 }
 
-.refresh-button.refresh-button-loading .refresh-icon {
+.refresh-button.refresh-admin-logs-button-loading .refresh-icon {
     animation: spin 1s linear infinite;
 }
 
@@ -194,24 +211,6 @@ body {
 
 .fade-in {
     animation: fadeIn 0.5s ease-in;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.form-group label {
-    font-weight: 500;
-    color: #333;
-    font-size: 14px;
-}
-
-.error-message {
-    color: #f44336;
-    margin-top: 15px;
-    font-size: 14px;
 }
 
 #paginationContainer button:disabled,
@@ -268,6 +267,13 @@ body {
 #selectedDateTitle {
     margin: 0;
     color: #19366f;
+}
+
+@media (max-width: 1025px) {
+
+    #selectedDateTitle {
+        font-size: 17px;
+    }
 }
 
 .date-summary-container {
@@ -362,6 +368,7 @@ body {
     margin-left: 8px;
 }
 
+
 #ipFilterNotification {
     display: inline-flex;
     align-items: center;
@@ -410,6 +417,6 @@ body {
     }
 }
 
-.refresh-button.refresh-button-success {
+.refresh-button.refresh-admin-logs-button-success {
     animation: successPulse 2s ease;
 }

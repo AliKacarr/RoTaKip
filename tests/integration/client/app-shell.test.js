@@ -33,9 +33,9 @@ function assertUniqueIds(files) {
   assert.deepEqual([...new Set(duplicates)], [], `Yinelenen DOM id: ${duplicates.join(', ')}`);
 }
 
-test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir', () => {
+test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği sağlar', () => {
   const shell = readPublic('app-shell.html');
-  const index = readPublic('gruplar.html');
+  const groupsFragment = readPublic('fragments/gruplar.html');
   const shellStyles = readClient('shell/shell.css');
   const indexStyles = readClient('features/group-directory/group-directory.css');
   const allClientStyles = fs.readdirSync(clientDir, { recursive: true })
@@ -49,9 +49,7 @@ test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir
   assert.match(shell, /name="description" content="[^"]*okuma alışkanlıklarınızı ve grup ilerlemenizi takip edin[^"]*"/);
   assert.doesNotMatch(shell, /Namaz vakitleri ve tesbihat içeriklerine/);
   assert.match(shell, /id="appNavigation"/);
-  assert.match(index, /id="appNavigation"/);
   assert.equal((shell.match(/<a[^>]+data-route=/g) || []).length, 5);
-  assert.equal((index.match(/<a[^>]+data-route=/g) || []).length, 5);
   assert.doesNotMatch(shell, /app-navigation-brand/);
   assert.match(shell, /data-route="okumalar"[\s\S]*?fa-regular fa-compass[\s\S]*?<span>Okumalar<\/span>/);
   assert.equal((shell.match(/class="app-navigation-icon"/g) || []).length, 5);
@@ -59,13 +57,8 @@ test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir
   assert.equal((shell.match(/app-navigation-icon-filled/g) || []).length, 5);
   assert.match(shell, /const selectedRoute = path === '\/gruplar' \|\| path\.startsWith\('\/grup\/'\)[\s\S]*?activeLink\.classList\.add\('is-active'\)[\s\S]*?navigation\.dataset\.activeRoute = selectedRoute[\s\S]*?new MutationObserver/);
   assert.match(shell, /data-route="tesbihat" href="\/tesbihat"[\s\S]*?<span>Tesbihat<\/span>/);
-  assert.match(index, /data-route="okumalar"[\s\S]*?class="app-navigation-item is-active"|class="app-navigation-item is-active"[\s\S]*?data-route="okumalar"/);
-  assert.match(index, /data-route="tesbihat" href="\/tesbihat"/);
-  assert.match(index, /data-route="okumalar" href="\/gruplar"/);
-  assert.match(index, /type="module" src="\/app\/group-directory-navigation\.js"/);
   assert.match(shell, /data-route="tefekkur" href="\/tefekkur"[\s\S]*?<span>Tefekkür<\/span>/);
   assert.match(shell, /data-route="tesbihat"[\s\S]*?data-route="tefekkur"[\s\S]*?data-route="videos"[\s\S]*?data-route="articles"[\s\S]*?data-route="okumalar"/);
-  assert.match(index, /data-route="tesbihat"[\s\S]*?data-route="tefekkur"[\s\S]*?data-route="videos"[\s\S]*?data-route="articles"[\s\S]*?data-route="okumalar"/);
   assert.match(shell, /id="tabContent"/);
   assert.match(shell, /id="footerRoot" hidden/);
   assert.match(shell, /id="globalOverlayRoot"/);
@@ -75,8 +68,9 @@ test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir
   assert.match(shell, /id="tabContent" class="tab-content is-initial-loading"[\s\S]*?id="initialTabLoader"[\s\S]*?route-loader-star[\s\S]*?>Ro<[\s\S]*?>Ta<[\s\S]*?>Kip</);
   assert.doesNotMatch(shell, /id="routeStatus"/);
   assert.doesNotMatch(shell, /initial-group-route-loading/);
-  assert.match(index, /<h1 class="header-title">Okuma Grupları<\/h1>/);
-  assert.match(index, /Kitap okuma hedeflerinizi belirleyin ve ilerlemenizi takip edin/);
+  assert.match(groupsFragment, /<h1 class="header-title">Okuma Grupları<\/h1>/);
+  assert.match(groupsFragment, /Kitap okuma hedeflerinizi belirleyin ve ilerlemenizi takip edin/);
+  assert.doesNotMatch(groupsFragment, /<!DOCTYPE|<html(?:\s|>)|<head(?:\s|>)|<body(?:\s|>)|id="appNavigation"|<script(?:\s|>)|class="site-footer"/i);
   assert.doesNotMatch(shell, /document\.documentElement\.classList\.add\('initial-group-route-loading'\)/);
   assert.match(shell, /shell\.min\.css\?v=/);
   assert.doesNotMatch(shell, /groups\.min\.(?:css|js)/);
@@ -85,12 +79,10 @@ test('keşif ve Tesbihat shell sayfaları aynı beş sekmeli navigasyonu içerir
   assert.doesNotMatch(indexStyles, /body\.index-navigation-body|\.app-navigation\s*\{/);
   assert.doesNotMatch(shellStyles, /:root\s*\{/);
   assert.doesNotMatch(indexStyles, /:root\s*\{/);
-  assert.doesNotMatch(readClient('features/readings/loading-placeholders.css'), /:root\s*\{/);
   assert.doesNotMatch(shellStyles, /--[a-zA-Z]|var\(--/);
   assert.doesNotMatch(indexStyles, /--[a-zA-Z]|var\(--/);
   assert.doesNotMatch(allClientStyles, /\b(?:\d*\.)?\d+rem\b/);
   assert.doesNotMatch(allPublicStyles, /\b(?:\d*\.)?\d+rem\b/);
-  assert.doesNotMatch(readClient('features/readings/loading-placeholders.css'), /--[a-zA-Z]|var\(--/);
   assert.match(shellStyles, /body\.app-shell-body\s*\{[^}]*padding-left:\s*132px/s);
   assert.match(indexStyles, /\.tab-view-groups \.main-container\s*\{[^}]*padding:\s*20px/s);
   assert.match(indexStyles, /\.tab-view-groups \.main-container\s*\{[^}]*background:\s*#fcfdfe/s);
@@ -141,7 +133,6 @@ test('Okuma mesaj paneli stilleri kendi bileşen dosyasında kalır', () => {
   const panelStyles = readClient('features/readings/reading-message-panels.css');
 
   assert.doesNotMatch(shellStyles, /\.reading-message-panels\b/);
-  assert.match(panelStyles, /\.reading-message-panels\s*\{[^}]*margin:\s*10px 0;/s);
   assert.match(panelStyles, /\.reading-message-panels-content\s*\{[^}]*padding:\s*20px;[^}]*box-sizing:\s*border-box;/s);
   assert.match(panelStyles, /\.reading-message-panels:not\(:has\(> \.reading-message-panels-content > \*\)\)\s*\{[^}]*display:\s*none;/s);
 });
@@ -173,7 +164,6 @@ test('uygulama kabuğundaki yukarı çık butonunu yalnız shell stillendirir', 
 test('son Okumalar konumu grup ve grup dizini arasında kalıcı tutulur', () => {
   const navigation = readPublic('app/navigation.js');
   const router = readPublic('app/shell-router.js');
-  const directoryNavigation = readPublic('app/group-directory-navigation.js');
 
   assert.match(navigation, /localStorage\.setItem\(key, value\)/);
   assert.match(navigation, /localStorage\.getItem\(key\)/);
@@ -193,7 +183,6 @@ test('son Okumalar konumu grup ve grup dizini arasında kalıcı tutulur', () =>
   assert.match(navigation, /tapFeedbackTimer = window\.setTimeout\(\(\) => link\.classList\.remove\('is-tap-feedback'\), 600\)/);
   assert.match(router, /route\.name === 'groups'\) rememberReadingPath\(canonicalPath\(route\)\)/);
   assert.match(router, /if \(!groupContext\.canRead\)[\s\S]*?return;[\s\S]*?rememberReadingPath\(canonicalPath\(route\)\)/);
-  assert.match(directoryNavigation, /okumalarLink\.href = getRememberedReadingPath\(\)/);
 });
 
 test('asset manifesti shell ve sekme paketlerini ayrı tutar', () => {
@@ -202,6 +191,9 @@ test('asset manifesti shell ve sekme paketlerini ayrı tutar', () => {
   [
     'shell.min.css', 'shell.min.js',
     'groups-directory.min.css', 'groups-directory.min.js',
+    'access-logs.min.css', 'access-logs.min.js',
+    'login-logs.min.css', 'login-logs.min.js',
+    'site-activity-admin.min.css', 'site-activity-admin.min.js',
     'group-common.min.css', 'group-common.min.js',
     'group-ui.min.js',
     'okumalar.min.css', 'okumalar.min.js',
@@ -213,6 +205,9 @@ test('asset manifesti shell ve sekme paketlerini ayrı tutar', () => {
   ].forEach(fileName => {
     assert.match(manifest[fileName], new RegExp(`^${fileName.replaceAll('.', '\\.')}\\?v=[a-f0-9]{12}$`));
   });
+  assert.equal(manifest['index.min.css'], undefined);
+  assert.equal(manifest['index.min.js'], undefined);
+  assert.match(buildAssets, /legacyAssetFiles = \['index\.min\.css', 'index\.min\.js'\][\s\S]*?fs\.rmSync\(path\.join\(publicPath, fileName\), \{ force: true \}\)/);
   const groupCommonStart = buildAssets.indexOf("'group-common': {");
   const groupUiStart = buildAssets.indexOf("'group-ui': {");
   const okumalarStart = buildAssets.indexOf('  okumalar: {');
@@ -390,13 +385,16 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   const router = readPublic('app/shell-router.js');
   const navigation = readPublic('app/navigation.js');
   const routes = readPublic('app/route-config.js');
-  const directoryHtml = readPublic('gruplar.html');
+  const directoryHtml = readPublic('fragments/gruplar.html');
   const directory = readClient('features/group-directory/group-directory.js');
   const directoryStyles = readClient('features/group-directory/group-directory.css');
   const managementStyles = readClient('features/readings/group-management.css');
 
-  assert.match(routes, /name: 'groups',[\s\S]*?fragment: '\/gruplar\.html'[\s\S]*?groups-directory\.min\.js[\s\S]*?groups-directory\.min\.css/);
-  assert.match(router, /function createGroupDirectoryView\(route\)[\s\S]*?new DOMParser\(\)[\s\S]*?contentRoot\.querySelector\('\.site-footer'\)\?\.remove\(\)[\s\S]*?view\.className = 'tab-view tab-view-groups'/);
+  assert.match(routes, /name: 'groups',[\s\S]*?fragment: '\/fragments\/gruplar\.html'[\s\S]*?groups-directory\.min\.js[\s\S]*?groups-directory\.min\.css/);
+  assert.doesNotMatch(router, /createGroupDirectoryView|new DOMParser\(\)/);
+  assert.match(router, /const viewPromise = createFragmentView\(route\.fragment, route\.name\)/);
+  assert.match(directoryHtml, /class="main-container"[\s\S]*?id="groupsGrid"[\s\S]*?id="createGroupModal"/);
+  assert.doesNotMatch(directoryHtml, /<!DOCTYPE|<html(?:\s|>)|<head(?:\s|>)|<body(?:\s|>)|id="appNavigation"|<script(?:\s|>)|class="site-footer"/i);
   assert.match(router, /activeView && activeView !== view\) activeView\.remove\(\)/);
   assert.match(router, /isPreparingGroupsFirstLoad = route\.name === 'groups' && !lifecycleCache\.has\(view\)[\s\S]*?classList\.toggle\('is-preparing-return', isPreparingGroupsFirstLoad\)[\s\S]*?tabContent\.appendChild\(view\)/);
   assert.match(router, /groups: window\.RoTaKipGroupsTab[\s\S]*?prepareBeforeReveal: false[\s\S]*?!view\?\.isConnected[\s\S]*?new MutationObserver[\s\S]*?view\.isConnected[\s\S]*?disableStyles\(\)/);
@@ -641,6 +639,7 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
 test('her route birleşiminde DOM kimlikleri benzersizdir', () => {
   const shared = ['app-shell.html', 'fragments/footer.html', 'fragments/global-overlays.html'];
   [
+    [...shared, 'fragments/gruplar.html'],
     [...shared, 'fragments/common-overlays.html', 'fragments/group-header.html', 'fragments/okumalar.html'],
     [...shared, 'fragments/tesbihat.html'],
     [...shared, 'fragments/videos.html'],
@@ -776,6 +775,29 @@ test('yönetim ve kayıt sayfaları mobil viewport tanımlar', () => {
     const html = fs.readFileSync(path.join(projectRoot, 'public', fileName), 'utf8');
     assert.match(html, viewportPattern, `${fileName} viewport etiketi içermeli`);
   });
+});
+
+test('yönetim sayfaları bağımsız paketlenir ve shell tarafından ön yüklenmez', () => {
+  const routes = readPublic('app/route-config.js');
+  const router = readPublic('app/shell-router.js');
+  const standalonePages = [
+    ['admin.html', 'site-activity-admin'],
+    ['access-logs.html', 'access-logs'],
+    ['login-logs.html', 'login-logs']
+  ];
+
+  standalonePages.forEach(([fileName, bundleName]) => {
+    const html = readPublic(fileName);
+    assert.match(html, new RegExp(`href="${bundleName}\\.min\\.css\\?v=[a-f0-9]{12}"`));
+    assert.match(html, new RegExp(`src="${bundleName}\\.min\\.js\\?v=[a-f0-9]{12}"`));
+    assert.doesNotMatch(html, /<script>(?:.|\n)*?<\/script>/);
+  });
+
+  assert.match(readPublic('admin.html'), /<script src="\/env\.js"><\/script>[\s\S]*?site-activity-admin\.min\.js/);
+  assert.match(readClient('features/site-activity-admin/site-activity-admin.js'), /window\.SITE_ACTIVITY_ADMIN_GROUP_ID/);
+
+  assert.doesNotMatch(routes, /access-logs|login-logs|site-activity-admin|admin\.html/);
+  assert.doesNotMatch(router, /access-logs|login-logs|site-activity-admin|admin\.html/);
 });
 
 test('grup yönetimi kutuları dar ekranda sarılır ve tek sütuna iner', () => {

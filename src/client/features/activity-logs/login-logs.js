@@ -1,0 +1,681 @@
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = String(value == null ? '' : value);
+      return div.innerHTML;
+    }
+    function getTurkeyYmdFromTimestamp(ts) {
+      return new Date(ts).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' });
+    }
+    function turkishDateLabelFromTrYmd(ymd) {
+      const parts = String(ymd).split('-');
+      if (parts.length !== 3) return String(ymd);
+      const y = parseInt(parts[0], 10);
+      const mo = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      if ([y, mo, d].some(function (n) { return Number.isNaN(n); })) return String(ymd);
+      return d + ' ' + getMonthName(mo - 1) + ' ' + y;
+    }
+    document.addEventListener('DOMContentLoaded', async function () {
+      const accessDenied = document.getElementById('accessDenied');
+      const logsSection = document.getElementById('logsSection');
+      const activeGroupId = new URLSearchParams(window.location.search).get('groupId');
+
+      async function checkAdminAccess() {
+        try {
+          if (!activeGroupId) {
+            showAccessDenied();
+            return;
+          }
+
+          const response = await fetch(`/api/auth/me/${encodeURIComponent(activeGroupId)}`);
+          const data = response.ok ? await response.json() : null;
+
+          if (data?.user?.authority === 'admin') {
+            // Admin verified, show logs with group filtering
+            logsSection.style.display = 'block';
+            loadLogs(activeGroupId);
+          } else {
+            // Admin verification failed
+            showAccessDenied();
+          }
+        } catch (error) {
+          console.error('Admin access check error:', error);
+          showAccessDenied();
+        }
+      }
+
+      function showAccessDenied() {
+        accessDenied.style.display = 'block';
+      }
+
+      // Check admin access on page load
+      checkAdminAccess();
+
+      // Add refresh button functionality
+      refreshLoginButton.addEventListener('click', function () {
+        if (activeGroupId) {
+          // Clear any active filters
+          const filterContainer = document.getElementById('filterContainer');
+          if (filterContainer) {
+            filterContainer.innerHTML = '';
+          }
+
+          // Add loading animation to button
+          refreshLoginButton.classList.add('refresh-button-loading');
+
+          // Store the current view state and selected date if any
+          const isDateGroupVisible = document.getElementById('dateGroupContainer').style.display === 'block';
+          const selectedDateTitle = document.getElementById('selectedDateTitle').textContent;
+          const selectedDate = selectedDateTitle.replace(' Kayıtları', '');
+
+          // Record the start time of the refresh
+          const refreshStartTime = Date.now();
+          const minimumAnimationTime = 1500; // 1.5 seconds minimum animation time
+
+          // Load logs without updating button state
+          loadLogs(activeGroupId, false).then(() => {
+            // Calculate how long the refresh has been running
+            const refreshDuration = Date.now() - refreshStartTime;
+
+            // If the refresh was too quick, wait before finishing
+            if (refreshDuration < minimumAnimationTime) {
+              setTimeout(() => {
+                finishRefresh();
+              }, minimumAnimationTime - refreshDuration);
+            } else {
+              finishRefresh();
+            }
+
+            function finishRefresh() {
+              // If we were viewing a date group, restore that view immediately
+              if (isDateGroupVisible && selectedDate) {
+                // Find the date group in the updated data
+                const dateCards = document.querySelectorAll('.date-summary-item');
+                for (const card of dateCards) {
+                  if (card.querySelector('h4').textContent.includes(selectedDate)) {
+                    // Simulate a click on the date card to show that date's logs
+                    card.click();
+                    break;
+                  }
+                }
+              }
+
+              // Remove loading animation from button
+              refreshLoginButton.classList.remove('refresh-button-loading');
+
+              // Show success indicator on button
+              const originalText = refreshLoginButton.querySelector('.refresh-text').textContent;
+              refreshLoginButton.querySelector('.refresh-text').textContent = 'Yenilendi!';
+              refreshLoginButton.classList.add('refresh-button-success');
+
+              // Reset button after 2 seconds
+              setTimeout(() => {
+                refreshLoginButton.querySelector('.refresh-text').textContent = originalText;
+                refreshLoginButton.classList.remove('refresh-button-success');
+              }, 2000);
+            }
+          });
+        } else {
+          // Show access denied if not authenticated
+          showAccessDenied();
+        }
+      });
+
+      // Add back button functionality
+      document.getElementById('backToAllLogs').addEventListener('click', () => {
+        document.getElementById('dateGroupContainer').style.display = 'none';
+        document.getElementById('dateGroupPaginationContainer').style.display = 'none';
+        document.querySelector('.logs-table').style.display = 'table';
+        document.getElementById('paginationContainer').style.display = 'flex';
+        document.getElementById('dateSummaryContainer').style.display = 'block';
+
+        // Clear any IP filters
+        const filterContainer = document.getElementById('filterContainer');
+        if (filterContainer) {
+          filterContainer.innerHTML = '';
+        }
+
+        // Remove active highlight from all date cards
+        const allDateCards = document.querySelectorAll('.date-summary-item');
+        allDateCards.forEach(card => {
+          card.classList.remove('date-summary-item-active');
+        });
+
+        // --- FIX: Always reload all logs when returning to all logs view ---
+        loadLogs(activeGroupId, true);
+      });
+
+      // Function to load logs
+      async function loadLogs(groupId, updateButtonState = true) {
+        try {
+          // Store the current view state
+          const isDateGroupVisible = document.getElementById('dateGroupContainer').style.display === 'block';
+
+          // Fetch login logs with group filtering
+          const response = await fetch(`/api/login-logs?groupId=${groupId}`);
+          const data = await response.json();
+
+          // Ensure logs is an array
+          const logs = Array.isArray(data) ? data : (data.logs || []);
+
+          const tableBody = document.getElementById('logsTableBody');
+          const noLogs = document.getElementById('noLogs');
+
+          // Clear existing logs
+          tableBody.innerHTML = '';
+
+          // Add fade-in class to table
+          document.querySelector('.logs-table').classList.add('fade-in');
+
+          // Remove fade-in class after animation completes
+          setTimeout(() => {
+            document.querySelector('.logs-table').classList.remove('fade-in');
+          }, 500);
+
+          if (!logs || logs.length === 0) {
+            noLogs.style.display = 'block';
+            document.getElementById('dateSummaryContainer').style.display = 'none';
+            document.getElementById('paginationContainer').style.display = 'none';
+
+            // Only update button state if this is a direct call (not from refresh button)
+            if (updateButtonState) {
+              // Remove loading animation from button
+              refreshLoginButton.classList.remove('refresh-button-loading');
+            }
+
+            return;
+          } else {
+            noLogs.style.display = 'none';
+            document.getElementById('dateSummaryContainer').style.display = 'block';
+
+            // Only show pagination if we're not in date view
+            if (!isDateGroupVisible) {
+              document.getElementById('paginationContainer').style.display = 'flex';
+            }
+          }
+
+          // Sort logs by date (newest first)
+          logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+          // Create a map of IP+device+screen combinations to colors
+          window.ipColors = {};
+
+          // Create unique combinations of IP, device info, and screen size
+          const uniqueCombinations = [];
+          logs.forEach(log => {
+            const device = log.deviceInfo || {};
+            const deviceInfo = formatDeviceInfo(log.deviceInfo);
+            const screenSize = `${device.screenWidth || '?'}x${device.screenHeight || '?'}`;
+            const ipDeviceScreen = `${log.ipAddress || 'Bilinmiyor'}-${deviceInfo}-${screenSize}`;
+            if (!uniqueCombinations.includes(ipDeviceScreen)) {
+              uniqueCombinations.push(ipDeviceScreen);
+            }
+          });
+
+          // Generate colors for each unique combination
+          const colors = [
+            '#e6194B', '#3cb44b', '#4363d8', '#f58231', '#911eb4',
+            '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990',
+            '#dcbeff', '#9A6324', '#800000', '#aaffc3', '#808000',
+            '#ffd8b1', '#000075', '#a9a9a9', '#000000', '#ffe119'
+          ];
+
+          uniqueCombinations.forEach((combo, index) => {
+            window.ipColors[combo] = colors[index % colors.length];
+          });
+
+          // Group logs by İstanbul calendar day (YYYY-MM-DD)
+          const logsByDate = {};
+          logs.forEach(log => {
+            const trYmd = getTurkeyYmdFromTimestamp(log.timestamp);
+            if (!logsByDate[trYmd]) {
+              logsByDate[trYmd] = [];
+            }
+            logsByDate[trYmd].push(log);
+          });
+
+          // Create date summary cards
+          const dateSummaryList = document.getElementById('dateSummaryList');
+          dateSummaryList.innerHTML = '';
+
+          // Sort dates (newest first)
+          const sortedDates = Object.keys(logsByDate).sort((a, b) => b.localeCompare(a));
+
+          sortedDates.forEach(trYmd => {
+            const dateKey = turkishDateLabelFromTrYmd(trYmd);
+            const dateCount = logsByDate[trYmd].length;
+            const uniqueIPs = new Set(logsByDate[trYmd].map(log => log.ipAddress)).size;
+
+            const dateCard = document.createElement('div');
+            dateCard.className = 'date-summary-item';
+            dateCard.dataset.trDate = trYmd;
+            dateCard.innerHTML = `
+              <div class="date-summary-item-header">
+                <h4>${dateKey}</h4>
+                <button type="button" class="date-summary-delete-btn" title="Bu günün kayıtlarını sil" aria-label="Bu günün kayıtlarını sil">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+              </div>
+              <p>Kullanıcı Adları: <span style="color: black; font-weight: 500;">${uniqueIPs}</span> farklı</p>
+              <p>Giriş: <span class="date-summary-count">${dateCount}</span></p>
+            `;
+
+            const delBtn = dateCard.querySelector('.date-summary-delete-btn');
+            if (delBtn) {
+              delBtn.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                if (!confirm('"' + dateKey + '" tarihine ait giriş kayıtları silinsin mi?')) return;
+                try {
+                  const res = await fetch('/api/login-logs/day', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trDate: trYmd, groupId: groupId })
+                  });
+                  const data = await res.json().catch(function () { return {}; });
+                  if (!res.ok) {
+                    alert(data.error || 'Kayıtlar silinemedi.');
+                    return;
+                  }
+                  document.getElementById('dateGroupContainer').style.display = 'none';
+                  document.getElementById('dateGroupPaginationContainer').style.display = 'none';
+                  const mainTables = document.querySelectorAll('.logs-table');
+                  if (mainTables[0]) mainTables[0].style.display = 'table';
+                  document.getElementById('paginationContainer').style.display = 'flex';
+                  const fc = document.getElementById('filterContainer');
+                  if (fc) fc.innerHTML = '';
+                  await loadLogs(groupId, true);
+                } catch (err) {
+                  console.error(err);
+                  alert('Kayıtlar silinirken bir hata oluştu.');
+                }
+              });
+            }
+
+            dateCard.addEventListener('click', () => {
+              showDateGroup(dateKey, logsByDate[trYmd]);
+              // Sayfanın en üstüne yavaşça kaydır
+              window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+              });
+            });
+
+            dateSummaryList.appendChild(dateCard);
+          });
+
+          // Initialize pagination
+          const itemsPerPage = 10;
+          let currentPage = 1;
+          const totalPages = Math.ceil(logs.length / itemsPerPage);
+
+          // Function to display logs for current page
+          function displayLogsForPage(page) {
+            tableBody.innerHTML = '';
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, logs.length);
+
+            for (let i = startIndex; i < endIndex; i++) {
+              const log = logs[i];
+              const row = document.createElement('tr');
+
+
+              // Format date
+              const date = new Date(log.timestamp);
+              const day = date.getDate();
+              const month = getMonthName(date.getMonth());
+              const year = date.getFullYear();
+              const hours = String(date.getHours()).padStart(2, '0');
+              const minutes = String(date.getMinutes()).padStart(2, '0');
+
+              // Format date with styled day and month
+              const formattedDate = `<span style="font-weight: bold; color: #11171c;">${day} ${month}</span><br><span>${year} ${hours}:${minutes}</span>`;
+
+              const device = log.deviceInfo || {};
+              const ipAddress = log.ipAddress || 'Bilinmiyor';
+              const deviceInfo = formatDeviceInfo(log.deviceInfo);
+              const screenSize = `${device.screenWidth || '?'}x${device.screenHeight || '?'}`;
+              const ipDeviceScreen = `${ipAddress}-${deviceInfo}-${screenSize}`;
+              const ipColor = window.ipColors[ipDeviceScreen];
+
+              row.innerHTML = `
+                <td>${formattedDate}</td>
+                <td class="log-actor" style="color: ${ipColor}; font-weight: bold; cursor: pointer;">${escapeHtml(ipAddress)}</td>
+                <td>${escapeHtml(deviceInfo)}</td>
+                <td>${escapeHtml(screenSize)}</td>
+              `;
+              row.querySelector('.log-actor').addEventListener('click', () => filterByIp(ipAddress));
+
+              tableBody.appendChild(row);
+            }
+
+            // Update pagination info
+            document.getElementById('paginationInfo').textContent =
+              `${startIndex + 1}-${endIndex} / ${logs.length} kayıt gösteriliyor`;
+
+            // Update button states
+            document.getElementById('prevPageBtn').disabled = page === 1;
+            document.getElementById('nextPageBtn').disabled = page === totalPages;
+          }
+
+          // Display first page
+          displayLogsForPage(currentPage);
+
+          // Set up pagination button handlers
+          document.getElementById('prevPageBtn').onclick = () => {
+            if (currentPage > 1) {
+              currentPage--;
+              displayLogsForPage(currentPage);
+            }
+          };
+
+          document.getElementById('nextPageBtn').onclick = () => {
+            if (currentPage < totalPages) {
+              currentPage++;
+              displayLogsForPage(currentPage);
+            }
+          };
+
+          // Remove loading animation from button
+          if (refreshLoginButton) {
+            refreshLoginButton.classList.remove('refresh-button-loading');
+
+          }
+
+        } catch (error) {
+          console.error('Error loading logs:', error);
+          document.getElementById('noLogs').textContent = 'Kayıtlar yüklenirken bir hata oluştu.';
+          document.getElementById('noLogs').style.display = 'block';
+          document.getElementById('dateSummaryContainer').style.display = 'none';
+          document.getElementById('paginationContainer').style.display = 'none';
+
+          // Remove loading animation from button
+          if (refreshLoginButton) {
+            refreshLoginButton.classList.remove('refresh-button-loading');
+
+            // Show error indicator on button
+            refreshLoginButton.querySelector('.refresh-text').textContent = 'Hata!';
+            refreshLoginButton.style.backgroundColor = '#f44336';
+
+            // Reset button after 2 seconds
+            setTimeout(() => {
+              refreshLoginButton.querySelector('.refresh-text').textContent = 'Yenile';
+              refreshLoginButton.style.backgroundColor = '';
+            }, 2000);
+          }
+        }
+      }
+
+      // Function to show logs for a specific date
+      function showDateGroup(dateKey, dateGroup) {
+        // Clear any active IP filters when switching dates
+        const filterContainer = document.getElementById('filterContainer');
+        if (filterContainer && filterContainer.innerHTML !== '') {
+          filterContainer.innerHTML = '';
+        }
+
+        // Hide the main logs table but keep the date summary visible
+        const mainTable = document.querySelectorAll('.logs-table')[0]; // Get the first table
+        mainTable.style.display = 'none';
+
+        document.getElementById('dateGroupContainer').style.display = 'block';
+        document.getElementById('selectedDateTitle').textContent = `${dateKey} Kayıtları`;
+
+        // Show pagination for date view with different ID
+        document.getElementById('paginationContainer').style.display = 'none';
+        document.getElementById('dateGroupPaginationContainer').style.display = 'flex';
+
+        // Highlight the selected date card
+        const allDateCards = document.querySelectorAll('.date-summary-item');
+        allDateCards.forEach(card => {
+          // Remove active class from all cards
+          card.classList.remove('date-summary-item-active');
+
+          // Add active class to the selected card
+          if (card.querySelector('h4').textContent.includes(dateKey)) {
+            card.classList.add('date-summary-item-active');
+          }
+        });
+
+        const dateGroupTableBody = document.getElementById('dateGroupTableBody');
+        dateGroupTableBody.innerHTML = '';
+
+        // Sort by time (newest first)
+        dateGroup.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Initialize pagination for date group
+        const itemsPerPage = 10;
+        let currentPage = 1;
+        const totalPages = Math.ceil(dateGroup.length / itemsPerPage);
+
+        // Function to display logs for current page
+        function displayLogsForPage(page) {
+          dateGroupTableBody.innerHTML = '';
+          const startIndex = (page - 1) * itemsPerPage;
+          const endIndex = Math.min(startIndex + itemsPerPage, dateGroup.length);
+
+          for (let i = startIndex; i < endIndex; i++) {
+            const log = dateGroup[i];
+            const row = document.createElement('tr');
+
+            const date = new Date(log.timestamp);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+
+            const device = log.deviceInfo || {};
+            const ipAddress = log.ipAddress || 'Bilinmiyor';
+            const deviceInfo = formatDeviceInfo(log.deviceInfo);
+            const screenSize = `${device.screenWidth || '?'}x${device.screenHeight || '?'}`;
+            const ipDeviceScreen = `${ipAddress}-${deviceInfo}-${screenSize}`;
+            const ipColor = window.ipColors[ipDeviceScreen];
+
+            row.innerHTML = `
+              <td>${hours}:${minutes}:${seconds}</td>
+              <td class="log-actor" style="color: ${ipColor}; font-weight: bold; cursor: pointer;">${escapeHtml(ipAddress)}</td>
+              <td>${escapeHtml(deviceInfo)}</td>
+              <td>${escapeHtml(screenSize)}</td>
+            `;
+            row.querySelector('.log-actor').addEventListener('click', () => filterByIp(ipAddress));
+
+            dateGroupTableBody.appendChild(row);
+          }
+
+          // Update pagination info
+          document.getElementById('dateGroupPaginationInfo').textContent =
+            `${startIndex + 1}-${endIndex} / ${dateGroup.length} kayıt gösteriliyor`;
+
+          // Update button states
+          const prevBtn = document.getElementById('prevDatePageBtn');
+          const nextBtn = document.getElementById('nextDatePageBtn');
+
+          if (page === 1) {
+            prevBtn.disabled = true;
+            prevBtn.style.opacity = '0.5';
+            prevBtn.style.cursor = 'not-allowed';
+          } else {
+            prevBtn.disabled = false;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+          }
+
+          if (page === totalPages) {
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '0.5';
+            nextBtn.style.cursor = 'not-allowed';
+          } else {
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+          }
+        }
+
+        // Display first page
+        try {
+          displayLogsForPage(currentPage);
+        } catch (error) {
+          console.error('Error displaying logs:', error);
+          dateGroupTableBody.innerHTML = '<tr><td colspan="4">Kayıtlar gösterilirken bir hata oluştu.</td></tr>';
+        }
+
+        // Set up pagination button handlers for date group
+        document.getElementById('prevDatePageBtn').onclick = () => {
+          if (currentPage > 1) {
+            currentPage--;
+            displayLogsForPage(currentPage);
+          }
+        };
+
+        document.getElementById('nextDatePageBtn').onclick = () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            displayLogsForPage(currentPage);
+          }
+        };
+      }
+
+      // Helper function to format device info
+      function formatDeviceInfo(deviceInfo) {
+        if (!deviceInfo) return 'Bilinmiyor';
+
+        const userAgent = deviceInfo.userAgent || '';
+
+        // Check for Windows devices
+        const windowsVersion = userAgent.match(/Windows NT [0-9.]+/);
+        const windowsArch = userAgent.match(/Win64|Win32/);
+
+        // Check for Android devices
+        const androidVersion = userAgent.match(/Android [0-9.]+/);
+
+        if (windowsVersion && windowsArch) {
+          return `${windowsVersion[0]} - ${windowsArch[0]}`;
+        } else if (windowsVersion) {
+          return windowsVersion[0];
+        } else if (androidVersion) {
+          // For Android devices, show "Linux - Android X"
+          return `Linux - ${androidVersion[0]}`;
+        } else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
+          // For iOS devices
+          const iosDevice = userAgent.match(/iPhone|iPad/)[0];
+          const iosVersion = userAgent.match(/OS ([0-9_]+)/);
+          return iosVersion ? `${iosDevice} - iOS ${iosVersion[1].replace('_', '.')}` : iosDevice;
+        } else if (userAgent.includes('Mac OS')) {
+          // For Mac devices
+          const macVersion = userAgent.match(/Mac OS X ([0-9_]+)/);
+          return macVersion ? `Mac OS X ${macVersion[1].replace(/_/g, '.')}` : 'Mac OS';
+        } else {
+          // Default fallback to platform or unknown
+          return deviceInfo.platform || 'Bilinmiyor';
+        }
+      }
+    });
+
+    // Helper functions
+    function getMonthName(monthIndex) {
+      const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+      return months[monthIndex];
+    }
+
+    // Function to filter logs by IP address
+    window.filterByIp = function (ipAddress) {
+      // Create filter notification
+      const filterContainer = document.getElementById('filterContainer');
+      if (!filterContainer) {
+        // Create filter container if it doesn't exist
+        const refreshLoginButtonContainer = document.querySelector('.refresh-button').parentElement;
+        const newFilterContainer = document.createElement('div');
+        newFilterContainer.id = 'filterContainer';
+        newFilterContainer.style.marginRight = '10px';
+        refreshLoginButtonContainer.insertBefore(newFilterContainer, refreshLoginButtonContainer.firstChild);
+      }
+
+      // Clear any existing filters
+      document.getElementById('filterContainer').innerHTML = '';
+
+      // Check if we're in date view
+      const isDateGroupVisible = document.getElementById('dateGroupContainer').style.display === 'block';
+      const selectedDateTitle = document.getElementById('selectedDateTitle').textContent;
+      const selectedDate = selectedDateTitle.replace(' Kayıtları', '');
+
+      // Create filter notification
+      const ipFilterNotification = document.createElement('div');
+      ipFilterNotification.id = 'ipFilterNotification';
+      ipFilterNotification.innerHTML = '<span class="filter-text"></span><button id="clearIpFilter">×</button>';
+      ipFilterNotification.querySelector('.filter-text').textContent = `${ipAddress} Kullanıcı adına göre filtrelendi`;
+      document.getElementById('filterContainer').appendChild(ipFilterNotification);
+
+      // Add event listener to clear filter button
+      document.getElementById('clearIpFilter').addEventListener('click', function (e) {
+        e.stopPropagation(); // Prevent the click from bubbling up
+        document.getElementById('filterContainer').innerHTML = '';
+
+        if (isDateGroupVisible) {
+          // If we were in date view, go back to that date view
+          const dateCards = document.querySelectorAll('.date-summary-item');
+          for (const card of dateCards) {
+            if (card.querySelector('h4').textContent.includes(selectedDate)) {
+              // Simulate a click on the date card to show that date's logs
+              card.click();
+              break;
+            }
+          }
+        } else {
+          // Instead of manual reload, trigger the refresh button
+          refreshLoginButton.click();
+        }
+      });
+
+      if (isDateGroupVisible) {
+        // We're in date view, filter the date group table
+        const filteredLogs = Array.from(document.querySelectorAll('#dateGroupTableBody tr')).filter(row => {
+          return row.querySelector('td:nth-child(2)').textContent.trim() === ipAddress;
+        });
+
+        // Hide all rows in date group table
+        document.querySelectorAll('#dateGroupTableBody tr').forEach(row => {
+          row.style.display = 'none';
+        });
+
+        // Show only filtered rows
+        filteredLogs.forEach(row => {
+          row.style.display = '';
+        });
+
+        // Update pagination info
+        document.getElementById('dateGroupPaginationInfo').textContent =
+          `1-${filteredLogs.length} / ${filteredLogs.length} kayıt gösteriliyor`;
+
+        // Disable pagination buttons
+        document.getElementById('prevDatePageBtn').disabled = true;
+        document.getElementById('nextDatePageBtn').disabled = true;
+      } else {
+        // We're in main view, filter the main table
+        const filteredLogs = Array.from(document.querySelectorAll('#logsTableBody tr')).filter(row => {
+          return row.querySelector('td:nth-child(2)').textContent.trim() === ipAddress;
+        });
+
+        // Hide date group container and show main table
+        document.getElementById('dateGroupContainer').style.display = 'none';
+        document.getElementById('dateGroupPaginationContainer').style.display = 'none';
+        document.querySelector('.logs-table').style.display = 'table';
+        document.getElementById('paginationContainer').style.display = 'flex';
+
+        // Hide all rows
+        document.querySelectorAll('#logsTableBody tr').forEach(row => {
+          row.style.display = 'none';
+        });
+
+        // Show only filtered rows
+        filteredLogs.forEach(row => {
+          row.style.display = '';
+        });
+
+        // Update pagination info
+        document.getElementById('paginationInfo').textContent =
+          `1-${filteredLogs.length} / ${filteredLogs.length} kayıt gösteriliyor`;
+
+        // Disable pagination buttons
+        document.getElementById('prevPageBtn').disabled = true;
+        document.getElementById('nextPageBtn').disabled = true;
+      }
+    };

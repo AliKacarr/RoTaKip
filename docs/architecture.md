@@ -35,6 +35,9 @@ public/
   *.html            Doğrudan sunulan giriş belgeleri
   *.min.js/css      Build çıktısı; Git tarafından takip edilmez
 
+docs/
+  assets/           README ve teknik belgelerde kullanılan, runtime'a çıkmayan görseller
+
 scripts/            Build ve bakım araçları
 tests/
   unit/             Saf iş kuralı testleri
@@ -50,6 +53,7 @@ tests/
 - Paylaşılan kod yalnızca gerçekten birden fazla özellik tarafından kullanılıyorsa `shared/` altına taşınır.
 - Grup üst çubuğu gibi ekranda görünen route öğeleri ilgili route fragmentinde tutulur; shell içinde ayrı bir görünür kök oluşturulmaz.
 - Bir route'a özgü markup kendi `public/fragments/<route>.html` dosyasında, CSS ve JavaScript ise o route'un özellik paketinde bulunur.
+- Yönetim ve log belgeleri bağımsız giriş noktalarıdır; kaynakları `src/client/features/` altında paketlenir, shell route ve preload listelerine eklenmez.
 - Grup giriş ve profil pencereleri `common-overlays.html` içinde, yalnız grup rotası açıldığında yüklenir. Tek özelliğe ait modallar ilgili özellik fragmentinde kalır.
 - Build çıktıları elle düzenlenmez. `npm run build:assets` ile yeniden üretilir.
 - Kullanıcı yüklemeleri kaynak kodla birlikte sürümlenmez.
