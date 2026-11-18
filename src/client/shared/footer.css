@@ -1,15 +1,18 @@
 .site-footer {
   color: #222;
-  padding-top: 10px;
+  padding-top: 15px;
   font-size: 21px;
-  margin-top: 10px;
+  margin-top: 15px;
   border-top: 1px solid #44444430;
 }
 
 .footer-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-areas:
+    "social app"
+    "corporate corporate";
+  column-gap: 24px;
   align-items: flex-start;
   max-width: 100%;
   margin: 0;
@@ -18,9 +21,8 @@
 }
 
 .footer-section {
-  flex: 1 1 220px;
-  margin: 10px 0;
-  min-width: 180px;
+  margin: 15px 0;
+  min-width: 0;
   text-align: center;
 }
 
@@ -35,18 +37,40 @@
   width: auto;
 }
 
+.footer-section.kurumsal {
+  grid-area: corporate;
+  margin-top: 8px;
+}
+
+.footer-section.kurumsal h4 {
+  display: none;
+}
+
 .footer-section.kurumsal ul {
+  display: flex;
+  width: 100%;
+  max-width: 560px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
   list-style: none;
   padding: 0;
   margin: 0 auto;
   text-align: center;
-  display: block;
+  box-sizing: border-box;
 }
 
 .footer-section.kurumsal ul li {
-  margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0;
   text-align: center;
-  display: block;
+}
+
+.footer-section.kurumsal ul li + li::before {
+  content: "•";
+  margin: 0 10px;
+  color: #777;
 }
 
 .footer-section.kurumsal ul li a {
@@ -55,6 +79,8 @@
   transition: color 0.2s, border-bottom 0.2s;
   position: relative;
   padding-bottom: 2px;
+  font-size: 17px;
+  white-space: nowrap;
 }
 
 .footer-section.kurumsal ul li a::after {
@@ -77,76 +103,215 @@
   width: 100%;
 }
 
-.footer-section.social-media .social-icons a {
-  transition: color 0.2s, transform 0.2s;
-}
-
-.footer-section.social-media .social-icons a:hover {
-  color: #1a417a;
-  transform: scale(1.18) rotate(-6deg);
-}
-
 .footer-section.social-media {
+  grid-area: social;
   text-align: center;
 }
 
-.footer-section.social-media .social-icons {
-  display: flex;
-  justify-content: center;
+.footer-section.social-media .social-links {
+  display: grid;
+  width: min(100%, 390px);
+  gap: 10px;
+  margin: 0 auto;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.footer-section.social-media .social-link {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
+  padding: 10px;
+  color: #111;
+  border-radius: 16px;
+  text-align: left;
+  text-decoration: none;
 }
 
-.footer-section.social-media .social-icons .fab{
+.footer-section.social-media .social-link:hover {
+  color: #111;
+}
+
+.footer-section.social-media .social-brand-icon {
   display: inline-flex;
-}
-
-.footer-section.social-media a {
-  color: #2b67c4;
+  width: 54px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  color: #fff;
   font-size: 27px;
-  transition: color 0.2s;
-  background: none;
-  border-radius: 0;
-  padding: 0;
-  display: inline-block;
-  margin: 0;
 }
 
-.footer-section.social-media a:hover {
-  color: #1a417a;
-  background: none;
+.footer-section.social-media .social-link-instagram .social-brand-icon {
+  background: radial-gradient(circle at 30% 105%, #fdf497 0 8%, #fd5949 38%, #d6249f 62%, #285aeb 100%);
+}
+
+.footer-section.social-media .social-link-instagram .social-brand-icon i {
+  font-size: 40px;
+}
+
+.footer-section.social-media .social-link-youtube .social-brand-icon {
+  color: #ff0000;
+  background: transparent;
+}
+
+.footer-section.social-media .social-link-youtube .social-brand-icon i {
+  font-size: 52px;
+}
+
+.footer-section.social-media .social-link-spotify .social-brand-icon {
+  color: #1DB954;
+  background: transparent;
+}
+
+.footer-section.social-media .social-link-spotify .social-brand-icon i {
+  font-size: 52px;
+}
+
+.footer-section.social-media .social-link-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.footer-section.social-media .social-link-copy strong {
+  overflow: hidden;
+  font-size: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer-section.social-media .social-link-copy small {
+  overflow: hidden;
+  margin-top: 3px;
+  color: #555;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer-section.social-media .social-link-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 15px 30px;
+  border-radius: 999px;
+  color: #fff;
+  background: #0095F6;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.footer-section.social-media .social-link-instagram .social-link-action:hover {
+  background: #007dcc;
+  transform: translateY(-1px);
+}
+
+.footer-section.social-media .social-link-youtube .social-link-action {
+  background: #ff0000;
+}
+
+.footer-section.social-media .social-link-youtube .social-link-action:hover {
+  background: #d90000;
+  transform: translateY(-1px);
+}
+
+.footer-section.social-media .social-link-spotify .social-link-action {
+  background: #1DB954;
+}
+
+.footer-section.social-media .social-link-spotify .social-link-action:hover {
+  background: #169c46;
+  transform: translateY(-1px);
+}
+
+.footer-section.app-download .social-contact-link {
+  display: flex;
+  width: min(100%, 340px);
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 25px auto 0;
+  box-sizing: border-box;
+  color: #fff;
+  background: #0095f6;
+  border: none;
+  border-radius: 15px;
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.footer-section.app-download .social-contact-link:hover {
+  color: #fff;
+  background: #007dcc;
+  transform: translateY(-1px);
+}
+
+.footer-section.app-download .social-contact-link i {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.footer-section.app-download .social-contact-link span {
+  display: inline-flex;
+  min-height: 20px;
+  align-items: center;
+  line-height: 1;
 }
 
 .footer-section.app-download .app-download-row {
   display: flex;
   justify-content: center;
   align-items: center;
+  height: clamp(76px, 7.8125vw, 100px);
   gap: 10px;
   margin-bottom: 0;
   margin-top: 5px;
 }
 
+.footer-section.app-download {
+  grid-area: app;
+}
+
 .footer-section.app-download .app-icon-container {
   display: flex;
+  flex: 0 0 auto;
+  height: 100%;
+  aspect-ratio: 1;
   justify-content: center;
   align-items: center;
-  transition: transform 0.2s ease;
 }
 
 .footer-section.app-download .app-icon-container a {
   display: flex;
+  width: 100%;
+  height: 100%;
   justify-content: center;
   align-items: center;
-  transition: transform 0.2s ease;
-}
-
-.footer-section.app-download .app-icon-container:hover {
-  transform: scale(1.05);
 }
 
 .footer-section.app-download .app-icon {
-  width: 80px;
-  height: 80px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
   border-radius: 16px;
   object-fit: cover;
 }
@@ -167,7 +332,7 @@
   border-radius: 22px;
   text-decoration: none;
   font-weight: bold;
-  transition: background 0.2s;
+  transition: background-color 0.2s ease, transform 0.2s ease;
   font-size: 16px;
   width: 100%;
 }
@@ -178,13 +343,14 @@
 }
 
 .footer-section.app-download .app-btn:hover {
-  background: #1a417a;
+  background: #1f56ad;
   color: #fff;
+  transform: translateY(-1px);
 }
 
 .footer-section.app-download .app-btn:active {
-  transform: scale(0.98);
-  background-color: #1a417a;
+  transform: none;
+  background-color: #2b67c4;
   color: #ffffff;
 }
 
@@ -199,8 +365,39 @@
 }
 
 @media (max-width: 768px) {
+  .site-footer {
+    margin-top: 30px;
+    padding: 15px 0 5px;
+    font-size: 15px;
+  }
+
+  .footer-container {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .footer-section {
+    width: 100%;
+    min-width: 0;
+    flex: 0 0 auto;
+    margin: 10px 0;
+    box-sizing: border-box;
+  }
+
+  .footer-section h4 {
+    margin-bottom: 8px;
+    padding-bottom: 3px;
+    font-size: 19px;
+  }
+
   .footer-bottom {
-    margin-top: 15px;
+    margin-top: 10px;
+    padding: 0 8px;
+    font-size: 15px;
+    line-height: 1.45;
   }
 
   .footer-section.social-media {
@@ -213,18 +410,113 @@
 
   .footer-section.kurumsal {
     order: 3;
+    margin-top: 15px;
   }
 
   .footer-section.kurumsal ul {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 12px;
     width: 100%;
-    max-width: 380px;
-    padding: 0 12px;
+    max-width: 360px;
+    padding: 0 8px;
   }
 
-  .footer-section.kurumsal ul li {
-    margin-bottom: 0;
+  .footer-section.kurumsal ul li + li::before {
+    margin: 0 7px;
+  }
+
+  .footer-section.kurumsal ul li a {
+    font-size: 14px;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  .footer-section.social-media .social-links {
+    width: min(100%, 340px);
+    gap: 7px;
+  }
+
+  .footer-section.social-media .social-link {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .footer-section.social-media .social-brand-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    font-size: 23px;
+  }
+
+  .footer-section.social-media .social-link-instagram .social-brand-icon i {
+    font-size: 30px;
+  }
+
+  .footer-section.social-media .social-link-youtube .social-brand-icon {
+    height: 42px;
+  }
+
+  .footer-section.social-media .social-link-youtube .social-brand-icon i {
+    font-size: 42px;
+  }
+
+  .footer-section.social-media .social-link-spotify .social-brand-icon i {
+    font-size: 42px;
+  }
+
+  .footer-section.social-media .social-link-copy strong {
+    font-size: 16px;
+  }
+
+  .footer-section.social-media .social-link-copy small {
+    font-size: 13px;
+  }
+
+  .footer-section.social-media .social-link-action {
+    padding: 11px 22px;
+    font-size: 13px;
+  }
+
+  .footer-section.app-download .social-contact-link {
+    width: min(100%, 300px);
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .footer-section.app-download .social-contact-link i {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+
+  .footer-section.app-download .app-download-row {
+    width: min(100%, 360px);
+    gap: 10px;
+    padding: 0 8px;
+    box-sizing: border-box;
+  }
+
+  .footer-section.app-download .app-buttons {
+    min-width: 0;
+    width: min(100%, 210px);
+    flex: 0 1 210px;
+    gap: 6px;
+  }
+
+  .footer-section.app-download .app-btn {
+    width: auto;
+    min-width: 0;
+    padding: 9px 10px;
+    border-radius: 18px;
+    font-size: 13px;
+    line-height: 1.25;
+    box-sizing: border-box;
+  }
+
+  .footer-section.app-download .app-btn i {
+    flex: 0 0 auto;
+    margin-right: 6px;
+    font-size: 17px;
   }
 }
+

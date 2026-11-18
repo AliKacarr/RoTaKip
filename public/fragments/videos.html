@@ -1,17 +1,17 @@
 <div class="videos">
-      <h3><i class="fa-regular fa-circle-play" style="font-size: 1.3em !important; padding: 0 10px 0 5px;"></i>Videolar
+      <h3 class="section-heading"><i class="fa-regular fa-circle-play" aria-hidden="true"></i>Videolar
       </h3>
-      <div class="top-bar">
-        <button id="randomBtn">
+      <div class="top-bar" role="group" aria-label="Video sıralama seçenekleri">
+        <button id="randomBtn" type="button">
           <i class="fa-solid fa-shuffle"></i> Rastgele
         </button>
-        <button id="latestBtn">
+        <button id="latestBtn" type="button">
           <i class="fa-solid fa-forward-fast"></i> Son Yüklenen
         </button>
-        <button id="mostViewedBtn">
+        <button id="mostViewedBtn" type="button">
           <i class="fa-solid fa-chart-line"></i> Popüler
         </button>
-        <button id="refreshBtn">
+        <button id="refreshBtn" type="button">
           <i class="fa-solid fa-rotate"></i> Yenile
         </button>
       </div>
@@ -19,8 +19,8 @@
 
       <div id="videoModal" class="video-modal">
         <div class="modal-content-video">
-          <span class="close">&times;</span>
-          <iframe id="videoFrame" frameborder="0" allowfullscreen loading="lazy"></iframe>
+          <button type="button" class="close" aria-label="Videoyu kapat">&times;</button>
+          <iframe id="videoFrame" title="Video oynatıcı" frameborder="0" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
     </div>

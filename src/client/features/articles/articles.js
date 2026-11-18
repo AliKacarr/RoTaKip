@@ -165,25 +165,31 @@ class ArticlesManager {
         const card = document.createElement('div');
         card.className = 'article-card';
         const title = window.escapeHtml(article.title);
-        const imageUrl = window.escapeHtml(window.safeExternalUrl(article.image_url, '/images/default-article.png'));
+        const imageUrl = window.safeExternalUrl(article.image_url, '/images/default-article.png');
         const destinationUrl = window.safeExternalUrl(article.destination_url);
         const categoryUrl = window.safeExternalUrl(article.category_url);
+        const category = window.escapeHtml(article.category || 'Makale');
+
+        if (destinationUrl) {
+            card.setAttribute('role', 'link');
+            card.setAttribute('tabindex', '0');
+            card.setAttribute('aria-label', `${article.title || 'Makale'} makalesini aç`);
+        }
         
         card.innerHTML = `
             <div class="article-content-wrapper">
                 <div class="article-card-header">
                     <div class="article-image">
-                        <img src="${imageUrl}" alt="${title}"
-                             onerror="this.src='/images/default-article.png'">
+                        <img alt="${title}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
                     </div>
                     <div class="article-content">
                         <div class="article-meta-row">
-                            <div class="article-category">• ${window.escapeHtml(article.category)}</div>
-                            <div class="article-share">
+                            <button class="article-category" type="button">${category}</button>
+                            <button class="article-share" type="button" aria-label="Makaleyi paylaş">
                                 <svg class="article-share-icon" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
                                 </svg>
-                            </div>
+                            </button>
                         </div>
                         <div class="article-title">${title}</div>
                     </div>
@@ -191,6 +197,16 @@ class ArticlesManager {
                 <div class="article-text">${window.escapeHtml(this.truncateText(article.text, 100))}</div>
             </div>
         `;
+
+        const image = card.querySelector('.article-image img');
+        image.addEventListener('error', () => {
+            const fallback = new URL('/images/default-article.png', window.location.origin).href;
+            if (image.src !== fallback) {
+                image.closest('.article-image').classList.add('is-fallback');
+                image.src = fallback;
+            }
+        });
+        image.src = imageUrl;
 
         card.querySelector('.article-category').addEventListener('click', () => {
             if (categoryUrl) window.open(categoryUrl, '_blank', 'noopener');
@@ -214,6 +230,14 @@ class ArticlesManager {
             
             // Diğer tüm tıklamalarda destination_url'ye yönlendir
             if (destinationUrl) window.open(destinationUrl, '_blank', 'noopener');
+        });
+
+        card.addEventListener('keydown', event => {
+            if (!destinationUrl || event.target !== card) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                window.open(destinationUrl, '_blank', 'noopener');
+            }
         });
 
         return card;
@@ -278,6 +302,7 @@ class ArticlesManager {
     }
 
     truncateText(text, maxLength) {
+        text = String(text || '').trim();
         if (text.length <= maxLength) {
             return text;
         }

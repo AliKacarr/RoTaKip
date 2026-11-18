@@ -1,6 +1,5 @@
 .quote {
-    margin-inline: 20px;
-    padding: 5px 0;
+    padding: 10px 20px;
 }
 
 .quote-container {
@@ -222,4 +221,73 @@
 
 @media (prefers-reduced-motion: reduce) {
     .quote-loading-line { animation: none; }
+}
+
+@media (max-width: 768px) {
+    .quote {
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+    }
+
+    .quote-grid-container {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .quote-section {
+        min-width: 0;
+        min-height: 220px;
+        margin: 0;
+        padding: 18px 12px 14px;
+        border-width: 1px;
+    }
+
+    .quote-container {
+        min-width: 0;
+    }
+
+    .quote-icon img {
+        width: 42px;
+        height: 46px;
+    }
+
+    .quote-title {
+        font-size: 16px;
+    }
+
+    .quote-text {
+        width: 100%;
+        min-width: 0;
+        padding: 5px 2px;
+        font-size: 17px;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+        box-sizing: border-box;
+    }
+
+    .quote-text.is-loading {
+        min-height: 90px;
+    }
+
+    .refresh-quote,
+    .share-quote {
+        top: 8px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .refresh-quote {
+        right: 8px;
+        font-size: 18px;
+    }
+
+    .share-quote {
+        left: 8px;
+    }
+
+    .share-quote img {
+        width: 25px !important;
+        height: 25px !important;
+    }
 }

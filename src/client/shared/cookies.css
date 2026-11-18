@@ -111,3 +111,51 @@
 .cookie-pulsate-button {
     animation: cookie-pulsate 1.5s infinite;
 }
+
+@media (max-width: 600px) {
+    .cookie-consent-banner {
+        max-height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px));
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border-radius: 12px;
+    }
+
+    .cookie-content {
+        padding: 18px 16px 16px;
+    }
+
+    .cookie-header {
+        margin-bottom: 9px;
+    }
+
+    .cookie-icon {
+        margin-right: 10px;
+        font-size: 26px;
+        line-height: 1;
+    }
+
+    .cookie-header h3 {
+        font-size: 20px !important;
+        line-height: 1.25;
+    }
+
+    .cookie-content p {
+        margin-bottom: 14px;
+        font-size: 15px;
+        line-height: 1.5;
+    }
+
+    .cookie-buttons {
+        gap: 10px;
+        margin-top: 0;
+    }
+
+    .cookie-button {
+        min-width: 0;
+        min-height: 44px;
+        flex: 1 1 0;
+        padding: 10px 12px;
+        font-size: 16px;
+        line-height: 1.2;
+    }
+}

@@ -93,11 +93,17 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.doesNotMatch(shellStyles, /\.app-navigation-icon(?:\s|\.[^{])*\{[^}]*transform:/s);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item\.is-active \.app-navigation-icon\s*\{[^}]*transform:/s);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item\.is-active \.app-navigation-icon-outline\s*\{[^}]*transform:/s);
-  assert.match(shellStyles, /\.app-navigation-icon i\s*\{[^}]*color:\s*#111/s);
+  assert.match(shellStyles, /\.app-navigation-icon i\s*\{[^}]*color:\s*currentColor/s);
   assert.match(shellStyles, /\.app-navigation-icon\s*\{[^}]*width:\s*1em;[^}]*height:\s*1em;[^}]*font-size:\s*38px/s);
   assert.match(shellStyles, /\.app-navigation-icon i\s*\{[^}]*position:\s*absolute;[^}]*opacity:\s*1;[^}]*transition:\s*opacity 160ms ease-out/s);
   assert.match(shellStyles, /\.app-navigation-icon \.app-navigation-icon-filled\s*\{[^}]*opacity:\s*0;/s);
   assert.match(shellStyles, /\.app-navigation\.icons-ready \.app-navigation-item\.is-active \.app-navigation-icon-outline\s*\{[^}]*opacity:\s*0[\s\S]*?\.app-navigation\.icons-ready \.app-navigation-item\.is-active \.app-navigation-icon-filled\s*\{[^}]*opacity:\s*1/s);
+  assert.match(shellStyles, /\.app-navigation-item\.is-active \.app-navigation-icon-outline\s*\{[^}]*color:\s*#48505f;/);
+  assert.match(shellStyles, /\[data-route="tesbihat"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1e3a5f;/);
+  assert.match(shellStyles, /\[data-route="tefekkur"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#f2b705;/);
+  assert.match(shellStyles, /\[data-route="videos"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#b91c1c;/);
+  assert.match(shellStyles, /\[data-route="articles"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1d4f91;/);
+  assert.match(shellStyles, /\[data-route="okumalar"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#12665f;/);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item:hover,\s*\n\.app-navigation-item:focus-visible/);
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*-webkit-tap-highlight-color:\s*transparent/s);
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*box-sizing:\s*border-box/s);
@@ -109,15 +115,16 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.match(shellStyles, /\.app-navigation\s*\{[^}]*z-index:\s*9000/s);
   assert.match(shellStyles, /\.app-navigation\s*\{[^}]*z-index:\s*9000[\s\S]*?\.initial-tab-loader\s*\{[^}]*z-index:\s*8999/s);
   assert.match(shellStyles, /\.tab-view\.visible\s*\{[^}]*tab-view-enter/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?body\.app-shell-body\s*\{[^}]*padding-bottom:\s*calc\(128px \+ env\(safe-area-inset-bottom, 0px\)\)/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation\s*\{[^}]*padding:\s*0 0 env\(safe-area-inset-bottom, 0px\);[^}]*border-top:\s*0/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-items\s*\{[^}]*gap:\s*0/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-item\s*\{[^}]*min-height:\s*128px;[^}]*gap:\s*9px;[^}]*border-radius:\s*30px \/ 64px;[^}]*font-size:\s*23px;/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-icon\s*\{[^}]*font-size:\s*52px;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?body\.app-shell-body\s*\{[^}]*padding-bottom:\s*calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\)/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation\s*\{[^}]*inset:\s*auto 0 -1px 0;[^}]*height:\s*calc\(81px \+ env\(safe-area-inset-bottom, 0px\)\);[^}]*padding:\s*0 0 env\(safe-area-inset-bottom, 0px\);[^}]*background:\s*#fff;[^}]*border-top:\s*0;[^}]*backdrop-filter:\s*none;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-items\s*\{[^}]*gap:\s*0;[^}]*overflow:\s*hidden;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-item\s*\{[^}]*min-height:\s*80px;[^}]*flex:\s*1 1 20%;[^}]*padding:\s*4px 2px;[^}]*font-size:\s*15px;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-icon\s*\{[^}]*font-size:\s*36px;/s);
   assert.match(shellStyles, /\.app-navigation-item\.is-tap-feedback::before\s*\{[^}]*app-navigation-tap-fade 560ms ease-in-out both/s);
-  assert.match(shellStyles, /\.app-navigation-item::before\s*\{[^}]*background:\s*#b7b7b7/s);
-  assert.match(shellStyles, /\.app-navigation-item:first-child\s*\{[^}]*border-radius:\s*0 30px 30px 0 \/ 0 64px 64px 0/s);
-  assert.match(shellStyles, /\.app-navigation-item:last-child\s*\{[^}]*border-radius:\s*30px 0 0 30px \/ 64px 0 0 64px/s);
+  assert.match(shellStyles, /\.app-navigation-item::before\s*\{[^}]*inset:\s*0 -10px;[^}]*border-radius:\s*16px \/ 50%;[^}]*background:\s*#b7b7b7/s);
+  assert.match(shellStyles, /@media \(max-width:\s*600px\)[\s\S]*?\.app-navigation-item::before\s*\{[^}]*inset:\s*0 -8px;[^}]*border-radius:\s*12px \/ 50%;/s);
+  assert.match(shellStyles, /\.app-navigation-item:first-child\s*\{[^}]*border-radius:\s*0 20px 20px 0 \/ 0 44px 44px 0/s);
+  assert.match(shellStyles, /\.app-navigation-item:last-child\s*\{[^}]*border-radius:\s*20px 0 0 20px \/ 44px 0 0 44px/s);
   assert.match(shellStyles, /\.app-navigation-icon\s*\{[^}]*display:\s*flex;[^}]*width:\s*1em;[^}]*height:\s*1em;[^}]*line-height:\s*1/s);
   assert.match(shellStyles, /@keyframes app-navigation-tap-fade[\s\S]*?0%[^}]*opacity:\s*0[\s\S]*?42%[^}]*opacity:\s*1[\s\S]*?100%[^}]*opacity:\s*0/s);
   assert.doesNotMatch(shellStyles, /@keyframes app-navigation-tap-fade[\s\S]*?opacity:\s*0\.35/s);
@@ -125,7 +132,7 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.doesNotMatch(shellStyles, /\.app-navigation-item::before\s*\{[^}]*gradient/s);
   assert.doesNotMatch(shellStyles, /app-navigation-tap[^}]*clip-path|@keyframes app-navigation-tap[^}]*clip-path/s);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item\.is-active\s*\{[^}]*transform:/s);
-  assert.match(shellStyles, /body\.app-shell-body \.cookie-consent-banner\s*\{[^}]*right:\s*auto;[^}]*bottom:\s*calc\(128px \+ env\(safe-area-inset-bottom, 0px\) \+ 18px\);[^}]*left:\s*18px;[^}]*margin-inline:\s*0;/s);
+  assert.match(shellStyles, /body\.app-shell-body \.cookie-consent-banner\s*\{[^}]*right:\s*auto;[^}]*bottom:\s*calc\(80px \+ env\(safe-area-inset-bottom, 0px\) \+ 18px\);[^}]*left:\s*18px;[^}]*margin-inline:\s*0;/s);
 });
 
 test('Okuma mesaj paneli stilleri kendi bileşen dosyasında kalır', () => {
@@ -135,6 +142,52 @@ test('Okuma mesaj paneli stilleri kendi bileşen dosyasında kalır', () => {
   assert.doesNotMatch(shellStyles, /\.reading-message-panels\b/);
   assert.match(panelStyles, /\.reading-message-panels-content\s*\{[^}]*padding:\s*20px;[^}]*box-sizing:\s*border-box;/s);
   assert.match(panelStyles, /\.reading-message-panels:not\(:has\(> \.reading-message-panels-content > \*\)\)\s*\{[^}]*display:\s*none;/s);
+});
+
+test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer', () => {
+  const base = readClient('shell/base.css');
+  const shell = readClient('shell/shell.css');
+  const quote = readClient('features/tefekkur/quote.css');
+  const homeTefekkur = readClient('features/tefekkur/home-tefekkur.css');
+  const videos = readClient('features/videos/videos.css');
+  const articles = readClient('features/articles/articles.css');
+  const footer = readClient('shared/footer.css');
+  const footerHtml = readPublic('fragments/footer.html');
+  const cookies = readClient('shared/cookies.css');
+
+  assert.match(base, /@media \(max-width:\s*768px\)[\s\S]*?body\.app-shell-body > \.app-shell-container[\s\S]*?box-sizing:\s*border-box;[\s\S]*?overflow-x:\s*clip;/);
+  assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?min-height:\s*58px;[\s\S]*?padding:\s*2px 1px;[\s\S]*?font-size:\s*11px;[\s\S]*?font-size:\s*clamp\(20px, 5\.8vw, 24px\)/);
+  assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?\.app-navigation\s*\{[^}]*height:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(quote, /@media \(max-width:\s*768px\)[\s\S]*?\.quote-grid-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(homeTefekkur, /@media \(max-width:\s*768px\)[\s\S]*?\.home-tefekkur-images\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(videos, /@media \(max-width:\s*768px\)[\s\S]*?\.top-bar\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(videos, /\.videos-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(articles, /\.articles-categories\s*\{[^}]*flex-wrap:\s*nowrap;[^}]*overflow-x:\s*auto;/s);
+  assert.match(articles, /\.articles-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(footer, /\.footer-container\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1\.15fr\) minmax\(0, 0\.85fr\);[^}]*"social app"[^}]*"corporate corporate";/s);
+  assert.match(footer, /\.footer-section\.kurumsal h4\s*\{[^}]*display:\s*none;[\s\S]*?\.footer-section\.kurumsal ul\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[\s\S]*?\.footer-section\.kurumsal ul li \+ li::before\s*\{[^}]*content:\s*"•";/);
+  assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-container\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[\s\S]*?\.footer-section\s*\{[^}]*min-width:\s*0;/);
+  assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-section\.social-media\s*\{[^}]*order:\s*1;[\s\S]*?\.footer-section\.app-download\s*\{[^}]*order:\s*2;/);
+  assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-section\.app-download \.app-buttons\s*\{[^}]*width:\s*min\(100%, 210px\);[^}]*flex:\s*0 1 210px;/);
+  assert.match(footer, /\.social-link\s*\{[^}]*grid-template-columns:\s*54px minmax\(0, 1fr\) auto;[\s\S]*?\.social-link-action\s*\{[^}]*padding:\s*12px 30px;[\s\S]*?\.footer-section\.app-download \.social-contact-link\s*\{[^}]*width:\s*min\(100%, 340px\);[^}]*min-height:\s*48px;/);
+  assert.match(footer, /\.footer-section\.app-download \.app-download-row\s*\{[^}]*align-items:\s*center;[^}]*height:\s*clamp\(76px, 7\.8125vw, 100px\);[\s\S]*?\.footer-section\.app-download \.app-icon-container\s*\{[^}]*height:\s*100%;[^}]*aspect-ratio:\s*1;[\s\S]*?\.footer-section\.app-download \.app-icon\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/);
+  assert.doesNotMatch(footer, /\.footer-section\.social-media \.social-link:hover\s*\{[^}]*transform:/);
+  assert.match(footer, /\.social-link-instagram \.social-link-action:hover\s*\{[^}]*background:\s*#007dcc;[^}]*transform:\s*translateY\(-1px\);[\s\S]*?\.social-link-youtube \.social-link-action:hover\s*\{[^}]*background:\s*#d90000;[^}]*transform:\s*translateY\(-1px\);[\s\S]*?\.social-link-spotify \.social-link-action:hover\s*\{[^}]*background:\s*#169c46;[^}]*transform:\s*translateY\(-1px\);/);
+  assert.match(footer, /\.footer-section\.app-download \.app-btn:hover\s*\{[^}]*background:\s*#1f56ad;[^}]*transform:\s*translateY\(-1px\);/);
+  assert.doesNotMatch(footer, /\.footer-section\.app-download \.app-icon-container:hover/);
+  assert.doesNotMatch(footer, /\.footer-section\.app-download \.app-icon-container\s*\{[^}]*display:\s*none;/);
+  assert.equal((footerHtml.match(/<h4>/g) || []).length, 3);
+  assert.match(footerHtml, /class="social-contact-link" href="mailto:alikacardev@gmail\.com"[\s\S]*?İletişime Geç/);
+  assert.match(footerHtml, /social-link-youtube[\s\S]*?social-brand-icon[\s\S]*?fab fa-youtube/);
+  assert.match(footer, /\.social-link-youtube \.social-brand-icon\s*\{[^}]*color:\s*#ff0000;[^}]*background:\s*transparent;/);
+  assert.match(footer, /\.social-link-instagram \.social-brand-icon i\s*\{[^}]*font-size:\s*40px;/);
+  assert.match(footer, /\.social-link-spotify \.social-brand-icon\s*\{[^}]*color:\s*#1DB954;[^}]*background:\s*transparent;/);
+  assert.match(footer, /\.footer-section\.app-download \.social-contact-link\s*\{[^}]*color:\s*#fff;[^}]*background:\s*#0095f6;[\s\S]*?\.footer-section\.app-download \.social-contact-link i\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*color:\s*#fff;/);
+  assert.doesNotMatch(footer, /@media \(min-width:\s*769px\)/);
+  assert.doesNotMatch(footerHtml, /wa\.me|>Bize Ulaşın</);
+  assert.match(cookies, /@media \(max-width:\s*600px\)[\s\S]*?\.cookie-consent-banner\s*\{[^}]*max-height:\s*calc\(100dvh - 96px - env\(safe-area-inset-bottom, 0px\)\);[^}]*overflow-y:\s*auto;/);
+  assert.match(cookies, /@media \(max-width:\s*600px\)[\s\S]*?\.cookie-button\s*\{[^}]*min-height:\s*44px;[^}]*flex:\s*1 1 0;[^}]*font-size:\s*16px;/);
+  assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?\.route-loader-star\s*\{[^}]*font-size:\s*30px;[\s\S]*?\.route-loader-line\s*\{[^}]*width:\s*27px;[\s\S]*?\.route-loader-line span\s*\{[^}]*font-size:\s*16px;/);
 });
 
 test('geçmiş günler kaydırma ipucu hesaplanan merkezi kendi üzerinde kullanır', () => {
@@ -284,7 +337,7 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat geçici
   ].map(className => orderedRouteMarkup.indexOf(`class="${className}`));
   assert.ok(orderedSections.every((position, index) => position >= 0 && (index === 0 || position > orderedSections[index - 1])));
   assert.doesNotMatch(tesbihat, /tracker-table-shell|user-cards-section|main-area|monthly-calendar-section|stats-section/);
-  assert.match(tesbihat, /class="tesbihat-preparation"[\s\S]*?Tesbihat[\s\S]*?RoTaKip'i kullandığınız için teşekkür ederiz[\s\S]*?mailto:ateizmfikri@gmail\.com[\s\S]*?Çatı Katı/);
+  assert.match(tesbihat, /class="tesbihat-preparation"[\s\S]*?Tesbihat[\s\S]*?RoTaKip'i kullandığınız için teşekkür ederiz[\s\S]*?mailto:alikacardev@gmail\.com[\s\S]*?Çatı Katı/);
   assert.doesNotMatch(commonOverlays, /readingEditModeBar/);
   assert.match(readClient('features/readings/reading-edit-mode.js'), /modeBar\.classList\.add\('show'\)[\s\S]*?aria-hidden', 'false'/);
   assert.match(readClient('features/readings/reading-edit-mode.js'), /modeBar\.classList\.remove\('show'\)[\s\S]*?aria-hidden', 'true'/);
@@ -365,6 +418,8 @@ test('global fragmentler grup içeriği taşımaz', () => {
   assert.doesNotMatch(readClient('features/articles/articles.js'), /loadingCard|article-loading-/);
   assert.doesNotMatch(readClient('features/articles/articles.js'), /article-loading-spinner/);
   assert.match(readClient('features/articles/articles.css'), /\.article-loading-image\s*\{[^}]*height:\s*175px;[^}]*article-loading/s);
+  assert.match(readClient('features/articles/articles.css'), /\.article-image\s*\{[^}]*width:\s*152px;[^}]*height:\s*152px;[^}]*overflow:\s*hidden;/s);
+  assert.match(readClient('features/articles/articles.css'), /\.article-image img\s*\{[^}]*height:\s*100%;[^}]*object-fit:\s*cover;/s);
 });
 
 test('global sekmeler ilk geçişten önce içerikleriyle birlikte arka planda hazırlanır', () => {
@@ -769,12 +824,31 @@ test('sunucu Okumalar ve bağımsız sekme adreslerini sunar', () => {
   assert.doesNotMatch(server, /app\.get\('\/:groupId'/);
 });
 
-test('yönetim ve kayıt sayfaları mobil viewport tanımlar', () => {
-  const viewportPattern = /<meta\s+name="viewport"\s+content="width=device-width, initial-scale=1\.0">/;
-  ['admin.html', 'login-logs.html', 'access-logs.html'].forEach(fileName => {
+test('tüm bağımsız sayfalar güvenli alan destekli mobil viewport tanımlar', () => {
+  const viewportPattern = /<meta\s+name="viewport"\s+content="width=device-width, initial-scale=1, viewport-fit=cover">/;
+  [
+    'app-shell.html',
+    'admin.html',
+    'login-logs.html',
+    'access-logs.html',
+    path.join('politikalar', 'hakkimizda.html'),
+    path.join('politikalar', 'gizlilik-politikasi.html'),
+    path.join('politikalar', 'cerez-politikasi.html')
+  ].forEach(fileName => {
     const html = fs.readFileSync(path.join(projectRoot, 'public', fileName), 'utf8');
     assert.match(html, viewportPattern, `${fileName} viewport etiketi içermeli`);
   });
+});
+
+test('grup rotaları geçici eski viewport düzenini kullanır', () => {
+  const shell = readPublic('app-shell.html');
+  const router = readPublic('app/shell-router.js');
+
+  assert.match(shell, /const responsiveViewport = 'width=device-width, initial-scale=1, viewport-fit=cover'/);
+  assert.match(shell, /const legacyGroupViewport = 'width=980'/);
+  assert.match(shell, /normalizedPath === '\/gruplar' \|\| normalizedPath\.startsWith\('\/grup\/'\)/);
+  assert.match(shell, /window\.syncRoTaKipViewport = syncViewport;\s*syncViewport\(path\)/);
+  assert.match(router, /window\.syncRoTaKipViewport\?\.\(url\.pathname\)/);
 });
 
 test('yönetim sayfaları bağımsız paketlenir ve shell tarafından ön yüklenmez', () => {

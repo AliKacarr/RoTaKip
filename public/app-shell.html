@@ -2,6 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="RoTaKip ile okuma alışkanlıklarınızı ve grup ilerlemenizi takip edin; tesbihat, tefekkür, videolar ve makaleler gibi içeriklere tek yerden ulaşın.">
   <meta name="keywords" content="rotakip, okuma takibi, okuma grupları, okuma alışkanlığı, tesbihat, tefekkür, videolar, makaleler">
   <meta name="robots" content="index, follow">
@@ -11,6 +12,17 @@
   <script>
     (() => {
       const path = window.location.pathname.replace(/\/$/, '') || '/';
+      const responsiveViewport = 'width=device-width, initial-scale=1, viewport-fit=cover';
+      const legacyGroupViewport = 'width=980';
+      const syncViewport = pathname => {
+        const normalizedPath = String(pathname || '/').replace(/\/$/, '') || '/';
+        const usesLegacyGroupLayout = normalizedPath === '/gruplar' || normalizedPath.startsWith('/grup/');
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) viewport.content = usesLegacyGroupLayout ? legacyGroupViewport : responsiveViewport;
+      };
+      window.syncRoTaKipViewport = syncViewport;
+      syncViewport(path);
+
       const selectedRoute = path === '/gruplar' || path.startsWith('/grup/')
         ? 'okumalar'
         : ({
@@ -40,7 +52,7 @@
   </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
-  <link rel="stylesheet" href="/shell.min.css?v=fdab73ba0d45">
+  <link rel="stylesheet" href="/shell.min.css?v=f4a8355b2e08">
 </head>
 <body class="app-shell-body initial-tab-loading">
   <div class="groups-sparkle-overlay" aria-hidden="true"></div>
@@ -53,8 +65,8 @@
       </div>
       <p>Bu site, size en iyi deneyimi sunmak için çerezleri kullanmaktadır. Çerezler, tercihlerinizi hatırlamak ve site kullanımınızı analiz etmek için kullanılır.</p>
       <div class="cookie-buttons">
-        <button id="declineCookies" class="cookie-button decline">Reddet</button>
-        <button id="acceptCookies" class="cookie-button accept cookie-pulsate-button">Kabul Et</button>
+        <button id="declineCookies" class="cookie-button decline" type="button">Reddet</button>
+        <button id="acceptCookies" class="cookie-button accept cookie-pulsate-button" type="button">Kabul Et</button>
       </div>
     </div>
   </div>

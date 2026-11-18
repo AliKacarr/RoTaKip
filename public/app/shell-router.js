@@ -672,6 +672,7 @@ async function navigate(url, options = {}) {
     window.location.assign(url.href);
     return;
   }
+  window.syncRoTaKipViewport?.(url.pathname);
   const leavesMountedGroup = Boolean(mountedGroupId)
     && (!route.requiresGroup || route.groupId !== mountedGroupId);
   if (leavesMountedGroup) window.invalidateRoTaKipGroupCache(mountedGroupId);

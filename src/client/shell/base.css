@@ -34,8 +34,7 @@ body {
   background-repeat: no-repeat;
   max-width: 1000px;
   margin: 20px auto;
-  padding: 10px;
-  padding-inline: 40px;
+  padding: 20px 40px;
   background-color: #fcfdfe;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
@@ -61,6 +60,54 @@ h3 {
   padding-bottom: 10px;
   border-bottom: 1px solid #44444430;
   width: 98%;
+}
+
+.section-heading {
+  gap: 8px;
+}
+
+.section-heading i {
+  flex: 0 0 auto;
+  padding: 0;
+  font-size: 1.15em;
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  body.app-shell-body > .app-shell-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 12px clamp(12px, 4vw, 20px) 15px;
+    border-radius: 0;
+    box-sizing: border-box;
+    font-size: 16px;
+    overflow-x: clip;
+  }
+
+  .tab-view-tesbihat,
+  .tab-view-tefekkur,
+  .tab-view-videos,
+  .tab-view-articles {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .section-heading,
+  h3.section-heading {
+    width: 100%;
+    margin: 10px 0 16px;
+    padding-bottom: 8px;
+    font-size: 21px !important;
+    line-height: 1.25;
+    box-sizing: border-box;
+  }
 }
 
 /* Unified Toast/Notification Styles */

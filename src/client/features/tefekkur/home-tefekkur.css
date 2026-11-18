@@ -98,3 +98,51 @@
 @keyframes home-tefekkur-spin {
     to { transform: rotate(360deg); }
 }
+
+@media (max-width: 768px) {
+    .home-tefekkur-window {
+        min-width: 0;
+        margin: 24px 0 18px;
+    }
+
+    .home-tefekkur-window h3 {
+        width: 100%;
+        margin: 18px 0 14px;
+        padding-bottom: 8px;
+        font-size: 20px !important;
+        box-sizing: border-box;
+    }
+
+    .home-tefekkur-images {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        width: 100%;
+        max-width: 420px;
+    }
+
+    .home-tefekkur-window .quote-section-image {
+        min-width: 0;
+        border-radius: 12px;
+    }
+
+    .home-tefekkur-window .refresh-quote,
+    .home-tefekkur-window .share-quote {
+        top: 8px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .home-tefekkur-window .refresh-quote {
+        right: 8px;
+        font-size: 18px;
+    }
+
+    .home-tefekkur-window .share-quote {
+        left: 8px;
+    }
+
+    .home-tefekkur-window .share-quote img {
+        width: 24px;
+        height: 24px;
+    }
+}
