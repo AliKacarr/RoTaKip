@@ -4,7 +4,7 @@
  * ortak responsive menüye yakın fiziksel boyutta görünmesini sağlar.
  * Grup sayfası responsive viewport'a geçirildiğinde bu dosya kaldırılmalıdır.
  */
-@media (max-width: 1180px) {
+@media (max-width: 1023px) {
   html.group-legacy-viewport body.app-shell-body {
     padding-bottom: calc(var(--group-legacy-body-padding, 148px) + env(safe-area-inset-bottom, 0px));
   }

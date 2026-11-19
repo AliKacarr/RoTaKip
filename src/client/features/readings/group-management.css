@@ -2163,7 +2163,7 @@ input[type="file"] {
     line-height: 1.45;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
     .main-area {
         gap: 24px;
         padding: 12px;

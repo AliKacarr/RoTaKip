@@ -183,7 +183,7 @@
     to { background-position: -100% 0; }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
     .tracker-table-placeholder { min-height: 0; padding: 0; }
     .tracker-placeholder-table {
         grid-template-columns: 132px minmax(385px, 4.5fr) 86px;
@@ -924,7 +924,7 @@
     }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
     .reading-edit-restriction-panel {
         padding: 14px;
     }

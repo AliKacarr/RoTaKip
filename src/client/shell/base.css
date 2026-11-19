@@ -72,6 +72,9 @@ h3 {
   font-size: 1.15em;
 }
 
+/* Responsive eşikler: 1023 tablet, 768 mobil, 640 kompakt mobil,
+   480 dar mobil. Yeni media query'lerde bu seti kullanın. */
+
 @media (max-width: 768px) {
   html,
   body {

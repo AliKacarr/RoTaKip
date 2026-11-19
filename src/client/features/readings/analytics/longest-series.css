@@ -128,7 +128,7 @@
     margin-left: 6px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
     .series-date-outside {
         flex-basis: 70px;
         min-width: 70px;

@@ -33,6 +33,23 @@ function assertUniqueIds(files) {
   assert.deepEqual([...new Set(duplicates)], [], `Yinelenen DOM id: ${duplicates.join(', ')}`);
 }
 
+test('istemci stilleri ortak responsive breakpoint setini kullanır', () => {
+  const allowedBreakpoints = new Set([1023, 768, 640, 480]);
+  const violations = [];
+  fs.readdirSync(clientDir, { recursive: true })
+    .filter(fileName => fileName.endsWith('.css'))
+    .forEach(fileName => {
+      const styles = fs.readFileSync(path.join(clientDir, fileName), 'utf8');
+      for (const match of styles.matchAll(/@media[^\n{]*\(\s*max-width\s*:\s*(\d+)px\s*\)/g)) {
+        const breakpoint = Number(match[1]);
+        if (!allowedBreakpoints.has(breakpoint)) {
+          violations.push(`${fileName}: ${breakpoint}px`);
+        }
+      }
+    });
+  assert.deepEqual(violations, []);
+});
+
 test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği sağlar', () => {
   const shell = readPublic('app-shell.html');
   const groupsFragment = readPublic('fragments/gruplar.html');
@@ -115,14 +132,14 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.match(shellStyles, /\.app-navigation\s*\{[^}]*z-index:\s*9000/s);
   assert.match(shellStyles, /\.app-navigation\s*\{[^}]*z-index:\s*9000[\s\S]*?\.initial-tab-loader\s*\{[^}]*z-index:\s*8999/s);
   assert.match(shellStyles, /\.tab-view\.visible\s*\{[^}]*tab-view-enter/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?body\.app-shell-body\s*\{[^}]*padding-bottom:\s*calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\)/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation\s*\{[^}]*inset:\s*auto 0 -1px 0;[^}]*height:\s*calc\(81px \+ env\(safe-area-inset-bottom, 0px\)\);[^}]*padding:\s*0 0 env\(safe-area-inset-bottom, 0px\);[^}]*background:\s*#fff;[^}]*border-top:\s*0;[^}]*backdrop-filter:\s*none;/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-items\s*\{[^}]*gap:\s*0;[^}]*overflow:\s*hidden;/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-item\s*\{[^}]*min-height:\s*80px;[^}]*flex:\s*1 1 20%;[^}]*font-size:\s*15px;/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-icon\s*\{[^}]*font-size:\s*36px;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1023px\)[\s\S]*?body\.app-shell-body\s*\{[^}]*padding-bottom:\s*calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\)/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1023px\)[\s\S]*?\.app-navigation\s*\{[^}]*inset:\s*auto 0 -1px 0;[^}]*height:\s*calc\(81px \+ env\(safe-area-inset-bottom, 0px\)\);[^}]*padding:\s*0 0 env\(safe-area-inset-bottom, 0px\);[^}]*background:\s*#fff;[^}]*border-top:\s*0;[^}]*backdrop-filter:\s*none;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1023px\)[\s\S]*?\.app-navigation-items\s*\{[^}]*gap:\s*0;[^}]*overflow:\s*hidden;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1023px\)[\s\S]*?\.app-navigation-item\s*\{[^}]*min-height:\s*80px;[^}]*flex:\s*1 1 20%;[^}]*font-size:\s*15px;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1023px\)[\s\S]*?\.app-navigation-icon\s*\{[^}]*font-size:\s*36px;/s);
   assert.match(shellStyles, /\.app-navigation-item\.is-tap-feedback::before\s*\{[^}]*app-navigation-tap-fade 560ms ease-in-out both/s);
   assert.match(shellStyles, /\.app-navigation-item::before\s*\{[^}]*inset:\s*0 -10px;[^}]*border-radius:\s*16px \/ 50%;[^}]*background:\s*#c4c4c4/s);
-  assert.match(shellStyles, /@media \(max-width:\s*600px\)[\s\S]*?\.app-navigation-item::before\s*\{[^}]*inset:\s*0 -8px;[^}]*border-radius:\s*12px \/ 50%;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*640px\)[\s\S]*?\.app-navigation-item::before\s*\{[^}]*inset:\s*0 -8px;[^}]*border-radius:\s*12px \/ 50%;/s);
   assert.match(shellStyles, /\.app-navigation-item:first-child\s*\{[^}]*border-radius:\s*0 20px 20px 0 \/ 0 44px 44px 0/s);
   assert.match(shellStyles, /\.app-navigation-item:last-child\s*\{[^}]*border-radius:\s*20px 0 0 20px \/ 44px 0 0 44px/s);
   assert.match(shellStyles, /\.app-navigation-icon\s*\{[^}]*display:\s*flex;[^}]*width:\s*1em;[^}]*height:\s*1em;[^}]*line-height:\s*1/s);
@@ -156,8 +173,8 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   const cookies = readClient('shared/cookies.css');
 
   assert.match(base, /@media \(max-width:\s*768px\)[\s\S]*?body\.app-shell-body > \.app-shell-container[\s\S]*?box-sizing:\s*border-box;[\s\S]*?overflow-x:\s*clip;/);
-  assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?min-height:\s*58px;[\s\S]*?font-size:\s*11px;[\s\S]*?font-size:\s*clamp\(20px, 5\.8vw, 24px\)/);
-  assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?\.app-navigation\s*\{[^}]*height:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(shell, /@media \(max-width:\s*640px\)[\s\S]*?min-height:\s*58px;[\s\S]*?font-size:\s*11px;[\s\S]*?font-size:\s*clamp\(20px, 5\.8vw, 24px\)/);
+  assert.match(shell, /@media \(max-width:\s*640px\)[\s\S]*?\.app-navigation\s*\{[^}]*height:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(quote, /@media \(max-width:\s*768px\)[\s\S]*?\.quote-grid-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(homeTefekkur, /@media \(max-width:\s*768px\)[\s\S]*?\.home-tefekkur-images\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(videos, /@media \(max-width:\s*768px\)[\s\S]*?\.top-bar\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
@@ -186,9 +203,9 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.match(footer, /\.footer-section\.app-download \.social-contact-link\s*\{[^}]*color:\s*#fff;[^}]*background:\s*#0095f6;[\s\S]*?\.footer-section\.app-download \.social-contact-link i\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*color:\s*#fff;/);
   assert.doesNotMatch(footer, /@media \(min-width:\s*769px\)/);
   assert.doesNotMatch(footerHtml, /wa\.me|>Bize Ulaşın</);
-  assert.match(cookies, /@media \(max-width:\s*600px\)[\s\S]*?\.cookie-consent-banner\s*\{[^}]*max-height:\s*calc\(100dvh - 96px - env\(safe-area-inset-bottom, 0px\)\);[^}]*overflow-y:\s*auto;/);
-  assert.match(cookies, /@media \(max-width:\s*600px\)[\s\S]*?\.cookie-button\s*\{[^}]*min-height:\s*44px;[^}]*flex:\s*1 1 0;[^}]*font-size:\s*16px;/);
-  assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?\.route-loader-star\s*\{[^}]*font-size:\s*30px;[\s\S]*?\.route-loader-line\s*\{[^}]*width:\s*27px;[\s\S]*?\.route-loader-line span\s*\{[^}]*font-size:\s*16px;/);
+  assert.match(cookies, /@media \(max-width:\s*640px\)[\s\S]*?\.cookie-consent-banner\s*\{[^}]*max-height:\s*calc\(100dvh - 96px - env\(safe-area-inset-bottom, 0px\)\);[^}]*overflow-y:\s*auto;/);
+  assert.match(cookies, /@media \(max-width:\s*640px\)[\s\S]*?\.cookie-button\s*\{[^}]*min-height:\s*44px;[^}]*flex:\s*1 1 0;[^}]*font-size:\s*16px;/);
+  assert.match(shell, /@media \(max-width:\s*640px\)[\s\S]*?\.route-loader-star\s*\{[^}]*font-size:\s*30px;[\s\S]*?\.route-loader-line\s*\{[^}]*width:\s*27px;[\s\S]*?\.route-loader-line span\s*\{[^}]*font-size:\s*16px;/);
 });
 
 test('geçmiş günler kaydırma ipucu hesaplanan merkezi kendi üzerinde kullanır', () => {
@@ -486,8 +503,10 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(directoryStyles, /\.join-group-btn,[\s\S]*?\.view-group-btn\s*\{[\s\S]*?position:\s*static/);
   assert.match(directoryStyles, /\.groups-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(directoryStyles, /@media \(max-width:\s*768px\)[\s\S]*?\.groups-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
-  assert.match(directoryStyles, /@media \(max-width:\s*1180px\)[\s\S]*?bottom:\s*calc\(81px \+ env\(safe-area-inset-bottom, 0px\)\)/);
-  assert.match(directoryStyles, /@media \(max-width:\s*600px\)[\s\S]*?bottom:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(directoryStyles, /\/\* ==================== Viewport layout refinements ==================== \*\/[\s\S]*?@media \(max-width:\s*768px\)[\s\S]*?\.group-card\s*\{[^}]*min-height:\s*226px;[^}]*\}[\s\S]*?\.user-group-badge\s*\{[^}]*width:\s*32px;[^}]*height:\s*32px;[^}]*\}[\s\S]*?\.user-group-badge i\s*\{[^}]*font-size:\s*12px;/s);
+  assert.match(directoryStyles, /\.user-group-badge i\s*\{\s*font-size:\s*14px;\s*\}/);
+  assert.match(directoryStyles, /@media \(max-width:\s*1023px\)[\s\S]*?bottom:\s*calc\(81px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(directoryStyles, /@media \(max-width:\s*640px\)[\s\S]*?bottom:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(directoryHtml, /class="groups-directory-ready-images-btn"[\s\S]*?avatar-picker-sparkle[^>]*>✨<[\s\S]*?Avatar seç/);
   assert.equal((directoryHtml.match(/✨/g) || []).length, 3);
   assert.match(directoryHtml, /class="groups-directory-form-group"/);
@@ -503,7 +522,7 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(directoryStyles, /\.input-container\.image-source-picker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto/s);
   assert.match(directoryStyles, /\.input-container \.file-input-label\s*\{[^}]*height:\s*52px/s);
   assert.match(directoryStyles, /\.tab-view-groups \.groups-directory-ready-images-btn,[\s\S]*?min-width:\s*132px;[\s\S]*?justify-content:\s*flex-start;[\s\S]*?position:\s*static;/);
-  assert.match(directoryStyles, /@media \(max-width:\s*420px\)[\s\S]*?\.input-container\.image-source-picker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
+  assert.match(directoryStyles, /@media \(max-width:\s*480px\)[\s\S]*?\.input-container\.image-source-picker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
   assert.match(managementStyles, /\.tab-view-okumalar \.ready-images-btn\s*\{[\s\S]*?width:\s*100%;/);
   assert.doesNotMatch(managementStyles, /^\.ready-images-btn/m);
   assert.match(managementStyles, /#overlayRoot \.ready-images-modal\s*\{/);
@@ -937,7 +956,7 @@ test('yalnız grup detay rotaları geçici eski viewport düzenini kullanır', (
   assert.match(shell, /window\.syncRoTaKipViewport = syncViewport;\s*syncViewport\(path\)/);
   assert.match(router, /window\.syncRoTaKipViewport\?\.\(url\.pathname\)/);
   assert.match(buildAssets, /shell:\s*\{[\s\S]*?'shell\/shell\.css',[\s\S]*?'shell\/group-legacy-viewport\.css'[\s\S]*?html: \['app-shell\.html'\]/);
-  assert.match(legacyNavigation, /@media \(max-width:\s*1180px\)/);
+  assert.match(legacyNavigation, /@media \(max-width:\s*1023px\)/);
   assert.match(legacyNavigation, /html\.group-legacy-viewport body\.app-shell-body\s*\{[^}]*--group-legacy-body-padding/);
   assert.match(legacyNavigation, /html\.group-legacy-viewport \.app-navigation\s*\{[^}]*--group-legacy-nav-height/);
   assert.match(legacyNavigation, /html\.group-legacy-viewport \.app-navigation-item\s*\{[^}]*--group-legacy-item-height[^}]*--group-legacy-font-size/s);
@@ -990,14 +1009,14 @@ test('grup yönetimi kutuları dar ekranda sarılır ve tek sütuna iner', () =>
   assert.match(css, /\.group-settings\s*\{[\s\S]*?margin:\s*0;/);
   assert.match(css, /\.automation-section\s*\{[\s\S]*?flex:\s*0 1 auto;[\s\S]*?max-width:\s*100%;/);
   assert.match(css, /\.automation-settings\s*\{[\s\S]*?margin:\s*0;/);
-  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.automation-settings-column,[\s\S]*?\.automation-actions-column[\s\S]*?width:\s*100%;/);
-  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.group-settings,[\s\S]*?\.automation-settings\s*\{[\s\S]*?max-width:\s*calc\(100% - 34px\);/);
+  assert.match(css, /@media \(max-width: 768px\)[\s\S]*?\.automation-settings-column,[\s\S]*?\.automation-actions-column[\s\S]*?width:\s*100%;/);
+  assert.match(css, /@media \(max-width: 768px\)[\s\S]*?\.group-settings,[\s\S]*?\.automation-settings\s*\{[\s\S]*?max-width:\s*calc\(100% - 34px\);/);
   const okumalar = readPublic('fragments/okumalar.html');
   assert.match(okumalar, /<div class="top-section">[\s\S]*?<div class="group-settings scroll-fade-in">[\s\S]*?<div class="automation-section scroll-fade-in">[\s\S]*?<!-- Alt Bölüm:/);
   assert.doesNotMatch(okumalar, /<section class="automation-section/);
   assert.match(okumalar, /class="bottom-section scroll-fade-in"[\s\S]*?class="user-onboarding-column"[\s\S]*?class="user-management-column"/);
   assert.doesNotMatch(okumalar, /class="(?:left|right)-column"/);
-  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.user-management-column,[\s\S]*?\.user-onboarding-column,[\s\S]*?width:\s*100%;/);
+  assert.match(css, /@media \(max-width: 768px\)[\s\S]*?\.user-management-column,[\s\S]*?\.user-onboarding-column,[\s\S]*?width:\s*100%;/);
   assert.match(css, /\.main-area\s*\{[\s\S]*?max-width:\s*100%;[\s\S]*?overflow-x:\s*clip;/);
 });
 

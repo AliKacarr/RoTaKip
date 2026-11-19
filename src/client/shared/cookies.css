@@ -112,7 +112,7 @@
     animation: cookie-pulsate 1.5s infinite;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
     .cookie-consent-banner {
         max-height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px));
         overflow-y: auto;

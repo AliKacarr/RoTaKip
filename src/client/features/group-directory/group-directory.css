@@ -1782,10 +1782,6 @@ h3#joinGroupName{
         height: 60px;
     }
 
-    .header-icon i {
-        font-size: 40px;
-    }
-
     .header-title {
         font-size: 40px;
     }
@@ -1840,10 +1836,6 @@ h3#joinGroupName{
     .header-icon {
         width: 70px;
         height: 70px;
-    }
-
-    .header-icon i {
-        font-size: 40px;
     }
     
     .header-title {
@@ -1995,6 +1987,15 @@ h3#joinGroupName{
         border-radius: 16px;
     }
 
+    .user-group-badge {
+        width: 32px;
+        height: 32px;
+    }
+
+    .user-group-badge i {
+        font-size: 12px;
+    }
+
     .group-card:hover,
     .user-group:hover {
         transform: none !important;
@@ -2099,7 +2100,7 @@ h3#joinGroupName{
     }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 480px) {
     .group-card {
         padding: 16px;
     }
@@ -2123,7 +2124,7 @@ h3#joinGroupName{
     }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 480px) {
     .input-container.image-source-picker {
         grid-template-columns: minmax(0, 1fr);
         gap: 8px;
@@ -2139,7 +2140,7 @@ h3#joinGroupName{
 }
 
 /* Keep fixed dialogs above the bottom application navigation. */
-@media (max-width: 1180px) {
+@media (max-width: 1023px) {
     .tab-view-groups .modal,
     .tab-view-groups .groups-directory-ready-images-modal {
         top: 0;
@@ -2154,7 +2155,7 @@ h3#joinGroupName{
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
     .tab-view-groups .modal,
     .tab-view-groups .groups-directory-ready-images-modal {
         bottom: calc(59px + env(safe-area-inset-bottom, 0px));

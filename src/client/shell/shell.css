@@ -430,7 +430,7 @@ body.initial-tab-loading { overflow: hidden; }
   50% { transform: translateY(-10px); }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .initial-tab-loader {
     padding: max(20px, env(safe-area-inset-top, 0px)) 20px
       max(20px, env(safe-area-inset-bottom, 0px));
@@ -474,7 +474,7 @@ body.initial-tab-loading { overflow: hidden; }
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1023px) {
   body.app-shell-body {
     padding-left: 0;
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
@@ -555,7 +555,7 @@ body.initial-tab-loading { overflow: hidden; }
   #scrollToTopBtn { bottom: calc(80px + 18px + env(safe-area-inset-bottom, 0px)); }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   body.app-shell-body {
     padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
   }

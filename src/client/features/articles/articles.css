@@ -496,7 +496,7 @@
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .article-card-header {
     grid-template-columns: 96px minmax(0, 1fr);
   }
