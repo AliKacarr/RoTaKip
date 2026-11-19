@@ -1,6 +1,6 @@
 /* Bağımsız giriş kayıtları sayfası; yalnız doğrudan açıldığında yüklenir. */
 body {
-    background-image: url('../images/arkaplan.webp');
+    background-image: url('/images/arkaplan.webp');
     background-size: cover;
     background-position: center;
     background-repeat: repeat;
@@ -70,7 +70,7 @@ body {
 }
 
 .logs-container {
-    background-image: url('../images/arkaplan3.webp');
+    background-image: url('/images/arkaplan3.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

@@ -208,7 +208,7 @@
     height: 80px;
     border-radius: 50%;
     background: linear-gradient(135deg, #FFD700 0%, #FFB300 40%, #FF8C00 100%);
-    background-image: url('../images/daire.webp');
+    background-image: url('/images/daire.webp');
     background-size: contain;
     padding: 3px;
     display: flex;

@@ -4,28 +4,36 @@ html {
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-image: url('../images/background.webp');
-  background-size: contain;
-  background-position: center;
-  background-repeat: repeat;
+  background-color: #f4f4f9;
+  background-image: none;
   margin: 0;
   padding: 0;
   isolation: isolate;
   font-size: 20px;
 }
 
-.groups-sparkle-overlay {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  min-height: 100%;
-  z-index: -1;
-  pointer-events: none;
-  background: url('/images/space.gif');
-  background-size: 400px 400px;
-  background-repeat: repeat;
-  background-position: center center;
-  opacity: 0.5;
+/* Arka plan yalnızca tablet/masaüstünde indirilir */
+@media (min-width: 768px) {
+  body {
+    background-image: url('/images/background.webp');
+    background-size: contain;
+    background-position: center;
+    background-repeat: repeat;
+  }
+
+  .groups-sparkle-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    min-height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    background: url('/images/space.gif');
+    background-size: 400px 400px;
+    background-repeat: repeat;
+    background-position: center center;
+    opacity: 0.5;
+  }
 }
 
 .main-container {
