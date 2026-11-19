@@ -119,8 +119,8 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.match(shellStyles, /\[data-route="tesbihat"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1e3a5f;/);
   assert.match(shellStyles, /\[data-route="tefekkur"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#ff6b33;/);
   assert.match(shellStyles, /\[data-route="videos"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#dc2626;/);
-  assert.match(shellStyles, /\[data-route="articles"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#2563eb;/);
-  assert.match(shellStyles, /\[data-route="okumalar"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1a9948;/);
+  assert.match(shellStyles, /\[data-route="articles"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1a9948;/);
+  assert.match(shellStyles, /\[data-route="okumalar"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1a71ff;/);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item:hover,\s*\n\.app-navigation-item:focus-visible/);
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*-webkit-tap-highlight-color:\s*transparent/s);
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*box-sizing:\s*border-box/s);

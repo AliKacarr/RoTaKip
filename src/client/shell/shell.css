@@ -111,11 +111,11 @@ body.app-shell-body { padding-left: 132px; }
 }
 
 .app-navigation-item[data-route="articles"].is-active .app-navigation-icon-filled {
-  color: #2563eb;
+  color: #1a9948;
 }
 
 .app-navigation-item[data-route="okumalar"].is-active .app-navigation-icon-filled {
-  color: #1a9948;
+  color: #1a71ff;
 }
 .app-navigation-item.is-active:focus-visible {
   color: #111;
