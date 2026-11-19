@@ -14,14 +14,92 @@
       const path = window.location.pathname.replace(/\/$/, '') || '/';
       const responsiveViewport = 'width=device-width, initial-scale=1, viewport-fit=cover';
       const legacyGroupViewport = 'width=980';
+      const legacyViewportWidth = 980;
+      const legacyNavigationProperties = [
+        '--group-legacy-body-padding',
+        '--group-legacy-nav-height',
+        '--group-legacy-item-height',
+        '--group-legacy-item-gap',
+        '--group-legacy-font-size',
+        '--group-legacy-icon-size',
+        '--group-legacy-radius-x',
+        '--group-legacy-radius-y',
+        '--group-legacy-feedback-inset',
+        '--group-legacy-feedback-radius-x',
+        '--group-legacy-bottom-gap',
+        '--group-legacy-loader-padding',
+        '--group-legacy-loader-max-width',
+        '--group-legacy-loader-font-size',
+        '--group-legacy-loader-offset',
+        '--group-legacy-loader-star-size',
+        '--group-legacy-loader-shadow-blur',
+        '--group-legacy-loader-lines-gap',
+        '--group-legacy-loader-lines-margin',
+        '--group-legacy-loader-line-width',
+        '--group-legacy-loader-line-height',
+        '--group-legacy-loader-line-radius',
+        '--group-legacy-loader-text-top',
+        '--group-legacy-loader-text-size',
+        '--group-legacy-loader-bounce'
+      ];
+      const syncLegacyNavigationMetrics = enabled => {
+        const rootStyle = document.documentElement.style;
+        if (!enabled) {
+          legacyNavigationProperties.forEach(property => rootStyle.removeProperty(property));
+          return;
+        }
+
+        const visualViewportWidth = window.visualViewport
+          ? window.visualViewport.width * window.visualViewport.scale
+          : 0;
+        const renderedViewportWidth = visualViewportWidth || window.screen.width || legacyViewportWidth;
+        const legacyScale = Math.min(1, Math.max(0.25, renderedViewportWidth / legacyViewportWidth));
+        const scaledPixels = value => `${value / legacyScale}px`;
+        const responsiveIconSize = Math.min(24, Math.max(20, renderedViewportWidth * 0.058));
+
+        rootStyle.setProperty('--group-legacy-body-padding', scaledPixels(58));
+        rootStyle.setProperty('--group-legacy-nav-height', scaledPixels(59));
+        rootStyle.setProperty('--group-legacy-item-height', scaledPixels(58));
+        rootStyle.setProperty('--group-legacy-item-gap', scaledPixels(4));
+        rootStyle.setProperty('--group-legacy-font-size', scaledPixels(11));
+        rootStyle.setProperty('--group-legacy-icon-size', scaledPixels(responsiveIconSize));
+        rootStyle.setProperty('--group-legacy-radius-x', scaledPixels(16));
+        rootStyle.setProperty('--group-legacy-radius-y', scaledPixels(32));
+        rootStyle.setProperty('--group-legacy-feedback-inset', scaledPixels(-8));
+        rootStyle.setProperty('--group-legacy-feedback-radius-x', scaledPixels(12));
+        rootStyle.setProperty('--group-legacy-bottom-gap', scaledPixels(12));
+        rootStyle.setProperty('--group-legacy-loader-padding', scaledPixels(20));
+        rootStyle.setProperty('--group-legacy-loader-max-width', scaledPixels(195));
+        rootStyle.setProperty('--group-legacy-loader-font-size', scaledPixels(14));
+        rootStyle.setProperty('--group-legacy-loader-offset', scaledPixels(-6));
+        rootStyle.setProperty('--group-legacy-loader-star-size', scaledPixels(30));
+        rootStyle.setProperty('--group-legacy-loader-shadow-blur', scaledPixels(12));
+        rootStyle.setProperty('--group-legacy-loader-lines-gap', scaledPixels(7));
+        rootStyle.setProperty('--group-legacy-loader-lines-margin', scaledPixels(38));
+        rootStyle.setProperty('--group-legacy-loader-line-width', scaledPixels(27));
+        rootStyle.setProperty('--group-legacy-loader-line-height', scaledPixels(3));
+        rootStyle.setProperty('--group-legacy-loader-line-radius', scaledPixels(12));
+        rootStyle.setProperty('--group-legacy-loader-text-top', scaledPixels(-19));
+        rootStyle.setProperty('--group-legacy-loader-text-size', scaledPixels(16));
+        rootStyle.setProperty('--group-legacy-loader-bounce', scaledPixels(-10));
+      };
       const syncViewport = pathname => {
         const normalizedPath = String(pathname || '/').replace(/\/$/, '') || '/';
         const usesLegacyGroupLayout = normalizedPath.startsWith('/grup/');
         const viewport = document.querySelector('meta[name="viewport"]');
+        syncLegacyNavigationMetrics(usesLegacyGroupLayout);
+        document.documentElement.classList.toggle('group-legacy-viewport', usesLegacyGroupLayout);
         if (viewport) viewport.content = usesLegacyGroupLayout ? legacyGroupViewport : responsiveViewport;
       };
       window.syncRoTaKipViewport = syncViewport;
       syncViewport(path);
+      const refreshLegacyNavigationMetrics = () => {
+        if (document.documentElement.classList.contains('group-legacy-viewport')) {
+          syncLegacyNavigationMetrics(true);
+        }
+      };
+      window.addEventListener('resize', refreshLegacyNavigationMetrics);
+      window.visualViewport?.addEventListener('resize', refreshLegacyNavigationMetrics);
 
       const selectedRoute = path === '/gruplar' || path.startsWith('/grup/')
         ? 'okumalar'
@@ -52,7 +130,7 @@
   </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
-  <link rel="stylesheet" href="/shell.min.css?v=44d7671f9b03">
+  <link rel="stylesheet" href="/shell.min.css?v=19d960ea8328">
 </head>
 <body class="app-shell-body initial-tab-loading">
   <div class="groups-sparkle-overlay" aria-hidden="true"></div>

@@ -40,7 +40,8 @@ const bundles = {
       'shared/footer.css',
       'shared/cookies.css',
       'shared/share-modal.css',
-      'shell/shell.css'
+      'shell/shell.css',
+      'shell/group-legacy-viewport.css'
     ],
     js: ['shared/third-party.js', 'shared/cookies.js'],
     html: ['app-shell.html']

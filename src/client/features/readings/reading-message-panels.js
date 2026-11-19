@@ -85,7 +85,10 @@
       panels.forEach(panel => {
         if (!panel.isConnected) return;
         panel.classList.remove('reading-message-panel-pending');
-        panel.classList.add('message-fade-in', 'reading-content-reveal');
+        panel.classList.add('message-fade-in');
+        if (!panel.classList.contains('reading-scroll-reveal')) {
+          panel.classList.add('reading-content-reveal');
+        }
       });
     });
   };

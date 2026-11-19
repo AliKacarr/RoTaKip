@@ -1,0 +1,99 @@
+/*
+ * Geçici grup sayfası navigasyon telafisi.
+ * /grup/... rotaları width=980 viewport kullandığı sürece alt menünün telefonda
+ * ortak responsive menüye yakın fiziksel boyutta görünmesini sağlar.
+ * Grup sayfası responsive viewport'a geçirildiğinde bu dosya kaldırılmalıdır.
+ */
+@media (max-width: 1180px) {
+  html.group-legacy-viewport body.app-shell-body {
+    padding-bottom: calc(var(--group-legacy-body-padding, 148px) + env(safe-area-inset-bottom, 0px));
+  }
+
+  html.group-legacy-viewport .app-navigation {
+    height: calc(var(--group-legacy-nav-height, 149px) + env(safe-area-inset-bottom, 0px));
+  }
+
+  html.group-legacy-viewport .app-navigation-item {
+    min-height: var(--group-legacy-item-height, 148px);
+    gap: var(--group-legacy-item-gap, 10px);
+    border-radius: var(--group-legacy-radius-x, 40px) / var(--group-legacy-radius-y, 80px);
+    font-size: var(--group-legacy-font-size, 27px);
+  }
+
+  html.group-legacy-viewport .app-navigation-icon {
+    font-size: var(--group-legacy-icon-size, 58px);
+  }
+
+  html.group-legacy-viewport .app-navigation-item::before {
+    inset: 0 var(--group-legacy-feedback-inset, -20px);
+    border-radius: var(--group-legacy-feedback-radius-x, 30px) / 50%;
+  }
+
+  html.group-legacy-viewport .app-navigation-item:first-child {
+    border-radius: 0 var(--group-legacy-radius-x, 40px) var(--group-legacy-radius-x, 40px) 0 /
+      0 var(--group-legacy-radius-y, 80px) var(--group-legacy-radius-y, 80px) 0;
+  }
+
+  html.group-legacy-viewport .app-navigation-item:last-child {
+    border-radius: var(--group-legacy-radius-x, 40px) 0 0 var(--group-legacy-radius-x, 40px) /
+      var(--group-legacy-radius-y, 80px) 0 0 var(--group-legacy-radius-y, 80px);
+  }
+
+  html.group-legacy-viewport body.app-shell-body .cookie-consent-banner {
+    bottom: calc(
+      var(--group-legacy-body-padding, 148px)
+      + env(safe-area-inset-bottom, 0px)
+      + var(--group-legacy-bottom-gap, 30px)
+    );
+  }
+
+  html.group-legacy-viewport #scrollToTopBtn {
+    bottom: calc(
+      var(--group-legacy-body-padding, 148px)
+      + var(--group-legacy-bottom-gap, 30px)
+      + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  html.group-legacy-viewport .initial-tab-loader {
+    padding: max(var(--group-legacy-loader-padding, 50px), env(safe-area-inset-top, 0px))
+      var(--group-legacy-loader-padding, 50px)
+      max(var(--group-legacy-loader-padding, 50px), env(safe-area-inset-bottom, 0px));
+  }
+
+  html.group-legacy-viewport .route-loader {
+    width: 100%;
+    max-width: var(--group-legacy-loader-max-width, 490px);
+    font-size: var(--group-legacy-loader-font-size, 35px);
+    transform: translateY(var(--group-legacy-loader-offset, -15px));
+  }
+
+  html.group-legacy-viewport .route-loader-star {
+    font-size: var(--group-legacy-loader-star-size, 75px);
+    filter: drop-shadow(
+      0 0 var(--group-legacy-loader-shadow-blur, 30px) rgba(255, 190, 0, 0.38)
+    );
+  }
+
+  html.group-legacy-viewport .route-loader-lines {
+    gap: var(--group-legacy-loader-lines-gap, 18px);
+    margin-top: var(--group-legacy-loader-lines-margin, 95px);
+  }
+
+  html.group-legacy-viewport .route-loader-line {
+    width: var(--group-legacy-loader-line-width, 68px);
+    height: var(--group-legacy-loader-line-height, 8px);
+    border-radius: var(--group-legacy-loader-line-radius, 30px);
+    animation-name: group-legacy-route-loader-line-bounce;
+  }
+
+  html.group-legacy-viewport .route-loader-line span {
+    top: var(--group-legacy-loader-text-top, -48px);
+    font-size: var(--group-legacy-loader-text-size, 40px);
+  }
+}
+
+@keyframes group-legacy-route-loader-line-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(var(--group-legacy-loader-bounce, -25px)); }
+}

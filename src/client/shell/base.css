@@ -102,10 +102,9 @@ h3 {
 
   .section-heading,
   h3.section-heading {
-    width: 100%;
-    margin: 10px 0 16px;
+    margin: 10px 0 16px 2px;
     padding-bottom: 8px;
-    font-size: 21px !important;
+    font-size: 22px !important;
     line-height: 1.25;
     box-sizing: border-box;
   }

@@ -254,6 +254,7 @@ async function activateView(route, preparedView = null) {
   const isPreparingGroupsFirstLoad = route.name === 'groups' && !lifecycleCache.has(view);
   view.classList.toggle('is-resuming', isReturningToOkumalar);
   view.classList.toggle('is-preparing-return', isPreparingGroupsFirstLoad);
+  view.classList.remove('is-initial-route-reveal');
   view.classList.remove('visible');
   if (view.parentNode !== tabContent) tabContent.appendChild(view);
   activeView = view;
@@ -373,22 +374,25 @@ function revealReadingPrimaryContent(isAuthenticated) {
   const trackerShell = document.querySelector('.tracker-table-shell');
   const messagePanels = document.querySelector('.reading-message-panels');
 
-  const leagueInfoBar = revealLeagueInfoBar({ animate: false });
-  const revealTargets = [leagueInfoBar, trackerShell].filter(Boolean);
-  revealTargets.forEach(element => element.classList.remove('reading-content-reveal'));
+  revealLeagueInfoBar({ animate: false });
   trackerShell?.classList.remove('is-primary-reveal-pending');
   if (messagePanels) {
     messagePanels.hidden = false;
     messagePanels.classList.remove('reading-content-reveal');
   }
-  if (hasInitialTabLoader()) {
-    revealReadingAuthControls(isAuthenticated);
-    return;
-  }
-  window.requestAnimationFrame(() => {
-    revealTargets.forEach(element => element.classList.add('reading-content-reveal'));
-    revealReadingAuthControls(isAuthenticated);
-  });
+  revealReadingAuthControls(isAuthenticated);
+}
+
+function replayReadingPrimarySectionReveal(view) {
+  if (!view) return;
+  const sections = view.querySelectorAll([
+    '.user-stats-info-area',
+    '.league-info-bar',
+    '.weekly-statistics-section'
+  ].join(', '));
+  const messagePanels = view.querySelectorAll('.reading-message-panels-content > *');
+  [...sections, ...messagePanels]
+    .forEach(element => window.replayReadingContentReveal?.(element));
 }
 
 async function initializeGroupUi() {
@@ -396,7 +400,7 @@ async function initializeGroupUi() {
   if (typeof window.initializeAdminModal === 'function') window.initializeAdminModal();
 }
 
-function runOkumalarBackgroundWork() {
+function runOkumalarBackgroundWork(options = {}) {
   const run = async () => {
     const loadAssetGroup = (label, assets) => Promise.allSettled([
       loadOkumalarStyles(assets.styles),
@@ -411,6 +415,7 @@ function runOkumalarBackgroundWork() {
     const statisticsReady = loadAssetGroup('İstatistikler', OKUMALAR_BACKGROUND_ASSETS.statistics);
     const managementReady = loadAssetGroup('Grup yönetimi', OKUMALAR_BACKGROUND_ASSETS.management);
     const groupUiReady = loadAssetGroup('Grup kullanıcı arayüzü', OKUMALAR_BACKGROUND_ASSETS.groupUi);
+    const refreshOptions = options.animateRefresh === true ? { animateRefresh: true } : undefined;
 
     const ensureLongestStreaks = () => {
       const store = window.globalDataStore;
@@ -432,20 +437,20 @@ function runOkumalarBackgroundWork() {
       ['liderlik panosu', async () => {
         await statisticsReady;
         await ensureLongestStreaks();
-        if (typeof window.loadUserCards === 'function') return window.loadUserCards();
+        if (typeof window.loadUserCards === 'function') return window.loadUserCards(refreshOptions);
       }],
       ['aylık takvim', async () => {
         await statisticsReady;
-        if (typeof window.loadMonthlyCalendar === 'function') return window.loadMonthlyCalendar();
+        if (typeof window.loadMonthlyCalendar === 'function') return window.loadMonthlyCalendar(refreshOptions);
       }],
       ['en uzun seri', async () => {
         await statisticsReady;
         await ensureLongestStreaks();
-        if (typeof window.renderLongestSeries === 'function') return window.renderLongestSeries();
+        if (typeof window.renderLongestSeries === 'function') return window.renderLongestSeries(refreshOptions);
       }],
       ['okuma istatistikleri', async () => {
         await statisticsReady;
-        if (typeof window.loadReadingStats === 'function') return window.loadReadingStats();
+        if (typeof window.loadReadingStats === 'function') return window.loadReadingStats(refreshOptions);
       }]
     ];
     return Promise.allSettled(tasks.map(([label, task]) => {
@@ -512,7 +517,7 @@ async function initOkumalarTab(options = {}) {
         }
       })();
       await Promise.all([trackerRefresh, prepareReadingPrimaryContent()]);
-      this.readyForPrefetch = runOkumalarBackgroundWork();
+      this.readyForPrefetch = runOkumalarBackgroundWork({ animateRefresh: true });
     }
   };
 }
@@ -793,6 +798,7 @@ async function navigate(url, options = {}) {
       if (sequence !== navigationSequence) return;
       await activateView(route);
       if (sequence !== navigationSequence) return;
+      activeView.classList.toggle('is-initial-route-reveal', isInitialNavigation);
       setOkumalarStylesEnabled(false);
     }
     const hasCachedLifecycle = lifecycleCache.has(activeView);
@@ -842,6 +848,9 @@ async function navigate(url, options = {}) {
       await revealRouteAfterLoader(activeView, { useInitialTabLoader, transitionLoader, sequence });
     }
     window.revealPendingReadingMessagePanels?.(activeView);
+    if (route.name === 'okumalar' && !isInviteOnboarding) {
+      replayReadingPrimarySectionReveal(activeView);
+    }
     tabContent.focus({ preventScroll: true });
     markPrimaryReady();
     if (activeLifecycle?.readyForPrefetch && typeof activeLifecycle.readyForPrefetch.finally === 'function') {

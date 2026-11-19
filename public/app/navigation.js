@@ -95,6 +95,7 @@ export function configureNavigation(route, onNavigate) {
   if (nav.dataset.bound === 'true') return;
   nav.dataset.bound = 'true';
   let tapFeedbackTimer = null;
+  let pendingNavigationTimer = null;
   nav.addEventListener('click', event => {
     const link = event.target.closest('a[data-route]');
     if (!link) return;
@@ -107,10 +108,21 @@ export function configureNavigation(route, onNavigate) {
     const url = new URL(link.href, window.location.origin);
     if (url.origin !== window.location.origin) return;
     event.preventDefault();
+    window.clearTimeout(pendingNavigationTimer);
+    pendingNavigationTimer = null;
     if (`${url.pathname}${url.search}${url.hash}` === `${window.location.pathname}${window.location.search}${window.location.hash}`) {
       return;
     }
+    const leavesLegacyGroupViewport = document.documentElement.classList.contains('group-legacy-viewport')
+      && !url.pathname.replace(/\/$/, '').startsWith('/grup/');
     setNavigationSelection(nav, link.dataset.route);
+    if (leavesLegacyGroupViewport) {
+      pendingNavigationTimer = window.setTimeout(() => {
+        pendingNavigationTimer = null;
+        onNavigate(url);
+      }, 180);
+      return;
+    }
     onNavigate(url);
   });
 }

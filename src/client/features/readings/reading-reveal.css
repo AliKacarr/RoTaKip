@@ -1,3 +1,7 @@
+.tab-view-okumalar {
+  --reading-auth-toggle-duration: 0.8s;
+}
+
 .reading-content-reveal {
   animation: reading-content-reveal 0.6s ease-out both;
 }
@@ -15,12 +19,18 @@
 }
 
 .tab-view-okumalar .user-cards-title.reading-scroll-reveal:not(.is-revealed),
-.tab-view-okumalar .leaderboard-sort-bar.reading-scroll-reveal:not(.is-revealed) {
+.tab-view-okumalar .leaderboard-sort-bar.reading-scroll-reveal:not(.is-revealed),
+.tab-view-okumalar .user-stats-info-area.reading-scroll-reveal:not(.is-revealed),
+.tab-view-okumalar .league-info-bar.reading-scroll-reveal:not(.is-revealed),
+.tab-view-okumalar .reading-message-panels-content > .reading-scroll-reveal:not(.is-revealed) {
   transform: translateY(20px);
 }
 
 .tab-view-okumalar .user-cards-title.reading-scroll-reveal.is-revealed,
-.tab-view-okumalar .leaderboard-sort-bar.reading-scroll-reveal.is-revealed {
+.tab-view-okumalar .leaderboard-sort-bar.reading-scroll-reveal.is-revealed,
+.tab-view-okumalar .user-stats-info-area.reading-scroll-reveal.is-revealed,
+.tab-view-okumalar .league-info-bar.reading-scroll-reveal.is-revealed,
+.tab-view-okumalar .reading-message-panels-content > .reading-scroll-reveal.is-revealed {
   animation-name: reading-viewport-reveal-compact;
 }
 
