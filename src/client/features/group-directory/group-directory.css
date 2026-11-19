@@ -279,7 +279,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: clamp(16px, 2.4vw, 24px);
-    margin-bottom: 40px;
+    margin-bottom: 20px;
 }
 
 .groups-grid:not(:has(.group-card)) {
@@ -1977,8 +1977,8 @@ h3#joinGroupName{
 
     .groups-grid {
         grid-template-columns: minmax(0, 1fr);
-        gap: 14px;
-        margin-bottom: 24px;
+        gap: 15px;
+        margin-bottom: 15px;
     }
 
     .group-card {
@@ -2019,9 +2019,7 @@ h3#joinGroupName{
     .join-group-btn,
     .view-group-btn {
         min-width: 0;
-        flex: 1 1 145px;
         justify-content: center;
-        padding-inline: 10px;
         font-size: 14px;
     }
 
@@ -2112,10 +2110,6 @@ h3#joinGroupName{
 
     .group-info {
         margin-left: 11px;
-    }
-
-    .stat-item {
-        padding-inline: 9px;
     }
 
     .groups-directory-modal-body,
