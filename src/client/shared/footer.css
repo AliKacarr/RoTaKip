@@ -235,7 +235,7 @@
 
 .footer-section.app-download .social-contact-link {
   display: flex;
-  width: min(100%, 340px);
+  width: min(100%, var(--app-download-content-width));
   min-height: 48px;
   align-items: center;
   justify-content: center;
@@ -278,15 +278,18 @@
 
 .footer-section.app-download .app-download-row {
   display: flex;
+  width: min(100%, var(--app-download-content-width));
   justify-content: center;
   align-items: center;
   height: clamp(76px, 7.8125vw, 100px);
   gap: 10px;
-  margin-bottom: 0;
-  margin-top: 5px;
+  margin: 5px auto 0;
+  box-sizing: border-box;
 }
 
 .footer-section.app-download {
+  --app-download-content-width: 340px;
+
   grid-area: app;
 }
 
@@ -318,6 +321,8 @@
 
 .footer-section.app-download .app-buttons {
   display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 8px;
 }
@@ -335,6 +340,7 @@
   transition: background-color 0.2s ease, transform 0.2s ease;
   font-size: 16px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .footer-section.app-download .app-btn i {
@@ -478,7 +484,6 @@
   }
 
   .footer-section.app-download .social-contact-link {
-    width: min(100%, 300px);
     min-height: 40px;
     font-size: 14px;
   }
@@ -490,21 +495,15 @@
   }
 
   .footer-section.app-download .app-download-row {
-    width: min(100%, 360px);
     gap: 10px;
-    padding: 0 8px;
-    box-sizing: border-box;
   }
 
   .footer-section.app-download .app-buttons {
-    min-width: 0;
-    width: min(100%, 210px);
-    flex: 0 1 210px;
     gap: 6px;
   }
 
   .footer-section.app-download .app-btn {
-    width: auto;
+    width: 100%;
     min-width: 0;
     padding: 9px 10px;
     border-radius: 18px;
