@@ -129,6 +129,24 @@ test('grup sayfası geçersiz kimliği reddeder', () => {
   assert.equal(response.body, 'Not found');
 });
 
+test('İngilizce group bağlantısı sorgu parametreleriyle kanonik grup adresine yönlenir', () => {
+  const app = createFakeApp();
+  registerPublicPageRoutes(app, {
+    publicPath: path.resolve('public'),
+    imageProxyLimiter: (_req, _res, next) => next()
+  });
+
+  const route = app.routes.find(item => item.path === '/group/:groupId');
+  const response = createResponse();
+  route.handlers.at(-1)({
+    params: { groupId: 'catikati23' },
+    query: { invite: 'abc' }
+  }, response);
+
+  assert.equal(response.statusCode, 302);
+  assert.equal(response.redirectLocation, '/grup/catikati23/?invite=abc');
+});
+
 test('eski groupid ve grupid bağlantıları sorgu parametrelerini kanonik adrese taşır', () => {
   const app = createFakeApp();
   registerPublicPageRoutes(app, {

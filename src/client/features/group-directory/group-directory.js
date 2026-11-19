@@ -1,4 +1,11 @@
 (() => {
+function setAvatarPickerButtonState(buttonId, isSelected) {
+    const button = document.getElementById(buttonId);
+    const label = button?.querySelector('.avatar-picker-label');
+    if (label) label.textContent = isSelected ? 'Avatar seçildi' : 'Avatar seç';
+    button?.classList.toggle('is-selected', isSelected);
+}
+
 /* ==================== LocalStorage Manager ==================== */
 class LocalStorageManager {
     static loginUser(groupId, userId, authority, username, groupName) {
@@ -299,8 +306,12 @@ class GroupsPage {
             const fileInputText = document.querySelector('#groupInfoStage .file-input-text');
             if (fileInput.files.length > 0) {
                 fileInputText.textContent = fileInput.files[0].name;
+                fileInputText.style.color = '#1976d2';
+                this.selectedAvatarPath = null;
+                setAvatarPickerButtonState('readyImagesBtn', false);
             } else {
-                fileInputText.textContent = 'Bir resim seçin...';
+                fileInputText.textContent = 'Cihazdan yükle';
+                fileInputText.style.color = '#1976d2';
             }
         });
 
@@ -310,8 +321,12 @@ class GroupsPage {
             const fileInputText = document.querySelector('#adminInfoStage .file-input-text');
             if (fileInput.files.length > 0) {
                 fileInputText.textContent = fileInput.files[0].name;
+                fileInputText.style.color = '#1976d2';
+                this.selectedAdminAvatarPath = null;
+                setAvatarPickerButtonState('adminAvatarBtn', false);
             } else {
-                fileInputText.textContent = 'Bir resim seçin...';
+                fileInputText.textContent = 'Cihazdan yükle';
+                fileInputText.style.color = '#1976d2';
             }
         });
 
@@ -349,8 +364,11 @@ class GroupsPage {
             const fileInputText = document.querySelector('#joinProfileImageInput').parentElement.querySelector('.file-input-text');
             if (fileInput.files.length > 0) {
                 fileInputText.textContent = fileInput.files[0].name;
+                fileInputText.style.color = '#1976d2';
+                setAvatarPickerButtonState('joinAvatarBtn', false);
             } else {
-                fileInputText.textContent = 'Bir resim seçin...';
+                fileInputText.textContent = 'Cihazdan yükle';
+                fileInputText.style.color = '#1976d2';
             }
         });
     }
@@ -737,13 +755,15 @@ class GroupsPage {
         const groupFileInputText = document.querySelector('#groupInfoStage .file-input-text');
         const adminFileInputText = document.querySelector('#adminInfoStage .file-input-text');
         if (groupFileInputText) {
-            groupFileInputText.textContent = 'Bir resim seçin...';
-            groupFileInputText.style.color = '#6c757d';
+            groupFileInputText.textContent = 'Cihazdan yükle';
+            groupFileInputText.style.color = '#1976d2';
         }
         if (adminFileInputText) {
-            adminFileInputText.textContent = 'Bir resim seçin...';
-            adminFileInputText.style.color = '#6c757d';
+            adminFileInputText.textContent = 'Cihazdan yükle';
+            adminFileInputText.style.color = '#1976d2';
         }
+        setAvatarPickerButtonState('readyImagesBtn', false);
+        setAvatarPickerButtonState('adminAvatarBtn', false);
 
         if (adminPasswordError) {
             adminPasswordError.style.display = 'none';
@@ -882,9 +902,10 @@ class GroupsPage {
     selectAdminAvatar(avatar) {
         const fileInputText = document.querySelector('#adminInfoStage .file-input-text');
         if (fileInputText) {
-            fileInputText.textContent = 'Avatar seçildi';
-            fileInputText.style.color = '#28a745';
+            fileInputText.textContent = 'Cihazdan yükle';
+            fileInputText.style.color = '#1976d2';
         }
+        setAvatarPickerButtonState('adminAvatarBtn', true);
         
         this.selectedAdminAvatarPath = `/userAvatars/${avatar}`;
         
@@ -1240,10 +1261,11 @@ class GroupsPage {
         const fileInput = document.getElementById('groupImageInput');
         fileInput.value = '';
         
-        // Dosya seçim metnini güncelle
+        // Avatar seçimini kendi düğmesinde göster
         const fileInputText = document.querySelector('.file-input-text');
-        fileInputText.textContent = 'Hazır görsel seçildi';
-        fileInputText.style.color = '#28a745';
+        fileInputText.textContent = 'Cihazdan yükle';
+        fileInputText.style.color = '#1976d2';
+        setAvatarPickerButtonState('readyImagesBtn', true);
     }
 
     // Katılma isteği durumlarını kontrol et
@@ -1367,7 +1389,10 @@ class GroupsPage {
         
         // Formu sıfırla
         document.getElementById('joinGroupForm').reset();
-        document.querySelector('#joinProfileImageInput').parentElement.querySelector('.file-input-text').textContent = 'Bir resim seçin...';
+        const joinFileInputText = document.querySelector('#joinProfileImageInput').parentElement.querySelector('.file-input-text');
+        joinFileInputText.textContent = 'Cihazdan yükle';
+        joinFileInputText.style.color = '#1976d2';
+        setAvatarPickerButtonState('joinAvatarBtn', false);
         
         // Form alanlarını tekrar göster (sadece join modal içinde)
         const joinModal = document.getElementById('joinGroupModal');
@@ -1743,9 +1768,10 @@ class AvatarModalManager {
     selectJoinAvatar(avatar) {
         const fileInputText = document.querySelector('#joinGroupModal .file-input-text');
         if (fileInputText) {
-            fileInputText.textContent = 'Avatar seçildi';
-            fileInputText.style.color = '#28a745';
+            fileInputText.textContent = 'Cihazdan yükle';
+            fileInputText.style.color = '#1976d2';
         }
+        setAvatarPickerButtonState('joinAvatarBtn', true);
         
         this.selectedJoinAvatarPath = `/userAvatars/${avatar}`;
         

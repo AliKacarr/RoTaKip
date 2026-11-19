@@ -84,7 +84,7 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.doesNotMatch(allClientStyles, /\b(?:\d*\.)?\d+rem\b/);
   assert.doesNotMatch(allPublicStyles, /\b(?:\d*\.)?\d+rem\b/);
   assert.match(shellStyles, /body\.app-shell-body\s*\{[^}]*padding-left:\s*132px/s);
-  assert.match(indexStyles, /\.tab-view-groups \.main-container\s*\{[^}]*padding:\s*20px/s);
+  assert.match(indexStyles, /\.tab-view-groups \.main-container\s*\{[^}]*padding:\s*clamp\(16px, 2\.4vw, 26px\)/s);
   assert.match(indexStyles, /\.tab-view-groups \.main-container\s*\{[^}]*background:\s*#fcfdfe/s);
   assert.match(indexStyles, /\.group-card\s*\{[^}]*border:\s*1px solid #b7c5d3/s);
   assert.match(indexStyles, /\.tab-view-groups,[\s\S]*?\.tab-view-groups \*[\s\S]*?box-sizing:\s*border-box/);
@@ -100,10 +100,10 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.match(shellStyles, /\.app-navigation\.icons-ready \.app-navigation-item\.is-active \.app-navigation-icon-outline\s*\{[^}]*opacity:\s*0[\s\S]*?\.app-navigation\.icons-ready \.app-navigation-item\.is-active \.app-navigation-icon-filled\s*\{[^}]*opacity:\s*1/s);
   assert.match(shellStyles, /\.app-navigation-item\.is-active \.app-navigation-icon-outline\s*\{[^}]*color:\s*#48505f;/);
   assert.match(shellStyles, /\[data-route="tesbihat"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1e3a5f;/);
-  assert.match(shellStyles, /\[data-route="tefekkur"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#f2b705;/);
-  assert.match(shellStyles, /\[data-route="videos"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#b91c1c;/);
-  assert.match(shellStyles, /\[data-route="articles"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1d4f91;/);
-  assert.match(shellStyles, /\[data-route="okumalar"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#12665f;/);
+  assert.match(shellStyles, /\[data-route="tefekkur"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#ff6b33;/);
+  assert.match(shellStyles, /\[data-route="videos"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#dc2626;/);
+  assert.match(shellStyles, /\[data-route="articles"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#2563eb;/);
+  assert.match(shellStyles, /\[data-route="okumalar"\]\.is-active \.app-navigation-icon-filled\s*\{[^}]*color:\s*#1a9948;/);
   assert.doesNotMatch(shellStyles, /\.app-navigation-item:hover,\s*\n\.app-navigation-item:focus-visible/);
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*-webkit-tap-highlight-color:\s*transparent/s);
   assert.match(shellStyles, /\.app-navigation-item\s*\{[^}]*box-sizing:\s*border-box/s);
@@ -118,10 +118,10 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?body\.app-shell-body\s*\{[^}]*padding-bottom:\s*calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\)/s);
   assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation\s*\{[^}]*inset:\s*auto 0 -1px 0;[^}]*height:\s*calc\(81px \+ env\(safe-area-inset-bottom, 0px\)\);[^}]*padding:\s*0 0 env\(safe-area-inset-bottom, 0px\);[^}]*background:\s*#fff;[^}]*border-top:\s*0;[^}]*backdrop-filter:\s*none;/s);
   assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-items\s*\{[^}]*gap:\s*0;[^}]*overflow:\s*hidden;/s);
-  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-item\s*\{[^}]*min-height:\s*80px;[^}]*flex:\s*1 1 20%;[^}]*padding:\s*4px 2px;[^}]*font-size:\s*15px;/s);
+  assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-item\s*\{[^}]*min-height:\s*80px;[^}]*flex:\s*1 1 20%;[^}]*font-size:\s*15px;/s);
   assert.match(shellStyles, /@media \(max-width:\s*1180px\)[\s\S]*?\.app-navigation-icon\s*\{[^}]*font-size:\s*36px;/s);
   assert.match(shellStyles, /\.app-navigation-item\.is-tap-feedback::before\s*\{[^}]*app-navigation-tap-fade 560ms ease-in-out both/s);
-  assert.match(shellStyles, /\.app-navigation-item::before\s*\{[^}]*inset:\s*0 -10px;[^}]*border-radius:\s*16px \/ 50%;[^}]*background:\s*#b7b7b7/s);
+  assert.match(shellStyles, /\.app-navigation-item::before\s*\{[^}]*inset:\s*0 -10px;[^}]*border-radius:\s*16px \/ 50%;[^}]*background:\s*#c4c4c4/s);
   assert.match(shellStyles, /@media \(max-width:\s*600px\)[\s\S]*?\.app-navigation-item::before\s*\{[^}]*inset:\s*0 -8px;[^}]*border-radius:\s*12px \/ 50%;/s);
   assert.match(shellStyles, /\.app-navigation-item:first-child\s*\{[^}]*border-radius:\s*0 20px 20px 0 \/ 0 44px 44px 0/s);
   assert.match(shellStyles, /\.app-navigation-item:last-child\s*\{[^}]*border-radius:\s*20px 0 0 20px \/ 44px 0 0 44px/s);
@@ -156,7 +156,7 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   const cookies = readClient('shared/cookies.css');
 
   assert.match(base, /@media \(max-width:\s*768px\)[\s\S]*?body\.app-shell-body > \.app-shell-container[\s\S]*?box-sizing:\s*border-box;[\s\S]*?overflow-x:\s*clip;/);
-  assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?min-height:\s*58px;[\s\S]*?padding:\s*2px 1px;[\s\S]*?font-size:\s*11px;[\s\S]*?font-size:\s*clamp\(20px, 5\.8vw, 24px\)/);
+  assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?min-height:\s*58px;[\s\S]*?font-size:\s*11px;[\s\S]*?font-size:\s*clamp\(20px, 5\.8vw, 24px\)/);
   assert.match(shell, /@media \(max-width:\s*600px\)[\s\S]*?\.app-navigation\s*\{[^}]*height:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(quote, /@media \(max-width:\s*768px\)[\s\S]*?\.quote-grid-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(homeTefekkur, /@media \(max-width:\s*768px\)[\s\S]*?\.home-tefekkur-images\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
@@ -169,7 +169,7 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-container\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[\s\S]*?\.footer-section\s*\{[^}]*min-width:\s*0;/);
   assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-section\.social-media\s*\{[^}]*order:\s*1;[\s\S]*?\.footer-section\.app-download\s*\{[^}]*order:\s*2;/);
   assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-section\.app-download \.app-buttons\s*\{[^}]*width:\s*min\(100%, 210px\);[^}]*flex:\s*0 1 210px;/);
-  assert.match(footer, /\.social-link\s*\{[^}]*grid-template-columns:\s*54px minmax\(0, 1fr\) auto;[\s\S]*?\.social-link-action\s*\{[^}]*padding:\s*12px 30px;[\s\S]*?\.footer-section\.app-download \.social-contact-link\s*\{[^}]*width:\s*min\(100%, 340px\);[^}]*min-height:\s*48px;/);
+  assert.match(footer, /\.social-link\s*\{[^}]*grid-template-columns:\s*54px minmax\(0, 1fr\) auto;[\s\S]*?\.social-link-action\s*\{[^}]*padding:\s*15px 30px;[\s\S]*?\.footer-section\.app-download \.social-contact-link\s*\{[^}]*width:\s*min\(100%, 340px\);[^}]*min-height:\s*48px;/);
   assert.match(footer, /\.footer-section\.app-download \.app-download-row\s*\{[^}]*align-items:\s*center;[^}]*height:\s*clamp\(76px, 7\.8125vw, 100px\);[\s\S]*?\.footer-section\.app-download \.app-icon-container\s*\{[^}]*height:\s*100%;[^}]*aspect-ratio:\s*1;[\s\S]*?\.footer-section\.app-download \.app-icon\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/);
   assert.doesNotMatch(footer, /\.footer-section\.social-media \.social-link:hover\s*\{[^}]*transform:/);
   assert.match(footer, /\.social-link-instagram \.social-link-action:hover\s*\{[^}]*background:\s*#007dcc;[^}]*transform:\s*translateY\(-1px\);[\s\S]*?\.social-link-youtube \.social-link-action:hover\s*\{[^}]*background:\s*#d90000;[^}]*transform:\s*translateY\(-1px\);[\s\S]*?\.social-link-spotify \.social-link-action:hover\s*\{[^}]*background:\s*#169c46;[^}]*transform:\s*translateY\(-1px\);/);
@@ -289,10 +289,22 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat geçici
   const okumalarFragment = readPublic('fragments/okumalar.html');
   const tesbihat = readPublic('fragments/tesbihat.html');
   const commonOverlays = readPublic('fragments/common-overlays.html');
+  const adminModalStyles = readClient('features/groups/admin-modal.css');
+  const adminModal = readClient('features/groups/admin-modal.js');
   const routes = readPublic('app/route-config.js');
   const router = readPublic('app/shell-router.js');
 
   assert.match(groupHeaderFragment, /id="secretAdminLogin"[\s\S]*?id="profileButton"/);
+  assert.match(commonOverlays, /groups-auth-join-image-source-picker[\s\S]*?Cihazdan yükle[\s\S]*?avatar-picker-sparkle[^>]*>✨<[\s\S]*?Avatar seç/);
+  assert.equal((commonOverlays.match(/✨/g) || []).length, 1);
+  assert.match(adminModalStyles, /\.groups-auth-join-input-container\.groups-auth-join-image-source-picker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto;[^}]*gap:\s*12px/s);
+  assert.match(adminModalStyles, /\.groups-auth-join-image-source-picker > \.groups-auth-join-file-input-label,[\s\S]*?\.groups-auth-join-image-source-picker > \.groups-auth-join-avatar-btn\s*\{[^}]*box-sizing:\s*border-box;/);
+  assert.match(adminModalStyles, /\.groups-auth-join-file-input-label\s*\{[^}]*height:\s*56px/s);
+  assert.match(adminModalStyles, /\.groups-auth-join-input-container \.groups-auth-join-file-input-label\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*flex-start;/s);
+  assert.match(adminModalStyles, /\.groups-auth-join-avatar-btn\s*\{[^}]*height:\s*56px/s);
+  assert.match(adminModalStyles, /\.groups-auth-join-avatar-btn\s*\{[^}]*justify-content:\s*flex-start;[^}]*position:\s*static/s);
+  assert.match(adminModal, /function setGroupsAuthJoinAvatarButtonState\(isSelected\)[\s\S]*?Avatar seçildi[\s\S]*?classList\.toggle\('is-selected', isSelected\)/);
+  assert.doesNotMatch(adminModal, /fileInputText\.textContent = 'Avatar seçildi'/);
   assert.match(groupHeaderFragment, /<button type="button" onclick="window\.navigateRoTaKip\('\/gruplar'\)" class="showGroups"/);
   assert.doesNotMatch(groupHeaderFragment, /window\.location\.href='\/gruplar'/);
   assert.doesNotMatch(okumalarFragment, /id="secretAdminLogin"|id="profileButton"/);
@@ -465,16 +477,28 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(directory, /const openGroup = \(\) =>[\s\S]*?navigateFromGroupDirectory\(`\/grup\/\$\{encodeURIComponent\(group\.groupId\)\}\/`\)/);
   assert.match(directory, /isUserGroup[\s\S]*?class="view-group-btn"[\s\S]*?Grubu Görüntüle/);
   assert.match(directory, /viewGroupBtn\?\.addEventListener\('click',[\s\S]*?e\.stopPropagation\(\)[\s\S]*?openGroup\(\)[\s\S]*?card\.addEventListener\('click', openGroup\)/);
-  assert.match(directoryStyles, /\.join-group-btn,[\s\S]*?\.view-group-btn\s*\{[\s\S]*?position:\s*absolute/);
-  assert.match(directoryHtml, /class="groups-directory-ready-images-btn"/);
+  assert.match(directoryStyles, /\.group-stats\s*\{[\s\S]*?position:\s*static/);
+  assert.match(directoryStyles, /\.join-group-btn,[\s\S]*?\.view-group-btn\s*\{[\s\S]*?position:\s*static/);
+  assert.match(directoryStyles, /\.groups-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
+  assert.match(directoryStyles, /@media \(max-width:\s*768px\)[\s\S]*?\.groups-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
+  assert.match(directoryStyles, /@media \(max-width:\s*1180px\)[\s\S]*?bottom:\s*calc\(81px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(directoryStyles, /@media \(max-width:\s*600px\)[\s\S]*?bottom:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(directoryHtml, /class="groups-directory-ready-images-btn"[\s\S]*?avatar-picker-sparkle[^>]*>✨<[\s\S]*?Avatar seç/);
+  assert.equal((directoryHtml.match(/✨/g) || []).length, 3);
   assert.match(directoryHtml, /class="groups-directory-form-group"/);
   assert.match(directoryHtml, /class="groups-directory-ready-images-modal"/);
   assert.match(directoryHtml, /id="groupsDirectoryReadyImagesModal"/);
   assert.match(directoryHtml, /id="groupsDirectoryAvatarGrid"/);
   assert.match(directory, /className = 'groups-directory-avatar-item'/);
+  assert.match(directory, /groupImageInput\.addEventListener\('change',[\s\S]*?this\.selectedAvatarPath = null/);
+  assert.match(directory, /function setAvatarPickerButtonState\(buttonId, isSelected\)[\s\S]*?Avatar seçildi[\s\S]*?classList\.toggle\('is-selected', isSelected\)/);
+  assert.doesNotMatch(directory, /fileInputText\.textContent = '(?:Avatar seçildi|Hazır görsel seçildi)'/);
   assert.match(directory, /getElementById\('groupsDirectoryReadyImagesModal'\)/);
   assert.match(directory, /getElementById\('groupsDirectoryAvatarGrid'\)/);
-  assert.match(directoryStyles, /\.tab-view-groups \.groups-directory-ready-images-btn,[\s\S]*?background:\s*#fff;[\s\S]*?width:\s*40px;/);
+  assert.match(directoryStyles, /\.input-container\.image-source-picker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto/s);
+  assert.match(directoryStyles, /\.input-container \.file-input-label\s*\{[^}]*height:\s*52px/s);
+  assert.match(directoryStyles, /\.tab-view-groups \.groups-directory-ready-images-btn,[\s\S]*?min-width:\s*132px;[\s\S]*?justify-content:\s*flex-start;[\s\S]*?position:\s*static;/);
+  assert.match(directoryStyles, /@media \(max-width:\s*420px\)[\s\S]*?\.input-container\.image-source-picker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
   assert.match(managementStyles, /\.tab-view-okumalar \.ready-images-btn\s*\{[\s\S]*?width:\s*100%;/);
   assert.doesNotMatch(managementStyles, /^\.ready-images-btn/m);
   assert.match(managementStyles, /#overlayRoot \.ready-images-modal\s*\{/);
@@ -496,7 +520,7 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(router, /criticalStyleLinks[\s\S]*?await waitForStyleApplication\(criticalStyleLinks\)[\s\S]*?await activateView\(route, preparedView\)/);
   assert.match(router, /if \(!groupViewPrepared\)[\s\S]*?await activateView\(route\);[\s\S]*?if \(sequence !== navigationSequence\) return;[\s\S]*?setOkumalarStylesEnabled\(false\)/);
   assert.doesNotMatch(router, /activeLifecycle = null;\s*setOkumalarStylesEnabled\(route\.requiresGroup\)/);
-  assert.match(router, /loadOkumalarStyles\(\['group-common\.min\.css', \.\.\.ROUTE_ASSETS\[route\.name\]\.styles\]\)/);
+  assert.match(router, /const criticalStyles = isInviteOnboarding[\s\S]*?: \['group-common\.min\.css', \.\.\.ROUTE_ASSETS\[route\.name\]\.styles\][\s\S]*?loadOkumalarStyles\(criticalStyles\)/);
   assert.match(router, /loadAssetGroup[\s\S]*?loadOkumalarStyles\(assets\.styles\)/);
   assert.match(router, /function resetOkumalarViewForGroup\(nextGroupId\)[\s\S]*?resetTrackerTimelineForGroup\?\.\(\)[\s\S]*?viewCache\.get\('okumalar'\)[\s\S]*?lifecycleCache\.delete\(okumalarView\)[\s\S]*?groupWarmups\.clear\(\)/);
   assert.match(router, /if \(route\.requiresGroup\) resetOkumalarViewForGroup\(route\.groupId\)/);
@@ -520,6 +544,26 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.doesNotMatch(directoryStyles, /groups-directory-embedded|\.app-navigation/);
   assert.match(directoryStyles, /\.tab-view-groups,[\s\S]*?\.tab-view-groups \*[\s\S]*?box-sizing:\s*border-box/);
   assert.match(readClient('shell/shell.css'), /\.tab-view-groups \.group-avatar-image\s*\{[^}]*width:\s*50px;[^}]*height:\s*50px;[^}]*object-fit:\s*cover;/s);
+});
+
+test('davet kaydı tamamlanınca grup sayfası yeni üyelik oturumuyla yeniden kurulur', () => {
+  const adminModal = readClient('features/groups/admin-modal.js');
+
+  assert.match(
+    adminModal,
+    /if \(updateData\.success\)[\s\S]*?LocalStorageManager\.loginUser\([\s\S]*?invalidateRoTaKipGroupCache\?\.\(updateData\.groupId\)[\s\S]*?const groupPath = `\/grup\/\$\{encodeURIComponent\(updateData\.groupId\)\}\/`;[\s\S]*?window\.location\.replace\(groupPath\);[\s\S]*?return;/
+  );
+});
+
+test('davet onboarding görünümü okuma verilerini ve bileşenlerini başlatmaz', () => {
+  const router = readPublic('app/shell-router.js');
+  const adminModal = readClient('features/groups/admin-modal.js');
+
+  assert.match(router, /function isInviteOnboardingRoute\(route, url\)[\s\S]*?route\?\.name === 'okumalar'[\s\S]*?searchParams\.has\('quick-login'\)[\s\S]*?searchParams\.get\('invite'\)/);
+  assert.match(router, /const criticalScripts = isInviteOnboarding[\s\S]*?GROUP_COMMON_SCRIPTS[\s\S]*?const criticalStyles = isInviteOnboarding[\s\S]*?\['group-common\.min\.css'\][\s\S]*?createFragmentView\('\/fragments\/group-header\.html', route\.name\)/);
+  assert.match(router, /const data = isInviteOnboarding \? null : await loadGroupData\(groupContext\)/);
+  assert.match(router, /async function initOkumalarTab\(options = \{\}\)[\s\S]*?if \(options\.inviteOnboarding === true\)[\s\S]*?initializeGroupUi\(\)[\s\S]*?initializeGroupPage\(\)[\s\S]*?return \{[\s\S]*?readyForPrefetch: Promise\.resolve\(\)[\s\S]*?await loadOkumalarStyles/);
+  assert.match(adminModal, /function handleWelcomeModalClose\(\)[\s\S]*?window\.location\.replace\('\/gruplar'\)[\s\S]*?window\.location\.replace\(cleanUrl\)/);
 });
 
 test('Videolar doğrudan yenilendiğinde veri ve kart görünürlüğü tamamlanır', () => {
@@ -562,7 +606,7 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   const commonStyles = readClient('shell/base.css');
   const userCardStyles = readClient('features/readings/analytics/user-cards.css');
   const messagePanelStyles = readClient('features/readings/reading-message-panels.css');
-  const okumalarInit = router.match(/async function initOkumalarTab\(\)[\s\S]*?(?=async function initGlobalTab)/)?.[0] || '';
+  const okumalarInit = router.match(/async function initOkumalarTab\(options = \{\}\)[\s\S]*?(?=async function initGlobalTab)/)?.[0] || '';
   assert.match(router, /function revealRouteContent/);
   assert.match(router, /view\.classList\.add\('visible'\);\s*footerRoot\.hidden = false;/);
   assert.doesNotMatch(router, /classList\.contains\('initial-group-route-loading'\)\) showStatus\(\)/);
@@ -818,6 +862,7 @@ test('sunucu Okumalar ve bağımsız sekme adreslerini sunar', () => {
   assert.match(server, /app\.get\('\/gruplar',[\s\S]*?sendHtmlFile\(res, publicPath, 'app-shell\.html'\)/);
   assert.doesNotMatch(server, /gruplar-embedded/);
   assert.match(server, /app\.get\('\/grup\/:groupId\/', \(req, res\) =>/);
+  assert.match(server, /app\.get\('\/group\/:groupId', \(req, res\) =>[\s\S]*?res\.redirect\(302, appendQueryString\(target, req\.query\)\)/);
   assert.doesNotMatch(server, /app\.get\('\/grup\/:groupId\/okumalar'/);
   assert.match(server, /app\.get\(\['\/tesbihat', '\/videolar', '\/tefekkur', '\/makaleler'\]/);
   assert.doesNotMatch(server, /sendHtmlFile\(res, '(?:index|groups)\.html'\)/);
@@ -840,13 +885,14 @@ test('tüm bağımsız sayfalar güvenli alan destekli mobil viewport tanımlar'
   });
 });
 
-test('grup rotaları geçici eski viewport düzenini kullanır', () => {
+test('yalnız grup detay rotaları geçici eski viewport düzenini kullanır', () => {
   const shell = readPublic('app-shell.html');
   const router = readPublic('app/shell-router.js');
 
   assert.match(shell, /const responsiveViewport = 'width=device-width, initial-scale=1, viewport-fit=cover'/);
   assert.match(shell, /const legacyGroupViewport = 'width=980'/);
-  assert.match(shell, /normalizedPath === '\/gruplar' \|\| normalizedPath\.startsWith\('\/grup\/'\)/);
+  assert.match(shell, /const usesLegacyGroupLayout = normalizedPath\.startsWith\('\/grup\/'\)/);
+  assert.doesNotMatch(shell, /normalizedPath === '\/gruplar'/);
   assert.match(shell, /window\.syncRoTaKipViewport = syncViewport;\s*syncViewport\(path\)/);
   assert.match(router, /window\.syncRoTaKipViewport\?\.\(url\.pathname\)/);
 });

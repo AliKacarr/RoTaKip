@@ -849,6 +849,19 @@
     align-items: center;
 }
 
+.groups-auth-join-input-container.groups-auth-join-image-source-picker {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.groups-auth-join-image-source-picker > .groups-auth-join-file-input-label,
+.groups-auth-join-image-source-picker > .groups-auth-join-avatar-btn {
+    box-sizing: border-box;
+    margin: 0;
+}
+
 .groups-auth-join-input-icon {
     position: absolute;
     left: 15px;
@@ -893,7 +906,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 15px 70px 15px 15px;
+    min-width: 0;
+    min-height: 56px;
+    height: 56px;
+    padding: 0 15px;
     border: 2px solid #64b5f6;
     border-radius: 8px;
     cursor: pointer;
@@ -922,11 +938,15 @@
 }
 
 .groups-auth-join-file-input-text {
-    margin-left: 10px;
+    margin-left: 0;
     font-size: 19px;
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
     color: #1976d2;
     font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .groups-auth-join-file-name {
@@ -1856,40 +1876,49 @@
 
 /* Groups Auth Join Avatar Button Styles */
 .groups-auth-join-avatar-btn {
-  background: #fff;
+  min-width: 160px;
+  min-height: 56px;
+  width: auto;
+  height: 56px;
+  padding: 0 15px;
+  background: #f7fbff;
   color: #1976d2;
   border: 2px solid #64b5f6;
   border-radius: 8px;
-  padding: 8px 12px;
   cursor: pointer;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0;
+  justify-content: flex-start;
+  gap: 9px;
   transition: all 0.3s ease;
-  height: 45px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  overflow: hidden;
-  min-width: 45px;
-  width: 45px;
+  position: static;
+  transform: none;
+  white-space: nowrap;
+}
+
+.groups-auth-join-avatar-btn .avatar-picker-sparkle {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.groups-auth-join-avatar-btn.is-selected {
+  color: #16803d;
+  background: #effcf4;
+  border-color: #49a86b;
 }
 
 .groups-auth-join-avatar-btn:hover {
-  background: #f5fbff;
+  background: #e3f2fd;
   border-color: #42a5f5;
-  transform: translateY(-50%) translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(66, 165, 245, 0.4);
 }
 
 .groups-auth-join-avatar-btn:active {
-  transform: translateY(-50%);
+  transform: none;
   box-shadow: 0 2px 4px rgba(66, 165, 245, 0.3);
 }
 
@@ -1919,6 +1948,9 @@
 }
 
 .groups-auth-join-input-container .groups-auth-join-file-input-label {
-  padding: 15px 70px 15px 15px; /* Increased right padding for avatar button */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 15px;
   margin: 0;
 }

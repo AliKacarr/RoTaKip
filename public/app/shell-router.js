@@ -98,6 +98,12 @@ function hasInitialTabLoader() {
   return Boolean(initialTabLoader?.isConnected);
 }
 
+function isInviteOnboardingRoute(route, url) {
+  return route?.name === 'okumalar'
+    && url.searchParams.has('quick-login')
+    && Boolean(url.searchParams.get('invite'));
+}
+
 function keepInitialTabLoaderVisible() {
   if (!hasInitialTabLoader()) return;
   initialTabLoader.classList.remove('is-leaving');
@@ -459,11 +465,20 @@ function runOkumalarBackgroundWork() {
   });
 }
 
-async function initOkumalarTab() {
+async function initOkumalarTab(options = {}) {
+  if (options.inviteOnboarding === true) {
+    await initializeGroupUi();
+    await window.initializeGroupPage();
+    return {
+      prepareBeforeReveal: false,
+      readyForPrefetch: Promise.resolve(),
+      destroy() {}
+    };
+  }
+
   await loadOkumalarStyles(ROUTE_ASSETS.okumalar.styles);
   await loadBundleScripts(ROUTE_ASSETS.okumalar.scripts);
   portalOkumalarOverlays();
-  if (new URLSearchParams(window.location.search).has('invite')) await initializeGroupUi();
   await window.initializeGroupPage();
   const context = window.__rotakipResolvedGroupContext;
   const isAuthenticated = context?.isAuthenticated === true;
@@ -672,6 +687,7 @@ async function navigate(url, options = {}) {
     window.location.assign(url.href);
     return;
   }
+  const isInviteOnboarding = isInviteOnboardingRoute(route, url);
   window.syncRoTaKipViewport?.(url.pathname);
   const leavesMountedGroup = Boolean(mountedGroupId)
     && (!route.requiresGroup || route.groupId !== mountedGroupId);
@@ -716,11 +732,19 @@ async function navigate(url, options = {}) {
     let groupContext = null;
     let groupViewPrepared = false;
     if (route.requiresGroup) {
-      const criticalScripts = [...GROUP_COMMON_SCRIPTS, ...ROUTE_ASSETS[route.name].scripts];
+      const criticalScripts = isInviteOnboarding
+        ? GROUP_COMMON_SCRIPTS
+        : [...GROUP_COMMON_SCRIPTS, ...ROUTE_ASSETS[route.name].scripts];
+      const criticalStyles = isInviteOnboarding
+        ? ['group-common.min.css']
+        : ['group-common.min.css', ...ROUTE_ASSETS[route.name].styles];
+      const viewPromise = isInviteOnboarding
+        ? createFragmentView('/fragments/group-header.html', route.name)
+        : getView(route);
       const [resolvedContext, criticalStyleLinks, preparedView] = await Promise.all([
         resolveGroupContext(route.groupId),
-        loadOkumalarStyles(['group-common.min.css', ...ROUTE_ASSETS[route.name].styles]),
-        getView(route),
+        loadOkumalarStyles(criticalStyles),
+        viewPromise,
         Promise.all(criticalScripts.map(fileName => preloadBundle(fileName, 'script')))
       ]);
       if (sequence !== navigationSequence) return;
@@ -753,7 +777,7 @@ async function navigate(url, options = {}) {
 
       rememberReadingPath(canonicalPath(route));
 
-      const data = await loadGroupData(groupContext);
+      const data = isInviteOnboarding ? null : await loadGroupData(groupContext);
       if (sequence !== navigationSequence) return;
       await ensureGroupCommon(route, groupContext, data);
     } else {
@@ -807,7 +831,7 @@ async function navigate(url, options = {}) {
       }
     } else {
       activeLifecycle = route.name === 'okumalar'
-        ? await initOkumalarTab()
+        ? await initOkumalarTab({ inviteOnboarding: isInviteOnboarding })
         : await initGlobalTab(route);
       lifecycleCache.set(activeView, activeLifecycle);
     }

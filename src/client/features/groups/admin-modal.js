@@ -5,6 +5,13 @@
 // Global flag for join request success
 let isJoinRequestSuccess = false;
 
+function setGroupsAuthJoinAvatarButtonState(isSelected) {
+    const button = document.getElementById('groupsAuthJoinAvatarBtn');
+    const label = button?.querySelector('.avatar-picker-label');
+    if (label) label.textContent = isSelected ? 'Avatar seçildi' : 'Avatar seç';
+    button?.classList.toggle('is-selected', isSelected);
+}
+
 window.initializeAdminModal = function initializeAdminModal() {
 
     const adminLogin = document.getElementById('secretAdminLogin');
@@ -245,7 +252,10 @@ window.initializeAdminModal = function initializeAdminModal() {
                     
                     if (groupsAuthJoinFileInputText) {
                         groupsAuthJoinFileInputText.style.display = 'inline';
+                        groupsAuthJoinFileInputText.textContent = 'Cihazdan yükle';
+                        groupsAuthJoinFileInputText.style.color = '#1976d2';
                     }
+                    setGroupsAuthJoinAvatarButtonState(false);
                     
                     // Clear other form inputs
                     const groupsAuthJoinUserNameInput = document.getElementById('groupsAuthJoinUserNameInput');
@@ -659,7 +669,9 @@ window.initializeAdminModal = function initializeAdminModal() {
                 const updateData = await updateResponse.json();
 
                 if (updateData.success) {
-                    // Auto login with updated info
+                    // Sunucu bu noktada üyelik oturumunu da oluşturur. Yerel üyelik
+                    // bilgisini hemen eşitle; ardından davet parametresini URL'den
+                    // çıkararak sayfayı yeni oturum bağlamıyla baştan kur.
                     LocalStorageManager.loginUser(
                         updateData.groupId,
                         updateData.userId,
@@ -669,27 +681,6 @@ window.initializeAdminModal = function initializeAdminModal() {
                         updateData.name
                     );
                     window.invalidateRoTaKipGroupCache?.(updateData.groupId);
-
-                    // Grafikler / özetler globalDataStore üzerinden; sayfa yenilemeden senkronize et
-                    if (window.globalDataStore && updateData.userId != null) {
-                        const uid = String(updateData.userId);
-                        const userIndex = window.globalDataStore.users.findIndex(
-                            (u) => String(u._id) === uid
-                        );
-                        if (userIndex !== -1) {
-                            if (updateData.profileImage != null) {
-                                window.globalDataStore.users[userIndex].profileImage = updateData.profileImage;
-                            }
-                            if (updateData.name) {
-                                window.globalDataStore.users[userIndex].name = updateData.name;
-                            }
-                            if (updateData.username) {
-                                window.globalDataStore.users[userIndex].username = updateData.username;
-                            }
-                            window.globalDataStore._rebuildIndexes();
-                            await window.globalDataStore._buildLongestStreaks();
-                        }
-                    }
                     
                     // Giriş serisi güncelle
                     try {
@@ -704,46 +695,15 @@ window.initializeAdminModal = function initializeAdminModal() {
                             })
                         });
                         
-                        if (streakResponse.ok) {
-                            const streakData = await streakResponse.json();
-                            
-                            // Giriş serisi bilgisini UI'da güncelle
-                            const streakNumber = document.querySelector('.streak-number');
-                            if (streakNumber) {
-                                streakNumber.textContent = streakData.loginStreak;
-                            }
-                            
-
-                                window.showStreakNotification(updateData.name, streakData.loginStreak);
-                            
-                        }
+                        if (streakResponse.ok) await streakResponse.json();
                     } catch (streakError) {
                         console.error('Giriş serisi güncelleme hatası:', streakError);
                     }
 
-                    // Close modal
                     window.hideModal(welcomeInviteModal);
-
-                    // Update UI
-                    if (typeof window.updateProfileButton === 'function') {
-                        window.updateProfileButton();
-                    }
-
-                    if (typeof loadTrackerTable === 'function') loadTrackerTable();
-                    
-                    if (typeof window.syncGroupManagementVisibility === 'function') {
-                        window.syncGroupManagementVisibility();
-                    }
-
-                    // Reload data
-                    if (typeof loadUserCards === 'function') loadUserCards();
-                    if (typeof loadReadingStats === 'function') loadReadingStats();
-                    if (typeof renderLongestSeries === 'function') renderLongestSeries();
-                    if (typeof loadMonthlyCalendar === 'function') loadMonthlyCalendar();
-                    if (window.updateMonthlyCalendarUsers) window.updateMonthlyCalendarUsers();
-
-                    // Clean URL
-                    window.history.replaceState({}, document.title, window.location.pathname);
+                    const groupPath = `/grup/${encodeURIComponent(updateData.groupId)}/`;
+                    window.location.replace(groupPath);
+                    return;
                 } else {
                     alert(updateData.error || 'Bilgiler güncellenirken bir hata oluştu.');
                 }
@@ -780,13 +740,16 @@ window.initializeAdminModal = function initializeAdminModal() {
             .then(data => {
                 if (data.group.visibility === 'private') {
                     // Private group - redirect to home
-            window.location.href = '/gruplar';
+                    window.location.replace('/gruplar');
+                    return;
                 }
-                // Public group - stay on page (URL already cleaned)
+                // Davet görünümünde okuma bileşenleri özellikle başlatılmadı.
+                // Public grubu temiz URL ile normal akışta yeniden kur.
+                window.location.replace(cleanUrl);
             })
             .catch(error => {
                 console.error('Error checking group visibility:', error);
-                // Default to staying on page (URL already cleaned)
+                window.location.replace(cleanUrl);
             });
     }
 
@@ -1063,6 +1026,7 @@ window.initializeAdminModal = function initializeAdminModal() {
         groupsAuthJoinProfileImageInput.addEventListener('change', function() {
             if (this.files.length > 0) {
                 selectedGroupsAuthJoinAvatarPath = null;
+                setGroupsAuthJoinAvatarButtonState(false);
                 console.log('Groups auth join modal - Dosya yüklendi, avatar seçimi sıfırlandı');
             }
         });
@@ -1885,14 +1849,21 @@ async function loadGroupsAuthJoinAvatarOptions() {
             avatarItem.addEventListener('click', function() {
                 const fileInputText = document.querySelector('#groupsAuthJoinModal .groups-auth-join-file-input-text');
                 if (fileInputText) {
-                    fileInputText.textContent = 'Avatar seçildi';
-                    fileInputText.style.color = '#28a745'; // Yeşil renk
+                    fileInputText.textContent = 'Cihazdan yükle';
+                    fileInputText.style.color = '#1976d2';
+                    fileInputText.style.display = 'inline';
+                }
+                const fileName = document.getElementById('groupsAuthJoinFileName');
+                if (fileName) {
+                    fileName.textContent = '';
+                    fileName.style.display = 'none';
                 }
                 selectedGroupsAuthJoinAvatarPath = `/userAvatars/${avatar}`;
                 const groupsAuthJoinProfileImageInput = document.getElementById('groupsAuthJoinProfileImageInput');
                 if (groupsAuthJoinProfileImageInput) {
                     groupsAuthJoinProfileImageInput.value = '';
                 }
+                setGroupsAuthJoinAvatarButtonState(true);
                 toggleGroupsAuthJoinAvatarModal();
             });
 

@@ -158,6 +158,12 @@ function registerPublicPageRoutes(app, { publicPath, imageProxyLimiter }) {
 
   registerDropboxImageProxy(app, imageProxyLimiter);
 
+  app.get('/group/:groupId', (req, res) => {
+    if (!isSafeGroupId(req.params.groupId)) return res.status(404).send('Not found');
+    const target = `/grup/${encodeURIComponent(req.params.groupId)}/`;
+    return res.redirect(302, appendQueryString(target, req.query));
+  });
+
   app.get('/grup/:groupId/', (req, res) => {
     if (!isSafeGroupId(req.params.groupId)) return res.status(404).send('Not found');
     return sendHtmlFile(res, publicPath, 'app-shell.html');
