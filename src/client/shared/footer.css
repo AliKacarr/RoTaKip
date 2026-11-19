@@ -74,12 +74,12 @@
 }
 
 .footer-section.kurumsal ul li a {
-  color: #222;
+  color: #444;
   text-decoration: none;
   transition: color 0.2s, border-bottom 0.2s;
   position: relative;
   padding-bottom: 2px;
-  font-size: 17px;
+  font-size: 18px;
   white-space: nowrap;
 }
 
@@ -281,14 +281,14 @@
   width: min(100%, var(--app-download-content-width));
   justify-content: center;
   align-items: center;
-  height: clamp(76px, 7.8125vw, 100px);
+  height: clamp(76px, 10vw, 100px);
   gap: 10px;
   margin: 5px auto 0;
   box-sizing: border-box;
 }
 
 .footer-section.app-download {
-  --app-download-content-width: 340px;
+  --app-download-content-width: 350px;
 
   grid-area: app;
 }
@@ -436,7 +436,7 @@
   }
 
   .footer-section.social-media .social-links {
-    width: min(100%, 340px);
+    width: min(100%, 350px);
     gap: 7px;
   }
 

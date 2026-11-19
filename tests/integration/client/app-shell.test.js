@@ -168,7 +168,7 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.match(footer, /\.footer-section\.kurumsal h4\s*\{[^}]*display:\s*none;[\s\S]*?\.footer-section\.kurumsal ul\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[\s\S]*?\.footer-section\.kurumsal ul li \+ li::before\s*\{[^}]*content:\s*"•";/);
   assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-container\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[\s\S]*?\.footer-section\s*\{[^}]*min-width:\s*0;/);
   assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-section\.social-media\s*\{[^}]*order:\s*1;[\s\S]*?\.footer-section\.app-download\s*\{[^}]*order:\s*2;/);
-  assert.match(footer, /\.footer-section\.app-download\s*\{[^}]*--app-download-content-width:\s*340px;[^}]*grid-area:\s*app;/);
+  assert.match(footer, /\.footer-section\.app-download\s*\{[^}]*--app-download-content-width:\s*350px;[^}]*grid-area:\s*app;/);
   assert.match(footer, /\.social-link\s*\{[^}]*grid-template-columns:\s*54px minmax\(0, 1fr\) auto;[\s\S]*?\.social-link-action\s*\{[^}]*padding:\s*15px 30px;[\s\S]*?\.footer-section\.app-download \.social-contact-link\s*\{[^}]*width:\s*min\(100%, var\(--app-download-content-width\)\);[^}]*min-height:\s*48px;/);
   assert.match(footer, /\.footer-section\.app-download \.app-download-row\s*\{[^}]*width:\s*min\(100%, var\(--app-download-content-width\)\);[^}]*align-items:\s*center;[^}]*height:\s*clamp\(76px, 7\.8125vw, 100px\);[^}]*margin:\s*5px auto 0;[\s\S]*?\.footer-section\.app-download \.app-icon-container\s*\{[^}]*height:\s*100%;[^}]*aspect-ratio:\s*1;[\s\S]*?\.footer-section\.app-download \.app-icon\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/);
   assert.match(footer, /\.footer-section\.app-download \.app-buttons\s*\{[^}]*min-width:\s*0;[^}]*flex:\s*1 1 auto;[\s\S]*?\.footer-section\.app-download \.app-btn\s*\{[^}]*width:\s*100%;[^}]*box-sizing:\s*border-box;/);
@@ -352,7 +352,9 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat geçici
   ].map(className => orderedRouteMarkup.indexOf(`class="${className}`));
   assert.ok(orderedSections.every((position, index) => position >= 0 && (index === 0 || position > orderedSections[index - 1])));
   assert.doesNotMatch(tesbihat, /tracker-table-shell|user-cards-section|main-area|monthly-calendar-section|stats-section/);
-  assert.match(tesbihat, /class="tesbihat-preparation"[\s\S]*?Tesbihat[\s\S]*?RoTaKip'i kullandığınız için teşekkür ederiz[\s\S]*?mailto:alikacardev@gmail\.com[\s\S]*?Çatı Katı/);
+  assert.match(tesbihat, /<h3 class="section-heading"><i class="fa-regular fa-moon" aria-hidden="true"><\/i> Tesbihat<\/h3>/);
+  assert.match(tesbihat, /class="tesbihat-preparation"[\s\S]*?Tesbihat bölümü çok yakında sizlerle[\s\S]*?RoTaKip'i kullandığınız için teşekkür ederiz[\s\S]*?mailto:alikacardev@gmail\.com[\s\S]*?Çatı Katı Elazığ İlim ve Kültür Derneği/);
+  assert.doesNotMatch(tesbihat, /tesbihat-preparation-icon|fa-solid fa-moon/);
   assert.doesNotMatch(commonOverlays, /readingEditModeBar/);
   assert.match(readClient('features/readings/reading-edit-mode.js'), /modeBar\.classList\.add\('show'\)[\s\S]*?aria-hidden', 'false'/);
   assert.match(readClient('features/readings/reading-edit-mode.js'), /modeBar\.classList\.remove\('show'\)[\s\S]*?aria-hidden', 'true'/);

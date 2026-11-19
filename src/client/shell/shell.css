@@ -266,19 +266,6 @@ body.app-shell-body { padding-left: 132px; }
   border-radius: 24px;
   box-shadow: 0 16px 42px rgba(44, 50, 94, 0.1);
 }
-.tesbihat-preparation-icon {
-  display: inline-flex;
-  width: 72px;
-  height: 72px;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 22px;
-  color: #fff;
-  background: linear-gradient(135deg, #4e54c8, #8f94fb);
-  border-radius: 22px;
-  box-shadow: 0 12px 26px rgba(78, 84, 200, 0.24);
-  font-size: 31px;
-}
 .tesbihat-preparation h1 {
   margin: 0;
   color: #252b3b;
@@ -337,13 +324,6 @@ body.app-shell-body { padding-left: 132px; }
     min-width: 0;
     padding: 28px 18px;
     border-radius: 16px;
-  }
-  .tesbihat-preparation-icon {
-    width: 54px;
-    height: 54px;
-    margin-bottom: 16px;
-    border-radius: 16px;
-    font-size: 24px;
   }
   .tesbihat-preparation h1 {
     font-size: 24px;
