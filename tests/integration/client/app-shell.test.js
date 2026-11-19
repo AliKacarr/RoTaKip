@@ -597,14 +597,24 @@ test('Tefekkür yeni metinleri arka planda hazırlayıp birlikte gösterir', () 
   assert.match(tefekkur, /destroy\(\)[\s\S]*?startTefekkurContentPreparation\(\)/);
 });
 
-test('ilk dört sekme ilk yükleme ve geçişte ortak giriş efekti kullanır', () => {
+test('sekme girişleri rota türüne uygun animasyon kullanır', () => {
   const shellStyles = readClient('shell/shell.css');
+  const indexStyles = readClient('features/group-directory/group-directory.css');
+  assert.match(shellStyles, /\.tab-view-okumalar\s*\{[^}]*transform:\s*none;[^}]*\}[\s\S]*?\.tab-view-okumalar\.visible\s*\{[^}]*okumalar-tab-view-fade 380ms ease-out forwards;/);
+  assert.match(shellStyles, /@keyframes okumalar-tab-view-fade\s*\{[\s\S]*?from\s*\{\s*opacity:\s*0;\s*\}[\s\S]*?to\s*\{\s*opacity:\s*1;\s*\}/);
+  assert.doesNotMatch(shellStyles, /@keyframes okumalar-tab-view-fade\s*\{[^}]*translateY/);
   assert.match(shellStyles, /\.tab-view-groups:not\(\.visible\)\s*\{[^}]*transform:\s*none;[^}]*animation:\s*none;[\s\S]*?\.tab-view-groups\.visible\s*\{[^}]*animation:\s*none;/);
   assert.match(shellStyles, /\.tab-view-videos:not\(\.visible\),[\s\S]*?\.tab-view-articles:not\(\.visible\)\s*\{[^}]*opacity:\s*0;[^}]*visibility:\s*hidden;[^}]*translateY\(16px\)/);
   assert.match(shellStyles, /\.tab-view-videos\.visible,[\s\S]*?\.tab-view-articles\.visible\s*\{[^}]*global-tab-view-enter 0\.38s ease-out both/);
   assert.match(shellStyles, /\.tab-view-videos\.visible\.is-initial-route-reveal,[\s\S]*?\.tab-view-articles\.visible\.is-initial-route-reveal\s*\{[^}]*animation-duration:\s*0\.6s/);
   assert.match(shellStyles, /@keyframes global-tab-view-enter\s*\{[\s\S]*?opacity:\s*0;[^}]*translateY\(16px\)[\s\S]*?opacity:\s*1;[^}]*translateY\(0\)/);
   assert.match(readPublic('app/shell-router.js'), /view\.classList\.remove\('is-initial-route-reveal'\)[\s\S]*?activeView\.classList\.toggle\('is-initial-route-reveal', isInitialNavigation\)/);
+  assert.match(indexStyles, /\.tab-view-groups:not\(\.visible\) \.main-header,[\s\S]*?\.groups-section\s*\{[^}]*opacity:\s*0;[^}]*translateY\(16px\);[^}]*animation:\s*none;/);
+  assert.match(indexStyles, /\.tab-view-groups\.visible \.main-header,[\s\S]*?\.groups-section\s*\{[^}]*groups-directory-section-enter 0\.5s ease-out both;/);
+  assert.match(indexStyles, /\.tab-view-groups\.visible \.actions-section\s*\{[^}]*animation-delay:\s*0\.06s;[\s\S]*?\.tab-view-groups\.visible \.groups-section\s*\{[^}]*animation-delay:\s*0\.12s;/);
+  assert.match(indexStyles, /\.tab-view-groups\.visible\.is-initial-route-reveal \.main-header,[\s\S]*?animation-duration:\s*0\.6s;/);
+  assert.match(indexStyles, /@keyframes groups-directory-section-enter\s*\{[\s\S]*?opacity:\s*0;[^}]*translateY\(16px\)[\s\S]*?opacity:\s*1;[^}]*translateY\(0\)/);
+  assert.match(indexStyles, /prefers-reduced-motion:\s*reduce[\s\S]*?\.tab-view-groups\.visible \.groups-section\s*\{[^}]*animation:\s*none;/);
   assert.match(shellStyles, /prefers-reduced-motion:\s*reduce[\s\S]*?\.tab-view-videos\.visible,[\s\S]*?\.tab-view-articles\.visible\s*\{\s*animation:\s*none;/);
   assert.doesNotMatch(readClient('features/articles/articles.js'), /renderArticlesWithTransition|translateY\(20px\)/);
 });
@@ -726,6 +736,8 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(readingRevealStyles, /\.reading-content-reveal\s*\{[^}]*reading-content-reveal 0\.6s ease-out both/);
   assert.match(readingRevealStyles, /\.reading-scroll-reveal:not\(\.is-revealed\)\s*\{[^}]*translateY\(50px\)/);
   assert.match(readingRevealStyles, /\.user-cards-title\.reading-scroll-reveal:not\(\.is-revealed\)[\s\S]*?\.leaderboard-sort-bar\.reading-scroll-reveal:not\(\.is-revealed\),[\s\S]*?\{[^}]*translateY\(20px\)/);
+  assert.match(readingRevealStyles, /\.weekly-statistics-section\.reading-scroll-reveal:not\(\.is-revealed\)[\s\S]*?\{[^}]*translateY\(20px\)/);
+  assert.match(readingRevealStyles, /\.weekly-statistics-section\.reading-scroll-reveal\.is-revealed,[\s\S]*?\{[^}]*animation-name:\s*reading-viewport-reveal-compact/);
   assert.match(readingRevealStyles, /@keyframes reading-content-reveal\s*\{[\s\S]*?from\s*\{[^}]*translateY\(20px\)/);
   assert.match(readClient('features/readings/reading-reveal.css'), /\.reading-scroll-reveal\.is-revealed\s*\{[^}]*reading-viewport-reveal 0\.6s ease-out both/s);
   assert.doesNotMatch(readClient('features/readings/reading-reveal.css'), /0\.7s/);

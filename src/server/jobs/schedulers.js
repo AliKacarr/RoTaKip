@@ -7,6 +7,11 @@ let eveningNotificationJob = null;
 let tokenRefreshJob = null;
 
 function scheduleDailyNotifications({ getRandomNotification, sendNotification }) {
+  if (process.env.NODE_ENV === 'development') {
+    console.info('OneSignal bildirim cronları development ortamında başlatılmadı.');
+    return null;
+  }
+
   if (!(process.env.ONESIGNAL_APP_ID && process.env.ONESIGNAL_API_KEY)) {
     console.warn('OneSignal env değişkenleri eksik. Cron başlatılmadı.');
     return null;

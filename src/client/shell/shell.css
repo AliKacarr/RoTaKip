@@ -188,6 +188,16 @@ body.app-shell-body { padding-left: 132px; }
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
 }
+.tab-view-okumalar {
+  transform: none;
+}
+.tab-view-okumalar.visible {
+  animation: okumalar-tab-view-fade 380ms ease-out forwards;
+}
+@keyframes okumalar-tab-view-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 .tab-view-okumalar.is-resuming {
   transform: none;
   animation: none;
@@ -470,12 +480,12 @@ body.initial-tab-loading { overflow: hidden; }
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
   .scroll-to-top-btn {
-    right: 18px;
+    right: 25px;
     bottom: calc(80px + env(safe-area-inset-bottom, 0px) + 14px);
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
   }
-  .scroll-to-top-btn svg { width: 36px; height: 36px; }
+  .scroll-to-top-btn svg { width: 45px; height: 45px; }
   .app-navigation {
     inset: auto 0 -1px 0;
     width: 100%;

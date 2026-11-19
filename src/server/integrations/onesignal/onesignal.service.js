@@ -3,6 +3,11 @@
 const https = require('https');
 
 async function sendOneSignalNotification(message, source = 'vecize') {
+  if (process.env.NODE_ENV === 'development') {
+    console.info('OneSignal bildirimi development ortamında gönderilmedi.');
+    return;
+  }
+
   try {
     // Kaynağa göre başlık belirle
     let heading = 'Bir Söz';
