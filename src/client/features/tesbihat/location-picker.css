@@ -1,0 +1,373 @@
+.tesbihat-page .tesbihat-view[data-view="location"].is-busy {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.tesbihat-page .tesbihat-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    padding: 0 18px;
+    border: 2px solid #d0d0d0;
+    border-radius: 14px;
+    background: #fff;
+    cursor: text;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-search:focus-within {
+    border-color: var(--tb-primary);
+    box-shadow: 0 0 0 3px rgba(43, 103, 196, 0.15);
+}
+
+.tesbihat-page .tesbihat-search i {
+    color: var(--tb-muted);
+    font-size: 19px;
+}
+
+.tesbihat-page .tesbihat-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    color: var(--tb-text);
+    background: transparent;
+    font: inherit;
+    font-size: 18px;
+    outline: none;
+}
+
+.tesbihat-page .tesbihat-search input::placeholder {
+    color: #94a3b8;
+}
+
+.tesbihat-page .tesbihat-geo-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    height: 56px;
+    margin-top: 12px;
+    border: 0;
+    border-radius: 14px;
+    color: #fff;
+    background: var(--tb-gradient);
+    font-size: 19px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(43, 103, 196, 0.25);
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-geo-button:hover:not(:disabled) {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+.tesbihat-page .tesbihat-geo-button:disabled {
+    cursor: progress;
+    opacity: 0.85;
+}
+
+.tesbihat-page .tesbihat-geo-button i {
+    font-size: 21px;
+}
+
+.tesbihat-page .tesbihat-geo-button.is-loading i {
+    animation: tesbihat-geo-spin 1s linear infinite;
+}
+
+@keyframes tesbihat-geo-spin {
+    to { transform: rotate(360deg); }
+}
+
+.tesbihat-page .tesbihat-geo-status {
+    margin: 12px 0 0;
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: #334155;
+    background: var(--tb-tint-soft);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.tesbihat-page .tesbihat-geo-status[data-tone="error"] {
+    color: #9a2a14;
+    background: #fdeeea;
+}
+
+.tesbihat-page .tesbihat-geo-status[hidden] {
+    display: none;
+}
+
+.tesbihat-page .tesbihat-selected-location {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 22px 2px 0;
+    font-size: 17px;
+}
+
+.tesbihat-page .tesbihat-selected-location i {
+    color: var(--tb-primary);
+    font-size: 19px;
+}
+
+.tesbihat-page .tesbihat-selected-location span {
+    color: var(--tb-muted);
+}
+
+.tesbihat-page .tesbihat-selected-location strong {
+    font-size: 19px;
+}
+
+.tesbihat-page .tesbihat-location-list-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 24px 2px 12px;
+}
+
+.tesbihat-page .tesbihat-location-list-header h5 {
+    margin: 0;
+    color: var(--tb-text);
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.tesbihat-page .tesbihat-location-list-header span {
+    color: var(--tb-muted);
+    font-size: 16px;
+}
+
+.tesbihat-page .tesbihat-location-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tesbihat-page .tesbihat-province-toggle,
+.tesbihat-page .tesbihat-search-result {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 12px 18px 12px 12px;
+    border: 1px solid var(--tb-border);
+    border-radius: 16px;
+    color: var(--tb-text);
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(36, 50, 70, 0.05);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-province-toggle:hover,
+.tesbihat-page .tesbihat-search-result:hover {
+    border-color: #a9c4ee;
+    background: var(--tb-tint-soft);
+}
+
+.tesbihat-page .tesbihat-province.is-open .tesbihat-province-toggle {
+    border-color: var(--tb-primary);
+    background: var(--tb-tint);
+}
+
+.tesbihat-page .tesbihat-plate {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    color: var(--tb-primary-dark);
+    background: var(--tb-tint);
+    font-size: 19px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.tesbihat-page .tesbihat-province-text,
+.tesbihat-page .tesbihat-district-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.tesbihat-page .tesbihat-province-text small,
+.tesbihat-page .tesbihat-district-text small {
+    color: var(--tb-muted);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.tesbihat-page .tesbihat-province-toggle > i {
+    color: var(--tb-muted);
+    font-size: 18px;
+    transition: transform 0.25s ease;
+}
+
+.tesbihat-page .tesbihat-province.is-open .tesbihat-province-toggle > i {
+    color: var(--tb-primary);
+    transform: rotate(180deg);
+}
+
+.tesbihat-page .tesbihat-district-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 10px 0 6px;
+    padding: 0 4px;
+}
+
+.tesbihat-page .tesbihat-district-list[hidden] {
+    display: none;
+}
+
+.tesbihat-page .tesbihat-district-list .tesbihat-district {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 50px;
+    padding: 10px 16px;
+    border: 1px solid var(--tb-border);
+    border-radius: 12px;
+    color: var(--tb-text);
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-district-list .tesbihat-district .tesbihat-district-text {
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.tesbihat-page .tesbihat-district-list .tesbihat-district:hover {
+    border-color: #a9c4ee;
+    background: var(--tb-tint-soft);
+}
+
+.tesbihat-page .tesbihat-district.is-selected {
+    border-color: var(--tb-primary);
+    color: var(--tb-primary-dark);
+    background: var(--tb-tint);
+}
+
+.tesbihat-page .tesbihat-district.is-selected .tesbihat-district-text {
+    font-weight: 700;
+}
+
+.tesbihat-page .tesbihat-district.is-selected > i {
+    color: var(--tb-primary);
+}
+
+.tesbihat-page .tesbihat-search-result.is-selected {
+    border-color: var(--tb-primary);
+    background: var(--tb-tint);
+}
+
+.tesbihat-page .tesbihat-location-empty {
+    padding: 28px 16px;
+    color: var(--tb-muted);
+    font-size: 17px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .tesbihat-page .tesbihat-search,
+    .tesbihat-page .tesbihat-geo-button {
+        height: 50px;
+        border-radius: 12px;
+    }
+
+    .tesbihat-page .tesbihat-search {
+        border-width: 1px;
+        padding: 0 14px;
+    }
+
+    .tesbihat-page .tesbihat-search input {
+        font-size: 16px;
+    }
+
+    .tesbihat-page .tesbihat-geo-button {
+        font-size: 16px;
+    }
+
+    .tesbihat-page .tesbihat-selected-location {
+        margin-top: 18px;
+        font-size: 15px;
+    }
+
+    .tesbihat-page .tesbihat-selected-location strong {
+        font-size: 16px;
+    }
+
+    .tesbihat-page .tesbihat-location-list-header {
+        margin-top: 20px;
+    }
+
+    .tesbihat-page .tesbihat-location-list-header h5 {
+        font-size: 17px;
+    }
+
+    .tesbihat-page .tesbihat-location-list-header span {
+        font-size: 14px;
+    }
+
+    .tesbihat-page .tesbihat-province-toggle,
+    .tesbihat-page .tesbihat-search-result {
+        gap: 12px;
+        padding: 10px 14px 10px 10px;
+        border-radius: 14px;
+    }
+
+    .tesbihat-page .tesbihat-plate {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        font-size: 17px;
+    }
+
+    .tesbihat-page .tesbihat-province-text,
+    .tesbihat-page .tesbihat-district-text {
+        font-size: 17px;
+    }
+
+    .tesbihat-page .tesbihat-province-text small,
+    .tesbihat-page .tesbihat-district-text small {
+        font-size: 13px;
+    }
+
+    .tesbihat-page .tesbihat-district-list {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 0;
+    }
+
+    .tesbihat-page .tesbihat-district-list .tesbihat-district .tesbihat-district-text {
+        font-size: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tesbihat-page .tesbihat-geo-button,
+    .tesbihat-page .tesbihat-province-toggle > i {
+        transition: none;
+    }
+
+    .tesbihat-page .tesbihat-geo-button.is-loading i {
+        animation: none;
+    }
+}

@@ -52,7 +52,7 @@ export const ROUTE_ASSETS = Object.freeze({
     scripts: ['okumalar.min.js'],
     styles: ['okumalar.min.css']
   },
-  tesbihat: { scripts: [], styles: [] },
+  tesbihat: { scripts: ['tesbihat.min.js'], styles: ['tesbihat.min.css'] },
   videos: { scripts: ['videos.min.js'], styles: ['videos.min.css'] },
   tefekkur: { scripts: ['tefekkur.min.js'], styles: ['tefekkur.min.css'] },
   articles: { scripts: ['articles.min.js'], styles: ['articles.min.css'] }

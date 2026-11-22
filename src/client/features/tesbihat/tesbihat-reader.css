@@ -1,0 +1,620 @@
+.tesbihat-page .tesbihat-type-options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.tesbihat-page .tesbihat-type-option {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 18px 20px 18px 18px;
+    border: 1px solid var(--tb-border);
+    border-radius: 16px;
+    color: var(--tb-text);
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--tb-card-shadow);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-type-option:hover {
+    border-color: var(--tb-primary);
+    background: var(--tb-tint-soft);
+    transform: translateY(-2px);
+}
+
+.tesbihat-page .tesbihat-type-option:focus-visible {
+    outline: 3px solid var(--tb-primary-light);
+    outline-offset: 2px;
+}
+
+.tesbihat-page .tesbihat-type-option-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    color: var(--tb-primary);
+    background: var(--tb-tint);
+    font-size: 26px;
+}
+
+.tesbihat-page .tesbihat-type-option-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.tesbihat-page .tesbihat-type-option-text strong {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.tesbihat-page .tesbihat-type-option-text small {
+    color: var(--tb-muted);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.tesbihat-page .tesbihat-type-option-chevron {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    color: var(--tb-primary);
+    background: var(--tb-tint);
+    font-size: 16px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-type-option:hover .tesbihat-type-option-chevron {
+    color: #fff;
+    background: var(--tb-primary);
+}
+
+/* Okuyucu: başlık, yapışkan araç çubuğudur; uzun listede de yazı boyutu ve sıfırlama erişilebilir kalır. */
+.tesbihat-page .tesbihat-view[data-view="reader"] {
+    --tesbihat-font-scale: 1;
+}
+
+.tesbihat-page .tesbihat-reader-bar {
+    position: sticky;
+    top: 8px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding: 12px 14px;
+    border-radius: 20px;
+    color: #fff;
+    background: var(--tb-header-gradient);
+    box-shadow: var(--tb-header-shadow);
+}
+
+.tesbihat-page .tesbihat-reader-bar-titles {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.tesbihat-page .tesbihat-reader-bar-titles h4 {
+    margin: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tesbihat-page .tesbihat-reader-bar-titles p {
+    margin: 2px 0 0;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tesbihat-page .tesbihat-reader-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.tesbihat-page .tesbihat-reader-actions button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 42px;
+    height: 42px;
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-reader-actions button:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.tesbihat-page .tesbihat-reader-actions button[hidden] {
+    display: none;
+}
+
+.tesbihat-page .tesbihat-reader-actions button:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.tesbihat-page #tesbihatVibrationToggle.is-off {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.tesbihat-page #tesbihatVibrationToggle.is-off::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.tesbihat-page .tesbihat-reader-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.tesbihat-page .tesbihat-step-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid var(--tb-border);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: var(--tb-card-shadow);
+    transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.tesbihat-page .tesbihat-step-card.is-complete {
+    border-color: #a7dcc0;
+    background: #f6fcf9;
+}
+
+.tesbihat-page .tesbihat-instruction {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    padding: 14px 16px;
+    border: 1px solid #b9cdf0;
+    border-radius: 12px;
+    color: #334155;
+    background: #eaf1fd;
+    font-size: calc(17px * var(--tesbihat-font-scale));
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.tesbihat-page .tesbihat-instruction-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--tb-primary);
+    font-size: 11px;
+}
+
+.tesbihat-page .tesbihat-instruction.is-footnote {
+    border-color: #ecd29a;
+    background: #fff8e8;
+}
+
+.tesbihat-page .tesbihat-instruction.is-footnote .tesbihat-instruction-icon {
+    color: #fff;
+    background: #d69e2e;
+}
+
+.tesbihat-page .tesbihat-recitation {
+    padding: 6px 6px;
+    color: var(--tb-text);
+    font-size: calc(22px * var(--tesbihat-font-scale));
+    font-weight: 600;
+    line-height: 1.65;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.tesbihat-page .tesbihat-line {
+    margin: 0;
+}
+
+.tesbihat-page .tesbihat-line + .tesbihat-line {
+    margin-top: 0.45em;
+    padding-top: 0.45em;
+    border-top: 1px dashed var(--tb-border);
+}
+
+.tesbihat-page .tesbihat-recitation.is-arabic,
+.tesbihat-page .tesbihat-ring-label.is-arabic {
+    font-family: "Amiri", "Scheherazade New", "Noto Naskh Arabic", "Traditional Arabic", serif;
+    font-weight: 400;
+}
+
+.tesbihat-page .tesbihat-recitation.is-arabic {
+    font-size: calc(31px * var(--tesbihat-font-scale));
+    line-height: 2.2;
+}
+
+.tesbihat-page .tesbihat-divine-name {
+    color: var(--tb-primary-dark);
+    font-weight: 700;
+}
+
+.tesbihat-page .tesbihat-ayah-number {
+    margin: 0 0.2em;
+    color: var(--tb-primary);
+    font-size: 0.75em;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.tesbihat-page .tesbihat-recitation.is-basmala,
+.tesbihat-page .tesbihat-recitation.is-surah-title {
+    color: var(--tb-primary-dark);
+    font-weight: 700;
+}
+
+.tesbihat-page .tesbihat-counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.tesbihat-page .tesbihat-counter > .tesbihat-recitation {
+    align-self: stretch;
+}
+
+.tesbihat-page .tesbihat-ring {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 210px;
+    height: 210px;
+    margin-top: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tesbihat-page .tesbihat-ring svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.tesbihat-page .tesbihat-ring-track,
+.tesbihat-page .tesbihat-ring-progress {
+    fill: none;
+    stroke-width: 9;
+}
+
+.tesbihat-page .tesbihat-ring-track {
+    stroke: var(--tb-tint);
+}
+
+.tesbihat-page .tesbihat-ring-progress {
+    stroke: var(--tb-primary);
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.25s ease, stroke 0.3s ease;
+}
+
+.tesbihat-page .tesbihat-ring-inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 152px;
+    height: 152px;
+    border-radius: 50%;
+    color: var(--tb-primary);
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(43, 103, 196, 0.16), inset 0 0 0 1px var(--tb-border);
+    transition: transform 0.15s ease, background 0.3s ease;
+}
+
+.tesbihat-page .tesbihat-ring-inner i {
+    font-size: 42px;
+    opacity: 0.85;
+}
+
+.tesbihat-page .tesbihat-ring-inner strong {
+    font-size: 34px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.tesbihat-page .tesbihat-ring:active .tesbihat-ring-inner {
+    transform: scale(0.95);
+}
+
+.tesbihat-page .tesbihat-ring.is-pulsing .tesbihat-ring-inner {
+    animation: tesbihat-ring-pulse 0.25s ease-out;
+}
+
+@keyframes tesbihat-ring-pulse {
+    0% { transform: scale(0.94); }
+    100% { transform: scale(1); }
+}
+
+.tesbihat-page .tesbihat-ring:focus-visible {
+    outline: 3px solid var(--tb-primary-light);
+    outline-offset: 4px;
+}
+
+.tesbihat-page .tesbihat-ring.is-complete {
+    cursor: default;
+}
+
+.tesbihat-page .tesbihat-ring.is-complete .tesbihat-ring-progress {
+    stroke: #22a06b;
+}
+
+.tesbihat-page .tesbihat-ring.is-complete .tesbihat-ring-inner {
+    color: #22a06b;
+    background: #f1faf5;
+}
+
+.tesbihat-page .tesbihat-ring-label {
+    margin: 0;
+    color: var(--tb-primary-dark);
+    font-size: calc(24px * var(--tesbihat-font-scale));
+    font-weight: 700;
+    text-align: center;
+}
+
+.tesbihat-page .tesbihat-ring-label.is-arabic {
+    font-size: calc(32px * var(--tesbihat-font-scale));
+}
+
+.tesbihat-page .tesbihat-part-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 12px 2px 0;
+    color: var(--tb-primary);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.tesbihat-page .tesbihat-part-divider::before,
+.tesbihat-page .tesbihat-part-divider::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: #c9daf5;
+}
+
+.tesbihat-page .tesbihat-error {
+    padding: 40px 20px;
+    border: 1px solid var(--tb-border);
+    border-radius: 16px;
+    background: #fff;
+    color: #b42318;
+    text-align: center;
+}
+
+.tesbihat-page .tesbihat-error i {
+    font-size: 38px;
+}
+
+.tesbihat-page .tesbihat-error p {
+    margin: 14px 0 18px;
+    color: #475569;
+    font-size: 17px;
+}
+
+.tesbihat-page .tesbihat-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--tb-gradient);
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .tesbihat-page .tesbihat-type-options {
+        gap: 10px;
+    }
+
+    .tesbihat-page .tesbihat-type-option {
+        gap: 12px;
+        padding: 14px 14px 14px 12px;
+        border-radius: 14px;
+    }
+
+    .tesbihat-page .tesbihat-type-option-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        font-size: 22px;
+    }
+
+    .tesbihat-page .tesbihat-type-option-text strong {
+        font-size: 18px;
+    }
+
+    .tesbihat-page .tesbihat-type-option-text small {
+        font-size: 14px;
+    }
+
+    .tesbihat-page .tesbihat-type-option-chevron {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .tesbihat-page .tesbihat-reader-bar {
+        gap: 8px;
+        margin-bottom: 14px;
+        padding: 8px 10px;
+        border-radius: 16px;
+    }
+
+    .tesbihat-page .tesbihat-reader-bar .tesbihat-back {
+        width: 36px;
+        height: 36px;
+    }
+
+    .tesbihat-page .tesbihat-reader-bar-titles h4 {
+        font-size: 16px;
+    }
+
+    .tesbihat-page .tesbihat-reader-bar-titles p {
+        font-size: 13px;
+    }
+
+    .tesbihat-page .tesbihat-reader-actions {
+        gap: 4px;
+    }
+
+    .tesbihat-page .tesbihat-reader-actions button {
+        min-width: 36px;
+        height: 36px;
+        padding: 0 7px;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .tesbihat-page .tesbihat-reader-content {
+        gap: 12px;
+    }
+
+    .tesbihat-page .tesbihat-step-card {
+        gap: 12px;
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .tesbihat-page .tesbihat-instruction {
+        gap: 10px;
+        padding: 10px 12px;
+        font-size: calc(15px * var(--tesbihat-font-scale));
+    }
+
+    .tesbihat-page .tesbihat-instruction-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+    }
+
+    .tesbihat-page .tesbihat-recitation {
+        padding: 4px 2px;
+        font-size: calc(18px * var(--tesbihat-font-scale));
+    }
+
+    .tesbihat-page .tesbihat-recitation.is-arabic {
+        font-size: calc(26px * var(--tesbihat-font-scale));
+        line-height: 2.1;
+    }
+
+    .tesbihat-page .tesbihat-ring {
+        width: 180px;
+        height: 180px;
+    }
+
+    .tesbihat-page .tesbihat-ring-inner {
+        width: 130px;
+        height: 130px;
+    }
+
+    .tesbihat-page .tesbihat-ring-inner i {
+        font-size: 36px;
+    }
+
+    .tesbihat-page .tesbihat-ring-inner strong {
+        font-size: 28px;
+    }
+
+    .tesbihat-page .tesbihat-ring-label {
+        font-size: calc(21px * var(--tesbihat-font-scale));
+    }
+
+    .tesbihat-page .tesbihat-ring-label.is-arabic {
+        font-size: calc(29px * var(--tesbihat-font-scale));
+    }
+}
+
+@media (max-width: 480px) {
+    .tesbihat-page .tesbihat-reader-bar-titles h4 {
+        font-size: 15px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tesbihat-page .tesbihat-type-option,
+    .tesbihat-page .tesbihat-ring-progress,
+    .tesbihat-page .tesbihat-ring-inner,
+    .tesbihat-page .tesbihat-step-card {
+        transition: none;
+    }
+
+    .tesbihat-page .tesbihat-type-option:hover {
+        transform: none;
+    }
+
+    .tesbihat-page .tesbihat-ring.is-pulsing .tesbihat-ring-inner {
+        animation: none;
+    }
+}

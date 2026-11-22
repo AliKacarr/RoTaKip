@@ -113,9 +113,38 @@ function logTefekkurAction(action) {
     }
 }
 
+function applyTefekkurFilter(filter) {
+    const selected = filter || 'all';
+    document.querySelectorAll('.tefekkur-filter-btn').forEach(button => {
+        const isActive = button.dataset.filter === selected;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+    });
+    document.querySelectorAll('.quote [data-category], .home-tefekkur-window[data-category]').forEach(element => {
+        element.hidden = selected !== 'all' && element.dataset.category !== selected;
+    });
+    document.querySelector('.quote-grid-container')?.classList.toggle('is-single', selected !== 'all');
+}
+
+function initializeTefekkurFilters() {
+    const filters = document.querySelector('.tefekkur-filters');
+    if (!filters) return;
+    if (filters.dataset.filterBound !== 'true') {
+        filters.dataset.filterBound = 'true';
+        filters.addEventListener('click', event => {
+            const button = event.target.closest('.tefekkur-filter-btn');
+            if (!button) return;
+            applyTefekkurFilter(button.dataset.filter);
+            logTefekkurAction(`Tefekkür filtresi: ${button.textContent.trim()}`);
+        });
+    }
+    applyTefekkurFilter(filters.querySelector('.tefekkur-filter-btn.active')?.dataset.filter);
+}
+
 function initializeTefekkurTab() {
     if (tefekkurTabInitialized) return;
     tefekkurTabInitialized = true;
+    initializeTefekkurFilters();
     // Tüm yenileme butonlarını seç
 
     const refreshQuoteButtons = document.querySelectorAll('.refresh-quote');

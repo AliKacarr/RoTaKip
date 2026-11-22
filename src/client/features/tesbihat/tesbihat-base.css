@@ -1,0 +1,315 @@
+.tesbihat-page {
+    --tb-primary: #2b67c4;
+    --tb-primary-dark: #1f56ad;
+    --tb-primary-light: #4b87e4;
+    --tb-gradient: linear-gradient(135deg, #2b67c4 0%, #4b87e4 100%);
+    --tb-tint: #e6efff;
+    --tb-tint-soft: #f5f8ff;
+    --tb-border: #c3ccd9;
+    --tb-text: #111;
+    --tb-muted: #5b6472;
+    --tb-card-shadow: 0 8px 24px rgba(36, 50, 70, 0.08);
+    --tb-header-gradient: linear-gradient(135deg, #1e3a5f 0%, #2b67c4 100%);
+    --tb-header-shadow: 0 4px 12px rgba(30, 58, 95, 0.16);
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 10px 20px 28px;
+    color: var(--tb-text);
+    box-sizing: border-box;
+}
+
+/* Başlıklar seçili vaktin hero rengini taşır; vakit yoksa (konum seçimi) varsayılan gece tonu kalır. */
+.tesbihat-page .tesbihat-view[data-vakit="sabah"] {
+    --tb-header-gradient: linear-gradient(135deg, #1e3a5f 0%, #4e54c8 100%);
+    --tb-header-shadow: 0 4px 12px rgba(78, 84, 200, 0.16);
+}
+
+.tesbihat-page .tesbihat-view[data-vakit="ogle"] {
+    --tb-header-gradient: linear-gradient(135deg, #2b67c4 0%, #4b87e4 100%);
+    --tb-header-shadow: 0 4px 12px rgba(43, 103, 196, 0.16);
+}
+
+.tesbihat-page .tesbihat-view[data-vakit="ikindi"] {
+    --tb-header-gradient: linear-gradient(135deg, #1f56ad 0%, #3f9cc4 100%);
+    --tb-header-shadow: 0 4px 12px rgba(31, 86, 173, 0.16);
+}
+
+.tesbihat-page .tesbihat-view[data-vakit="aksam"] {
+    --tb-header-gradient: linear-gradient(135deg, #4e54c8 0%, #2b67c4 100%);
+    --tb-header-shadow: 0 4px 12px rgba(78, 84, 200, 0.16);
+}
+
+/* Kayma yalnızca görünümlerde olur (dış sarmalayıcı kaymaz). Sekme görünür olana kadar
+   görünümler gizli bekler; böylece animasyon sekme ilk açılırken görünür şekilde oynar,
+   sekme içi geçişlerde de aynı animasyon yeniden çalışır. */
+.tab-view-tesbihat:not(.visible) .tesbihat-page .tesbihat-view {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: none;
+}
+
+.tab-view-tesbihat.visible .tesbihat-page .tesbihat-view:not([hidden]) {
+    animation: tesbihat-view-in 0.38s ease-out both;
+}
+
+/* Diğer sekmelerle aynı: sayfa ilk açıldığında giriş 0,6 sn sürer. */
+.tab-view-tesbihat.visible.is-initial-route-reveal .tesbihat-page .tesbihat-view:not([hidden]) {
+    animation-duration: 0.6s;
+}
+
+@keyframes tesbihat-view-in {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tesbihat-page button {
+    font-family: inherit;
+}
+
+.tesbihat-page .tesbihat-back {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 2px solid #d0d0d0;
+    border-radius: 50%;
+    color: var(--tb-primary);
+    background: #fff;
+    font-size: 17px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-back:hover {
+    border-color: var(--tb-primary);
+    background: var(--tb-tint-soft);
+}
+
+.tesbihat-page .tesbihat-plain-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 22px;
+    padding: 16px 20px;
+    border-radius: 20px;
+    color: #fff;
+    background: var(--tb-header-gradient);
+    box-shadow: var(--tb-header-shadow);
+}
+
+.tesbihat-page .tesbihat-plain-header h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.tesbihat-page .tesbihat-plain-header p {
+    text-align: center;
+    margin: 4px 0 0;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 17px;
+}
+
+.tesbihat-page .tesbihat-plain-header-titles {
+    min-width: 0;
+}
+
+.tesbihat-page .tesbihat-info-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 22px;
+    padding: 18px 20px;
+    border: 1px solid #c9daf5;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--tb-tint-soft) 0%, var(--tb-tint) 100%);
+}
+
+.tesbihat-page .tesbihat-info-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--tb-gradient);
+    font-size: 13px;
+}
+
+.tesbihat-page .tesbihat-info-note p {
+    margin: 0;
+    color: #334155;
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+.tesbihat-page .tesbihat-status {
+    margin: 16px 0 0;
+    padding: 12px 16px;
+    border: 1px solid #f3d9a4;
+    border-radius: 12px;
+    color: #7a5311;
+    background: #fff8e8;
+    font-size: 16px;
+}
+
+.tesbihat-page .tesbihat-status[hidden] {
+    display: none;
+}
+
+.tesbihat-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.55);
+    animation: tesbihat-dialog-fade 0.18s ease-out both;
+}
+
+.tesbihat-dialog {
+    width: 100%;
+    max-width: 420px;
+    padding: 24px 24px 12px;
+    border-radius: 16px;
+    color: #111;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+    animation: tesbihat-dialog-pop 0.2s ease-out both;
+}
+
+.tesbihat-dialog h2 {
+    margin: 0 0 12px;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.tesbihat-dialog p {
+    margin: 0;
+    color: #475569;
+    font-size: 18px;
+    line-height: 1.55;
+}
+
+.tesbihat-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.tesbihat-dialog-actions button {
+    min-width: 88px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    color: #2b67c4;
+    background: transparent;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.tesbihat-dialog-actions button:hover {
+    background: #e6efff;
+}
+
+.tesbihat-dialog-actions button.is-confirm {
+    color: #dc2626;
+}
+
+.tesbihat-dialog-actions button.is-confirm:hover {
+    background: #fdeceb;
+}
+
+.tesbihat-dialog-actions button:focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 2px;
+}
+
+@keyframes tesbihat-dialog-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes tesbihat-dialog-pop {
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 768px) {
+    .tesbihat-page {
+        padding: 0 0 20px;
+    }
+
+    .tesbihat-page .tesbihat-plain-header {
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 12px 14px;
+        border-radius: 16px;
+    }
+
+    .tesbihat-page .tesbihat-plain-header h4 {
+        font-size: 22px;
+    }
+
+    .tesbihat-page .tesbihat-plain-header p {
+        font-size: 15px;
+    }
+
+    .tesbihat-page .tesbihat-back {
+        width: 38px;
+        height: 38px;
+        border-width: 1px;
+        font-size: 15px;
+    }
+
+    .tesbihat-page .tesbihat-info-note {
+        gap: 12px;
+        margin-top: 18px;
+        padding: 14px 16px;
+    }
+
+    .tesbihat-page .tesbihat-info-note p {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tesbihat-dialog {
+        padding: 20px 18px 8px;
+    }
+
+    .tesbihat-dialog h2 {
+        font-size: 21px;
+    }
+
+    .tesbihat-dialog p {
+        font-size: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tab-view-tesbihat:not(.visible) .tesbihat-page .tesbihat-view,
+    .tab-view-tesbihat.visible .tesbihat-page .tesbihat-view:not([hidden]),
+    .tesbihat-dialog-backdrop,
+    .tesbihat-dialog {
+        animation: none;
+    }
+}

@@ -528,6 +528,7 @@ async function initGlobalTab(route) {
   await loadBundleScripts(assets.scripts);
   const lifecycle = {
     groups: window.RoTaKipGroupsTab,
+    tesbihat: window.RoTaKipTesbihatTab,
     videos: window.RoTaKipVideoTab,
     tefekkur: window.RoTaKipTefekkurTab,
     articles: window.RoTaKipArticlesTab

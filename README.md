@@ -99,7 +99,7 @@ Kaynak yerleşimi, dosya sahipliği ve geliştirme kuralları için [mimari belg
 Grup deneyimi ortak `app-shell.html` kabuğu üzerinde, route'a göre tembel yüklenen fragment ve asset paketlerinden oluşur. Okuma gruplarını keşfetme ekranının görünümü `public/fragments/gruplar.html` dosyasıdır ve `/gruplar` rotasında shell içine yüklenir:
 
 - `/grup/:groupId/` — haftalık takip, motivasyon panelleri, grup ayarları, lig kartları, aylık takvim ve grafikler
-- `/tesbihat` — bağımsız Tesbihat sekmesi; `/` bu adrese yönlendirilir (içerik daha sonra eklenecek)
+- `/tesbihat` — sıradaki vakte geri sayım ve beş vakit listesi; `/` bu adrese yönlendirilir. Sekme içi görünümler sorgu parametresiyle açılır: `?konum` (il/ilçe/plaka araması ve "Konumumu kullan"), `?vakit=sabah` (tesbihat türü seçimi), `?vakit=sabah&tur=kisa|uzun|arapca-uzun` (sayaçlı tesbihat okuyucu). Varsayılan konum İstanbul'dur. Veriler `prayer_locations`, `prayer_times` ve `tesbihatlar` koleksiyonlarından `/api/prayer-locations`, `/api/prayer-times`, `/api/tesbihat/:vakit/:tur` uçlarıyla okunur; otomatik konum için tarayıcıdan BigDataCloud ters coğrafi kodlama servisine yuvarlanmış koordinat gönderilir.
 - `/videolar`, `/tefekkur`, `/makaleler` — grup bağlamından bağımsız içerikler
 
 İstemci kaynakları `src/client/`, shell yönlendirmesi `public/app/`, görünüm HTML'leri `public/fragments/` altındadır. `npm run build` sekmeye özel CSS/JS paketlerini üretir ve içerik hash'lerini `public/assets-manifest.json` içine yazar. Üretilmiş paketler Git tarafından takip edilmez. `/groupid=:groupId` bağlantıları query parametrelerini koruyarak kanonik grup adresine yönlendirilir.

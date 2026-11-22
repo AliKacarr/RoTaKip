@@ -187,7 +187,7 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.match(footer, /@media \(max-width:\s*768px\)[\s\S]*?\.footer-section\.social-media\s*\{[^}]*order:\s*1;[\s\S]*?\.footer-section\.app-download\s*\{[^}]*order:\s*2;/);
   assert.match(footer, /\.footer-section\.app-download\s*\{[^}]*--app-download-content-width:\s*350px;[^}]*grid-area:\s*app;/);
   assert.match(footer, /\.social-link\s*\{[^}]*grid-template-columns:\s*54px minmax\(0, 1fr\) auto;[\s\S]*?\.social-link-action\s*\{[^}]*padding:\s*15px 30px;[\s\S]*?\.footer-section\.app-download \.social-contact-link\s*\{[^}]*width:\s*min\(100%, var\(--app-download-content-width\)\);[^}]*min-height:\s*48px;/);
-  assert.match(footer, /\.footer-section\.app-download \.app-download-row\s*\{[^}]*width:\s*min\(100%, var\(--app-download-content-width\)\);[^}]*align-items:\s*center;[^}]*height:\s*clamp\(76px, 7\.8125vw, 100px\);[^}]*margin:\s*5px auto 0;[\s\S]*?\.footer-section\.app-download \.app-icon-container\s*\{[^}]*height:\s*100%;[^}]*aspect-ratio:\s*1;[\s\S]*?\.footer-section\.app-download \.app-icon\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/);
+  assert.match(footer, /\.footer-section\.app-download \.app-download-row\s*\{[^}]*width:\s*min\(100%, var\(--app-download-content-width\)\);[^}]*align-items:\s*center;[^}]*height:\s*clamp\(76px, 10vw, 100px\);[^}]*margin:\s*5px auto 0;[\s\S]*?\.footer-section\.app-download \.app-icon-container\s*\{[^}]*height:\s*100%;[^}]*aspect-ratio:\s*1;[\s\S]*?\.footer-section\.app-download \.app-icon\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/);
   assert.match(footer, /\.footer-section\.app-download \.app-buttons\s*\{[^}]*min-width:\s*0;[^}]*flex:\s*1 1 auto;[\s\S]*?\.footer-section\.app-download \.app-btn\s*\{[^}]*width:\s*100%;[^}]*box-sizing:\s*border-box;/);
   assert.doesNotMatch(footer, /\.footer-section\.social-media \.social-link:hover\s*\{[^}]*transform:/);
   assert.match(footer, /\.social-link-instagram \.social-link-action:hover\s*\{[^}]*background:\s*#007dcc;[^}]*transform:\s*translateY\(-1px\);[\s\S]*?\.social-link-youtube \.social-link-action:hover\s*\{[^}]*background:\s*#d90000;[^}]*transform:\s*translateY\(-1px\);[\s\S]*?\.social-link-spotify \.social-link-action:hover\s*\{[^}]*background:\s*#169c46;[^}]*transform:\s*translateY\(-1px\);/);
@@ -304,7 +304,7 @@ test('asset manifesti shell ve sekme paketlerini ayrı tutar', () => {
   assert.match(managementBundle, /group-management\.css/);
 });
 
-test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat geçici bilgilendirme alanı gösterir', () => {
+test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat namaz vakitleri ve okuyucu gösterir', () => {
   const groupHeaderFragment = readPublic('fragments/group-header.html');
   const okumalarFragment = readPublic('fragments/okumalar.html');
   const tesbihat = readPublic('fragments/tesbihat.html');
@@ -369,9 +369,28 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat geçici
   ].map(className => orderedRouteMarkup.indexOf(`class="${className}`));
   assert.ok(orderedSections.every((position, index) => position >= 0 && (index === 0 || position > orderedSections[index - 1])));
   assert.doesNotMatch(tesbihat, /tracker-table-shell|user-cards-section|main-area|monthly-calendar-section|stats-section/);
-  assert.match(tesbihat, /<h3 class="section-heading"><i class="fa-regular fa-moon" aria-hidden="true"><\/i> Tesbihat<\/h3>/);
-  assert.match(tesbihat, /class="tesbihat-preparation"[\s\S]*?Tesbihat bölümü çok yakında sizlerle[\s\S]*?RoTaKip'i kullandığınız için teşekkür ederiz[\s\S]*?mailto:alikacardev@gmail\.com[\s\S]*?Çatı Katı Elazığ İlim ve Kültür Derneği/);
-  assert.doesNotMatch(tesbihat, /tesbihat-preparation-icon|fa-solid fa-moon/);
+  assert.doesNotMatch(tesbihat, /section-heading|fa-calendar|tesbihatHeroNextLabel|tesbihat-hero-location|tesbihatHeroSky/);
+  assert.doesNotMatch(readClient('features/tesbihat/tesbihat-home.css'), /\.tesbihat-hero-dates\s*\{[^}]*border-top/s);
+  const tesbihatViews = Array.from(tesbihat.matchAll(/class="tesbihat-view" data-view="([a-z]+)"/g), match => match[1]);
+  assert.deepEqual(tesbihatViews, ['home', 'location', 'types', 'reader']);
+  assert.match(tesbihat, /data-view="home"[\s\S]*?id="tesbihatHero"[\s\S]*?id="tesbihatCountdownMain"[\s\S]*?class="tesbihat-change-location" data-open-location[\s\S]*?fa-location-dot[\s\S]*?id="tesbihatCurrentLocation"[\s\S]*?Değiştir[\s\S]*?class="tesbihat-list-heading"[\s\S]*?id="tesbihatPrayerList"/);
+  assert.doesNotMatch(readClient('features/tesbihat/tesbihat-home.css'), /tesbihat-list-heading::after|tesbihat-list-heading > i/);
+  assert.equal((tesbihat.match(/data-open-location/g) || []).length, 1);
+  assert.match(tesbihat, /data-view="location"[^>]*hidden[\s\S]*?id="tesbihatLocationSearch"[\s\S]*?id="tesbihatUseMyLocation"[\s\S]*?id="tesbihatLocationList"/);
+  assert.match(tesbihat, /data-view="types"[^>]*hidden[\s\S]*?data-tur="kisa"[\s\S]*?data-tur="uzun"[\s\S]*?data-tur="arapca-uzun"[\s\S]*?class="tesbihat-info-note"/);
+  assert.match(tesbihat, /data-view="reader"[^>]*hidden[\s\S]*?class="tesbihat-reader-bar"[\s\S]*?id="tesbihatResetCounters"[\s\S]*?id="tesbihatReaderContent"/);
+  assert.match(readClient('features/tesbihat/tesbihat-reader.css'), /\.tesbihat-reader-bar\s*\{[^}]*position:\s*sticky;[^}]*top:\s*8px;/s);
+  const tesbihatReader = readClient('features/tesbihat/tesbihat-reader.js');
+  assert.match(tesbihatReader, /resetButton\.addEventListener\('click'[\s\S]*?ns\.confirmDialog\(\{[\s\S]*?title: 'Sayaçları Sıfırla'[\s\S]*?confirmLabel: 'Sıfırla'/);
+  assert.doesNotMatch(tesbihatReader, /scrollTo\(/);
+  assert.doesNotMatch(tesbihatReader, /tesbihat-ring-reset/);
+  assert.doesNotMatch(readClient('features/tesbihat/tesbihat-home.js'), /tesbihat-prayer-badge/);
+  assert.doesNotMatch(readClient('features/tesbihat/tesbihat-home.js'), /tesbihat-prayer-now/);
+  assert.match(readClient('features/tesbihat/tesbihat-home.css'), /\.tesbihat-prayer-row\.is-current\s*\{[^}]*border-left-width:\s*8px;/s);
+  assert.doesNotMatch(tesbihat, /tesbihat-hero-art|<svg/);
+  assert.match(tesbihatReader, /matchMedia\('\(pointer: coarse\)'\)/);
+  assert.match(readClient('features/tesbihat/tesbihat-utils.js'), /ns\.confirmDialog[\s\S]*?role="alertdialog"[\s\S]*?document\.body\.appendChild\(backdrop\)/);
+  assert.doesNotMatch(tesbihat, /<select|tesbihat-preparation|çok yakında/);
   assert.doesNotMatch(commonOverlays, /readingEditModeBar/);
   assert.match(readClient('features/readings/reading-edit-mode.js'), /modeBar\.classList\.add\('show'\)[\s\S]*?aria-hidden', 'false'/);
   assert.match(readClient('features/readings/reading-edit-mode.js'), /modeBar\.classList\.remove\('show'\)[\s\S]*?aria-hidden', 'true'/);
@@ -398,7 +417,7 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat geçici
 
 test('global fragmentler grup içeriği taşımaz', () => {
   const expectations = [
-    ['fragments/tesbihat.html', 'Tesbihat içeriği'],
+    ['fragments/tesbihat.html', 'class="tesbihat-page"'],
     ['fragments/videos.html', 'class="videos"'],
     ['fragments/tefekkur.html', 'class="quote"'],
     ['fragments/articles.html', 'class="articles"']
@@ -724,8 +743,19 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(okumalarInit, /Promise\.all\(\[trackerReady, prepareReadingPrimaryContent\(\)\]\)[\s\S]*?revealReadingPrimaryContent\(isAuthenticated\)[\s\S]*?const readyForPrefetch = runOkumalarBackgroundWork\(\)/);
   assert.match(router, /activeLifecycle\?\.readyForPrefetch[\s\S]*?schedulePrefetch\(route\)/);
   assert.match(okumalarInit, /monthShareModal/);
-  assert.match(routeConfig, /tesbihat:\s*\{ scripts:\s*\[\], styles:\s*\[\] \}/);
-  assert.match(readClient('shell/shell.css'), /\.tab-view-tesbihat\.visible[\s\S]*?global-tab-view-enter 0\.38s ease-out both/);
+  assert.match(routeConfig, /tesbihat:\s*\{ scripts:\s*\['tesbihat\.min\.js'\], styles:\s*\['tesbihat\.min\.css'\] \}/);
+  assert.match(router, /tesbihat:\s*window\.RoTaKipTesbihatTab/);
+  const buildAssets = fs.readFileSync(path.join(projectRoot, 'scripts', 'build-assets.js'), 'utf8');
+  assert.match(buildAssets, /tesbihat:\s*\{[\s\S]*?css:\s*\['tesbihat-base\.css', 'tesbihat-home\.css', 'location-picker\.css', 'tesbihat-reader\.css'\][\s\S]*?'tesbihat-utils\.js',\s*'tesbihat-store\.js',\s*'prayer-schedule\.js',\s*'tesbihat-home\.js',\s*'location-picker\.js',\s*'tesbihat-reader\.js',\s*'tesbihat-tab\.js'/);
+  const tesbihatTab = readClient('features/tesbihat/tesbihat-tab.js');
+  assert.match(tesbihatTab, /window\.RoTaKipTesbihatTab = \{\s*prepareBeforeReveal: true/);
+  assert.match(tesbihatTab, /params\.has\('konum'\)[\s\S]*?view: 'reader', vakit, tur[\s\S]*?view: 'types', vakit/);
+  assert.match(readClient('features/tesbihat/prayer-schedule.js'), /DEFAULT_LOCATION_ID = 9541;/);
+  assert.doesNotMatch(readClient('shell/shell.css'), /tesbihat-preparation/);
+  // Tesbihat'ta dış sarmalayıcı kaymaz; kayma görünümlerin kendisinde (tek katman).
+  assert.match(readClient('shell/shell.css'), /\.tab-view-tesbihat\.visible\s*\{[^}]*transform:\s*none;[^}]*animation:\s*none;/);
+  assert.match(readClient('features/tesbihat/tesbihat-base.css'), /\.tab-view-tesbihat\.visible \.tesbihat-page \.tesbihat-view:not\(\[hidden\]\)\s*\{[^}]*tesbihat-view-in 0\.38s ease-out both/);
+  assert.match(readClient('features/tesbihat/tesbihat-base.css'), /@keyframes tesbihat-view-in\s*\{[\s\S]*?translateY\(16px\)/);
   assert.match(readClient('features/readings/tracker-table.js'), /schedulePostToggleUiRefresh[\s\S]*?window\.renderReadingMessagePanels/);
   assert.match(readClient('features/readings/tracker-table.js'), /allTimeAmountsByUser[\s\S]*?seasonAmountsByUser/);
   assert.doesNotMatch(readClient('features/readings/tracker-table.js'), /function calculateStreak\(userStats\)\s*\{\s*const allDates = Object\.keys\(userStats\)\.sort\(\)/);

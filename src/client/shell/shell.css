@@ -230,8 +230,19 @@ body.app-shell-body { padding-left: 132px; }
   transform: none;
   animation: none;
 }
+/* Tesbihat'ta kayma efekti dış sarmalayıcıda değil, görünümlerin kendisinde (tesbihat-base.css). */
+.tab-view-tesbihat:not(.visible) {
+  opacity: 0;
+  visibility: hidden;
+  transform: none;
+  animation: none;
+}
+.tab-view-tesbihat.visible {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
 .tab-view-videos:not(.visible),
-.tab-view-tesbihat:not(.visible),
 .tab-view-tefekkur:not(.visible),
 .tab-view-articles:not(.visible) {
   opacity: 0;
@@ -240,13 +251,11 @@ body.app-shell-body { padding-left: 132px; }
   animation: none;
 }
 .tab-view-videos.visible,
-.tab-view-tesbihat.visible,
 .tab-view-tefekkur.visible,
 .tab-view-articles.visible {
   animation: global-tab-view-enter 0.38s ease-out both;
 }
 .tab-view-videos.visible.is-initial-route-reveal,
-.tab-view-tesbihat.visible.is-initial-route-reveal,
 .tab-view-tefekkur.visible.is-initial-route-reveal,
 .tab-view-articles.visible.is-initial-route-reveal {
   animation-duration: 0.6s;
@@ -254,106 +263,6 @@ body.app-shell-body { padding-left: 132px; }
 @keyframes global-tab-view-enter {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.tesbihat-preparation {
-  display: flex;
-  min-height: min(620px, calc(100vh - 190px));
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 56px 20px;
-}
-.tesbihat-preparation-card {
-  width: 100%;
-  max-width: 620px;
-  box-sizing: border-box;
-  padding: 48px 44px;
-  color: #303748;
-  text-align: center;
-  background: linear-gradient(145deg, #fff 0%, #f8f8ff 100%);
-  border: 1px solid rgba(78, 84, 200, 0.14);
-  border-radius: 24px;
-  box-shadow: 0 16px 42px rgba(44, 50, 94, 0.1);
-}
-.tesbihat-preparation h1 {
-  margin: 0;
-  color: #252b3b;
-  font-size: clamp(26px, 4vw, 36px);
-  line-height: 1.2;
-}
-.tesbihat-preparation-description {
-  max-width: 510px;
-  margin: 18px auto 0;
-  color: #424957;
-  font-size: 20px;
-  line-height: 1.7;
-}
-.tesbihat-preparation-feedback {
-  max-width: 500px;
-  margin: 24px auto 0;
-}
-.tesbihat-preparation-feedback p {
-  margin: 0;
-  color: #424957;
-  font-size: 18px;
-  line-height: 1.65;
-}
-.tesbihat-preparation-feedback a {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  color: #4e54c8;
-  font-size: 18px;
-  font-weight: 700;
-  text-decoration: none;
-}
-.tesbihat-preparation-feedback a:hover,
-.tesbihat-preparation-feedback a:focus-visible {
-  color: #373db0;
-  text-decoration: underline;
-}
-.tesbihat-preparation-feedback span {
-  display: block;
-  margin-top: 14px;
-  color: #434a5b;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-@media (max-width: 640px) {
-  .tesbihat-preparation {
-    width: 100%;
-    min-width: 0;
-    min-height: calc(100vh - 180px);
-    padding: 24px 0;
-    box-sizing: border-box;
-  }
-  .tesbihat-preparation-card {
-    min-width: 0;
-    padding: 28px 18px;
-    border-radius: 16px;
-  }
-  .tesbihat-preparation h1 {
-    font-size: 24px;
-  }
-  .tesbihat-preparation-description {
-    margin-top: 14px;
-    font-size: 16px;
-    line-height: 1.55;
-  }
-  .tesbihat-preparation-feedback {
-    margin-top: 18px;
-  }
-  .tesbihat-preparation-feedback p,
-  .tesbihat-preparation-feedback a,
-  .tesbihat-preparation-feedback span {
-    font-size: 15px;
-  }
-  .tesbihat-preparation-note {
-    line-height: 1.4;
-  }
 }
 
 .initial-tab-loader {
@@ -600,7 +509,6 @@ body.initial-tab-loading { overflow: hidden; }
   .app-navigation-item::before { animation: none !important; }
   .tab-view.visible { opacity: 1; transform: none; }
   .tab-view-videos.visible,
-  .tab-view-tesbihat.visible,
   .tab-view-tefekkur.visible,
   .tab-view-articles.visible { animation: none; }
 }

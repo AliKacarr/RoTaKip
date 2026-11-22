@@ -10,6 +10,51 @@
     height: 100%;
 }
 
+.tefekkur-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 2px 25px;
+}
+
+.tefekkur-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 13px 22px;
+    border: 2px solid #d0d0d0;
+    border-radius: 20px;
+    background: #ffffff;
+    color: #6c757d;
+    font-size: 21px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tefekkur-filter-btn:hover {
+    border-color: #007bff;
+    color: #007bff;
+    background: #f8f9ff;
+}
+
+.tefekkur-filter-btn.active {
+    border-color: #007bff;
+    background: #007bff;
+    color: #ffffff;
+}
+
+.quote-section[hidden],
+.home-tefekkur-window[hidden] {
+    display: none;
+}
+
+.quote-grid-container.is-single {
+    grid-template-columns: minmax(0, 1fr);
+    width: min(100%, 900px);
+    margin-inline: auto;
+}
+
 .quote-icon {
     display: flex;
     flex-direction: column;
@@ -228,6 +273,28 @@
         min-width: 0;
         margin: 0;
         padding: 0;
+    }
+
+    .tefekkur-filters {
+        flex-wrap: nowrap;
+        gap: 8px;
+        margin: 0 0 16px;
+        padding: 2px 2px 8px;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tefekkur-filter-btn {
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        border-width: 1px;
+        border-radius: 17px;
+        gap: 5px;
+        font-size: 14px;
+        line-height: 1.2;
+        white-space: nowrap;
     }
 
     .quote-grid-container {

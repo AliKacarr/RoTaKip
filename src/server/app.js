@@ -46,6 +46,8 @@ const {
 const readingEditPolicy = require('./modules/readings/reading-edit-policy');
 const { registerReadingRoutes } = require('./modules/readings/reading.routes');
 const { registerHealthRoutes } = require('./modules/system/health.routes');
+const { registerTesbihatRoutes } = require('./modules/tesbihat/tesbihat.routes');
+const { createTesbihatService } = require('./modules/tesbihat/tesbihat.service');
 const { registerProfileRoutes } = require('./modules/users/profile.routes');
 const userService = require('./modules/users/user.service');
 const userVisibility = require('./modules/users/user-visibility');
@@ -79,6 +81,7 @@ const authMiddleware = createAuthMiddleware({
 const activityService = createActivityService({
   getSessionMembership: authMiddleware.getSessionMembership
 });
+const tesbihatService = createTesbihatService();
 
 const routeDependencies = {
   ...activityModels,
@@ -96,6 +99,7 @@ const routeDependencies = {
   ...joinRequestModel,
   ...rateLimiters,
   ...readingEditPolicy,
+  ...tesbihatService,
   ...uploadMiddleware,
   ...userService,
   ...userVisibility,
@@ -115,6 +119,7 @@ registerProtectedPageRoutes(app, routeDependencies);
 configureStaticFiles(app, publicPath);
 registerPublicPageRoutes(app, routeDependencies);
 registerContentRoutes(app);
+registerTesbihatRoutes(app, routeDependencies);
 registerDropboxRoutes(app, routeDependencies);
 registerGroupRoutes(app, routeDependencies);
 registerAuthRoutes(app, routeDependencies);

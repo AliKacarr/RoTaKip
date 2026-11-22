@@ -105,6 +105,19 @@ const bundles = {
       'features/readings/analytics/monthly.js'
     ]
   },
+  tesbihat: {
+    sourceRoot: path.join(clientSourcePath, 'features', 'tesbihat'),
+    css: ['tesbihat-base.css', 'tesbihat-home.css', 'location-picker.css', 'tesbihat-reader.css'],
+    js: [
+      'tesbihat-utils.js',
+      'tesbihat-store.js',
+      'prayer-schedule.js',
+      'tesbihat-home.js',
+      'location-picker.js',
+      'tesbihat-reader.js',
+      'tesbihat-tab.js'
+    ]
+  },
   videos: {
     sourceRoot: path.join(clientSourcePath, 'features', 'videos'),
     css: ['videos.css'],

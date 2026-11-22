@@ -1,20 +1,112 @@
-<!-- Tesbihat içeriği daha sonra eklenecek. Ortak footer shell tarafından gösterilir. -->
-<h3 class="section-heading"><i class="fa-regular fa-moon" aria-hidden="true"></i> Tesbihat</h3>
-<section class="tesbihat-preparation" aria-labelledby="tesbihatPreparationTitle">
-  <div class="tesbihat-preparation-card">
-    <h1 id="tesbihatPreparationTitle">Tesbihat bölümü çok yakında sizlerle...</h1>
-    <p class="tesbihat-preparation-description">
-      Tesbihatlarınızı huzurla ve düzenli bir şekilde takip edebilmeniz için bu bölümü özenle hazırlıyoruz. İnşallah en kısa sürede hizmetinize sunacağız.
-    </p>
-    <div class="tesbihat-preparation-feedback">
-      <p>
-        Bu bölümde görmek istediğiniz özellikleri bizimle paylaşabilirsiniz. RoTaKip'i kullandığınız için teşekkür ederiz.
-      </p>
-      <a href="mailto:alikacardev@gmail.com">
-        <i class="fa-regular fa-envelope" aria-hidden="true"></i>
-        Önerilerinizi paylaşın
-      </a>
-      <span>Çatı Katı Elazığ İlim ve Kültür Derneği</span>
+<div class="tesbihat-page">
+  <section class="tesbihat-view" data-view="home" aria-labelledby="tesbihatHomeTitle">
+    <div id="tesbihatHero" class="tesbihat-hero" data-period="yatsi">
+      <div class="tesbihat-hero-top">
+        <div class="tesbihat-hero-current">
+          <h4 id="tesbihatHomeTitle"><span id="tesbihatHeroCurrent">Namaz Vakitleri</span></h4>
+        </div>
+        <div id="tesbihatHeroCountdown" class="tesbihat-hero-countdown" role="timer" aria-live="off">
+          <strong><span id="tesbihatCountdownMain">--:--</span><small id="tesbihatCountdownSeconds"></small></strong>
+        </div>
+      </div>
+      <div class="tesbihat-hero-dates">
+        <span id="tesbihatGregorianDate"></span>
+        <span id="tesbihatHijriDate"></span>
+      </div>
     </div>
-  </div>
-</section>
+
+    <button type="button" class="tesbihat-change-location" data-open-location>
+      <i class="fa-solid fa-location-dot tesbihat-change-location-pin" aria-hidden="true"></i>
+      <span id="tesbihatCurrentLocation" class="tesbihat-change-location-name">Konum yükleniyor</span>
+      <span class="tesbihat-change-location-action">Değiştir <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+    </button>
+
+    <p id="tesbihatHomeStatus" class="tesbihat-status" role="status" hidden></p>
+
+    <h4 class="tesbihat-list-heading">Namaz Tesbihatları</h4>
+    <ol id="tesbihatPrayerList" class="tesbihat-prayer-list"></ol>
+  </section>
+
+  <section class="tesbihat-view" data-view="location" aria-labelledby="tesbihatLocationTitle" hidden>
+    <header class="tesbihat-plain-header">
+      <button type="button" class="tesbihat-back" data-back aria-label="Geri dön"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      <h4 id="tesbihatLocationTitle">Konum Seç</h4>
+    </header>
+
+    <label class="tesbihat-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input id="tesbihatLocationSearch" type="search" placeholder="İl, ilçe veya plaka kodu ara..." autocomplete="off" aria-label="İl, ilçe veya plaka kodu ara">
+    </label>
+
+    <button type="button" id="tesbihatUseMyLocation" class="tesbihat-geo-button">
+      <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+      <span>Konumumu kullan</span>
+    </button>
+    <p id="tesbihatGeoStatus" class="tesbihat-geo-status" role="status" hidden></p>
+
+    <p class="tesbihat-selected-location">
+      <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+      <span>Seçili konum</span>
+      <strong id="tesbihatSelectedLocation">—</strong>
+    </p>
+
+    <div class="tesbihat-location-list-header">
+      <h5 id="tesbihatLocationListTitle">Tüm İller</h5>
+      <span id="tesbihatLocationListCount"></span>
+    </div>
+    <ul id="tesbihatLocationList" class="tesbihat-location-list"></ul>
+  </section>
+
+  <section class="tesbihat-view" data-view="types" aria-labelledby="tesbihatTypesTitle" hidden>
+    <header class="tesbihat-plain-header">
+      <button type="button" class="tesbihat-back" data-back aria-label="Namaz vakitlerine dön"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      <div class="tesbihat-plain-header-titles">
+        <h4 id="tesbihatTypesTitle">Tesbihat</h4>
+        <p>Tesbihat türünü seçin</p>
+      </div>
+    </header>
+
+    <div class="tesbihat-type-options">
+      <button type="button" class="tesbihat-type-option" data-tur="kisa">
+        <span class="tesbihat-type-option-icon"><i class="fa-regular fa-clock" aria-hidden="true"></i></span>
+        <span class="tesbihat-type-option-text"><strong>Kısa Tesbihat</strong><small>Temel tesbihat · günlük kullanım</small></span>
+        <span class="tesbihat-type-option-chevron"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+      </button>
+      <button type="button" class="tesbihat-type-option" data-tur="uzun">
+        <span class="tesbihat-type-option-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
+        <span class="tesbihat-type-option-text"><strong>Uzun Tesbihat</strong><small>Tam tesbihat · Türkçe okunuş</small></span>
+        <span class="tesbihat-type-option-chevron"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+      </button>
+      <button type="button" class="tesbihat-type-option" data-tur="arapca-uzun">
+        <span class="tesbihat-type-option-icon"><i class="fa-solid fa-language" aria-hidden="true"></i></span>
+        <span class="tesbihat-type-option-text"><strong>Arapça Uzun Tesbihat</strong><small>Arapça metin · orijinal okuyuş</small></span>
+        <span class="tesbihat-type-option-chevron"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+      </button>
+    </div>
+
+    <aside class="tesbihat-info-note">
+      <span class="tesbihat-info-icon" aria-hidden="true"><i class="fa-solid fa-info"></i></span>
+      <p>Tesbihat namazın devamı niteliğindedir. Zamanınız varsa uzun tesbihatı tercih edin; yoksa kısa tesbihat ile de zikre devam edebilirsiniz. Allah kabul etsin.</p>
+    </aside>
+  </section>
+
+  <section class="tesbihat-view" data-view="reader" aria-labelledby="tesbihatReaderTitle" hidden>
+    <header class="tesbihat-reader-bar">
+      <button type="button" class="tesbihat-back" data-back aria-label="Tesbihat türlerine dön"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      <div class="tesbihat-reader-bar-titles">
+        <h4 id="tesbihatReaderTitle">Tesbihat</h4>
+        <p id="tesbihatReaderSubtitle"></p>
+      </div>
+      <div class="tesbihat-reader-actions" role="group" aria-label="Okuma ayarları">
+        <button type="button" id="tesbihatVibrationToggle" aria-pressed="true" aria-label="Titreşim" title="Titreşim" hidden><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></button>
+        <button type="button" data-font-step="-1" aria-label="Yazıyı küçült" title="Yazıyı küçült">A−</button>
+        <button type="button" data-font-step="1" aria-label="Yazıyı büyüt" title="Yazıyı büyüt">A+</button>
+        <button type="button" id="tesbihatResetCounters" class="tesbihat-reset-all" aria-label="Tüm sayaçları sıfırla" title="Tüm sayaçları sıfırla">
+          <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+        </button>
+      </div>
+    </header>
+
+    <div id="tesbihatReaderContent" class="tesbihat-reader-content" aria-live="polite"></div>
+  </section>
+</div>

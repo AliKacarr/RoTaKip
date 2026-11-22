@@ -1,0 +1,387 @@
+.tesbihat-page .tesbihat-hero {
+    --hero-gradient: linear-gradient(135deg, #1e3a5f 0%, #2b67c4 100%);
+    --hero-shadow: rgba(30, 58, 95, 0.16);
+    padding: 22px 26px 18px;
+    border-radius: 20px;
+    color: #fff;
+    background: var(--hero-gradient);
+    box-shadow: 0 4px 12px var(--hero-shadow);
+}
+
+/* Vakit yalnızca renkle anlatılır: gece lacivert, gün boyu sitenin mavisi, akşam indigo. */
+.tesbihat-page .tesbihat-hero[data-period="imsak"] {
+    --hero-gradient: linear-gradient(135deg, #1e3a5f 0%, #4e54c8 100%);
+    --hero-shadow: rgba(78, 84, 200, 0.16);
+}
+
+.tesbihat-page .tesbihat-hero[data-period="gunes"] {
+    --hero-gradient: linear-gradient(135deg, #2b67c4 0%, #5593e8 100%);
+    --hero-shadow: rgba(43, 103, 196, 0.16);
+}
+
+.tesbihat-page .tesbihat-hero[data-period="ogle"] {
+    --hero-gradient: linear-gradient(135deg, #2b67c4 0%, #4b87e4 100%);
+    --hero-shadow: rgba(43, 103, 196, 0.16);
+}
+
+.tesbihat-page .tesbihat-hero[data-period="ikindi"] {
+    --hero-gradient: linear-gradient(135deg, #1f56ad 0%, #3f9cc4 100%);
+    --hero-shadow: rgba(31, 86, 173, 0.16);
+}
+
+.tesbihat-page .tesbihat-hero[data-period="aksam"] {
+    --hero-gradient: linear-gradient(135deg, #4e54c8 0%, #2b67c4 100%);
+    --hero-shadow: rgba(78, 84, 200, 0.16);
+}
+
+.tesbihat-page .tesbihat-hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.tesbihat-page .tesbihat-hero-current {
+    min-width: 0;
+}
+
+.tesbihat-page .tesbihat-hero-current h4 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.tesbihat-page .tesbihat-hero-countdown {
+    flex: 0 0 auto;
+    padding-top: 6px;
+    text-align: right;
+}
+
+.tesbihat-page .tesbihat-hero-countdown strong {
+    font-size: 58px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.tesbihat-page .tesbihat-hero-countdown small {
+    margin-left: 0.15em;
+    font-size: 28px;
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+.tesbihat-page .tesbihat-hero-dates {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 20px;
+    margin-top: 14px;
+    font-size: 17px;
+}
+
+.tesbihat-page .tesbihat-change-location {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 46px;
+    margin-top: 12px;
+    padding: 0 14px;
+    border: 1px solid #c9daf5;
+    border-radius: 12px;
+    color: var(--tb-primary-dark);
+    background: var(--tb-tint-soft);
+    font-size: 17px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-change-location:hover {
+    border-color: var(--tb-primary);
+    background: var(--tb-tint);
+}
+
+.tesbihat-page .tesbihat-change-location:focus-visible {
+    outline: 3px solid var(--tb-primary-light);
+    outline-offset: 2px;
+}
+
+.tesbihat-page .tesbihat-change-location-pin {
+    flex: 0 0 auto;
+    font-size: 19px;
+}
+
+.tesbihat-page .tesbihat-change-location-name {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tesbihat-page .tesbihat-change-location-action {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    color: var(--tb-primary);
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.tesbihat-page .tesbihat-change-location-action i {
+    font-size: 12px;
+}
+
+.tesbihat-page .tesbihat-list-heading {
+    margin: 26px 2px 14px;
+    color: var(--tb-text);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.tesbihat-page .tesbihat-prayer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tesbihat-page .tesbihat-prayer-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    min-height: 84px;
+    padding: 12px 20px 12px 14px;
+    border: 1px solid var(--tb-border);
+    border-radius: 16px;
+    color: var(--tb-text);
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--tb-card-shadow);
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-prayer-row:hover {
+    border-color: #a9c4ee;
+    background: var(--tb-tint-soft);
+    transform: translateY(-2px);
+}
+
+.tesbihat-page .tesbihat-prayer-row:focus-visible {
+    outline: 3px solid var(--tb-primary-light);
+    outline-offset: 2px;
+}
+
+.tesbihat-page .tesbihat-prayer-row {
+    position: relative;
+    overflow: hidden;
+}
+
+.tesbihat-page .tesbihat-prayer-row.is-current {
+    border-color: var(--tb-primary);
+    background: var(--tb-tint);
+    border-left-width: 8px;
+    box-shadow: 0 8px 22px rgba(43, 103, 196, 0.18);
+}
+
+.tesbihat-page .tesbihat-prayer-row.is-current .tesbihat-prayer-time {
+    border-left-color: #8fb1e6;
+}
+
+.tesbihat-page .tesbihat-prayer-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    color: var(--tb-primary);
+    background: var(--tb-tint);
+    font-size: 24px;
+}
+
+.tesbihat-page .tesbihat-prayer-row.is-current .tesbihat-prayer-icon {
+    color: #fff;
+    background: var(--tb-gradient);
+}
+
+/* Her vaktin kendi rengi vardır: ikon, zemin, kenarlık ve aktif satırın sol şeridi bu renkten beslenir. */
+.tesbihat-page .tesbihat-prayer-row[data-vakit="sabah"] { --vakit-color: #2f9bc4; --vakit-tint: #e5f4fa; }
+.tesbihat-page .tesbihat-prayer-row[data-vakit="ogle"] { --vakit-color: #d99200; --vakit-tint: #fff4d6; }
+.tesbihat-page .tesbihat-prayer-row[data-vakit="ikindi"] { --vakit-color: #e8702a; --vakit-tint: #ffeadb; }
+.tesbihat-page .tesbihat-prayer-row[data-vakit="aksam"] { --vakit-color: #d1426a; --vakit-tint: #fde6ed; }
+.tesbihat-page .tesbihat-prayer-row[data-vakit="yatsi"] { --vakit-color: #4a50b5; --vakit-tint: #e8e9fa; }
+
+.tesbihat-page .tesbihat-prayer-row[data-vakit] {
+    border-color: var(--vakit-color);
+    background: var(--vakit-tint);
+}
+
+.tesbihat-page .tesbihat-prayer-row[data-vakit]:hover {
+    border-color: var(--vakit-color);
+    background: var(--vakit-tint);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--vakit-color) 28%, transparent);
+}
+
+.tesbihat-page .tesbihat-prayer-row[data-vakit] .tesbihat-prayer-icon {
+    color: #fff;
+    background: var(--vakit-color);
+}
+
+.tesbihat-page .tesbihat-prayer-row[data-vakit] .tesbihat-prayer-time {
+    border-left-color: var(--vakit-color);
+}
+
+.tesbihat-page .tesbihat-prayer-row[data-vakit].is-current {
+    border-color: var(--vakit-color);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--vakit-color) 35%, transparent);
+}
+
+.tesbihat-page .tesbihat-prayer-name {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.tesbihat-page .tesbihat-prayer-name small {
+    margin-top: 2px;
+    color: var(--tb-muted);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.tesbihat-page .tesbihat-prayer-time {
+    flex: 0 0 auto;
+    padding-left: 20px;
+    border-left: 1px solid var(--tb-border);
+    font-size: 26px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.tesbihat-page .tesbihat-prayer-chevron {
+    flex: 0 0 auto;
+    color: var(--tb-muted);
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .tesbihat-page .tesbihat-hero {
+        padding: 18px 16px 14px;
+        border-radius: 16px;
+    }
+
+    .tesbihat-page .tesbihat-hero-current h4 {
+        font-size: 30px;
+    }
+
+    .tesbihat-page .tesbihat-hero-countdown {
+        padding-top: 4px;
+    }
+
+    .tesbihat-page .tesbihat-hero-countdown strong {
+        font-size: 40px;
+    }
+
+    .tesbihat-page .tesbihat-hero-countdown small {
+        font-size: 20px;
+    }
+
+    .tesbihat-page .tesbihat-hero-dates {
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    .tesbihat-page .tesbihat-change-location {
+        min-height: 44px;
+        margin-top: 10px;
+        padding: 0 12px;
+        font-size: 16px;
+    }
+
+    .tesbihat-page .tesbihat-change-location-pin {
+        font-size: 18px;
+    }
+
+    .tesbihat-page .tesbihat-change-location-action {
+        gap: 6px;
+        font-size: 15px;
+    }
+
+    .tesbihat-page .tesbihat-list-heading {
+        margin: 22px 2px 12px;
+        font-size: 20px;
+    }
+
+    .tesbihat-page .tesbihat-prayer-list {
+        gap: 10px;
+    }
+
+    .tesbihat-page .tesbihat-prayer-row {
+        gap: 12px;
+        min-height: 72px;
+        padding: 10px 14px 10px 14px;
+        border-radius: 14px;
+    }
+
+    .tesbihat-page .tesbihat-prayer-icon {
+        width: 46px;
+        height: 46px;
+        font-size: 20px;
+    }
+
+    .tesbihat-page .tesbihat-prayer-name {
+        font-size: 17px;
+    }
+
+    .tesbihat-page .tesbihat-prayer-name small {
+        font-size: 13px;
+    }
+
+    .tesbihat-page .tesbihat-prayer-time {
+        padding-left: 12px;
+        font-size: 20px;
+    }
+
+    .tesbihat-page .tesbihat-prayer-chevron {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tesbihat-page .tesbihat-hero-current h4 {
+        font-size: 26px;
+    }
+
+    .tesbihat-page .tesbihat-hero-countdown strong {
+        font-size: 34px;
+    }
+
+    .tesbihat-page .tesbihat-hero-countdown small {
+        font-size: 17px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tesbihat-page .tesbihat-prayer-row {
+        transition: none;
+    }
+
+    .tesbihat-page .tesbihat-prayer-row:hover {
+        transform: none;
+    }
+}

@@ -1,8 +1,13 @@
 <div class="quote">
-  <h3 class="section-heading"><i class="fa-regular fa-star" aria-hidden="true"></i> Tefekkür
-  </h3>
+  <div class="tefekkur-filters" role="group" aria-label="Tefekkür kategorileri">
+    <button class="tefekkur-filter-btn active" type="button" data-filter="all" aria-pressed="true"><i class="fa-solid fa-th-large" aria-hidden="true"></i> Tümü</button>
+    <button class="tefekkur-filter-btn" type="button" data-filter="ayat" aria-pressed="false">Ayet</button>
+    <button class="tefekkur-filter-btn" type="button" data-filter="hadith" aria-pressed="false">Hadis</button>
+    <button class="tefekkur-filter-btn" type="button" data-filter="dua" aria-pressed="false">Dua</button>
+    <button class="tefekkur-filter-btn" type="button" data-filter="quote" aria-pressed="false">Söz</button>
+  </div>
   <div class="quote-grid-container">
-    <div class="quote-section is-loading">
+    <div class="quote-section is-loading" data-category="ayat">
       <button class="refresh-quote" id="refreshAyat" type="button" title="Yeni ayet getir" disabled><i
           class="fa-solid fa-arrow-rotate-right"></i></button>
       <button class="share-quote" type="button" data-target="ayatText" title="Paylaş" disabled>
@@ -18,7 +23,7 @@
       </div>
     </div>
 
-    <div class="quote-section is-loading">
+    <div class="quote-section is-loading" data-category="hadith">
       <button class="refresh-quote" id="refreshHadith" type="button" title="Yeni hadis getir" disabled><i
           class="fa-solid fa-arrow-rotate-right"></i></button>
       <button class="share-quote" type="button" data-target="hadithText" title="Paylaş" disabled>
@@ -34,7 +39,7 @@
       </div>
     </div>
 
-    <div class="quote-section is-loading">
+    <div class="quote-section is-loading" data-category="dua">
       <button class="refresh-quote" id="refreshDua" type="button" title="Yeni dua getir" disabled><i
           class="fa-solid fa-arrow-rotate-right"></i></button>
       <button class="share-quote" type="button" data-target="duaText" title="Paylaş" disabled>
@@ -50,7 +55,7 @@
       </div>
     </div>
 
-    <div class="quote-section is-loading">
+    <div class="quote-section is-loading" data-category="quote">
       <button class="refresh-quote" id="refreshQuote" type="button" title="Yeni söz getir" disabled><i
           class="fa-solid fa-arrow-rotate-right"></i></button>
       <button class="share-quote" type="button" data-target="quoteText" title="Paylaş" disabled>
@@ -68,7 +73,7 @@
   </div>
 </div>
 
-<section class="home-tefekkur-window" aria-labelledby="homeTefekkurWindowTitle">
+<section class="home-tefekkur-window" data-category="quote" aria-labelledby="homeTefekkurWindowTitle">
   <h3 id="homeTefekkurWindowTitle">
     <i class="fa-solid fa-quote-right" aria-hidden="true"></i> Günün Vecizeleri
   </h3>
