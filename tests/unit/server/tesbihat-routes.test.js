@@ -238,6 +238,50 @@ test('toplu tesbihat paketi boşsa 404 verir', async () => {
   assert.equal(response.statusCode, 404);
 });
 
+const resolveDb = () => createFakeDb({
+  prayer_locations: [
+    { locationId: 9432, il: 'Elazığ', ilce: 'Elazığ' },
+    { locationId: 9440, il: 'Elazığ', ilce: 'Palu' },
+    { locationId: 9146, il: 'Adana', ilce: 'Adana' }
+  ]
+});
+
+function resolveWith(place) {
+  const reverseGeocode = typeof place === 'function' ? place : async () => place;
+  return registerWith(createTesbihatService({ getDb: resolveDb, reverseGeocode }))
+    .routes.get('/api/prayer-locations/resolve');
+}
+
+test('koordinat ilçeye, ilçe bulunamazsa il merkezine eşlenir', async () => {
+  const exact = createResponse();
+  await resolveWith({ countryCode: 'TR', plate: '23', names: ['Elazığ Province', 'Palu'] })(
+    { query: { latitude: '38.72', longitude: '39.93' } }, exact);
+  assert.equal(exact.body.location.locationId, 9440);
+  assert.equal(exact.body.exact, true);
+
+  const fallback = createResponse();
+  await resolveWith({ countryCode: 'TR', plate: '', names: ['Elazığ Province', 'Bilinmeyen'] })(
+    { query: { latitude: '38.72', longitude: '39.93' } }, fallback);
+  assert.equal(fallback.body.location.locationId, 9432);
+  assert.equal(fallback.body.exact, false);
+});
+
+test('konum çözümleme geçersiz koordinatı, yurt dışını ve servis hatasını ayırt eder', async () => {
+  const invalid = createResponse();
+  await resolveWith({ countryCode: 'TR', names: [] })({ query: { latitude: 'abc', longitude: '39' } }, invalid);
+  assert.equal(invalid.statusCode, 400);
+
+  const abroad = createResponse();
+  await resolveWith({ countryCode: 'DE', names: ['Berlin'] })({ query: { latitude: '52.52', longitude: '13.40' } }, abroad);
+  assert.equal(abroad.statusCode, 404);
+  assert.equal(abroad.body.outsideTurkey, true);
+
+  const down = createResponse();
+  await resolveWith(async () => { throw Object.assign(new Error('ağ'), { statusCode: 502 }); })(
+    { query: { latitude: '38.72', longitude: '39.93' } }, down);
+  assert.equal(down.statusCode, 502);
+});
+
 test('veritabanı hazır değilse 503 döner', async () => {
   const app = registerWith(createTesbihatService({ getDb: () => null }));
   const response = createResponse();

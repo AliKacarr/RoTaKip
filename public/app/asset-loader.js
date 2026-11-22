@@ -3,6 +3,13 @@ const stylePromises = new Map();
 const preloadKeys = new Set();
 let manifestPromise = null;
 
+// <script>/<link> yüklemesi ağ hatasında ayrıntı vermez; bağlantı sorunu olarak işaretlenir.
+function createLoadError(message) {
+  const error = new Error(message);
+  error.isNetworkError = true;
+  return error;
+}
+
 export function loadAssetManifest() {
   if (!manifestPromise) {
     manifestPromise = fetch('/assets-manifest.json', {
@@ -35,7 +42,7 @@ export function loadClassicScript(src) {
     script.onload = () => resolve(script);
     script.onerror = () => {
       scriptPromises.delete(src);
-      reject(new Error(`${src} scripti yüklenemedi.`));
+      reject(createLoadError(`${src} scripti yüklenemedi.`));
     };
     document.head.appendChild(script);
   });
@@ -62,7 +69,7 @@ export function loadStyle(href) {
     link.onload = () => resolve(link);
     link.onerror = () => {
       stylePromises.delete(href);
-      reject(new Error(`${href} stili yüklenemedi.`));
+      reject(createLoadError(`${href} stili yüklenemedi.`));
     };
     document.head.appendChild(link);
   });

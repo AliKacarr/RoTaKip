@@ -1,19 +1,9 @@
 (function () {
     const ns = window.RoTaKipTesbihat;
     const TAB_PATH = '/tesbihat';
-    const ARABIC_FONT_URL = 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap';
     const HISTORY_MARKER = 'rotakipTesbihat';
     let initPromise = null;
     let currentRoute = { view: 'home' };
-
-    function ensureArabicFont() {
-        if (document.querySelector('link[data-tesbihat-font]')) return;
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = ARABIC_FONT_URL;
-        link.dataset.tesbihatFont = 'true';
-        document.head.appendChild(link);
-    }
 
     function readRoute() {
         if (window.location.pathname.replace(/\/$/, '') !== TAB_PATH) return { view: 'home' };
@@ -73,7 +63,6 @@
     };
 
     async function initialize() {
-        ensureArabicFont();
         ns.home.init();
         ns.locationPicker.init();
         ns.reader.init();

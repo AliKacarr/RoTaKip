@@ -2,67 +2,6 @@
 if (!window.OneSignalInitialized) {
     window.OneSignalInitialized = true;
   
-function initializeOneSignalSettingsVisibility() {
-    const container = document.querySelector('.onesignal-customlink-container');
-    const settingsSection = container?.closest('.onesignal-settings-section');
-    const settingsContent = settingsSection?.querySelector('.onesignal-settings-content');
-
-    if (!container || !settingsSection || !settingsContent) return;
-
-    let updateFrame = null;
-    let isVisible = false;
-    let lockedVisibleHeight = 0;
-
-    const updateVisibility = () => {
-        if (updateFrame !== null) cancelAnimationFrame(updateFrame);
-        updateFrame = requestAnimationFrame(() => {
-            updateFrame = null;
-            const hasContent = container.childElementCount > 0 || container.textContent.trim().length > 0;
-
-            if (hasContent) {
-                isVisible = true;
-                lockedVisibleHeight = Math.max(lockedVisibleHeight, settingsContent.scrollHeight);
-            }
-
-            if (isVisible) {
-                settingsSection.hidden = false;
-                settingsSection.classList.add('is-visible');
-                settingsSection.style.height = `${lockedVisibleHeight}px`;
-            } else {
-                settingsSection.classList.remove('is-visible');
-                settingsSection.style.height = '0px';
-            }
-        });
-    };
-
-    settingsSection.addEventListener('transitionend', (event) => {
-        if (event.propertyName === 'height' && !isVisible) {
-            settingsSection.hidden = true;
-        }
-    });
-
-    updateVisibility();
-    new MutationObserver(updateVisibility).observe(container, {
-        childList: true,
-        subtree: true,
-        characterData: true
-    });
-
-    if ('ResizeObserver' in window) {
-        new ResizeObserver(() => {
-            if (isVisible) updateVisibility();
-        }).observe(settingsContent);
-    } else {
-        window.addEventListener('resize', updateVisibility);
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeOneSignalSettingsVisibility, { once: true });
-} else {
-    initializeOneSignalSettingsVisibility();
-}
-
 window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function (OneSignal) {
       try {
@@ -76,8 +15,9 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
   
         console.log("✅ OneSignal başarıyla başlatıldı");
 
-        const customLinkContainer = document.querySelector('.onesignal-customlink-container');
+        const customLinkSelector = '.onesignal-customlink-container';
         const notificationButtonSelector = '.onesignal-customlink-container-button';
+        const observedContainers = new WeakSet();
         let notificationStateUpdateFrame = null;
         let notificationStateChanging = false;
 
@@ -86,11 +26,10 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
           OneSignal.User.PushSubscription.optedIn === true
         );
 
-        const getNotificationButtons = () => {
-          if (!customLinkContainer) return [];
-
-          return Array.from(customLinkContainer.querySelectorAll(notificationButtonSelector));
-        };
+        // Kap (Tesbihat bildirim paneli) SDK'dan sonra da oluşabileceği için her seferinde aranır.
+        const getNotificationButtons = () => Array.from(
+          document.querySelectorAll(`${customLinkSelector} ${notificationButtonSelector}`)
+        );
 
         const updateNotificationButtonState = () => {
           if (notificationStateUpdateFrame !== null) {
@@ -126,7 +65,7 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
           if (!(event.target instanceof Element)) return;
 
           const button = event.target.closest(notificationButtonSelector);
-          if (!button || !customLinkContainer?.contains(button)) return;
+          if (!button || !button.closest(customLinkSelector)) return;
 
           // OneSignal'ın oluşturduğu bağlantının masaüstü ve mobilde farklı
           // zamanlarda yenilenmesine bağlı kalmadan tercihi SDK üzerinden değiştir.
@@ -157,14 +96,22 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
           }
         };
 
-        if (customLinkContainer) {
-          customLinkContainer.addEventListener('click', handleNotificationToggle, true);
-          new MutationObserver(updateNotificationButtonState).observe(customLinkContainer, {
-            childList: true,
-            subtree: true,
-            characterData: true
+        const observeCustomLinkContainers = () => {
+          document.querySelectorAll(customLinkSelector).forEach((container) => {
+            if (observedContainers.has(container)) return;
+            observedContainers.add(container);
+            new MutationObserver(updateNotificationButtonState).observe(container, {
+              childList: true,
+              subtree: true,
+              characterData: true
+            });
           });
-        }
+        };
+
+        document.addEventListener('click', handleNotificationToggle, true);
+        // Panel body'nin doğrudan çocuğu olarak eklenir; yalnızca bu düzey izlenir.
+        new MutationObserver(observeCustomLinkContainers).observe(document.body, { childList: true });
+        observeCustomLinkContainers();
 
         OneSignal.Notifications.addEventListener('permissionChange', updateNotificationButtonState);
         OneSignal.User.PushSubscription.addEventListener('change', updateNotificationButtonState);

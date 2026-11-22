@@ -94,7 +94,7 @@ h3 {
     width: 100%;
     max-width: 100%;
     margin: 0 auto;
-    padding: 12px clamp(12px, 4vw, 20px) 15px;
+    padding: 20px clamp(12px, 4vw, 20px) 15px;
     border-radius: 0;
     box-sizing: border-box;
     font-size: 16px;
@@ -146,6 +146,7 @@ h3 {
 .toast-success,
 .notification-success,
 .share-success { background: #28a745; }
+.share-error { background: #dc3545; }
 
 .toast-error,
 .notification-error { background: #dc3545; }
@@ -174,6 +175,51 @@ h3 {
 .notification-hide,
 .share-hide { animation: slideOut 0.3s ease forwards; }
 
+
+/* Mobil: toast sağ üstte değil, alt menü çubuğunun hemen üstünde, ekran genişliğinde
+   ve içeriği kadar yükseklikte gösterilir. Alt menü yüksekliği shell.css ile aynı tutulur. */
+@media (max-width: 768px) {
+  .toast,
+  .notification-toast,
+  .share-toast {
+    top: auto;
+    right: 0;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    border-radius: 0;
+    font-size: 16px;
+    text-align: center;
+    animation: toastSlideUp 0.3s ease;
+  }
+
+  .toast-hide,
+  .notification-hide,
+  .share-hide {
+    animation: toastSlideDown 0.3s ease forwards;
+  }
+}
+
+@media (max-width: 640px) {
+  .toast,
+  .notification-toast,
+  .share-toast {
+    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@keyframes toastSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toastSlideDown {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}
 
 @keyframes slideInRight {
   from {

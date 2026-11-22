@@ -377,6 +377,39 @@ body.initial-tab-loading { overflow: hidden; }
   text-align: center;
 }
 .route-error a { color: #4e54c8; font-weight: 800; }
+.route-error > i { margin-bottom: 10px; color: #4e54c8; font-size: 34px; }
+.route-error[data-connection] > i { color: #c2410c; }
+.route-error-retry {
+  margin-top: 6px;
+  padding: 12px 26px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  background: #4e54c8;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.connection-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
+  color: #fff;
+  background: #c2410c;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25);
+}
+.connection-banner[hidden] { display: none; }
+.connection-banner[data-state="online"] { background: #15803d; }
 @media (min-width: 1181px) {
   body.app-shell-body .cookie-consent-banner {
     left: calc(132px + 40px);

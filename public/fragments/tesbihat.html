@@ -1,5 +1,16 @@
 <div class="tesbihat-page">
   <section class="tesbihat-view" data-view="home" aria-labelledby="tesbihatHomeTitle">
+    <div class="tesbihat-location-bar">
+      <button type="button" class="tesbihat-change-location" data-open-location>
+        <i class="fa-solid fa-location-dot tesbihat-change-location-pin" aria-hidden="true"></i>
+        <span id="tesbihatCurrentLocation" class="tesbihat-change-location-name">Konum yükleniyor</span>
+        <span class="tesbihat-change-location-action">Değiştir <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+      </button>
+      <button type="button" id="tesbihatNotificationButton" class="tesbihat-notification-button" aria-label="Bildirimler" title="Bildirimler" aria-haspopup="dialog">
+        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+      </button>
+    </div>
+
     <div id="tesbihatHero" class="tesbihat-hero" data-period="yatsi">
       <div class="tesbihat-hero-top">
         <div class="tesbihat-hero-current">
@@ -14,12 +25,6 @@
         <span id="tesbihatHijriDate"></span>
       </div>
     </div>
-
-    <button type="button" class="tesbihat-change-location" data-open-location>
-      <i class="fa-solid fa-location-dot tesbihat-change-location-pin" aria-hidden="true"></i>
-      <span id="tesbihatCurrentLocation" class="tesbihat-change-location-name">Konum yükleniyor</span>
-      <span class="tesbihat-change-location-action">Değiştir <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
-    </button>
 
     <p id="tesbihatHomeStatus" class="tesbihat-status" role="status" hidden></p>
 
@@ -40,9 +45,9 @@
 
     <button type="button" id="tesbihatUseMyLocation" class="tesbihat-geo-button">
       <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
-      <span>Konumumu kullan</span>
+      <span class="tesbihat-geo-spinner" aria-hidden="true"></span>
+      <span data-geo-label>Konumumu kullan</span>
     </button>
-    <p id="tesbihatGeoStatus" class="tesbihat-geo-status" role="status" hidden></p>
 
     <p class="tesbihat-selected-location">
       <i class="fa-solid fa-location-dot" aria-hidden="true"></i>

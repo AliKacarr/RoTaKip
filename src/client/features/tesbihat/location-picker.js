@@ -1,6 +1,6 @@
 (function () {
     const ns = window.RoTaKipTesbihat;
-    const REVERSE_GEOCODE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';
+    const RESOLVE_LOCATION_URL = '/api/prayer-locations/resolve';
     const MAX_SEARCH_RESULTS = 80;
 
     let elements = null;
@@ -12,7 +12,7 @@
             view: document.querySelector('.tesbihat-view[data-view="location"]'),
             search: document.getElementById('tesbihatLocationSearch'),
             geoButton: document.getElementById('tesbihatUseMyLocation'),
-            geoStatus: document.getElementById('tesbihatGeoStatus'),
+            geoLabel: document.querySelector('#tesbihatUseMyLocation [data-geo-label]'),
             selected: document.getElementById('tesbihatSelectedLocation'),
             listTitle: document.getElementById('tesbihatLocationListTitle'),
             listCount: document.getElementById('tesbihatLocationListCount'),
@@ -48,10 +48,11 @@
         return ns.schedule.snapshot().location?.locationId ?? null;
     }
 
-    function setGeoStatus(message, tone = 'info') {
-        elements.geoStatus.textContent = message || '';
-        elements.geoStatus.dataset.tone = tone;
-        elements.geoStatus.hidden = !message;
+    function setGeoLoading(loading) {
+        elements.geoButton.disabled = loading;
+        elements.geoButton.classList.toggle('is-loading', loading);
+        elements.geoButton.setAttribute('aria-busy', String(loading));
+        elements.geoLabel.textContent = loading ? 'Konum alınıyor...' : 'Konumumu kullan';
     }
 
     function districtLabel(district) {
@@ -157,11 +158,10 @@
         try {
             const loaded = await ns.schedule.setLocation(locationId);
             if (!loaded) {
-                setGeoStatus('Bu konumun vakitleri yüklenemedi. Lütfen tekrar deneyin.', 'error');
+                ns.toast('Bu konumun vakitleri yüklenemedi. Lütfen tekrar deneyin.', 'error');
                 return;
             }
-            setGeoStatus('');
-            if (successMessage) ns.toast(successMessage);
+            ns.toast(successMessage || `Konumunuz: ${ns.formatLocation(ns.schedule.snapshot().location)}`);
             ns.back();
         } finally {
             busy = false;
@@ -180,87 +180,64 @@
     }
 
     function geolocationErrorMessage(error) {
-        if (error?.name === 'GeocodeError') return 'Konum alındı ancak il/ilçe bilgisi çözümlenemedi (konum servisine ulaşılamadı). Lütfen listeden seçin.';
+        if (navigator.onLine === false) return 'İnternet bağlantısı yok. Bağlantınızı kontrol edip tekrar deneyin ya da listeden seçin.';
+        if (error?.name === 'OutsideTurkeyError') return 'Şimdilik yalnızca Türkiye\'deki konumlar destekleniyor. Lütfen listeden seçin.';
+        if (error?.name === 'NoMatchError') return 'Konumunuza uygun il bulunamadı. Lütfen listeden seçin.';
+        if (error?.name === 'GeocodeError') return 'Konum alındı ancak il/ilçe bilgisi şu an çözümlenemedi. Lütfen birazdan tekrar deneyin ya da listeden seçin.';
         if (error?.code === 1) return 'Konum izni verilmedi. Tarayıcı/telefon ayarlarından bu site için konum iznini açabilir ya da listeden seçebilirsiniz.';
         if (error?.code === 2) return 'Cihazınız konumu belirleyemedi. Telefonun konum (GPS) servisinin açık olduğundan emin olun ya da listeden seçin.';
         if (error?.code === 3) return 'Konum zamanında alınamadı. Lütfen tekrar deneyin ya da listeden seçin.';
         return 'Konumunuz belirlenemedi. Lütfen listeden seçin.';
     }
 
-    async function reverseGeocode(latitude, longitude) {
+    // İl/ilçe çözümlemesi sunucuda yapılır: tarayıcıdan üçüncü taraf servise doğrudan istek,
+    // reklam engelleyici/ağ kısıtlarına takılıp sık sık başarısız oluyordu.
+    async function resolveLocation(latitude, longitude) {
+        let response;
         try {
-            const response = await fetch(
-                `${REVERSE_GEOCODE_URL}?latitude=${latitude}&longitude=${longitude}&localityLanguage=tr`
-            );
-            if (!response.ok) throw new Error(`Konum servisi ${response.status}`);
-            return await response.json();
+            response = await fetch(`${RESOLVE_LOCATION_URL}?latitude=${latitude}&longitude=${longitude}`, {
+                headers: { Accept: 'application/json' }
+            });
         } catch (error) {
             const wrapped = new Error(error.message);
             wrapped.name = 'GeocodeError';
             throw wrapped;
         }
-    }
-
-    function matchDistrict(place) {
-        const plate = String(place.principalSubdivisionCode || '').replace(/^TR-/, '').padStart(2, '0');
-        const province = provinces.find(item => item.plaka === plate)
-            || provinces.find(item => item.searchName === ns.normalizeSearch(place.principalSubdivision));
-        if (!province) return null;
-
-        const administrative = place.localityInfo?.administrative || [];
-        const candidates = [
-            ...administrative.filter(entry => entry.adminLevel >= 6).map(entry => entry.name),
-            place.city,
-            place.locality
-        ].map(ns.normalizeSearch).filter(Boolean);
-        const exact = province.districts.find(district => candidates.includes(district.searchName));
-        return {
-            district: exact || province.districts[0],
-            exact: Boolean(exact)
-        };
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.location) return data;
+        const failure = new Error(data.message || `Konum servisi ${response.status}`);
+        failure.name = data.outsideTurkey ? 'OutsideTurkeyError' : response.status === 404 ? 'NoMatchError' : 'GeocodeError';
+        throw failure;
     }
 
     async function useMyLocation() {
         if (busy) return;
         if (!navigator.geolocation) {
-            setGeoStatus('Tarayıcınız konum özelliğini desteklemiyor. Lütfen listeden seçin.', 'error');
+            ns.toast('Tarayıcınız konum özelliğini desteklemiyor. Lütfen listeden seçin.', 'error');
             return;
         }
 
         if (window.isSecureContext === false) {
-            setGeoStatus('Konum özelliği yalnızca güvenli (HTTPS) bağlantıda çalışır. Siteyi https:// adresinden açın ya da listeden seçin.', 'error');
+            ns.toast('Konum özelliği yalnızca güvenli (HTTPS) bağlantıda çalışır. Siteyi https:// adresinden açın ya da listeden seçin.', 'error');
             return;
         }
 
-        elements.geoButton.disabled = true;
-        elements.geoButton.classList.add('is-loading');
-        setGeoStatus('Konumunuz belirleniyor...', 'info');
+        setGeoLoading(true);
         try {
-            await ensureProvinces();
             const position = await getPosition();
             // Koordinatlar ilçe tespiti için yeterli hassasiyete (~1 km) yuvarlanarak gönderilir.
             const latitude = position.coords.latitude.toFixed(2);
             const longitude = position.coords.longitude.toFixed(2);
-            const place = await reverseGeocode(latitude, longitude);
-            if (place.countryCode !== 'TR') {
-                setGeoStatus('Şimdilik yalnızca Türkiye\'deki konumlar destekleniyor. Lütfen listeden seçin.', 'error');
-                return;
-            }
-            const match = matchDistrict(place);
-            if (!match) {
-                setGeoStatus('Konumunuza uygun il bulunamadı. Lütfen listeden seçin.', 'error');
-                return;
-            }
-            const message = match.exact
-                ? `Konumunuz: ${ns.formatLocation(match.district)}`
-                : `${match.district.il} için en yakın kayıtlı konum seçildi.`;
-            await chooseLocation(match.district.locationId, message);
+            const { location, exact } = await resolveLocation(latitude, longitude);
+            const message = exact || location.ilce === location.il
+                ? `Konumunuz: ${ns.formatLocation(location)}`
+                : `${location.il} için en yakın kayıtlı konum seçildi.`;
+            await chooseLocation(location.locationId, message);
         } catch (error) {
             console.warn('Otomatik konum tespiti başarısız:', error);
-            setGeoStatus(geolocationErrorMessage(error), 'error');
+            ns.toast(geolocationErrorMessage(error), 'error');
         } finally {
-            elements.geoButton.disabled = false;
-            elements.geoButton.classList.remove('is-loading');
+            setGeoLoading(false);
         }
     }
 
@@ -284,8 +261,10 @@
             bindEvents();
         },
         async open() {
+            // Ekran şimdiki vaktin renklerini taşır; Güneş'te tesbihat olmadığı için sabah paleti kullanılır.
+            const schedule = ns.schedule.snapshot().schedule;
+            elements.view.dataset.vakit = schedule ? (schedule.current.tesbihat || 'sabah') : 'yatsi';
             elements.search.value = '';
-            setGeoStatus('');
             elements.selected.textContent = ns.formatLocation(ns.schedule.snapshot().location) || '—';
             try {
                 await ensureProvinces();

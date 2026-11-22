@@ -72,8 +72,7 @@ const bundles = {
       'features/readings/tracker-table.css',
       'features/readings/reading-message-panels.css',
       'features/readings/reading-journey.css',
-      'features/daily-gift/daily-gift.css',
-      'features/readings/preferences.css'
+      'features/daily-gift/daily-gift.css'
     ],
     js: [
       'features/readings/reading-reveal.js',

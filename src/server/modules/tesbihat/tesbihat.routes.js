@@ -2,6 +2,7 @@
 
 const {
   isTesbihatSelection,
+  parseCoordinate,
   parseDayCount,
   parseLocationId
 } = require('./tesbihat.service');
@@ -9,6 +10,10 @@ const {
 function sendServiceError(res, error, fallbackMessage) {
   if (error.statusCode === 503) {
     return res.status(503).json({ success: false, message: error.message });
+  }
+  if (error.statusCode === 502) {
+    console.warn(`${fallbackMessage}:`, error.message);
+    return res.status(502).json({ success: false, message: fallbackMessage });
   }
   console.error(`${fallbackMessage}:`, error);
   return res.status(500).json({ success: false, message: fallbackMessage });
@@ -21,6 +26,7 @@ function registerTesbihatRoutes(app, {
   listPrayerLocations,
   listPrayerTimes,
   listTesbihat,
+  resolvePrayerLocation,
   shiftDateKey
 }) {
   app.get('/api/prayer-locations', async (req, res) => {
@@ -30,6 +36,28 @@ function registerTesbihatRoutes(app, {
       return res.json({ success: true, locations });
     } catch (error) {
       return sendServiceError(res, error, 'Konumlar yüklenemedi');
+    }
+  });
+
+  app.get('/api/prayer-locations/resolve', async (req, res) => {
+    const latitude = parseCoordinate(req.query.latitude, 90);
+    const longitude = parseCoordinate(req.query.longitude, 180);
+    if (latitude === null || longitude === null) {
+      return res.status(400).json({ success: false, message: 'Geçerli bir konum gönderin' });
+    }
+
+    try {
+      const result = await resolvePrayerLocation(latitude, longitude);
+      res.setHeader('Cache-Control', 'no-store');
+      if (result.outsideTurkey) {
+        return res.status(404).json({ success: false, outsideTurkey: true, message: 'Şimdilik yalnızca Türkiye\'deki konumlar destekleniyor' });
+      }
+      if (!result.location) {
+        return res.status(404).json({ success: false, message: 'Konumunuza uygun il bulunamadı' });
+      }
+      return res.json({ success: true, location: result.location, exact: result.exact });
+    } catch (error) {
+      return sendServiceError(res, error, 'Konum servisine ulaşılamadı');
     }
   });
 

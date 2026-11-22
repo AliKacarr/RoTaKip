@@ -18,25 +18,46 @@
     box-sizing: border-box;
 }
 
-/* Başlıklar seçili vaktin hero rengini taşır; vakit yoksa (konum seçimi) varsayılan gece tonu kalır. */
+/* Seçili vaktin paleti: başlık, kartlar, sayaç ve sayfa zemini bu renklerden beslenir.
+   Vakit yoksa (konum seçimi) varsayılan gece tonu kalır. */
 .tesbihat-page .tesbihat-view[data-vakit="sabah"] {
-    --tb-header-gradient: linear-gradient(135deg, #1e3a5f 0%, #4e54c8 100%);
-    --tb-header-shadow: 0 4px 12px rgba(78, 84, 200, 0.16);
+    --vakit-color: #2f9bc4; --vakit-dark: #1b6f93; --vakit-tint: #e5f4fa; --vakit-wash: #f1f9fd;
 }
 
 .tesbihat-page .tesbihat-view[data-vakit="ogle"] {
-    --tb-header-gradient: linear-gradient(135deg, #2b67c4 0%, #4b87e4 100%);
-    --tb-header-shadow: 0 4px 12px rgba(43, 103, 196, 0.16);
+    --vakit-color: #d99200; --vakit-dark: #8f5b00; --vakit-tint: #fff4d6; --vakit-wash: #fffaeb;
 }
 
 .tesbihat-page .tesbihat-view[data-vakit="ikindi"] {
-    --tb-header-gradient: linear-gradient(135deg, #1f56ad 0%, #3f9cc4 100%);
-    --tb-header-shadow: 0 4px 12px rgba(31, 86, 173, 0.16);
+    --vakit-color: #e8702a; --vakit-dark: #a8480f; --vakit-tint: #ffeadb; --vakit-wash: #fff6ef;
 }
 
 .tesbihat-page .tesbihat-view[data-vakit="aksam"] {
-    --tb-header-gradient: linear-gradient(135deg, #4e54c8 0%, #2b67c4 100%);
-    --tb-header-shadow: 0 4px 12px rgba(78, 84, 200, 0.16);
+    --vakit-color: #d1426a; --vakit-dark: #9c2a4d; --vakit-tint: #fde6ed; --vakit-wash: #fff3f6;
+}
+
+.tesbihat-page .tesbihat-view[data-vakit="yatsi"] {
+    --vakit-color: #4a50b5; --vakit-dark: #2f3590; --vakit-tint: #e8e9fa; --vakit-wash: #f4f4fc;
+}
+
+.tesbihat-page .tesbihat-view[data-vakit] {
+    --tb-header-gradient: linear-gradient(135deg, var(--vakit-dark) 0%, var(--vakit-color) 100%);
+    --tb-header-shadow: 0 4px 12px color-mix(in srgb, var(--vakit-color) 30%, transparent);
+}
+
+/* Okuyucu ve konum seçimi açıkken sayfa zemini de vaktin rengine hafifçe boyanır.
+   Boyama sekme görünümünde değil, onu çevreleyen ana kapsayıcıda yapılır; aksi halde
+   kapsayıcının beyaz iç boşluğu ekran kenarlarında görünür. */
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="sabah"]:not([hidden])) { background-image: linear-gradient(180deg, #e3f3fa 0%, #f1f9fd 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="ogle"]:not([hidden])) { background-image: linear-gradient(180deg, #fff1cc 0%, #fffaeb 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="ikindi"]:not([hidden])) { background-image: linear-gradient(180deg, #ffe5d2 0%, #fff6ef 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="aksam"]:not([hidden])) { background-image: linear-gradient(180deg, #fbdde6 0%, #fff3f6 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="yatsi"]:not([hidden])) { background-image: linear-gradient(180deg, #e2e4f8 0%, #f4f4fc 360px, #fff 100%); }
+
+/* Alt bilgi (footer) yalnızca tesbihat ana sayfasında görünür; vakit türleri, okuyucu ve
+   konum seçimi gibi diğer görünümlerde gizlenir. */
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:not([data-view="home"]):not([hidden])) #footerRoot {
+    display: none;
 }
 
 /* Kayma yalnızca görünümlerde olur (dış sarmalayıcı kaymaz). Sekme görünür olana kadar
@@ -126,7 +147,7 @@
     gap: 14px;
     margin-top: 22px;
     padding: 18px 20px;
-    border: 1px solid #c9daf5;
+    border: 1.5px solid #9dbbea;
     border-radius: 16px;
     background: linear-gradient(135deg, var(--tb-tint-soft) 0%, var(--tb-tint) 100%);
 }
@@ -243,6 +264,76 @@
     outline-offset: 2px;
 }
 
+.tesbihat-dialog-backdrop[hidden] {
+    display: none;
+}
+
+/* Bildirim paneli: içeriği (metin ve buton) OneSignal sitesindeki Custom Link ayarı üretir. */
+/* Sabit varsayılan yükseklik: içerik (OneSignal) geç gelse ya da boş kalsa da panel boyut değiştirmez. */
+.tesbihat-dialog.tesbihat-notification-dialog {
+    display: flex;
+    flex-direction: column;
+    min-height: 260px;
+    padding-bottom: 24px;
+}
+
+.tesbihat-notification-dialog .onesignal-customlink-container {
+    flex: 1 1 auto;
+}
+
+.tesbihat-notification-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.tesbihat-notification-dialog-header h2 {
+    margin: 0;
+}
+
+.tesbihat-notification-close {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    color: #475569;
+    background: transparent;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.tesbihat-notification-close:hover {
+    background: #e6efff;
+}
+
+.tesbihat-notification-close:focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 2px;
+}
+
+.tesbihat-notification-dialog .onesignal-customlink-container,
+.tesbihat-notification-dialog .onesignal-customlink-container * {
+    font-size: 18px !important;
+    line-height: 1.5 !important;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+}
+
+.tesbihat-notification-dialog .onesignal-customlink-container button,
+.tesbihat-notification-dialog .onesignal-customlink-container .onesignal-customlink-container-button {
+    transform: none !important;
+    padding: 11px 16px !important;
+}
+
+.tesbihat-notification-dialog .onesignal-customlink-container:empty::before {
+    content: 'Bildirim ayarları yükleniyor…';
+    color: #475569;
+}
+
 @keyframes tesbihat-dialog-fade {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -255,7 +346,7 @@
 
 @media (max-width: 768px) {
     .tesbihat-page {
-        padding: 0 0 20px;
+        padding: 0;
     }
 
     .tesbihat-page .tesbihat-plain-header {
@@ -294,6 +385,11 @@
 @media (max-width: 480px) {
     .tesbihat-dialog {
         padding: 20px 18px 8px;
+    }
+
+    .tesbihat-dialog.tesbihat-notification-dialog {
+        min-height: 220px;
+        padding-bottom: 20px;
     }
 
     .tesbihat-dialog h2 {

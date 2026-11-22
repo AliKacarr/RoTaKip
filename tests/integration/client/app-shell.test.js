@@ -336,7 +336,7 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat namaz v
   assert.match(okumalarFragment, /id="readingEditModeBar" class="reading-edit-mode-bar" aria-hidden="true"[\s\S]*?class="reading-edit-mode-bar-content"/);
   assert.match(okumalarFragment, /class="reading-message-panels"/);
   assert.match(okumalarFragment, /class="main-area"/);
-  assert.match(okumalarFragment, /class="settings-section/);
+  assert.doesNotMatch(okumalarFragment, /settings-section|onesignal-customlink-container/);
   assert.doesNotMatch(okumalarFragment, /Günün Vecizeleri|home-tefekkur-window|quote-section-image/);
   assert.match(routes, /fragment:\s*\['\/fragments\/group-header\.html', '\/fragments\/okumalar\.html'\]/);
 
@@ -373,7 +373,10 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat namaz v
   assert.doesNotMatch(readClient('features/tesbihat/tesbihat-home.css'), /\.tesbihat-hero-dates\s*\{[^}]*border-top/s);
   const tesbihatViews = Array.from(tesbihat.matchAll(/class="tesbihat-view" data-view="([a-z]+)"/g), match => match[1]);
   assert.deepEqual(tesbihatViews, ['home', 'location', 'types', 'reader']);
-  assert.match(tesbihat, /data-view="home"[\s\S]*?id="tesbihatHero"[\s\S]*?id="tesbihatCountdownMain"[\s\S]*?class="tesbihat-change-location" data-open-location[\s\S]*?fa-location-dot[\s\S]*?id="tesbihatCurrentLocation"[\s\S]*?Değiştir[\s\S]*?class="tesbihat-list-heading"[\s\S]*?id="tesbihatPrayerList"/);
+  assert.match(tesbihat, /data-view="home"[\s\S]*?class="tesbihat-change-location" data-open-location[\s\S]*?fa-location-dot[\s\S]*?id="tesbihatCurrentLocation"[\s\S]*?Değiştir[\s\S]*?id="tesbihatNotificationButton"[\s\S]*?fa-bell[\s\S]*?id="tesbihatHero"[\s\S]*?id="tesbihatCountdownMain"[\s\S]*?class="tesbihat-list-heading"[\s\S]*?id="tesbihatPrayerList"/);
+  const tesbihatHome = readClient('features/tesbihat/tesbihat-home.js');
+  assert.match(tesbihatHome, /id = 'tesbihatNotificationPanel'[\s\S]*?onesignal-customlink-container[\s\S]*?document\.body\.appendChild\(notificationPanel\)/);
+  assert.match(tesbihatHome, /window\.scheduleOneSignalLoad/);
   assert.doesNotMatch(readClient('features/tesbihat/tesbihat-home.css'), /tesbihat-list-heading::after|tesbihat-list-heading > i/);
   assert.equal((tesbihat.match(/data-open-location/g) || []).length, 1);
   assert.match(tesbihat, /data-view="location"[^>]*hidden[\s\S]*?id="tesbihatLocationSearch"[\s\S]*?id="tesbihatUseMyLocation"[\s\S]*?id="tesbihatLocationList"/);

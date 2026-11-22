@@ -9,7 +9,7 @@
     gap: 12px;
     height: 56px;
     padding: 0 18px;
-    border: 2px solid #d0d0d0;
+    border: 2px solid color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 35%, #fff);
     border-radius: 14px;
     background: #fff;
     cursor: text;
@@ -17,12 +17,12 @@
 }
 
 .tesbihat-page .tesbihat-search:focus-within {
-    border-color: var(--tb-primary);
-    box-shadow: 0 0 0 3px rgba(43, 103, 196, 0.15);
+    border-color: var(--vakit-color, var(--tb-primary));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 22%, transparent);
 }
 
 .tesbihat-page .tesbihat-search i {
-    color: var(--tb-muted);
+    color: var(--vakit-color, var(--tb-primary));
     font-size: 19px;
 }
 
@@ -52,11 +52,11 @@
     border: 0;
     border-radius: 14px;
     color: #fff;
-    background: var(--tb-gradient);
+    background: linear-gradient(135deg, var(--vakit-dark, var(--tb-primary-dark)) 0%, var(--vakit-color, var(--tb-primary)) 100%);
     font-size: 19px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 8px 20px rgba(43, 103, 196, 0.25);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 30%, transparent);
     transition: filter 0.2s ease, transform 0.2s ease;
 }
 
@@ -74,31 +74,27 @@
     font-size: 21px;
 }
 
+.tesbihat-page .tesbihat-geo-spinner {
+    display: none;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: tesbihat-geo-spin 0.8s linear infinite;
+}
+
 .tesbihat-page .tesbihat-geo-button.is-loading i {
-    animation: tesbihat-geo-spin 1s linear infinite;
+    display: none;
+}
+
+.tesbihat-page .tesbihat-geo-button.is-loading .tesbihat-geo-spinner {
+    display: block;
 }
 
 @keyframes tesbihat-geo-spin {
     to { transform: rotate(360deg); }
-}
-
-.tesbihat-page .tesbihat-geo-status {
-    margin: 12px 0 0;
-    padding: 12px 16px;
-    border-radius: 12px;
-    color: #334155;
-    background: var(--tb-tint-soft);
-    font-size: 16px;
-    line-height: 1.5;
-}
-
-.tesbihat-page .tesbihat-geo-status[data-tone="error"] {
-    color: #9a2a14;
-    background: #fdeeea;
-}
-
-.tesbihat-page .tesbihat-geo-status[hidden] {
-    display: none;
 }
 
 .tesbihat-page .tesbihat-selected-location {
@@ -111,7 +107,7 @@
 }
 
 .tesbihat-page .tesbihat-selected-location i {
-    color: var(--tb-primary);
+    color: var(--vakit-color, var(--tb-primary));
     font-size: 19px;
 }
 
@@ -120,6 +116,7 @@
 }
 
 .tesbihat-page .tesbihat-selected-location strong {
+    color: var(--vakit-dark, var(--tb-primary-dark));
     font-size: 19px;
 }
 
@@ -158,10 +155,10 @@
     gap: 16px;
     width: 100%;
     padding: 12px 18px 12px 12px;
-    border: 1px solid var(--tb-border);
+    border: 1px solid color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 30%, #fff);
     border-radius: 16px;
     color: var(--tb-text);
-    background: #fff;
+    background: linear-gradient(180deg, #fff 0%, var(--vakit-wash, var(--tb-tint-soft)) 100%);
     text-align: left;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(36, 50, 70, 0.05);
@@ -170,13 +167,13 @@
 
 .tesbihat-page .tesbihat-province-toggle:hover,
 .tesbihat-page .tesbihat-search-result:hover {
-    border-color: #a9c4ee;
-    background: var(--tb-tint-soft);
+    border-color: var(--vakit-color, var(--tb-primary));
+    background: var(--vakit-tint, var(--tb-tint));
 }
 
 .tesbihat-page .tesbihat-province.is-open .tesbihat-province-toggle {
-    border-color: var(--tb-primary);
-    background: var(--tb-tint);
+    border-color: var(--vakit-color, var(--tb-primary));
+    background: var(--vakit-tint, var(--tb-tint));
 }
 
 .tesbihat-page .tesbihat-plate {
@@ -187,8 +184,8 @@
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    color: var(--tb-primary-dark);
-    background: var(--tb-tint);
+    color: #fff;
+    background: var(--vakit-color, var(--tb-primary));
     font-size: 19px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
@@ -218,7 +215,7 @@
 }
 
 .tesbihat-page .tesbihat-province.is-open .tesbihat-province-toggle > i {
-    color: var(--tb-primary);
+    color: var(--vakit-color, var(--tb-primary));
     transform: rotate(180deg);
 }
 
@@ -241,7 +238,7 @@
     width: 100%;
     min-height: 50px;
     padding: 10px 16px;
-    border: 1px solid var(--tb-border);
+    border: 1px solid color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 30%, #fff);
     border-radius: 12px;
     color: var(--tb-text);
     background: #fff;
@@ -256,14 +253,14 @@
 }
 
 .tesbihat-page .tesbihat-district-list .tesbihat-district:hover {
-    border-color: #a9c4ee;
-    background: var(--tb-tint-soft);
+    border-color: var(--vakit-color, var(--tb-primary));
+    background: var(--vakit-tint, var(--tb-tint));
 }
 
 .tesbihat-page .tesbihat-district.is-selected {
-    border-color: var(--tb-primary);
-    color: var(--tb-primary-dark);
-    background: var(--tb-tint);
+    border-color: var(--vakit-color, var(--tb-primary));
+    color: var(--vakit-dark, var(--tb-primary-dark));
+    background: var(--vakit-tint, var(--tb-tint));
 }
 
 .tesbihat-page .tesbihat-district.is-selected .tesbihat-district-text {
@@ -271,12 +268,12 @@
 }
 
 .tesbihat-page .tesbihat-district.is-selected > i {
-    color: var(--tb-primary);
+    color: var(--vakit-color, var(--tb-primary));
 }
 
 .tesbihat-page .tesbihat-search-result.is-selected {
-    border-color: var(--tb-primary);
-    background: var(--tb-tint);
+    border-color: var(--vakit-color, var(--tb-primary));
+    background: var(--vakit-tint, var(--tb-tint));
 }
 
 .tesbihat-page .tesbihat-location-empty {
@@ -367,7 +364,7 @@
         transition: none;
     }
 
-    .tesbihat-page .tesbihat-geo-button.is-loading i {
-        animation: none;
+    .tesbihat-page .tesbihat-geo-spinner {
+        animation-duration: 2s;
     }
 }

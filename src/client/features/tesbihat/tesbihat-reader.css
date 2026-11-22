@@ -196,16 +196,19 @@
     flex-direction: column;
     gap: 14px;
     padding: 20px;
-    border: 1px solid var(--tb-border);
+    border: 1px solid color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 28%, #fff);
+    border-left: 6px solid var(--vakit-color, var(--tb-primary));
     border-radius: 16px;
-    background: #fff;
-    box-shadow: var(--tb-card-shadow);
+    background: var(--vakit-wash, #fff);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 14%, transparent);
     transition: border-color 0.3s ease, background 0.3s ease;
 }
 
 .tesbihat-page .tesbihat-step-card.is-complete {
     border-color: #a7dcc0;
-    background: #f6fcf9;
+    border-left-color: #22a06b;
+    background: #f1faf5;
+    box-shadow: 0 8px 22px rgba(34, 160, 107, 0.14);
 }
 
 .tesbihat-page .tesbihat-instruction {
@@ -214,10 +217,10 @@
     gap: 12px;
     margin: 0;
     padding: 14px 16px;
-    border: 1px solid #b9cdf0;
+    border: 1px solid color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 35%, #fff);
     border-radius: 12px;
-    color: #334155;
-    background: #eaf1fd;
+    color: #263244;
+    background: var(--vakit-tint, #eaf1fd);
     font-size: calc(17px * var(--tesbihat-font-scale));
     font-weight: 600;
     line-height: 1.5;
@@ -232,7 +235,7 @@
     height: 24px;
     border-radius: 50%;
     color: #fff;
-    background: var(--tb-primary);
+    background: var(--vakit-color, var(--tb-primary));
     font-size: 11px;
 }
 
@@ -263,12 +266,28 @@
 .tesbihat-page .tesbihat-line + .tesbihat-line {
     margin-top: 0.45em;
     padding-top: 0.45em;
-    border-top: 1px dashed var(--tb-border);
+    border-top: 1px dashed color-mix(in srgb, var(--vakit-color, var(--tb-border)) 40%, #fff);
+}
+
+@font-face {
+    font-family: "KFGQPC Uthman Taha Naskh";
+    src: url("/fonts/uthman-taha-naskh-regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "KFGQPC Uthman Taha Naskh";
+    src: url("/fonts/uthman-taha-naskh-bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
 }
 
 .tesbihat-page .tesbihat-recitation.is-arabic,
 .tesbihat-page .tesbihat-ring-label.is-arabic {
-    font-family: "Amiri", "Scheherazade New", "Noto Naskh Arabic", "Traditional Arabic", serif;
+    font-family: "KFGQPC Uthman Taha Naskh", "Amiri", "Noto Naskh Arabic", "Traditional Arabic", serif;
     font-weight: 400;
 }
 
@@ -278,13 +297,13 @@
 }
 
 .tesbihat-page .tesbihat-divine-name {
-    color: var(--tb-primary-dark);
+    color: var(--vakit-dark, var(--tb-primary-dark));
     font-weight: 700;
 }
 
 .tesbihat-page .tesbihat-ayah-number {
     margin: 0 0.2em;
-    color: var(--tb-primary);
+    color: var(--vakit-color, var(--tb-primary));
     font-size: 0.75em;
     font-weight: 500;
     white-space: nowrap;
@@ -292,7 +311,7 @@
 
 .tesbihat-page .tesbihat-recitation.is-basmala,
 .tesbihat-page .tesbihat-recitation.is-surah-title {
-    color: var(--tb-primary-dark);
+    color: var(--vakit-dark, var(--tb-primary-dark));
     font-weight: 700;
 }
 
@@ -340,11 +359,11 @@
 }
 
 .tesbihat-page .tesbihat-ring-track {
-    stroke: var(--tb-tint);
+    stroke: var(--vakit-tint, var(--tb-tint));
 }
 
 .tesbihat-page .tesbihat-ring-progress {
-    stroke: var(--tb-primary);
+    stroke: var(--vakit-color, var(--tb-primary));
     stroke-linecap: round;
     transition: stroke-dasharray 0.25s ease, stroke 0.3s ease;
 }
@@ -359,9 +378,9 @@
     width: 152px;
     height: 152px;
     border-radius: 50%;
-    color: var(--tb-primary);
+    color: var(--vakit-color, var(--tb-primary));
     background: #fff;
-    box-shadow: 0 10px 24px rgba(43, 103, 196, 0.16), inset 0 0 0 1px var(--tb-border);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 22%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--vakit-color, var(--tb-border)) 35%, #fff);
     transition: transform 0.15s ease, background 0.3s ease;
 }
 
@@ -410,7 +429,7 @@
 
 .tesbihat-page .tesbihat-ring-label {
     margin: 0;
-    color: var(--tb-primary-dark);
+    color: var(--vakit-dark, var(--tb-primary-dark));
     font-size: calc(24px * var(--tesbihat-font-scale));
     font-weight: 700;
     text-align: center;
@@ -425,7 +444,7 @@
     align-items: center;
     gap: 14px;
     margin: 12px 2px 0;
-    color: var(--tb-primary);
+    color: var(--vakit-dark, var(--tb-primary));
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -436,8 +455,9 @@
 .tesbihat-page .tesbihat-part-divider::after {
     content: "";
     flex: 1 1 auto;
-    height: 1px;
-    background: #c9daf5;
+    height: 2px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--vakit-color, #9fbbea) 45%, #fff);
 }
 
 .tesbihat-page .tesbihat-error {
@@ -544,6 +564,7 @@
     .tesbihat-page .tesbihat-step-card {
         gap: 12px;
         padding: 14px;
+        border-left-width: 5px;
         border-radius: 14px;
     }
 

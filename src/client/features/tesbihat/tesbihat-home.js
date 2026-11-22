@@ -20,12 +20,14 @@
     }
 
     let elements = null;
+    let notificationPanel = null;
 
     function queryElements() {
         return {
             view: document.querySelector('.tesbihat-view[data-view="home"]'),
             hero: document.getElementById('tesbihatHero'),
             changeLocation: document.querySelector('.tesbihat-change-location'),
+            notificationButton: document.getElementById('tesbihatNotificationButton'),
             currentName: document.getElementById('tesbihatHeroCurrent'),
             locationName: document.getElementById('tesbihatCurrentLocation'),
             countdown: document.getElementById('tesbihatHeroCountdown'),
@@ -143,8 +145,62 @@
         renderStatus(snapshot);
     }
 
+    // Panel sekme görünümünün dışında (body) durur: sekme geçiş animasyonu `position: fixed`
+    // öğelerin konumunu bozar. İçindeki kap, OneSignal Custom Link'inin yerleştiği yerdir ve
+    // SDK yüklenmeden önce DOM'da hazır bulunması için başlangıçta (gizli) oluşturulur.
+    function ensureNotificationPanel() {
+        if (notificationPanel?.isConnected) return notificationPanel;
+        notificationPanel = document.getElementById('tesbihatNotificationPanel');
+        if (notificationPanel) return notificationPanel;
+
+        notificationPanel = document.createElement('div');
+        notificationPanel.id = 'tesbihatNotificationPanel';
+        notificationPanel.className = 'tesbihat-dialog-backdrop';
+        notificationPanel.hidden = true;
+        notificationPanel.innerHTML = `
+            <div class="tesbihat-dialog tesbihat-notification-dialog" role="dialog" aria-modal="true" aria-labelledby="tesbihatNotificationTitle">
+                <div class="tesbihat-notification-dialog-header">
+                    <h2 id="tesbihatNotificationTitle">Bildirimler</h2>
+                    <button type="button" class="tesbihat-notification-close" data-notification-close aria-label="Kapat"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                </div>
+                <div class="onesignal-customlink-container"></div>
+            </div>
+        `;
+        notificationPanel.addEventListener('click', event => {
+            if (event.target === notificationPanel || event.target.closest('[data-notification-close]')) closeNotificationPanel();
+        });
+        document.body.appendChild(notificationPanel);
+        return notificationPanel;
+    }
+
+    function onNotificationKeyDown(event) {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        closeNotificationPanel();
+    }
+
+    function openNotificationPanel() {
+        const panel = ensureNotificationPanel();
+        panel.hidden = false;
+        document.addEventListener('keydown', onNotificationKeyDown, true);
+        panel.querySelector('[data-notification-close]').focus({ preventScroll: true });
+        // Panel açıldığında SDK'nın boşta beklemesi gerekmez; zaten yüklenmişse bu çağrı etkisizdir.
+        if (typeof window.loadOneSignalDeferred === 'function') window.loadOneSignalDeferred();
+    }
+
+    function closeNotificationPanel() {
+        if (!notificationPanel || notificationPanel.hidden) return;
+        notificationPanel.hidden = true;
+        document.removeEventListener('keydown', onNotificationKeyDown, true);
+        elements?.notificationButton.focus({ preventScroll: true });
+    }
+
     function bindEvents() {
         elements.view.addEventListener('click', event => {
+            if (event.target.closest('#tesbihatNotificationButton')) {
+                openNotificationPanel();
+                return;
+            }
             if (event.target.closest('[data-open-location]')) {
                 ns.navigate({ view: 'location' });
                 return;
@@ -166,6 +222,8 @@
         init() {
             elements = queryElements();
             bindEvents();
+            ensureNotificationPanel();
+            if (typeof window.scheduleOneSignalLoad === 'function') window.scheduleOneSignalLoad();
         },
         render
     };

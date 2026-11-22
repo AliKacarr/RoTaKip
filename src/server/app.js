@@ -46,7 +46,8 @@ const {
 const readingEditPolicy = require('./modules/readings/reading-edit-policy');
 const { registerReadingRoutes } = require('./modules/readings/reading.routes');
 const { registerHealthRoutes } = require('./modules/system/health.routes');
-const { registerTesbihatRoutes } = require('./modules/tesbihat/tesbihat.routes');
+const { createReverseGeocoder } = require('./integrations/geocoding/reverse-geocoder');
+const { registerTesbihatRoutes } =require('./modules/tesbihat/tesbihat.routes');
 const { createTesbihatService } = require('./modules/tesbihat/tesbihat.service');
 const { registerProfileRoutes } = require('./modules/users/profile.routes');
 const userService = require('./modules/users/user.service');
@@ -81,7 +82,7 @@ const authMiddleware = createAuthMiddleware({
 const activityService = createActivityService({
   getSessionMembership: authMiddleware.getSessionMembership
 });
-const tesbihatService = createTesbihatService();
+const tesbihatService = createTesbihatService({ reverseGeocode: createReverseGeocoder() });
 
 const routeDependencies = {
   ...activityModels,

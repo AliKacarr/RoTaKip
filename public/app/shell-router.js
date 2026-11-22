@@ -1,4 +1,5 @@
 import { ROUTES, ROUTE_ASSETS, canonicalPath, resolveRoute } from './route-config.js';
+import { describeConnectionError, initializeConnectivityMonitor } from './connectivity.js';
 import { createFragmentView, mountFragment, preloadFragment } from './fragment-loader.js';
 import { loadAssetManifest, loadBundleScripts, loadBundleStyles, preloadBundle } from './asset-loader.js';
 import { invalidateGroupContext, loadGroupData, resolveGroupContext } from './group-context.js';
@@ -207,8 +208,20 @@ async function revealRouteAfterLoader(view, options = {}) {
   return true;
 }
 
+function escapeText(value) {
+  return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
 function renderError(error) {
-  tabContent.innerHTML = `<section class="route-error"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><h1>İçerik açılamadı</h1><p>${window.escapeHtml(error.message || 'Beklenmeyen bir hata oluştu.')}</p><a href="/gruplar">Gruplara dön</a></section>`;
+  const connection = describeConnectionError(error);
+  const icon = connection ? 'fa-wifi' : 'fa-circle-exclamation';
+  const title = connection ? connection.title : 'İçerik açılamadı';
+  const message = connection ? connection.message : (error.message || 'Beklenmeyen bir hata oluştu.');
+  const actions = connection
+    ? '<button type="button" class="route-error-retry" data-route-error-retry>Tekrar dene</button>'
+    : '<a href="/gruplar">Gruplara dön</a>';
+  tabContent.innerHTML = `<section class="route-error"${connection ? ' data-connection' : ''}><i class="fa-solid ${icon}" aria-hidden="true"></i><h1>${title}</h1><p>${escapeText(message)}</p>${actions}</section>`;
+  tabContent.querySelector('[data-route-error-retry]')?.addEventListener('click', () => window.location.reload());
   footerRoot.hidden = false;
 }
 
@@ -875,6 +888,7 @@ window.navigateRoTaKip = path => navigate(new URL(path, window.location.origin))
 window.refreshRoTaKipRoute = () => navigate(new URL(window.location.href), { fromPopState: true });
 
 async function start() {
+  initializeConnectivityMonitor();
   await loadAssetManifest();
   await ensureShellFragments();
   await loadBundleScripts(COMMON_SCRIPTS);

@@ -63,7 +63,14 @@
     };
 
     ns.fetchJson = async function fetchJson(url) {
-        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        let response;
+        try {
+            response = await fetch(url, { headers: { Accept: 'application/json' } });
+        } catch (error) {
+            throw new Error(navigator.onLine === false
+                ? 'İnternet bağlantısı yok.'
+                : 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.', { cause: error });
+        }
         const data = await response.json().catch(() => ({}));
         if (!response.ok || data.success === false) {
             throw new Error(data.message || 'İstek tamamlanamadı');
@@ -71,17 +78,17 @@
         return data;
     };
 
-    ns.toast = function toast(message) {
+    ns.toast = function toast(message, tone = 'success') {
         document.querySelector('.share-toast')?.remove();
         const element = document.createElement('div');
-        element.className = 'share-toast share-success';
+        element.className = `share-toast share-${tone}`;
         element.setAttribute('role', 'status');
         element.textContent = message;
         document.body.appendChild(element);
         window.setTimeout(() => {
             element.classList.add('share-hide');
             window.setTimeout(() => element.remove(), 300);
-        }, 3000);
+        }, tone === 'error' ? 5000 : 3000);
     };
 
     // Onay penceresi sekme görünümünün dışında (body) açılır: sekme geçiş animasyonu

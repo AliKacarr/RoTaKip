@@ -186,7 +186,7 @@ async function upsertLocation(locationsCollection, { locationId, il, ilce }) {
 async function upsertTimes(timesCollection, records) {
   if (records.length === 0) return { upsertedCount: 0, modifiedCount: 0 };
 
-  const operations = records.map(({ il, ilce, ...time }) => ({
+  const operations = records.map(({ il: _il, ilce: _ilce, ...time }) => ({
     updateOne: {
       filter: { locationId: time.locationId, tarih: time.tarih },
       update: { $set: time },

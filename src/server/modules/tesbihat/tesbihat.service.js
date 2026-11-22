@@ -36,6 +36,27 @@ function parseDayCount(value) {
   return Math.min(Math.max(parsed, 1), MAX_PRAYER_DAY_COUNT);
 }
 
+// Koordinatlar ilçe tespiti için yeterli hassasiyete (~1 km) yuvarlanır; konum servisine daha
+// ayrıntılı bir iz gönderilmez.
+function parseCoordinate(value, limit) {
+  const text = String(value ?? '').trim();
+  if (!/^-?\d{1,3}(\.\d+)?$/.test(text)) return null;
+  const parsed = Number(text);
+  if (!Number.isFinite(parsed) || Math.abs(parsed) > limit) return null;
+  return parsed.toFixed(2);
+}
+
+function normalizePlaceName(value) {
+  return String(value ?? '')
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/İ/g, 'i')
+    .replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u')
+    .replace(/̇/g, '')
+    .replace(/\b(province|district|merkez|ili|ilcesi|belediyesi)\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function isTesbihatSelection(vakit, tur) {
   return TESBIHAT_VAKITLERI.includes(vakit) && TESBIHAT_TURLERI.includes(tur);
 }
@@ -44,7 +65,11 @@ function defaultGetDb() {
   return mongoose.connection.readyState === 1 ? mongoose.connection.db : null;
 }
 
-function createTesbihatService({ getDb = defaultGetDb, now = () => Date.now() } = {}) {
+function createTesbihatService({
+  getDb = defaultGetDb,
+  now = () => Date.now(),
+  reverseGeocode = null
+} = {}) {
   const cache = new Map();
 
   function requireDb() {
@@ -83,6 +108,31 @@ function createTesbihatService({ getDb = defaultGetDb, now = () => Date.now() } 
     return locations.find(location => location.locationId === locationId) || null;
   }
 
+  // Koordinatı Diyanet konum listesindeki il/ilçeye eşler. Ağ hatası 502, Türkiye dışı
+  // veya eşleşmeyen konum `null` (`outsideTurkey` ile birlikte) döner.
+  async function resolvePrayerLocation(latitude, longitude) {
+    if (!reverseGeocode) {
+      const error = new Error('Konum servisi yapılandırılmamış');
+      error.statusCode = 502;
+      throw error;
+    }
+    const place = await reverseGeocode(latitude, longitude);
+    if (place.countryCode !== 'TR') return { outsideTurkey: true, location: null };
+
+    const locations = await listPrayerLocations();
+    const names = new Set(place.names.map(normalizePlaceName).filter(Boolean));
+    const provinceName = place.plate
+      ? locations.find(location => location.plaka === place.plate)?.il
+      : locations.find(location => names.has(normalizePlaceName(location.il)))?.il;
+    if (!provinceName) return { outsideTurkey: false, location: null };
+
+    const districts = locations.filter(location => location.il === provinceName);
+    const exact = districts.find(location => location.ilce !== location.il
+      && names.has(normalizePlaceName(location.ilce)));
+    const center = districts.find(location => location.ilce === location.il) || districts[0];
+    return { outsideTurkey: false, location: exact || center, exact: Boolean(exact) };
+  }
+
   function listPrayerTimes(locationId, startDateKey, endDateKey) {
     const projection = { _id: 0, tarih: 1 };
     PRAYER_TIME_FIELDS.forEach(field => { projection[field] = 1; });
@@ -119,13 +169,16 @@ function createTesbihatService({ getDb = defaultGetDb, now = () => Date.now() } 
     getTesbihat,
     listPrayerLocations,
     listPrayerTimes,
-    listTesbihat
+    listTesbihat,
+    resolvePrayerLocation
   };
 }
 
 module.exports = {
   createTesbihatService,
   isTesbihatSelection,
+  normalizePlaceName,
+  parseCoordinate,
   parseDayCount,
   parseLocationId
 };

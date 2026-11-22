@@ -1,6 +1,7 @@
 .tesbihat-page .tesbihat-hero {
     --hero-gradient: linear-gradient(135deg, #1e3a5f 0%, #2b67c4 100%);
     --hero-shadow: rgba(30, 58, 95, 0.16);
+    margin-top: 12px;
     padding: 22px 26px 18px;
     border-radius: 20px;
     color: #fff;
@@ -82,15 +83,21 @@
     font-size: 17px;
 }
 
+.tesbihat-page .tesbihat-location-bar {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+}
+
 .tesbihat-page .tesbihat-change-location {
     display: flex;
+    flex: 1 1 auto;
     align-items: center;
     gap: 10px;
-    width: 100%;
+    min-width: 0;
     min-height: 46px;
-    margin-top: 12px;
     padding: 0 14px;
-    border: 1px solid #c9daf5;
+    border: 1.5px solid #9dbbea;
     border-radius: 12px;
     color: var(--tb-primary-dark);
     background: var(--tb-tint-soft);
@@ -107,6 +114,33 @@
 }
 
 .tesbihat-page .tesbihat-change-location:focus-visible {
+    outline: 3px solid var(--tb-primary-light);
+    outline-offset: 2px;
+}
+
+.tesbihat-page .tesbihat-notification-button {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    min-height: 46px;
+    padding: 0;
+    border: 1.5px solid #9dbbea;
+    border-radius: 12px;
+    color: var(--tb-primary-dark);
+    background: var(--tb-tint-soft);
+    font-size: 19px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.tesbihat-page .tesbihat-notification-button:hover {
+    border-color: var(--tb-primary);
+    background: var(--tb-tint);
+}
+
+.tesbihat-page .tesbihat-notification-button:focus-visible {
     outline: 3px solid var(--tb-primary-light);
     outline-offset: 2px;
 }
@@ -281,6 +315,7 @@
 
 @media (max-width: 768px) {
     .tesbihat-page .tesbihat-hero {
+        margin-top: 10px;
         padding: 18px 16px 14px;
         border-radius: 16px;
     }
@@ -306,11 +341,20 @@
         font-size: 14px;
     }
 
+    .tesbihat-page .tesbihat-location-bar {
+        gap: 8px;
+    }
+
     .tesbihat-page .tesbihat-change-location {
         min-height: 44px;
-        margin-top: 10px;
         padding: 0 12px;
         font-size: 16px;
+    }
+
+    .tesbihat-page .tesbihat-notification-button {
+        width: 44px;
+        min-height: 44px;
+        font-size: 18px;
     }
 
     .tesbihat-page .tesbihat-change-location-pin {
