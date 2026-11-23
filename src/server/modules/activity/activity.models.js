@@ -26,7 +26,10 @@ const siteActivityLogSchema = new mongoose.Schema({
   ipAddress: String,
   groupId: String,
   // Yalnızca tesbihat_görüntüleme eyleminde: açılan sekme içi görünüm (data-view)
-  view: String
+  view: String,
+  // Tesbihat görünümünde seçili vakit (sabah, ogle…) ve tür (kisa, uzun, arapca-uzun)
+  vakit: String,
+  tur: String
 });
 
 const SiteActivityLog = mongoose.model('SiteActivityLog', siteActivityLogSchema, 'siteactivitylogs');

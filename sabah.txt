@@ -1,0 +1,1124 @@
+{
+  _id: ObjectId('6b01be317582c78d2d54e2df'),
+  vakit: 'sabah',
+  tur: 'arapca-uzun',
+  adimlar: [
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Sabah namazının farzını kılıp, selama müteakib:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ اَنْتَ السَّلَامُ وَ مِنْكَ السَّلَامُ تَبَارَكْتَ يَا ذَا الْجَلَالِ وَ اْلاِكْرَامِ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Dedikten sonra elleri yukarı kaldırıp, el açarak:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ صَلِّ عَلٰى سَيِّدِنَا مُحَمَّدٍ وَ عَلَٓى اٰلِ سَيِّدِنَا مُحَمَّدٍ صَلَاةً تُنْجٖينَا بِهَا مِنْ جَمٖيعِ الْاَهْوَالِ وَ اْلاٰفَاتِ وَ تَقْضٖى لَنَا بِهَا جَمٖيعَ الْحَاجَاتِ وَ تُطَهِّرُنَا بِهَا مِنْ جَمٖيعِ السَّيِّئَاتِ وَ تَرْفَعُنَا بِهَا عِنْدَكَ اَعْلَى الدَّرَجَاتِ وَ تُبَلِّغُنَا بِهَٓا اَقْصَى الْغَايَاتِ مِنْ جَمٖيعِ الْخَيْرَاتِ فِى الْحَيَاةِ وَ بَعْدَ الْمَمَاتِ اٰمٖينَ يَا مُجٖيبَ الدَّعَوَاتِ وَالْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمٖينَ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Dedikten sonra'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ اِنَّا نُقَدِّمُ اِلَيْكَ بَيْنَ يَدَىْ كُلِّ نَفَسٍ وَ لَمْحَةٍ وَ لَحْظَةٍ وَ طَرْفَةٍ يَطْرِفُ بِهَٓا اَهْلُ السَّمٰوَاتِ وَ اَهْلُ الْاَرَضٖينَ شَهَادَةً اَشْهَدُ اَنْ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Buraya kadar bir defa deyip'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'لَٓا اِلٰهَ اِلَّا اللّٰهُ وَحْدَهُ لَٓا شَرٖيكَ لَهُ لَهُ الْمُلْكُ وَ لَهُ الْحَمْدُ يُحْيٖى وَ يُمٖيتُ وَ هُوَ حَىٌّ لَا يَمُوتُ بِيَدِهِ الْخَيْرُ وَ هُوَ عَلٰى كُلِّ شَىْءٍ قَدٖيرٌ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'On defa tekrar edilerek onuncusunda'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'وَ اِلَيْهِ الْمَصٖيرُ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Deyip, elleri kaldırıp avuçları aşağıya çevirerek'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ اَجِرْنَا مِنَ النَّارِ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '3-5-7 defa tekrar edilir. Müteakiben:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ اَجِرْنَا مِنْ كُلِّ نَارٍ ❁ اَللّٰهُمَّ اَجِرْنَا مِنَ الْفِتْنَةِ الدّٖينِيَّةِ وَ الدُّنْيَوِيَّةِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ فِتْنَةِ اٰخِرِ الزَّمَانِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ فِتْنَةِ الْمَسٖيحِ الدَّجَّالِ وَ السُّفْيَانِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنَ الضَّلَالَاتِ وَ الْبِدْعِيَّاتِ وَ الْبَلِيَّاتِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ شَرِّ النَّفْسِ الْاَمَّارَةِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ شُرُورِ النُّفُوسِ الْاَمَّارَاتِ الْفِرْعَوْنِيَّةِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ شَرِّ النِّسَٓاءِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ بَلَٓاءِ النِّسَٓاءِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ فِتْنَةِ النِّسَٓاءِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ عَذَابِ الْقَبْرِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ عَذَابِ يَوْمِ الْقِيٰمَةِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ عَذَابِ جَهَنَّمَ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ عَذَابِ قَهْرِكَ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ نَارِ قَهْرِكَ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ عَذَابِ الْقَبْرِ وَ الٖنّيرَانِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنَ الرِّيَاءِ وَ السُّمْعَةِ وَ الْعُجُبِ وَ الْفَخْرِ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ تَجَاوُزِ الْمُلْحِدٖينَ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ شَرِّ الْمُنَافِقٖينَ ❁ اَللّٰهُمَّ اَجِرْنَا مِنْ فِتْنَةِ الْفَاسِقٖينَ ❁ اَللّٰهُمَّ اَجِرْنَا وَ اَجِرْ وَالِدَيْنَا وَ طَلَبَةَ رَسَٓائِلِ النُّورِ الصَّادِقٖينَ فٖى خِدْمَةِ الْقُرْاٰنِ وَ اْلاٖيمَانِ وَ اَحْبَابَنَا الْمُؤْمِنٖينَ الْمُخْلِصٖينَ وَ اَقْرِبَٓائَنَا وَ اَجْدَادَنَا مِنَ النَّارِ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Elleri yukarı çevirerek'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'بِعَفْوِكَ يَا مُجٖيرُ بِفَضْلِكَ يَا غَفَّارُ ❁ اَللّٰهُمَّ اَدْخِلْنَا الْجَنَّةَ مَعَ الْاَبْرَارِ ❁ اَللّٰهُمَّ اَدْخِلْنَا الْجَنَّةَ مَعَ الْاَبْرَارِ ❁ اَللّٰهُمَّ اَدْخِلْنَا وَ اَدْخِلْ اُسْتَادَنَا سَعٖيدَ النُّورْسٖى رَضِىَ اللّٰهُ عَنْهُ وَ وَالِدَيْنَا وَ طَلَبَةَ رَسَٓائِلِ النُّورِ الصَّادِقٖينَ وَ اِخْوَانَنَا وَ اَخَوَاتِنَا وَ اَقْرِبَٓائَنَا وَ اَجْدَادَنَا وَ اَحْبَابَنَا الْمُؤْمِنٖينَ الْمُخْلِصٖينَ فٖى خِدْمَةِ اْلاٖيمَانِ وَ الْقُرْاٰنِ اَلْجَنَّةَ مَعَ الْاَبْرَارِ صَلِّ عَلٰى نَبِيِّكَ الْمُخْتَارِ وَ اٰلِهٖ الْاَطْهَارِ وَ اَصْحَابِهِ الْاَخْيَارِ وَ سَلِّمْ مَادَامَ الَّيْلُ وَ النَّهَارُ اٰمٖينَ وَالْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمٖينَ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'bundan sonra şu dua okunur'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'سُبْحَانَ اللّٰهِ وَالْحَمْدُ لِلّٰهِ وَلَٓا اِلَهَ اِلَّا اللّٰهُ وَ اللّٰهُ اَكْبَرْ وَلَا حَوْلَ وَلَا قُوَّةَ اِلَّا بِاللّٰهِ الْعَلِىِّ الْعَظٖيمِْ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Âyet-ül Kürsi okunur'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحٖيمِ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'اَللّٰهُ لَٓا اِلٰهَ اِلَّا هُوَۚ اَلْحَىُّ الْقَيُّومُۚ لَا تَاْخُذُهُ سِنَةٌ وَلَا نَوْمٌۜ لَهُ مَا فِى السَّمٰوَاتِ وَمَا فِى الْاَرْضِۜ مَنْ ذَا الَّذٖى يَشْفَعُ عِنْدَهُٓ اِلَّا بِاِذْنِهٖۜ يَعْلَمُ مَا بَيْنَ اَيْدٖيهِمْ وَمَا خَلْفَهُمْۚ وَلَا يُحٖيطُونَ بِشَيْءٍ مِنْ عِلْمِهٖٓ اِلَّا بِمَا شَٓاءَۚ وَسِعَ كُرْسِيُّهُ السَّمٰوَاتِ وَالْاَرْضَۚ وَلَا يَؤُ۫دُهُ حِفْظُهُمَاۚ وَهُوَ الْعَلِىُّ الْعَظٖيمُ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'ardından 33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'سُبْحَانَ اللّٰهِ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'اَلْحَمْدُ لِلّٰهِ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'اَللّٰهُ اَكْبَرُ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'tesbihleri çekilir. Devamında ,'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'لَٓا اِلٰهَ اِلَّا اللّٰهُ وَحْدَهُ لَا شَرٖيكَ لَهُ لَهُ الْمُلْكُ وَ لَهُ الْحَمْدُ يُحْيٖى وَ يُمٖيتُ وَ هُوَ حَىٌّ لَا يَمُوتُ بِيَدِهِ الْخَيْرُ وَ هُوَ عَلٰى كُلِّ شَىْءٍ قَدٖيرٌ وَ اِلَيْهِ الْمَصٖيرُ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'سُبْحَانَ رَبِّىَ الْعَلِىِّ الْأَعْلَى الْوَهَّابْ'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'denir, arkasından eller kaldırılıp dua edilir.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Duadan sonra, bir defa'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'فَاعْلَمْ اَنَّهُ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: '33 defa'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'لَٓا اِلٰهَ اِلَّا اللّٰهُ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Haşiye: Sabah ve yatsı namazlarından sonra isteyen 100 defa okuyabilir.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Ve sonra:'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'مُحَمَّدٌ رَسُولُ اللّٰهِ صَلَّى اللّٰهُ تَعَالٰى عَلَيْهِ وَ سَلَّمَ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Deyip yalnız sabah namazına mahsus 10 defa:'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'لَٓا اِلٰهَ اِلَّا اللّٰهُ اَلْمَلِكُ الْحَقُّ الْمُبٖينُ مُحَمَّدٌ رَسُولُ اللّٰهِ صَادِقُ الْوَعْدِ الْاَمٖينُ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Der ve ba\'dehu'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحٖيمِ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'اِنَّ اللّٰهَ وَ مَلَٓئِكَتَهُ يُصَلُّونَ عَلَى النَّبِىِّ يَٓا اَيُّهَا الَّذٖينَ اٰمَنُوا صَلُّوا عَلَيْهِ وَ سَلِّمُوا تَسْلٖيمًا ❁ لَبَّيْكَ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ صَلِّ عَلٰى سَيِّدِنَا مُحَمَّدٍ وَعَلَٓى اٰلِ سَيِّدِنَا مُحَمَّدٍ بِعَدَدِ كُلِّ دَٓاءٍ وَدَوَٓاءٍ وَبَارِكْ وَسَلِّمْ عَلَيْهِ وَعَلَيْهِمْ كَثٖيرًا'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ صَلِّ عَلٰى سَيِّدِنَا مُحَمَّدٍ وَعَلَٓى اٰلِ سَيِّدِنَا مُحَمَّدٍ بِعَدَدِ كُلِّ دَٓاءٍ وَدَوَٓاءٍ وَبَارِكْ وَسَلِّمْ عَلَيْهِ وَعَلَيْهِمْ كَثٖيرًا'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ صَلِّ عَلٰى سَيِّدِنَا مُحَمَّدٍ وَعَلَٓى اٰلِ سَيِّدِنَا مُحَمَّدٍ بِعَدَدِ كُلِّ دَٓاءٍ وَدَوَٓاءٍ وَبَارِكْ وَسَلِّمْ عَلَيْهِ وَعَلَيْهِمْ كَثٖيرًا كَثٖيرًا'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'صَلِّ وَ سَلِّمْ يَا رَبِّ عَلٰى حَبٖيبِكَ مُحَمَّدٍ وَ عَلٰى جَمٖيعِ الْاَنْبِيَٓاءِ وَ الْمُرْسَلٖينَ وَ عَلَٓى اٰلِ كُلٍّ وَ صَحْبِ كُلٍّ اَجْمَعٖينَ اٰمٖينَ وَالْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمٖينَ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'اَلْفُ اَلْفِ صَلَاةٍ وَ اَلْفُ اَلْفِ سَلَامٍ عَلَيْكَ يَا رَسُولَ اللّٰهِ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'اَلْفُ اَلْفِ صَلَاةٍ وَ اَلْفُ اَلْفِ سَلَامٍ عَلَيْكَ يَا حَبٖيبَ اللّٰهِ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'اَلْفُ اَلْفِ صَلَاةٍ وَ اَلْفُ اَلْفِ سَلَامٍ عَلَيْكَ يَٓا اَمٖينَ وَحْىِ اللّٰهِ'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'اَللّٰهُمَّ صَلِّ وَ سَلِّمْ وَ بَارِكْ عَلٰى سَيِّدِنَا مُحَمَّدٍ وَعَلَٓى اٰلِهٖ وَ اَصْحَابِهٖ بِعَدَدِ اَوْرَاقِ الْاَشْجَارِ وَ اَمْوَاجِ الْبِحَارِ وَ قَطَرَاتِ الْاَمْطَارِ وَ اغْفِرْلَنَا وَ ارْحَمْنَا وَ الْطُفْ بِنَا وَ بِاُسْـتَاذِنَا سَعٖيدِ النُّورْسٖى رَضِىَ اللّٰهُ عَنْهُ وَ وَالِدَيْنَا وَ بِطَلَبَةِ رَسَٓائِلِ النُّورِ الصَّادِقٖينَ يَٓا اِلٰهَنَا بِكُلِّ صَلَاةٍ مِنْهَٓا اَشْهَدُ اَنْ لَٓا اِلٰهَ اِلَّا اللّٰهُ وَ اَشْهَدُ اَنَّ مُحَمَّدًا رَسُولُ اللّٰهِ صَلَّى اللّٰهُ تَعَالٰى عَلَيْهِ وَ سَلَّمْ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحٖيمِ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَك يَٓا ﴿اَللّٰهُ﴾ تَعَالَيْتَ يَا ﴿رَحْمٰنُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿رَحٖيمُ﴾ تَعَالَيْتَ يَا ﴿كَرٖيمُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿حَمٖيدُ﴾ تَعَالَيْتَ يَا ﴿حَكٖيمُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿مَجٖيدُ﴾ تَعَالَيْتَ يَا ﴿مَلِكُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰن'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿قُدُّوسُ﴾ تَعَالَيْتَ يَا ﴿سَلَامُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿مُؤْمِنُ﴾ تَعَالَيْتَ يَا ﴿مُهَيْمِنُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿عَزٖيزُ﴾ تَعَالَيْتَ يَا ﴿جَبَّارُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿مُتَكَبِّرُ﴾ تَعَالَيْتَ يَا ﴿خَالِقُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَٓا ﴿اَوَّلُ﴾ تَعَالَيْتَ يَٓا ﴿اٰخِرُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿ظَاهِرُ﴾ تَعَالَيْتَ يَا ﴿بَاطِنُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿بَارِىءُ﴾ تَعَالَيْتَ يَا ﴿مُصَوِّرُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿تَوَّابُ﴾ تَعَالَيْتَ يَا ﴿وَهَّابُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿بَاعِثُ﴾ تَعَالَيْتَ يَا ﴿وَارِثُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿قَدٖيمُ﴾ تَعَالَيْتَ يَا ﴿مُقٖيمُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿فَرْدُ﴾ تَعَالَيْتَ يَا ﴿وِتْرُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿نُورُ﴾ تَعَالَيْتَ يَا ﴿سَتَّارُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿جَلٖيلُ﴾ تَعَالَيْتَ يَا ﴿جَمٖيلُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿قَاهِرُ﴾ تَعَالَيْتَ يَا ﴿قَادِرُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿مَلٖيكُ﴾ تَعَالَيْتَ يَا ﴿مُقْتَدِرُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿عَلٖيمُ﴾ تَعَالَيْتَ يَا ﴿عَلَّامُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿عَظٖيمُ﴾ تَعَالَيْتَ يَا ﴿غَفُورُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿حَلٖيمُ﴾ تَعَالَيْتَ يَا ﴿وَدُودُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿شَهٖيدُ﴾ تَعَالَيْتَ يَا ﴿شَاهِدُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿كَبٖيرُ﴾ تَعَالَيْتَ يَا ﴿مُتَعَالِ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿نُورُ﴾ تَعَالَيْتَ يَا ﴿لَطٖيفُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿سَمٖيعُ﴾ تَعَالَيْتَ يَا ﴿كَفٖيلُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿قَرٖيبُ﴾ تَعَالَيْتَ يَا ﴿بَصٖيرُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿حَقُّ﴾ تَعَالَيْتَ يَا ﴿مُبٖينُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿رَؤُفُ﴾ تَعَالَيْتَ يَا ﴿رَحٖيمُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿طَاهِرُ﴾ تَعَالَيْتَ يَا ﴿مُطَهِّرُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿مُجَمِّلُ﴾ تَعَالَيْتَ يَا ﴿مُفَضِّلُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿مُظْهِرُ﴾ تَعَالَيْتَ يَا ﴿مُنْعِمُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿دَيَّانُ﴾ تَعَالَيْتَ يَا ﴿سُلْطَانُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿حَنَّانُ﴾ تَعَالَيْتَ يَا ﴿مَنَّانُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَٓا ﴿اَحَدُ﴾ تَعَالَيْتَ يَا ﴿صَمَدُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿حَىُّ﴾ تَعَالَيْتَ يَا ﴿قَيُّومُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿عَدْلُ﴾ تَعَالَيْتَ يَا ﴿حَكَمُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ يَا ﴿فَرْدُ﴾ تَعَالَيْتَ يَا ﴿قُدُّوسُ﴾ اَجِرْنَا مِنَ النَّارِ بِعَفْوِكَ يَا رَحْمٰنُ'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'سُبْحَانَكَ اٰهِيًّا شَرَاهِيًّا تَعَالَيْتَ لَٓا اِلٰهَ اِلَّٓا اَنْتَ اَجِرْنَا وَ اَجِرْ اُسْتَاذَنَا سَعٖيدَ النُّورْسٖى رَضِىَ اللّٰهُ عَنْهُ وَ وَالِدَيْنَا وَ اِخْوَانَنَا وَ اَخَوَاتِنَـا وَ طَلَبَةَ رَسَٓائِلِ النُّورِ وَ رُفَقَٓائَنَا وَ اَحْبَابَنَا الْمُخْلِصٖينَ مِنَ النَّارِ وَ مِنْ كُلِّ نَارٍ وَ احْفَظْنَا مِنْ شَرِّ النَّفْسِ وَ الشَّيْطَانِ وَ مِنْ شَرِّ الْجِنِّ وَ اْلاِنْسَانِ وَ مِنْ شَرِّ الْبِدْعَةِ وَ الضَّلَالَاتِ وَ اْلاِلْحَادِ وَ الطُّغْيَانِ بِعَفْوِكَ يَا مُجٖيرُ بِفَضْلِكَ يَا غَفَّارُ بِرَحْمَتِكَ يَٓا اَرْحَمَ الرَّاحِمٖينَ ❁ اَللّٰهُمَّ اَدْخِلْنَا الْجَنَّةَ مَعَ الْاَبْرَارِ بِشَفَاعَةِ نَبِيِّكَ الْمُخْتَارِ اٰمٖينَ وَالْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمٖينَ'
+    },
+    {
+      bolum: 'kapanis-suresi',
+      tur: 'arapca',
+      metin: 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحٖيمِ'
+    },
+    {
+      bolum: 'kapanis-suresi',
+      tur: 'arapca',
+      metin: 'لَا يَسْتَوٖٓى اَصْحَابُ النَّارِ وَاَصْحَابُ الْجَنَّةِۜ اَصْحَابُ الْجَنَّةِ هُمُ الْفَٓائِزُونَ ﴿٢٠﴾ لَوْ اَنْزَلْنَا هٰذَا الْقُرْاٰنَ عَلٰى جَبَلٍ لَرَاَيْتَهُ خَاشِعًا مُتَصَدِّعًا مِنْ خَشْيَةِ اللّٰهِۜ وَتِلْكَ الْاَمْثَالُ نَضْرِبُهَا لِلنَّاسِ لَعَلَّهُمْ يَتَفَكَّرُونَ ﴿٢١﴾ هُوَ اللّٰهُ الَّذٖى لَٓا اِلٰهَ اِلَّا هُوَۚ عَالِمُ الْغَيْبِ وَالشَّهَادَةِۚ هُوَ الرَّحْمٰنُ الرَّحٖيمُ ﴿٢٢﴾ هُوَ اللّٰهُ الَّذٖى لَٓا اِلٰهَ اِلَّا هُوَۚ اَلْمَلِكُ الْقُدُّوسُ السَّلَامُ الْمُؤْمِنُ الْمُهَيْمِنُ الْعَزٖيزُ الْجَبَّارُ الْمُتَكَبِّرُۜ سُبْحَانَ اللّٰهِ عَمَّا يُشْرِكُونَ ﴿٢٣﴾ هُوَ اللّٰهُ الْخَالِقُ الْبَارِىُٔ الْمُصَوِّرُ لَهُ الْاَسْمَٓاءُ الْحُسْنٰىۜ يُسَبِّحُ لَهُ مَا فِى السَّمٰوَاتِ وَالْاَرْضِۚ وَهُوَ الْعَزٖيزُ الْحَكٖيمُ ﴿٢٤﴾'
+    }
+  ],
+  baslik: 'Sabah Namazı Tesbihatı (Arapça Uzun)',
+  guncellenmeTarihi: ISODate('2026-11-21T20:05:24.767Z')
+}
+
+{
+  _id: ObjectId('6b01be317582c78d2d54e2e0'),
+  vakit: 'sabah',
+  tur: 'uzun',
+  adimlar: [
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Sabah namazının farzını kılıp, selama müteakib:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme ente\'s-selâm ve minke\'s-selâm, tebârekte yâ ze\'l-celâli ve\'l-ikrâm.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Dedikten sonra elleri yukarı kaldırıp, el açarak:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed, salâten tüncînâ bihâ min cemî\'i\'l-ehvâli ve\'l-âfât, ve takdî lenâ bihâ cemî\'a\'l-hâcât, ve tutahhirunâ bihâ min cemî\'i\'s-seyyiât, ve terfeunâ bihâ indeke a\'le\'d-derecât, ve tübelliğunâ bihâ aksa\'l-gâyât min cemî\'i\'l-hayrâti fi\'l-hayâti ve ba\'de\'l-mevât, âmîn yâ mücîbe\'d-da\'avât, ve\'l-hamdü lillâhi Rabbi\'l-âlemîn.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Dedikten sonra'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme innâ nükaddimu ileyke beyne yedey külli nefesin ve lemhatin ve lahzatin ve tarfetin yatrifu bihâ ehlü\'s-semâvâti ve ehlü\'l-arazîne, şehâdeten eşhedü en:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Buraya kadar bir defa deyip'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Lâ ilâhe illallahu vahdehû lâ şerîke leh, lehü\'l-mülkü ve lehü\'l-hamdü, yuhyî ve yümît ve hüve hayyün lâ yemût, bi-yedihi\'l-hayr ve hüve alâ külli şey\'in kadîr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'On defa tekrar edilerek onuncusunda'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Ve ileyhi\'l-masîr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Deyip, elleri kaldırıp avuçları aşağıya çevirerek'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme ecirnâ mine\'n-nâr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '3-5-7 defa tekrar edilir. Müteakiben:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme ecirnâ min külli nâr ❁ Allahümme ecirnâ mine\'l-fitneti\'d-dîniyyeti ve\'d-dünyeviyye ❁ Allahümme ecirnâ min fitneti âhiri\'z-zamân ❁ Allahümme ecirnâ min fitneti\'l-Mesîhi\'d-Deccâli ve\'s-Süfyân ❁ Allahümme ecirnâ mine\'d-dalâlâti ve\'l-bid\'iyyâti ve\'l-beliyyât ❁ Allahümme ecirnâ min şerri\'n-nefsi\'l-emmâre ❁ Allahümme ecirnâ min şurûri\'n-nüfûsi\'l-emmârâti\'l-fir\'avniyye ❁ Allahümme ecirnâ min şerri\'n-nisâ ❁ Allahümme ecirnâ min belâi\'n-nisâ ❁ Allahümme ecirnâ min fitneti\'n-nisâ ❁ Allahümme ecirnâ min azâbi\'l-kabr ❁ Allahümme ecirnâ min azâbi yevmi\'l-kıyâme ❁ Allahümme ecirnâ min azâbi Cehennem ❁ Allahümme ecirnâ min azâbi kahrik ❁ Allahümme ecirnâ min nâri kahrik ❁ Allahümme ecirnâ min azâbi\'l-kabri ve\'n-nîrân ❁ Allahümme ecirnâ mine\'r-riyâi ve\'s-sum\'ati ve\'l-ucbi ve\'l-fahr ❁ Allahümme ecirnâ min tecâvüzi\'l-mülhidîn ❁ Allahümme ecirnâ min şerri\'l-münâfikîn ❁ Allahümme ecirnâ min fitneti\'l-fâsıkîn ❁ Allahümme ecirnâ ve ecir vâlideynâ ve talebete Resâili\'n-Nûri\'s-sâdıkîne fî hidmeti\'l-Kur\'âni ve\'l-îmân, ve ahbâbenâ\'l-mü\'minîne\'l-muhlisîne ve akribâenâ ve ecdâdenâ mine\'n-nâr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Elleri yukarı çevirerek'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Bi-afvike yâ Mücîr, bi-fadlike yâ Gaffâr. Allahümme edhilnâ\'l-cennete mea\'l-ebrâr. Allahümme edhilnâ\'l-cennete mea\'l-ebrâr. Allahümme edhilnâ ve edhil üstâzenâ Saîde\'n-Nûrsî radıyallahu anh ve vâlideynâ ve talebete Resâili\'n-Nûri\'s-sâdıkîne ve ihvânenâ ve ehavâtinâ ve akribâenâ ve ecdâdenâ ve ahbâbenâ\'l-mü\'minîne\'l-muhlisîne fî hidmeti\'l-îmâni ve\'l-Kur\'ân, el-cennete mea\'l-ebrâr. Salli alâ Nebiyyike\'l-muhtâr ve âlihi\'l-athâr ve ashâbihi\'l-ahyâr ve sellim mâdâme\'l-leylü ve\'n-nehâr, âmîn ve\'l-hamdü lillâhi Rabbi\'l-âlemîn.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'bundan sonra şu dua okunur'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Sübhânallâhi ve\'l-hamdü lillâhi ve lâ ilâhe illallahu vallâhü ekber, ve lâ havle ve lâ kuvvete illâ billâhi\'l-aliyyi\'l-azîm.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Âyet-ül Kürsi okunur'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Bismillâhirrahmânirrahîm.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allâhü lâ ilâhe illâ hû, el-Hayyu\'l-Kayyûm, lâ te\'huzühû sinetün ve lâ nevm, lehû mâ fi\'s-semâvâti ve mâ fi\'l-ard, men ze\'llezî yeşfeu indehû illâ bi-iznih, ya\'lemü mâ beyne eydîhim ve mâ halfehüm, ve lâ yühîtûne bi-şey\'in min ilmihî illâ bimâ şâe, vesia kürsiyyühü\'s-semâvâti ve\'l-arda ve lâ yeûdühû hıfzuhümâ, ve hüve\'l-Aliyyü\'l-Azîm.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'ardından 33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Sübhânallah.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Elhamdülillah.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahü ekber.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'tesbihleri çekilir. Devamında ,'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Lâ ilâhe illallahu vahdehû lâ şerîke leh, lehü\'l-mülkü ve lehü\'l-hamdü, yuhyî ve yümît ve hüve hayyün lâ yemût, bi-yedihi\'l-hayr ve hüve alâ külli şey\'in kadîr, ve ileyhi\'l-masîr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Sübhâne Rabbiye\'l-Aliyyi\'l-A\'le\'l-Vehhâb.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'denir, arkasından eller kaldırılıp dua edilir.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Duadan sonra, bir defa'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Fa\'lem ennehû:'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: '33 defa'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Lâ ilâhe illallah.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Haşiye: Sabah ve yatsı namazlarından sonra isteyen 100 defa okuyabilir.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Ve sonra:'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Muhammedün Resûlullah, sallallahu teâlâ aleyhi ve sellem.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Deyip yalnız sabah namazına mahsus 10 defa:'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Lâ ilâhe illallahü\'l-Melikü\'l-Hakku\'l-Mübîn, Muhammedün Resûlullah sâdıku\'l-va\'di\'l-emîn.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'turkce',
+      metin: 'Der ve ba\'dehu'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Bismillâhirrahmânirrahîm.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'İnnallahe ve melâiketehû yusallûne ale\'n-nebî, yâ eyyühe\'llezîne âmenû sallû aleyhi ve sellimû teslîmâ. Lebbeyk.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed, bi-adedi külli dâin ve devâin, ve bârik ve sellim aleyhi ve aleyhim kesîrâ.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed, bi-adedi külli dâin ve devâin, ve bârik ve sellim aleyhi ve aleyhim kesîrâ.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed, bi-adedi külli dâin ve devâin, ve bârik ve sellim aleyhi ve aleyhim kesîran kesîrâ.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Salli ve sellim yâ Rabbi alâ habîbike Muhammedin ve alâ cemî\'i\'l-enbiyâi ve\'l-mürselîn, ve alâ âli küllin ve sahbi küllin ecmaîn, âmîn ve\'l-hamdü lillâhi Rabbi\'l-âlemîn.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Elfü elfi salâtin ve elfü elfi selâmin aleyke yâ Resûlallah.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Elfü elfi salâtin ve elfü elfi selâmin aleyke yâ Habîballah.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Elfü elfi salâtin ve elfü elfi selâmin aleyke yâ Emîne vahyillah.'
+    },
+    {
+      bolum: 'ozel-dua',
+      tur: 'arapca',
+      metin: 'Allahümme salli ve sellim ve bârik alâ seyyidinâ Muhammedin ve alâ âlihî ve ashâbihî bi-adedi evrâki\'l-eşcâri ve emvâci\'l-bihâri ve katarâti\'l-emtâr, ve\'ğfirlenâ ve\'rhamnâ ve\'ltuf binâ ve bi-üstâzinâ Saîdi\'n-Nûrsî radıyallahu anh ve vâlideynâ ve bi-talebeti Resâili\'n-Nûri\'s-sâdıkîn, yâ İlâhenâ bi-külli salâtin minhâ eşhedü en lâ ilâhe illallah ve eşhedü enne Muhammeden Resûlullah sallallahu teâlâ aleyhi ve sellem.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Bismillâhirrahmânirrahîm.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Allah, teâleyte yâ Rahmân, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Rahîm, teâleyte yâ Kerîm, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Hamîd, teâleyte yâ Hakîm, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Mecîd, teâleyte yâ Melik, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Kuddûs, teâleyte yâ Selâm, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Mü\'min, teâleyte yâ Müheymin, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Azîz, teâleyte yâ Cebbâr, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Mütekebbir, teâleyte yâ Hâlık, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Evvel, teâleyte yâ Âhir, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Zâhir, teâleyte yâ Bâtın, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Bârî, teâleyte yâ Musavvir, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Tevvâb, teâleyte yâ Vehhâb, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Bâis, teâleyte yâ Vâris, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Kadîm, teâleyte yâ Mukîm, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Ferd, teâleyte yâ Vitr, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Nûr, teâleyte yâ Settâr, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Celîl, teâleyte yâ Cemîl, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Kâhir, teâleyte yâ Kâdir, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Melîk, teâleyte yâ Muktedir, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Alîm, teâleyte yâ Allâm, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Azîm, teâleyte yâ Gafûr, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Halîm, teâleyte yâ Vedûd, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Şehîd, teâleyte yâ Şâhid, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Kebîr, teâleyte yâ Müteâl, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Nûr, teâleyte yâ Latîf, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Semî\', teâleyte yâ Kefîl, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Karîb, teâleyte yâ Basîr, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Hak, teâleyte yâ Mübîn, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Raûf, teâleyte yâ Rahîm, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Tâhir, teâleyte yâ Mutahhir, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Mücemmil, teâleyte yâ Müfaddil, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Muzhir, teâleyte yâ Mün\'im, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Deyyân, teâleyte yâ Sultân, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Hannân, teâleyte yâ Mennân, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Ahad, teâleyte yâ Samed, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Hayy, teâleyte yâ Kayyûm, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Adl, teâleyte yâ Hakem, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke yâ Ferd, teâleyte yâ Kuddûs, ecirnâ mine\'n-nâri bi-afvike yâ Rahmân.'
+    },
+    {
+      bolum: 'esma',
+      tur: 'arapca',
+      metin: 'Sübhâneke Âhiyyen Şerâhiyyen teâleyte, lâ ilâhe illâ ente, ecirnâ ve ecir üstâzenâ Saîde\'n-Nûrsî radıyallahu anh ve vâlideynâ ve ihvânenâ ve ehavâtinâ ve talebete Resâili\'n-Nûr ve rufekâenâ ve ahbâbenâ\'l-muhlisîne mine\'n-nâri ve min külli nâr, ve\'hfaznâ min şerri\'n-nefsi ve\'ş-şeytâni ve min şerri\'l-cinni ve\'l-insâni ve min şerri\'l-bid\'ati ve\'d-dalâlâti ve\'l-ilhâdi ve\'t-tuğyân, bi-afvike yâ Mücîr, bi-fadlike yâ Gaffâr, bi-rahmetike yâ erhame\'r-râhimîn. Allahümme edhilnâ\'l-cennete mea\'l-ebrâr bi-şefâati Nebiyyike\'l-muhtâr, âmîn ve\'l-hamdü lillâhi Rabbi\'l-âlemîn.'
+    },
+    {
+      bolum: 'kapanis-suresi',
+      tur: 'arapca',
+      metin: 'Bismillâhirrahmânirrahîm.'
+    },
+    {
+      bolum: 'kapanis-suresi',
+      tur: 'arapca',
+      metin: 'Lâ yestevî ashâbü\'n-nâri ve ashâbü\'l-cenneh; ashâbü\'l-cenneti hümü\'l-fâizûn. (20) Lev enzelnâ hâze\'l-Kur\'âne alâ cebelin leraeytehû hâşian mütesaddian min haşyetillâh; ve tilke\'l-emsâlü nadribühâ li\'n-nâsi leallehüm yetefekkerûn. (21) Hüvallâhü\'llezî lâ ilâhe illâ hû, âlimü\'l-ğaybi ve\'ş-şehâdeh; hüve\'r-Rahmânü\'r-Rahîm. (22) Hüvallâhü\'llezî lâ ilâhe illâ hû, el-Melikü\'l-Kuddûsü\'s-Selâmü\'l-Mü\'minü\'l-Müheyminü\'l-Azîzü\'l-Cebbârü\'l-Mütekebbir; sübhânallahi ammâ yüşrikûn. (23) Hüvallâhü\'l-Hâlikü\'l-Bâriü\'l-Musavviru lehü\'l-esmâü\'l-hüsnâ; yüsebbihu lehû mâ fi\'s-semâvâti ve\'l-ard; ve hüve\'l-Azîzü\'l-Hakîm. (24)'
+    }
+  ],
+  baslik: 'Sabah Namazı Tesbihatı (Uzun)',
+  guncellenmeTarihi: ISODate('2026-11-21T20:05:24.767Z')
+}
+
+{
+  _id: ObjectId('6b01be317582c78d2d54e2e1'),
+  tur: 'kisa',
+  vakit: 'sabah',
+  adimlar: [
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Sabah namazının farzını kılıp, selama müteakib:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme ente\'s-selâm ve minke\'s-selâm, tebârekte yâ ze\'l-celâli ve\'l-ikrâm.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Dedikten sonra elleri yukarı kaldırıp, el açarak:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed, salâten tüncînâ bihâ min cemî\'i\'l-ehvâli ve\'l-âfât, ve takdî lenâ bihâ cemî\'a\'l-hâcât, ve tutahhirunâ bihâ min cemî\'i\'s-seyyiât, ve terfeunâ bihâ indeke a\'le\'d-derecât, ve tübelliğunâ bihâ aksa\'l-gâyât min cemî\'i\'l-hayrâti fi\'l-hayâti ve ba\'de\'l-mevât, âmîn yâ mücîbe\'d-da\'avât, ve\'l-hamdü lillâhi Rabbi\'l-âlemîn.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Dedikten sonra'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme innâ nükaddimu ileyke beyne yedey külli nefesin ve lemhatin ve lahzatin ve tarfetin yatrifu bihâ ehlü\'s-semâvâti ve ehlü\'l-arazîne, şehâdeten eşhedü en:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Buraya kadar bir defa deyip'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Lâ ilâhe illallahu vahdehû lâ şerîke leh, lehü\'l-mülkü ve lehü\'l-hamdü, yuhyî ve yümît ve hüve hayyün lâ yemût, bi-yedihi\'l-hayr ve hüve alâ külli şey\'in kadîr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'On defa tekrar edilerek onuncusunda'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Ve ileyhi\'l-masîr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Deyip, elleri kaldırıp avuçları aşağıya çevirerek'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme ecirnâ mine\'n-nâr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '3-5-7 defa tekrar edilir. Müteakiben:'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahümme ecirnâ min külli nâr ❁ Allahümme ecirnâ mine\'l-fitneti\'d-dîniyyeti ve\'d-dünyeviyye ❁ Allahümme ecirnâ min fitneti âhiri\'z-zamân ❁ Allahümme ecirnâ min fitneti\'l-Mesîhi\'d-Deccâli ve\'s-Süfyân ❁ Allahümme ecirnâ mine\'d-dalâlâti ve\'l-bid\'iyyâti ve\'l-beliyyât ❁ Allahümme ecirnâ min şerri\'n-nefsi\'l-emmâre ❁ Allahümme ecirnâ min şurûri\'n-nüfûsi\'l-emmârâti\'l-fir\'avniyye ❁ Allahümme ecirnâ min şerri\'n-nisâ ❁ Allahümme ecirnâ min belâi\'n-nisâ ❁ Allahümme ecirnâ min fitneti\'n-nisâ ❁ Allahümme ecirnâ min azâbi\'l-kabr ❁ Allahümme ecirnâ min azâbi yevmi\'l-kıyâme ❁ Allahümme ecirnâ min azâbi Cehennem ❁ Allahümme ecirnâ min azâbi kahrik ❁ Allahümme ecirnâ min nâri kahrik ❁ Allahümme ecirnâ min azâbi\'l-kabri ve\'n-nîrân ❁ Allahümme ecirnâ mine\'r-riyâi ve\'s-sum\'ati ve\'l-ucbi ve\'l-fahr ❁ Allahümme ecirnâ min tecâvüzi\'l-mülhidîn ❁ Allahümme ecirnâ min şerri\'l-münâfikîn ❁ Allahümme ecirnâ min fitneti\'l-fâsıkîn ❁ Allahümme ecirnâ ve ecir vâlideynâ ve talebete Resâili\'n-Nûri\'s-sâdıkîne fî hidmeti\'l-Kur\'âni ve\'l-îmân, ve ahbâbenâ\'l-mü\'minîne\'l-muhlisîne ve akribâenâ ve ecdâdenâ mine\'n-nâr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Elleri yukarı çevirerek'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Bi-afvike yâ Mücîr, bi-fadlike yâ Gaffâr. Allahümme edhilnâ\'l-cennete mea\'l-ebrâr. Allahümme edhilnâ\'l-cennete mea\'l-ebrâr. Allahümme edhilnâ ve edhil üstâzenâ Saîde\'n-Nûrsî radıyallahu anh ve vâlideynâ ve talebete Resâili\'n-Nûri\'s-sâdıkîne ve ihvânenâ ve ehavâtinâ ve akribâenâ ve ecdâdenâ ve ahbâbenâ\'l-mü\'minîne\'l-muhlisîne fî hidmeti\'l-îmâni ve\'l-Kur\'ân, el-cennete mea\'l-ebrâr. Salli alâ Nebiyyike\'l-muhtâr ve âlihi\'l-athâr ve ashâbihi\'l-ahyâr ve sellim mâdâme\'l-leylü ve\'n-nehâr, âmîn ve\'l-hamdü lillâhi Rabbi\'l-âlemîn.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'bundan sonra şu dua okunur'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Sübhânallâhi ve\'l-hamdü lillâhi ve lâ ilâhe illallahu vallâhü ekber, ve lâ havle ve lâ kuvvete illâ billâhi\'l-aliyyi\'l-azîm.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'Âyet-ül Kürsi okunur'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Bismillâhirrahmânirrahîm.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allâhü lâ ilâhe illâ hû, el-Hayyu\'l-Kayyûm, lâ te\'huzühû sinetün ve lâ nevm, lehû mâ fi\'s-semâvâti ve mâ fi\'l-ard, men ze\'llezî yeşfeu indehû illâ bi-iznih, ya\'lemü mâ beyne eydîhim ve mâ halfehüm, ve lâ yühîtûne bi-şey\'in min ilmihî illâ bimâ şâe, vesia kürsiyyühü\'s-semâvâti ve\'l-arda ve lâ yeûdühû hıfzuhümâ, ve hüve\'l-Aliyyü\'l-Azîm.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'ardından 33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Sübhânallah.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Elhamdülillah.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: '33 defa'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Allahü ekber.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'tesbihleri çekilir. Devamında ,'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Lâ ilâhe illallahu vahdehû lâ şerîke leh, lehü\'l-mülkü ve lehü\'l-hamdü, yuhyî ve yümît ve hüve hayyün lâ yemût, bi-yedihi\'l-hayr ve hüve alâ külli şey\'in kadîr, ve ileyhi\'l-masîr.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'arapca',
+      metin: 'Sübhâne Rabbiye\'l-Aliyyi\'l-A\'le\'l-Vehhâb.'
+    },
+    {
+      bolum: 'ana',
+      tur: 'turkce',
+      metin: 'denir, arkasından eller kaldırılıp dua edilir.'
+    },
+    {
+      bolum: 'kapanis-suresi',
+      tur: 'arapca',
+      metin: 'Bismillâhirrahmânirrahîm.'
+    },
+    {
+      bolum: 'kapanis-suresi',
+      tur: 'arapca',
+      metin: 'Lâ yestevî ashâbü\'n-nâri ve ashâbü\'l-cenneh; ashâbü\'l-cenneti hümü\'l-fâizûn. (20) Lev enzelnâ hâze\'l-Kur\'âne alâ cebelin leraeytehû hâşian mütesaddian min haşyetillâh; ve tilke\'l-emsâlü nadribühâ li\'n-nâsi leallehüm yetefekkerûn. (21) Hüvallâhü\'llezî lâ ilâhe illâ hû, âlimü\'l-ğaybi ve\'ş-şehâdeh; hüve\'r-Rahmânü\'r-Rahîm. (22) Hüvallâhü\'llezî lâ ilâhe illâ hû, el-Melikü\'l-Kuddûsü\'s-Selâmü\'l-Mü\'minü\'l-Müheyminü\'l-Azîzü\'l-Cebbârü\'l-Mütekebbir; sübhânallahi ammâ yüşrikûn. (23) Hüvallâhü\'l-Hâlikü\'l-Bâriü\'l-Musavviru lehü\'l-esmâü\'l-hüsnâ; yüsebbihu lehû mâ fi\'s-semâvâti ve\'l-ard; ve hüve\'l-Azîzü\'l-Hakîm. (24)'
+    }
+  ],
+  baslik: 'Sabah Namazı Tesbihatı (Kısa)',
+  guncellenmeTarihi: ISODate('2026-11-21T20:05:24.767Z')
+}

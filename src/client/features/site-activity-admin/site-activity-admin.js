@@ -126,6 +126,28 @@
         }
       });
 
+      /** Tesbihat kaydı → okunur cümle, örn. "Sabah namazı kısa tesbihatı açıldı" */
+      function formatTesbihatEylem(log) {
+        const vakitLabels = { sabah: 'Sabah', ogle: 'Öğle', ikindi: 'İkindi', aksam: 'Akşam', yatsi: 'Yatsı' };
+        const turLabels = { kisa: 'kısa tesbihatı', uzun: 'uzun tesbihatı', 'arapca-uzun': 'Arapça uzun tesbihatı' };
+        const view = log.view != null ? String(log.view).trim() : '';
+        const vakit = vakitLabels[log.vakit] ? vakitLabels[log.vakit] + ' namazı' : '';
+        const tur = turLabels[log.tur] || '';
+
+        switch (view) {
+          case 'home':
+            return 'Tesbihat ana ekranı açıldı';
+          case 'location':
+            return 'Tesbihat konum seçimi açıldı';
+          case 'types':
+            return (vakit || 'Bir namaz') + ' için tesbihat türleri açıldı';
+          case 'reader':
+            return (vakit || 'Bir namaz') + ' ' + (tur || 'tesbihatı') + ' açıldı';
+          default:
+            return 'Tesbihat sekmesi açıldı';
+        }
+      }
+
       /** SiteActivityLog: action + groupId → Türkçe eylem metni */
       function formatSiteActivityEylem(log) {
         const gidRaw = log.groupId != null ? String(log.groupId).trim() : '';
@@ -141,18 +163,8 @@
             return escapeHtml(gid || '—') + ' grubu oluşturuldu';
           case 'grup_silme':
             return escapeHtml(gid || '—') + ' grubu silindi';
-          case 'tesbihat_görüntüleme': {
-            const viewLabels = {
-              home: 'Ana ekran',
-              location: 'Konum seçimi',
-              types: 'Tesbihat türleri',
-              reader: 'Tesbihat okuma'
-            };
-            const view = log.view != null ? String(log.view).trim() : '';
-            return 'Tesbihat sekmesi görüntülendi' +
-              (view ? '<br><span style="color:#5f5f5f;font-size:0.92em;">Sayfa: ' +
-                escapeHtml(viewLabels[view] || view) + ' (' + escapeHtml(view) + ')</span>' : '');
-          }
+          case 'tesbihat_görüntüleme':
+            return escapeHtml(formatTesbihatEylem(log));
           default:
             return escapeHtml(action || 'bilinmeyen eylem') +
               (gid ? '<br><span style="color:#5f5f5f;font-size:0.92em;">Grup: ' + escapeHtml(gid) + '</span>' : '');

@@ -34,10 +34,12 @@
 
     // Yalnızca yönetici panelindeki (admin.html) etkinlik kayıtlarında görünür.
     // Çerez onayından bağımsızdır; hata sessizce yutulur, sekmenin çalışmasını etkilemez.
-    async function logTesbihatView(view) {
+    async function logTesbihatView(route) {
         const payload = JSON.stringify({
             action: 'tesbihat_görüntüleme',
-            view,
+            view: route.view,
+            vakit: route.vakit || null,
+            tur: route.tur || null,
             deviceInfo: {
                 userAgent: navigator.userAgent,
                 screenWidth: window.screen.width,
@@ -74,7 +76,7 @@
         if (route.view === 'home') ns.home.render();
         else if (route.view === 'types') ns.reader.showTypes(route.vakit);
         else if (route.view === 'reader') await ns.reader.showReader(route.vakit, route.tur);
-        if (sequence === renderSequence) logTesbihatView(route.view);
+        if (sequence === renderSequence) logTesbihatView(route);
     }
 
     ns.navigate = function navigate(route, options = {}) {

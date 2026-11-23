@@ -7,7 +7,16 @@ const { isSafeGroupId } = require('../../shared/group-id');
 
 const TESBIHAT_VIEW_ACTION = 'tesbihat_görüntüleme';
 /** Tesbihat sekmesindeki .tesbihat-view[data-view] değerleri */
+const ALLOWED_SITE_ACTIONS = new Set([
+  'grup_görüntüleme',
+  'ana_sayfa_görüntüleme',
+  'grup_oluşturma',
+  'grup_silme',
+  TESBIHAT_VIEW_ACTION
+]);
 const TESBIHAT_VIEWS = new Set(['home', 'location', 'types', 'reader']);
+const TESBIHAT_VAKITS = new Set(['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi']);
+const TESBIHAT_TURS = new Set(['kisa', 'uzun', 'arapca-uzun']);
 
 function createActivityService({ getSessionMembership }) {
   function getTurkeyMinuteBounds(at = new Date()) {
@@ -66,33 +75,27 @@ function createActivityService({ getSessionMembership }) {
       : extractClientIp(req);
   }
 
-  async function logSiteActivity({ action, req, groupId, deviceInfo, actor, view }) {
+  async function logSiteActivity({ action, req, groupId, deviceInfo, actor, view, vakit, tur }) {
     try {
-      const allowedSiteActions = new Set([
-        'grup_görüntüleme',
-        'ana_sayfa_görüntüleme',
-        'grup_oluşturma',
-        'grup_silme',
-        TESBIHAT_VIEW_ACTION
-      ]);
-      const normalizeSiteAction = (rawAction) => {
-        const a = typeof rawAction === 'string' ? rawAction.trim() : '';
-        return allowedSiteActions.has(a) ? a : 'bilinmeyen_eylem';
-      };
+      const normalizedAction = typeof action === 'string' ? action.trim() : '';
+      // Tanımsız eylemler (ör. istemcinin gönderdiği serbest metinler) kaydedilmez.
+      if (!ALLOWED_SITE_ACTIONS.has(normalizedAction)) return;
 
-      const normalizedAction = normalizeSiteAction(action);
       const storedGroupId = isSafeGroupId(groupId) ? String(groupId) : null;
       const storedActor = actor || await resolveLogActor(req, storedGroupId);
-      // Yalnızca tesbihat eyleminde ve bilinen bir data-view değeriyle saklanır.
-      const storedView = normalizedAction === TESBIHAT_VIEW_ACTION && TESBIHAT_VIEWS.has(view)
-        ? view
-        : null;
+      // Yalnızca tesbihat eyleminde ve bilinen değerlerle saklanır (serbest metin kabul edilmez).
+      const tesbihatDetails = {};
+      if (normalizedAction === TESBIHAT_VIEW_ACTION && TESBIHAT_VIEWS.has(view)) {
+        tesbihatDetails.view = view;
+        if (TESBIHAT_VAKITS.has(vakit)) tesbihatDetails.vakit = vakit;
+        if (TESBIHAT_TURS.has(tur)) tesbihatDetails.tur = tur;
+      }
 
       if (await hasLogInSameTurkeyMinute(SiteActivityLog, {
         groupId: storedGroupId,
         action: normalizedAction,
         ipAddress: storedActor,
-        ...(storedView ? { view: storedView } : {})
+        ...tesbihatDetails
       })) {
         return;
       }
@@ -103,7 +106,7 @@ function createActivityService({ getSessionMembership }) {
         deviceInfo: buildDeviceInfo(req, deviceInfo),
         ipAddress: storedActor,
         groupId: storedGroupId,
-        ...(storedView ? { view: storedView } : {})
+        ...tesbihatDetails
       });
 
       await log.save();
