@@ -24,7 +24,9 @@ const siteActivityLogSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   deviceInfo: Object,
   ipAddress: String,
-  groupId: String
+  groupId: String,
+  // Yalnızca tesbihat_görüntüleme eyleminde: açılan sekme içi görünüm (data-view)
+  view: String
 });
 
 const SiteActivityLog = mongoose.model('SiteActivityLog', siteActivityLogSchema, 'siteactivitylogs');

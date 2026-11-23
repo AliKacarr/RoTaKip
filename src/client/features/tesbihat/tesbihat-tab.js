@@ -30,15 +30,51 @@
         return { view: 'home' };
     }
 
+    let renderSequence = 0;
+
+    // Yalnızca yönetici panelindeki (admin.html) etkinlik kayıtlarında görünür.
+    // Çerez onayından bağımsızdır; hata sessizce yutulur, sekmenin çalışmasını etkilemez.
+    async function logTesbihatView(view) {
+        const payload = JSON.stringify({
+            action: 'tesbihat_görüntüleme',
+            view,
+            deviceInfo: {
+                userAgent: navigator.userAgent,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height
+            }
+        });
+        for (const endpoint of ['/api/visit-event', '/api/log-visit']) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                });
+                if (response.ok) return;
+            } catch (error) {
+                // Reklam engelleyici / ağ hatası: bir sonraki uç noktayı dene.
+            }
+        }
+    }
+
     async function render(route) {
+        const sequence = ++renderSequence;
+        // Konum listesi hazır olana kadar önceki görünüm ekranda kalır; liste yüklenince
+        // görünüm içeriğiyle birlikte giriş animasyonuyla açılır.
+        if (route.view === 'location') {
+            await ns.locationPicker.open();
+            if (sequence !== renderSequence) return;
+        }
         currentRoute = route;
         document.querySelectorAll('.tesbihat-page > .tesbihat-view').forEach(view => {
             view.hidden = view.dataset.view !== route.view;
         });
         if (route.view === 'home') ns.home.render();
-        else if (route.view === 'location') await ns.locationPicker.open();
         else if (route.view === 'types') ns.reader.showTypes(route.vakit);
         else if (route.view === 'reader') await ns.reader.showReader(route.vakit, route.tur);
+        if (sequence === renderSequence) logTesbihatView(route.view);
     }
 
     ns.navigate = function navigate(route, options = {}) {

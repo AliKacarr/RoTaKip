@@ -10,24 +10,24 @@
     gap: 18px;
     width: 100%;
     padding: 18px 20px 18px 18px;
-    border: 1px solid var(--tb-border);
+    border: 1px solid color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 28%, #fff);
     border-radius: 16px;
     color: var(--tb-text);
     background: #fff;
     text-align: left;
     cursor: pointer;
-    box-shadow: var(--tb-card-shadow);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--vakit-color, var(--tb-primary)) 14%, transparent);
     transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .tesbihat-page .tesbihat-type-option:hover {
-    border-color: var(--tb-primary);
-    background: var(--tb-tint-soft);
+    border-color: var(--vakit-color, var(--tb-primary));
+    background: var(--vakit-wash, var(--tb-tint-soft));
     transform: translateY(-2px);
 }
 
 .tesbihat-page .tesbihat-type-option:focus-visible {
-    outline: 3px solid var(--tb-primary-light);
+    outline: 3px solid var(--vakit-color, var(--tb-primary-light));
     outline-offset: 2px;
 }
 
@@ -39,8 +39,8 @@
     width: 60px;
     height: 60px;
     border-radius: 16px;
-    color: var(--tb-primary);
-    background: var(--tb-tint);
+    color: var(--vakit-dark, var(--tb-primary));
+    background: var(--vakit-tint, var(--tb-tint));
     font-size: 26px;
 }
 
@@ -71,15 +71,15 @@
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    color: var(--tb-primary);
-    background: var(--tb-tint);
+    color: var(--vakit-dark, var(--tb-primary));
+    background: var(--vakit-tint, var(--tb-tint));
     font-size: 16px;
     transition: background 0.2s ease, color 0.2s ease;
 }
 
 .tesbihat-page .tesbihat-type-option:hover .tesbihat-type-option-chevron {
     color: #fff;
-    background: var(--tb-primary);
+    background: var(--vakit-color, var(--tb-primary));
 }
 
 /* Okuyucu: başlık, yapışkan araç çubuğudur; uzun listede de yazı boyutu ve sıfırlama erişilebilir kalır. */
@@ -89,7 +89,7 @@
 
 .tesbihat-page .tesbihat-reader-bar {
     position: sticky;
-    top: 8px;
+    top: 20px;
     z-index: 20;
     display: flex;
     align-items: center;

@@ -382,7 +382,7 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat namaz v
   assert.match(tesbihat, /data-view="location"[^>]*hidden[\s\S]*?id="tesbihatLocationSearch"[\s\S]*?id="tesbihatUseMyLocation"[\s\S]*?id="tesbihatLocationList"/);
   assert.match(tesbihat, /data-view="types"[^>]*hidden[\s\S]*?data-tur="kisa"[\s\S]*?data-tur="uzun"[\s\S]*?data-tur="arapca-uzun"[\s\S]*?class="tesbihat-info-note"/);
   assert.match(tesbihat, /data-view="reader"[^>]*hidden[\s\S]*?class="tesbihat-reader-bar"[\s\S]*?id="tesbihatResetCounters"[\s\S]*?id="tesbihatReaderContent"/);
-  assert.match(readClient('features/tesbihat/tesbihat-reader.css'), /\.tesbihat-reader-bar\s*\{[^}]*position:\s*sticky;[^}]*top:\s*8px;/s);
+  assert.match(readClient('features/tesbihat/tesbihat-reader.css'), /\.tesbihat-reader-bar\s*\{[^}]*position:\s*sticky;[^}]*top:\s*20px;/s);
   const tesbihatReader = readClient('features/tesbihat/tesbihat-reader.js');
   assert.match(tesbihatReader, /resetButton\.addEventListener\('click'[\s\S]*?ns\.confirmDialog\(\{[\s\S]*?title: 'Sayaçları Sıfırla'[\s\S]*?confirmLabel: 'Sıfırla'/);
   assert.doesNotMatch(tesbihatReader, /scrollTo\(/);
@@ -646,7 +646,7 @@ test('sekme girişleri rota türüne uygun animasyon kullanır', () => {
   assert.doesNotMatch(shellStyles, /@keyframes okumalar-tab-view-fade\s*\{[^}]*translateY/);
   assert.match(shellStyles, /\.tab-view-groups:not\(\.visible\)\s*\{[^}]*transform:\s*none;[^}]*animation:\s*none;[\s\S]*?\.tab-view-groups\.visible\s*\{[^}]*animation:\s*none;/);
   assert.match(shellStyles, /\.tab-view-videos:not\(\.visible\),[\s\S]*?\.tab-view-articles:not\(\.visible\)\s*\{[^}]*opacity:\s*0;[^}]*visibility:\s*hidden;[^}]*translateY\(16px\)/);
-  assert.match(shellStyles, /\.tab-view-videos\.visible,[\s\S]*?\.tab-view-articles\.visible\s*\{[^}]*global-tab-view-enter 0\.38s ease-out both/);
+  assert.match(shellStyles, /\.tab-view-videos\.visible,[\s\S]*?\.tab-view-articles\.visible\s*\{[^}]*global-tab-view-enter 0.4s ease-out both/);
   assert.match(shellStyles, /\.tab-view-videos\.visible\.is-initial-route-reveal,[\s\S]*?\.tab-view-articles\.visible\.is-initial-route-reveal\s*\{[^}]*animation-duration:\s*0\.6s/);
   assert.match(shellStyles, /@keyframes global-tab-view-enter\s*\{[\s\S]*?opacity:\s*0;[^}]*translateY\(16px\)[\s\S]*?opacity:\s*1;[^}]*translateY\(0\)/);
   assert.match(readPublic('app/shell-router.js'), /view\.classList\.remove\('is-initial-route-reveal'\)[\s\S]*?activeView\.classList\.toggle\('is-initial-route-reveal', isInitialNavigation\)/);
@@ -757,7 +757,7 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.doesNotMatch(readClient('shell/shell.css'), /tesbihat-preparation/);
   // Tesbihat'ta dış sarmalayıcı kaymaz; kayma görünümlerin kendisinde (tek katman).
   assert.match(readClient('shell/shell.css'), /\.tab-view-tesbihat\.visible\s*\{[^}]*transform:\s*none;[^}]*animation:\s*none;/);
-  assert.match(readClient('features/tesbihat/tesbihat-base.css'), /\.tab-view-tesbihat\.visible \.tesbihat-page \.tesbihat-view:not\(\[hidden\]\)\s*\{[^}]*tesbihat-view-in 0\.38s ease-out both/);
+  assert.match(readClient('features/tesbihat/tesbihat-base.css'), /\.tab-view-tesbihat\.visible \.tesbihat-page \.tesbihat-view:not\(\[hidden\]\)\s*\{[^}]*tesbihat-view-in 0.4s ease-out both/);
   assert.match(readClient('features/tesbihat/tesbihat-base.css'), /@keyframes tesbihat-view-in\s*\{[\s\S]*?translateY\(16px\)/);
   assert.match(readClient('features/readings/tracker-table.js'), /schedulePostToggleUiRefresh[\s\S]*?window\.renderReadingMessagePanels/);
   assert.match(readClient('features/readings/tracker-table.js'), /allTimeAmountsByUser[\s\S]*?seasonAmountsByUser/);

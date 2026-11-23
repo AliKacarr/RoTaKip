@@ -141,6 +141,18 @@
             return escapeHtml(gid || '—') + ' grubu oluşturuldu';
           case 'grup_silme':
             return escapeHtml(gid || '—') + ' grubu silindi';
+          case 'tesbihat_görüntüleme': {
+            const viewLabels = {
+              home: 'Ana ekran',
+              location: 'Konum seçimi',
+              types: 'Tesbihat türleri',
+              reader: 'Tesbihat okuma'
+            };
+            const view = log.view != null ? String(log.view).trim() : '';
+            return 'Tesbihat sekmesi görüntülendi' +
+              (view ? '<br><span style="color:#5f5f5f;font-size:0.92em;">Sayfa: ' +
+                escapeHtml(viewLabels[view] || view) + ' (' + escapeHtml(view) + ')</span>' : '');
+          }
           default:
             return escapeHtml(action || 'bilinmeyen eylem') +
               (gid ? '<br><span style="color:#5f5f5f;font-size:0.92em;">Grup: ' + escapeHtml(gid) + '</span>' : '');

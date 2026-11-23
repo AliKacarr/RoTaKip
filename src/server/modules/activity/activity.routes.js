@@ -206,8 +206,9 @@ function registerActivityRoutes(app, dependencies) {
       if (!bounds) {
         return res.status(400).json({ error: 'Geçersiz trDate' });
       }
+      // Endpoint yalnızca site yöneticisi grubunun admini için açık (requireSiteActivityAdmin);
+      // bu yüzden tüm grupların ve grupsuz (ana sayfa, tesbihat) kayıtlar silinebilir.
       const q = {
-        groupId: req.auth.groupId,
         timestamp: { $gte: bounds.start, $lt: bounds.end }
       };
       if (action && String(action).trim()) {
@@ -243,7 +244,7 @@ function registerActivityRoutes(app, dependencies) {
   // Ziyaret logu endpoint'i
   app.post('/api/log-visit', publicLogLimiter, async (req, res) => {
     try {
-      const { deviceInfo, groupId, action } = req.body || {};
+      const { deviceInfo, groupId, action, view } = req.body || {};
       const siteAction = (action || 'grup_görüntüleme').toString().trim();
       const shouldWriteAccessLog = (
         siteAction === 'grup_görüntüleme'
@@ -271,7 +272,8 @@ function registerActivityRoutes(app, dependencies) {
         req,
         groupId,
         deviceInfo,
-        actor: storedActor
+        actor: storedActor,
+        view
       });
       res.json({ success: true });
     } catch (error) {
@@ -283,7 +285,7 @@ function registerActivityRoutes(app, dependencies) {
   // Ziyaret logu için adblock'a daha az takılan alternatif endpoint
   app.post('/api/visit-event', publicLogLimiter, async (req, res) => {
     try {
-      const { deviceInfo, groupId, action } = req.body || {};
+      const { deviceInfo, groupId, action, view } = req.body || {};
       const siteAction = (action || 'grup_görüntüleme').toString().trim();
       const shouldWriteAccessLog = (
         siteAction === 'grup_görüntüleme'
@@ -311,7 +313,8 @@ function registerActivityRoutes(app, dependencies) {
         req,
         groupId,
         deviceInfo,
-        actor: storedActor
+        actor: storedActor,
+        view
       });
       res.json({ success: true });
     } catch (error) {

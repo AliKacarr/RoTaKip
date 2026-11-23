@@ -253,7 +253,7 @@ body.app-shell-body { padding-left: 132px; }
 .tab-view-videos.visible,
 .tab-view-tefekkur.visible,
 .tab-view-articles.visible {
-  animation: global-tab-view-enter 0.38s ease-out both;
+  animation: global-tab-view-enter 0.4s ease-out both;
 }
 .tab-view-videos.visible.is-initial-route-reveal,
 .tab-view-tefekkur.visible.is-initial-route-reveal,

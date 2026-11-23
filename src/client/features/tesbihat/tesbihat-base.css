@@ -21,38 +21,38 @@
 /* Seçili vaktin paleti: başlık, kartlar, sayaç ve sayfa zemini bu renklerden beslenir.
    Vakit yoksa (konum seçimi) varsayılan gece tonu kalır. */
 .tesbihat-page .tesbihat-view[data-vakit="sabah"] {
-    --vakit-color: #2f9bc4; --vakit-dark: #1b6f93; --vakit-tint: #e5f4fa; --vakit-wash: #f1f9fd;
+    --vakit-color: #0095f6; --vakit-dark: #0070bf; --vakit-head: #0082dc; --vakit-tint: #e5f3fe; --vakit-wash: #f2f9ff;
 }
 
 .tesbihat-page .tesbihat-view[data-vakit="ogle"] {
-    --vakit-color: #d99200; --vakit-dark: #8f5b00; --vakit-tint: #fff4d6; --vakit-wash: #fffaeb;
+    --vakit-color: #eaa820; --vakit-dark: #a56d00; --vakit-head: #d99200; --vakit-tint: #fff4d6; --vakit-wash: #fffaeb;
 }
 
 .tesbihat-page .tesbihat-view[data-vakit="ikindi"] {
-    --vakit-color: #e8702a; --vakit-dark: #a8480f; --vakit-tint: #ffeadb; --vakit-wash: #fff6ef;
+    --vakit-color: #f28a4a; --vakit-dark: #b9521a; --vakit-head: #e8702a; --vakit-tint: #ffeadb; --vakit-wash: #fff6ef;
 }
 
 .tesbihat-page .tesbihat-view[data-vakit="aksam"] {
-    --vakit-color: #d1426a; --vakit-dark: #9c2a4d; --vakit-tint: #fde6ed; --vakit-wash: #fff3f6;
+    --vakit-color: #dc5078; --vakit-dark: #b03a5f; --vakit-head: #d1426a; --vakit-tint: #fde6ed; --vakit-wash: #fff3f6;
 }
 
 .tesbihat-page .tesbihat-view[data-vakit="yatsi"] {
-    --vakit-color: #4a50b5; --vakit-dark: #2f3590; --vakit-tint: #e8e9fa; --vakit-wash: #f4f4fc;
+    --vakit-color: #4a60bd; --vakit-dark: #34479f; --vakit-head: #3a4fa8; --vakit-tint: #e8ebf8; --vakit-wash: #f4f5fb;
 }
 
 .tesbihat-page .tesbihat-view[data-vakit] {
-    --tb-header-gradient: linear-gradient(135deg, var(--vakit-dark) 0%, var(--vakit-color) 100%);
+    --tb-header-gradient: linear-gradient(135deg, var(--vakit-head, var(--vakit-dark)) 0%, var(--vakit-color) 100%);
     --tb-header-shadow: 0 4px 12px color-mix(in srgb, var(--vakit-color) 30%, transparent);
 }
 
 /* Okuyucu ve konum seçimi açıkken sayfa zemini de vaktin rengine hafifçe boyanır.
    Boyama sekme görünümünde değil, onu çevreleyen ana kapsayıcıda yapılır; aksi halde
    kapsayıcının beyaz iç boşluğu ekran kenarlarında görünür. */
-.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="sabah"]:not([hidden])) { background-image: linear-gradient(180deg, #e3f3fa 0%, #f1f9fd 360px, #fff 100%); }
-.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="ogle"]:not([hidden])) { background-image: linear-gradient(180deg, #fff1cc 0%, #fffaeb 360px, #fff 100%); }
-.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="ikindi"]:not([hidden])) { background-image: linear-gradient(180deg, #ffe5d2 0%, #fff6ef 360px, #fff 100%); }
-.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="aksam"]:not([hidden])) { background-image: linear-gradient(180deg, #fbdde6 0%, #fff3f6 360px, #fff 100%); }
-.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"])[data-vakit="yatsi"]:not([hidden])) { background-image: linear-gradient(180deg, #e2e4f8 0%, #f4f4fc 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"], [data-view="types"])[data-vakit="sabah"]:not([hidden])) { background-image: linear-gradient(180deg, #dff0fe 0%, #f2f9ff 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"], [data-view="types"])[data-vakit="ogle"]:not([hidden])) { background-image: linear-gradient(180deg, #fff1cc 0%, #fffaeb 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"], [data-view="types"])[data-vakit="ikindi"]:not([hidden])) { background-image: linear-gradient(180deg, #ffe5d2 0%, #fff6ef 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"], [data-view="types"])[data-vakit="aksam"]:not([hidden])) { background-image: linear-gradient(180deg, #fbdde6 0%, #fff3f6 360px, #fff 100%); }
+.app-shell-container:has(.tab-view-tesbihat.visible .tesbihat-view:is([data-view="reader"], [data-view="location"], [data-view="types"])[data-vakit="yatsi"]:not([hidden])) { background-image: linear-gradient(180deg, #e2e6f6 0%, #f4f5fb 360px, #fff 100%); }
 
 /* Alt bilgi (footer) yalnızca tesbihat ana sayfasında görünür; vakit türleri, okuyucu ve
    konum seçimi gibi diğer görünümlerde gizlenir. */
@@ -70,7 +70,7 @@
 }
 
 .tab-view-tesbihat.visible .tesbihat-page .tesbihat-view:not([hidden]) {
-    animation: tesbihat-view-in 0.38s ease-out both;
+    animation: tesbihat-view-in 0.4s ease-out both;
 }
 
 /* Diğer sekmelerle aynı: sayfa ilk açıldığında giriş 0,6 sn sürer. */
@@ -147,9 +147,9 @@
     gap: 14px;
     margin-top: 22px;
     padding: 18px 20px;
-    border: 1.5px solid #9dbbea;
+    border: 1.5px solid color-mix(in srgb, var(--vakit-color, #4b87e4) 45%, #fff);
     border-radius: 16px;
-    background: linear-gradient(135deg, var(--tb-tint-soft) 0%, var(--tb-tint) 100%);
+    background: linear-gradient(135deg, var(--vakit-wash, var(--tb-tint-soft)) 0%, var(--vakit-tint, var(--tb-tint)) 100%);
 }
 
 .tesbihat-page .tesbihat-info-icon {
@@ -161,7 +161,7 @@
     height: 30px;
     border-radius: 50%;
     color: #fff;
-    background: var(--tb-gradient);
+    background: linear-gradient(135deg, var(--vakit-head, var(--vakit-color, var(--tb-primary))) 0%, var(--vakit-color, var(--tb-primary-light)) 100%);
     font-size: 13px;
 }
 

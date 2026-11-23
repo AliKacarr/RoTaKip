@@ -2,13 +2,13 @@
 
 const { rateLimit } = require('express-rate-limit');
 
-function createRateLimiter(windowMs, limit, message) {
+function createRateLimiter(windowMs, limit, message, body = { error: message }) {
   return rateLimit({
     windowMs,
     limit,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    message: { error: message }
+    message: body
   });
 }
 
@@ -33,9 +33,20 @@ const imageProxyLimiter = createRateLimiter(
   'Çok fazla görsel isteği gönderdiniz.'
 );
 
+// Konum çözümleme her çağrıda üçüncü taraf bir servise gider; kotayı korumak için sıkı tutulur.
+// Tesbihat istemcisi hata metnini "message" alanından okuduğu için yanıt gövdesi buna uyar.
+const locationLookupMessage = 'Çok fazla konum isteği gönderdiniz. Lütfen biraz bekleyip tekrar deneyin.';
+const locationLookupLimiter = createRateLimiter(
+  60 * 1000,
+  10,
+  locationLookupMessage,
+  { success: false, message: locationLookupMessage }
+);
+
 module.exports = {
   accountCreationLimiter,
   imageProxyLimiter,
+  locationLookupLimiter,
   loginLimiter,
   publicLogLimiter
 };

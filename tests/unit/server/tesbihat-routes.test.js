@@ -13,10 +13,13 @@ const { shiftDateKey } = require('../../../src/server/shared/date-time');
 
 function createFakeApp() {
   const routes = new Map();
+  const middlewares = new Map();
   return {
     routes,
-    get(routePath, handler) {
-      routes.set(routePath, handler);
+    middlewares,
+    get(routePath, ...handlers) {
+      routes.set(routePath, handlers.at(-1));
+      middlewares.set(routePath, handlers.slice(0, -1));
     }
   };
 }
@@ -73,10 +76,13 @@ function createFakeDb(collections) {
   };
 }
 
+const locationLookupLimiter = (_req, _res, next) => next();
+
 function registerWith(service, today = '2026-11-22') {
   const app = createFakeApp();
   registerTesbihatRoutes(app, {
     ...service,
+    locationLookupLimiter,
     istanbulDateKey: () => today,
     shiftDateKey
   });
@@ -244,6 +250,11 @@ const resolveDb = () => createFakeDb({
     { locationId: 9440, il: 'Elazığ', ilce: 'Palu' },
     { locationId: 9146, il: 'Adana', ilce: 'Adana' }
   ]
+});
+
+test('konum çözümleme ucu hız sınırlayıcıyla korunur', () => {
+  const app = registerWith(createTesbihatService({ getDb: () => fakeDb }));
+  assert.deepEqual(app.middlewares.get('/api/prayer-locations/resolve'), [locationLookupLimiter]);
 });
 
 function resolveWith(place) {

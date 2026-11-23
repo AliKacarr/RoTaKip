@@ -26,6 +26,7 @@ function registerTesbihatRoutes(app, {
   listPrayerLocations,
   listPrayerTimes,
   listTesbihat,
+  locationLookupLimiter,
   resolvePrayerLocation,
   shiftDateKey
 }) {
@@ -39,7 +40,7 @@ function registerTesbihatRoutes(app, {
     }
   });
 
-  app.get('/api/prayer-locations/resolve', async (req, res) => {
+  app.get('/api/prayer-locations/resolve', locationLookupLimiter, async (req, res) => {
     const latitude = parseCoordinate(req.query.latitude, 90);
     const longitude = parseCoordinate(req.query.longitude, 180);
     if (latitude === null || longitude === null) {

@@ -5,6 +5,10 @@ const { SiteActivityLog } = require('./activity.models');
 const { getGroupCollections } = require('../groups/group.models');
 const { isSafeGroupId } = require('../../shared/group-id');
 
+const TESBIHAT_VIEW_ACTION = 'tesbihat_görüntüleme';
+/** Tesbihat sekmesindeki .tesbihat-view[data-view] değerleri */
+const TESBIHAT_VIEWS = new Set(['home', 'location', 'types', 'reader']);
+
 function createActivityService({ getSessionMembership }) {
   function getTurkeyMinuteBounds(at = new Date()) {
     const m = moment(at).utcOffset(3);
@@ -62,13 +66,14 @@ function createActivityService({ getSessionMembership }) {
       : extractClientIp(req);
   }
 
-  async function logSiteActivity({ action, req, groupId, deviceInfo, actor }) {
+  async function logSiteActivity({ action, req, groupId, deviceInfo, actor, view }) {
     try {
       const allowedSiteActions = new Set([
         'grup_görüntüleme',
         'ana_sayfa_görüntüleme',
         'grup_oluşturma',
-        'grup_silme'
+        'grup_silme',
+        TESBIHAT_VIEW_ACTION
       ]);
       const normalizeSiteAction = (rawAction) => {
         const a = typeof rawAction === 'string' ? rawAction.trim() : '';
@@ -78,11 +83,16 @@ function createActivityService({ getSessionMembership }) {
       const normalizedAction = normalizeSiteAction(action);
       const storedGroupId = isSafeGroupId(groupId) ? String(groupId) : null;
       const storedActor = actor || await resolveLogActor(req, storedGroupId);
+      // Yalnızca tesbihat eyleminde ve bilinen bir data-view değeriyle saklanır.
+      const storedView = normalizedAction === TESBIHAT_VIEW_ACTION && TESBIHAT_VIEWS.has(view)
+        ? view
+        : null;
 
       if (await hasLogInSameTurkeyMinute(SiteActivityLog, {
         groupId: storedGroupId,
         action: normalizedAction,
-        ipAddress: storedActor
+        ipAddress: storedActor,
+        ...(storedView ? { view: storedView } : {})
       })) {
         return;
       }
@@ -92,7 +102,8 @@ function createActivityService({ getSessionMembership }) {
         timestamp: new Date(),
         deviceInfo: buildDeviceInfo(req, deviceInfo),
         ipAddress: storedActor,
-        groupId: storedGroupId
+        groupId: storedGroupId,
+        ...(storedView ? { view: storedView } : {})
       });
 
       await log.save();

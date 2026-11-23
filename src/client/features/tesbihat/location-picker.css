@@ -52,7 +52,7 @@
     border: 0;
     border-radius: 14px;
     color: #fff;
-    background: linear-gradient(135deg, var(--vakit-dark, var(--tb-primary-dark)) 0%, var(--vakit-color, var(--tb-primary)) 100%);
+    background: linear-gradient(135deg, var(--vakit-head, var(--vakit-dark, var(--tb-primary-dark))) 0%, var(--vakit-color, var(--tb-primary)) 100%);
     font-size: 19px;
     font-weight: 700;
     cursor: pointer;
