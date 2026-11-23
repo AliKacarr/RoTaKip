@@ -12,7 +12,10 @@ const ALLOWED_SITE_ACTIONS = new Set([
   'ana_sayfa_görüntüleme',
   'grup_oluşturma',
   'grup_silme',
-  TESBIHAT_VIEW_ACTION
+  TESBIHAT_VIEW_ACTION,
+  'videolar_görüntüleme',
+  'tefekkur_görüntüleme',
+  'makaleler_görüntüleme'
 ]);
 const TESBIHAT_VIEWS = new Set(['home', 'location', 'types', 'reader']);
 const TESBIHAT_VAKITS = new Set(['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi']);

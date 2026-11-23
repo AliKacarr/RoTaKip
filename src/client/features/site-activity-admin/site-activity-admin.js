@@ -165,6 +165,12 @@
             return escapeHtml(gid || '—') + ' grubu silindi';
           case 'tesbihat_görüntüleme':
             return escapeHtml(formatTesbihatEylem(log));
+          case 'videolar_görüntüleme':
+            return 'Videolar sekmesi açıldı';
+          case 'tefekkur_görüntüleme':
+            return 'Tefekkür sekmesi açıldı';
+          case 'makaleler_görüntüleme':
+            return 'Makaleler sekmesi açıldı';
           default:
             return escapeHtml(action || 'bilinmeyen eylem') +
               (gid ? '<br><span style="color:#5f5f5f;font-size:0.92em;">Grup: ' + escapeHtml(gid) + '</span>' : '');

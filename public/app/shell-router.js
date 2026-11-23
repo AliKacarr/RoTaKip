@@ -483,6 +483,42 @@ function runOkumalarBackgroundWork(options = {}) {
   });
 }
 
+// Sekme açılışları yalnızca site yöneticisinin etkinlik kayıtlarında görünür.
+// Tesbihat kendi görünümlerini (vakit/tür) tesbihat-tab.js içinde ayrıca kaydeder.
+const TAB_VIEW_ACTIONS = Object.freeze({
+  videos: 'videolar_görüntüleme',
+  tefekkur: 'tefekkur_görüntüleme',
+  articles: 'makaleler_görüntüleme'
+});
+
+function logTabView(route) {
+  const action = TAB_VIEW_ACTIONS[route.name];
+  if (!action) return;
+  const payload = JSON.stringify({
+    action,
+    deviceInfo: {
+      userAgent: navigator.userAgent,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height
+    }
+  });
+  (async () => {
+    for (const endpoint of ['/api/visit-event', '/api/log-visit']) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true
+        });
+        if (response.ok) return;
+      } catch {
+        // Reklam engelleyici / ağ hatası: bir sonraki uç noktayı dene.
+      }
+    }
+  })();
+}
+
 async function initOkumalarTab(options = {}) {
   if (options.inviteOnboarding === true) {
     await initializeGroupUi();
@@ -858,6 +894,7 @@ async function navigate(url, options = {}) {
     if (route.name === 'groups') activeView.classList.remove('is-preparing-return');
     await hideStatus();
     if (sequence !== navigationSequence) return;
+    logTabView(route);
     if (revealAfterLifecycle) {
       await revealRouteAfterLoader(activeView, { useInitialTabLoader, transitionLoader, sequence });
     }
