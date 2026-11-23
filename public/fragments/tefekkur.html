@@ -40,7 +40,7 @@
       </button></li>
       <li><button type="button" class="tefekkur-section-row" data-section="zikirmatik">
         <span class="tefekkur-section-icon"><i class="fa-solid fa-bullseye" aria-hidden="true"></i></span>
-        <span class="tefekkur-section-name">Zikirmatik<small>Dokunarak sayın, tur hedefi belirleyin</small></span>
+        <span class="tefekkur-section-name">Zikirmatik<small>Günlük zikirlerinizi çekin</small></span>
         <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
       </button></li>
       <li><button type="button" class="tefekkur-section-row" data-section="kuran-radyo">
@@ -93,11 +93,21 @@
       </div>
       <div class="tefekkur-header-actions" role="group" aria-label="Zikirmatik ayarları">
         <button type="button" id="tefekkurZikirVibration" aria-pressed="true" aria-label="Titreşim" title="Titreşim" hidden><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></button>
-        <button type="button" id="tefekkurZikirReset" aria-label="Sayacı sıfırla" title="Sayacı sıfırla"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+        <button type="button" id="tefekkurZikirClear" aria-label="Tümünü sil" title="Tümünü sil"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+        <button type="button" id="tefekkurZikirReset" aria-label="Sayacı sıfırla" title="Sayacı sıfırla"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></button>
       </div>
     </header>
 
     <div class="tefekkur-zikir-presets" role="group" aria-label="Zikir seçimi"></div>
+
+    <div class="tefekkur-zikir-targets" role="group" aria-label="Tur hedefi">
+      <button type="button" data-target="33">33</button>
+      <button type="button" data-target="99">99</button>
+      <button type="button" data-target="100">100</button>
+      <button type="button" data-target="500">500</button>
+      <button type="button" data-target="1000">1000</button>
+      <button type="button" data-target="0" aria-label="Hedefsiz">∞</button>
+    </div>
 
     <div class="tefekkur-zikir-card">
       <p id="tefekkurZikirArabic" class="tefekkur-zikir-arabic" lang="ar" dir="rtl" hidden></p>
@@ -116,18 +126,6 @@
         <div><dt>Tur</dt><dd id="tefekkurZikirLaps">0</dd></div>
         <div><dt>Toplam</dt><dd id="tefekkurZikirTotal">0</dd></div>
       </dl>
-    </div>
-
-    <div class="tefekkur-zikir-controls">
-      <div class="tefekkur-zikir-targets" role="group" aria-label="Tur hedefi">
-        <button type="button" data-target="33">33</button>
-        <button type="button" data-target="99">99</button>
-        <button type="button" data-target="100">100</button>
-        <button type="button" data-target="500">500</button>
-        <button type="button" data-target="1000">1000</button>
-        <button type="button" data-target="0" aria-label="Hedefsiz">∞</button>
-      </div>
-      <button type="button" id="tefekkurZikirUndo" class="tefekkur-zikir-undo"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Geri al</button>
     </div>
   </section>
 

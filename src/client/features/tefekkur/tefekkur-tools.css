@@ -2,8 +2,7 @@
 .tefekkur-page .tefekkur-zikir-presets {
     display: flex;
     gap: 8px;
-    margin: 0 -2px 18px;
-    padding: 2px 2px 6px;
+    margin: 0 0px 18px;
     overflow-x: auto;
     scrollbar-width: none;
 }
@@ -50,6 +49,11 @@
     border-radius: 24px;
     background: linear-gradient(180deg, var(--section-tint) 0%, #fff 70%);
     box-shadow: 0 8px 24px color-mix(in srgb, var(--section-color) 14%, transparent);
+    /* Kartın her yerine dokunmak sayar; çift dokunuşla yakınlaşma ve metin seçimi olmasın. */
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .tefekkur-page .tefekkur-zikir-arabic {
@@ -135,7 +139,7 @@
     font-weight: 600;
 }
 
-.tefekkur-page .tefekkur-zikir-ring:active .tefekkur-zikir-ring-inner {
+.tefekkur-page .tefekkur-zikir-card:active .tefekkur-zikir-ring-inner {
     transform: scale(0.95);
 }
 
@@ -199,45 +203,17 @@
     font-variant-numeric: tabular-nums;
 }
 
-.tefekkur-page .tefekkur-zikir-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 18px;
-}
-
 .tefekkur-page .tefekkur-zikir-targets {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    margin-bottom: 18px;
 }
 
 .tefekkur-page .tefekkur-zikir-targets button {
     min-width: 54px;
     padding: 0 12px;
     font-variant-numeric: tabular-nums;
-}
-
-.tefekkur-page .tefekkur-zikir-undo {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 18px;
-    border: 1.5px solid #c9ccd2;
-    border-radius: 14px;
-    color: #333;
-    background: #fff;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.tefekkur-page .tefekkur-zikir-undo:disabled {
-    cursor: default;
-    opacity: 0.45;
 }
 
 /* --- Radyo ----------------------------------------------------------------------------- */
@@ -436,25 +412,16 @@
         font-size: 60px;
     }
 
-    .tefekkur-page .tefekkur-zikir-controls {
-        flex-direction: column;
-        align-items: stretch;
-        margin-top: 14px;
-    }
-
     .tefekkur-page .tefekkur-zikir-targets {
         display: grid;
         grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 6px;
+        margin-bottom: 14px;
     }
 
     .tefekkur-page .tefekkur-zikir-targets button {
         min-width: 0;
         padding: 0 4px;
-    }
-
-    .tefekkur-page .tefekkur-zikir-undo {
-        justify-content: center;
     }
 
     .tefekkur-page .tefekkur-radio-card {

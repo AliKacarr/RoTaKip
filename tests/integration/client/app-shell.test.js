@@ -645,7 +645,8 @@ test('Tefekkür bölümleri sekme içi URL ile açılır ve kaydırmalı okuyucu
   assert.match(core, /esma:\s*\{[\s\S]*?source:\s*\{\s*type:\s*'esma'\s*\}[\s\S]*?chip:\s*'index'/);
   assert.match(slider, /addEventListener\('pointerdown'[\s\S]*?addEventListener\('pointermove'[\s\S]*?addEventListener\('pointerup'[\s\S]*?addEventListener\('pointercancel'/);
   assert.match(slider, /event\.key !== 'ArrowLeft' && event\.key !== 'ArrowRight'/);
-  assert.match(slider, /counter\.textContent = ready \? `\$\{state\.index \+ 1\} \/ \$\{total\}`/);
+  assert.match(slider, /const text = `\$\{index \+ 1\} \/ \$\{total\}`/);
+  assert.match(slider, /if \(ready\) renderCounter\(state\.index\)/);
   assert.match(slider, /\/esmaulhusna\.json/);
   assert.match(slider, /\/api\/tefekkur\/images\/[\s\S]*?\/api\/tefekkur\/texts\//);
 

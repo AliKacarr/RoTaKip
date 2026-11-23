@@ -182,7 +182,7 @@
                     } else if (option === 'copy') {
                         try {
                             await ns.copyText(text);
-                            ns.toast('Kopyalandı');
+                            ns.toast('Panoya kopyalandı');
                         } catch (_error) {
                             ns.toast('Kopyalanamadı', 'error');
                         }

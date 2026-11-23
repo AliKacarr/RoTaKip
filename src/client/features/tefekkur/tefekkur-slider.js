@@ -20,7 +20,8 @@
         status: 'idle',
         sequence: 0,
         animating: false,
-        drag: null
+        drag: null,
+        neighbor: null
     };
 
     function queryElements() {
@@ -126,8 +127,8 @@
     function renderSlide() {
         const { slide } = state.elements;
         const item = currentItem();
+        removeNeighbor();
         slide.style.transform = '';
-        slide.style.opacity = '';
         if (state.status === 'loading') {
             slide.className = 'tefekkur-slide is-loading';
             slide.replaceChildren();
@@ -141,14 +142,18 @@
             renderMessage('fa-regular fa-folder-open', state.emptyMessage || 'Bu bölüme henüz içerik eklenmedi.', false);
             return;
         }
+        fillSlide(slide, item, state.index);
+    }
 
+    // Kartın içeriğini çizer; geçerli kart ve kaydırma sırasında yanında görünen komşu kart aynı kodu kullanır.
+    function fillSlide(slide, item, index) {
         slide.replaceChildren();
         if (item.image) {
             slide.className = 'tefekkur-slide is-image';
             const figure = createElement('figure', 'tefekkur-slide-figure');
             const image = document.createElement('img');
             image.src = item.image;
-            image.alt = `${state.label} görseli ${state.index + 1}`;
+            image.alt = `${state.label} görseli ${index + 1}`;
             image.decoding = 'async';
             image.draggable = false;
             figure.appendChild(image);
@@ -182,6 +187,15 @@
         slide.appendChild(createElement('span', 'tefekkur-slide-rule is-bottom'));
     }
 
+    // Sayaç, geçiş bitmeden hedef karta göre güncellenebilsin diye dizini dışarıdan alır.
+    function renderCounter(index) {
+        const { counter } = state.elements;
+        const total = state.items.length;
+        const text = `${index + 1} / ${total}`;
+        if (counter.textContent !== text) counter.textContent = text;
+        counter.setAttribute('aria-label', `${total} içerikten ${index + 1}.`);
+    }
+
     function renderControls() {
         const { prev, next, counter, copy, share, chip } = state.elements;
         const total = state.items.length;
@@ -192,9 +206,11 @@
         share.disabled = !ready;
         chip.disabled = !ready || total < 2;
         // Yüklenirken, hata ve boş durumlarında sayaç boş kalır; mesaj zaten kartta gösterilir.
-        counter.textContent = ready ? `${state.index + 1} / ${total}` : '';
-        if (ready) counter.setAttribute('aria-label', `${total} içerikten ${state.index + 1}.`);
-        else counter.removeAttribute('aria-label');
+        if (ready) renderCounter(state.index);
+        else {
+            counter.textContent = '';
+            counter.removeAttribute('aria-label');
+        }
         if (state.chip === 'index') {
             chip.querySelector('span').textContent = total > 0 ? `${total} İsim` : 'Liste';
         }
@@ -226,10 +242,54 @@
         }
     }
 
-    function animateSlide(keyframes, duration, easing) {
-        const { slide } = state.elements;
-        if (ns.prefersReducedMotion() || typeof slide.animate !== 'function') return Promise.resolve();
-        return slide.animate(keyframes, { duration, easing }).finished.catch(() => {});
+    const SLIDE_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+    function stageWidth() {
+        return state.elements.stage.clientWidth || window.innerWidth;
+    }
+
+    function canAnimate() {
+        return !ns.prefersReducedMotion() && typeof state.elements.slide.animate === 'function';
+    }
+
+    function slideKeyframes(from, to) {
+        return [{ transform: `translateX(${from}px)` }, { transform: `translateX(${to}px)` }];
+    }
+
+    function removeNeighbor() {
+        if (!state.neighbor) return;
+        state.neighbor.el.remove();
+        state.neighbor = null;
+    }
+
+    // Kaydırma sırasında gelecek kartı geçerli kartın yanında hazır tutar; böylece kart
+    // parmakla birlikte kayar ve geçişte boş an kalmaz. direction: +1 sağdan, -1 soldan gelir.
+    function ensureNeighbor(index, direction) {
+        if (state.neighbor?.index === index) {
+            state.neighbor.direction = direction;
+            return state.neighbor;
+        }
+        removeNeighbor();
+        const item = state.items[index];
+        if (!item) return null;
+        const el = createElement('div', 'tefekkur-slide-neighbor');
+        el.setAttribute('aria-hidden', 'true');
+        const slide = createElement('article', 'tefekkur-slide');
+        fillSlide(slide, item, index);
+        el.appendChild(slide);
+        state.elements.stage.appendChild(el);
+        state.neighbor = { el, index, direction };
+        return state.neighbor;
+    }
+
+    function placeSlides(offset) {
+        state.elements.slide.style.transform = `translateX(${offset}px)`;
+        if (state.neighbor) {
+            state.neighbor.el.style.transform = `translateX(${offset + state.neighbor.direction * stageWidth()}px)`;
+        }
+        // Yeni kartın görünen kısmı yarıyı geçince sayaç ona geçer; yarıdan geri dönülürse eski değere döner.
+        const passedHalf = state.neighbor && Math.abs(offset) > stageWidth() / 2;
+        renderCounter(passedHalf ? state.neighbor.index : state.index);
     }
 
     // direction: +1 sonraki (içerik sola kayar), -1 önceki (içerik sağa kayar)
@@ -243,31 +303,53 @@
         state.animating = true;
         try {
             const { slide } = state.elements;
-            const startOpacity = slide.style.opacity || '1';
-            await animateSlide([
-                { transform: `translateX(${fromOffset}px)`, opacity: startOpacity },
-                { transform: `translateX(${-direction * 45}%)`, opacity: 0 }
-            ], 150, 'ease-in');
-            state.index = nextIndex;
-            render();
-            await animateSlide([
-                { transform: `translateX(${direction * 45}%)`, opacity: 0 },
-                { transform: 'translateX(0)', opacity: 1 }
-            ], 220, 'cubic-bezier(0.2, 0.8, 0.2, 1)');
+            const neighbor = canAnimate() ? ensureNeighbor(nextIndex, direction) : null;
+            if (neighbor) {
+                const width = stageWidth();
+                placeSlides(fromOffset);
+                renderCounter(nextIndex);
+                // Kalan mesafe kısaldıkça süre de kısalır; kart parmağın bıraktığı yerden devam eder.
+                const duration = Math.round(270 + 150 * Math.max(0, 1 - Math.abs(fromOffset) / width));
+                const animations = [
+                    slide.animate(slideKeyframes(fromOffset, -direction * width), { duration, easing: SLIDE_EASING, fill: 'forwards' }),
+                    neighbor.el.animate(slideKeyframes(direction * width + fromOffset, 0), { duration, easing: SLIDE_EASING, fill: 'forwards' })
+                ];
+                await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+                state.index = nextIndex;
+                render();
+                animations.forEach(animation => animation.cancel());
+            } else {
+                state.index = nextIndex;
+                render();
+            }
         } finally {
             state.animating = false;
         }
     }
 
-    function snapBack(fromOffset) {
+    async function snapBack(fromOffset) {
         const { slide } = state.elements;
-        const startOpacity = slide.style.opacity || '1';
-        slide.style.transform = '';
-        slide.style.opacity = '';
-        animateSlide([
-            { transform: `translateX(${fromOffset}px)`, opacity: startOpacity },
-            { transform: 'translateX(0)', opacity: 1 }
-        ], 200, 'ease-out');
+        const neighbor = state.neighbor;
+        state.animating = true;
+        renderCounter(state.index);
+        try {
+            if (canAnimate() && fromOffset) {
+                const animations = [slide.animate(slideKeyframes(fromOffset, 0), { duration: 300, easing: SLIDE_EASING, fill: 'forwards' })];
+                if (neighbor) {
+                    const rest = neighbor.direction * stageWidth();
+                    animations.push(neighbor.el.animate(slideKeyframes(rest + fromOffset, rest), { duration: 300, easing: SLIDE_EASING, fill: 'forwards' }));
+                }
+                await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+                slide.style.transform = '';
+                removeNeighbor();
+                animations.forEach(animation => animation.cancel());
+            } else {
+                slide.style.transform = '';
+                removeNeighbor();
+            }
+        } finally {
+            state.animating = false;
+        }
     }
 
     function step(delta) {
@@ -329,7 +411,7 @@
     async function copyCurrent() {
         try {
             const result = await ns.share.copyItem(currentItem());
-            ns.toast(result === 'link' ? 'Görsel bağlantısı kopyalandı' : result === 'image' ? 'Görsel kopyalandı' : 'Kopyalandı');
+            ns.toast(result === 'link' ? 'Görsel bağlantısı kopyalandı' : result === 'image' ? 'Görsel kopyalandı' : 'Panoya kopyalandı');
         } catch (error) {
             console.warn('Kopyalanamadı:', error);
             ns.toast('Kopyalanamadı', 'error');
@@ -368,11 +450,12 @@
             state.elements.stage.setPointerCapture?.(event.pointerId);
             state.elements.slide.classList.add('is-dragging');
         }
+        const direction = dx < 0 ? 1 : -1;
         const atEdge = (state.index === 0 && dx > 0) || (state.index === state.items.length - 1 && dx < 0);
         drag.dx = atEdge ? dx * 0.3 : dx;
-        const { slide } = state.elements;
-        slide.style.transform = `translateX(${drag.dx}px)`;
-        slide.style.opacity = String(1 - Math.min(Math.abs(drag.dx) / 700, 0.35));
+        if (atEdge) removeNeighbor();
+        else ensureNeighbor(state.index + direction, direction);
+        placeSlides(drag.dx);
     }
 
     function finishDrag(event, cancelled) {

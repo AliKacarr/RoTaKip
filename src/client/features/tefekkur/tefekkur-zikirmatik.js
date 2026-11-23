@@ -22,7 +22,9 @@
         target: 33,
         count: 0,
         laps: 0,
-        total: 0
+        total: 0,
+        // Her zikrin hedef, sayaç, tur ve toplamı ayrı tutulur: { [presetKey]: { target, count, laps, total } }
+        counters: {}
     };
 
     function queryElements() {
@@ -32,6 +34,7 @@
             subtitle: document.getElementById('tefekkurZikirSubtitle'),
             presets: view.querySelector('.tefekkur-zikir-presets'),
             arabic: document.getElementById('tefekkurZikirArabic'),
+            card: view.querySelector('.tefekkur-zikir-card'),
             tap: document.getElementById('tefekkurZikirTap'),
             progress: view.querySelector('.tefekkur-zikir-ring-progress'),
             count: document.getElementById('tefekkurZikirCount'),
@@ -39,8 +42,8 @@
             laps: document.getElementById('tefekkurZikirLaps'),
             total: document.getElementById('tefekkurZikirTotal'),
             targets: Array.from(view.querySelectorAll('.tefekkur-zikir-targets [data-target]')),
-            undo: document.getElementById('tefekkurZikirUndo'),
             reset: document.getElementById('tefekkurZikirReset'),
+            clear: document.getElementById('tefekkurZikirClear'),
             vibration: document.getElementById('tefekkurZikirVibration')
         };
     }
@@ -54,29 +57,52 @@
         return Number.isInteger(number) && number >= 0 ? number : 0;
     }
 
+    function normalizeCounter(raw, preset) {
+        if (!raw || typeof raw !== 'object') return null;
+        const target = TARGETS.includes(raw.target) ? raw.target : preset.target;
+        let count = toCount(raw.count);
+        if (target > 0 && count >= target) count = 0;
+        return { target, count, laps: toCount(raw.laps), total: toCount(raw.total) };
+    }
+
+    // Seçili zikrin kayıtlı değerlerini ekrandaki sayaca yükler; kayıt yoksa zikrin varsayılanıyla başlar.
+    function applyCounter(key) {
+        const preset = findPreset(key);
+        const counter = state.counters[preset.key] || { target: preset.target, count: 0, laps: 0, total: 0 };
+        state.target = counter.target;
+        state.count = counter.count;
+        state.laps = counter.laps;
+        state.total = counter.total;
+    }
+
+    function captureCounter() {
+        state.counters[state.preset] = { target: state.target, count: state.count, laps: state.laps, total: state.total };
+    }
+
     function loadState() {
         try {
             const stored = JSON.parse(ns.readStorage(STATE_STORAGE_KEY) || 'null');
             if (!stored || typeof stored !== 'object') return;
             state.preset = findPreset(stored.preset).key;
-            state.target = TARGETS.includes(stored.target) ? stored.target : findPreset(state.preset).target;
-            state.count = toCount(stored.count);
-            state.laps = toCount(stored.laps);
-            state.total = toCount(stored.total);
-            if (state.target > 0 && state.count >= state.target) state.count = 0;
+            if (stored.counters && typeof stored.counters === 'object') {
+                PRESETS.forEach(preset => {
+                    const counter = normalizeCounter(stored.counters[preset.key], preset);
+                    if (counter) state.counters[preset.key] = counter;
+                });
+            } else {
+                // Eski kayıt biçimi: tek sayaç vardı, seçili zikre aktarılır.
+                const counter = normalizeCounter(stored, findPreset(state.preset));
+                if (counter) state.counters[state.preset] = counter;
+            }
+            applyCounter(state.preset);
         } catch (_error) {
             // Bozuk kayıt yok sayılır; sayaç sıfırdan başlar.
         }
     }
 
     function saveState() {
-        ns.writeStorage(STATE_STORAGE_KEY, JSON.stringify({
-            preset: state.preset,
-            target: state.target,
-            count: state.count,
-            laps: state.laps,
-            total: state.total
-        }));
+        captureCounter();
+        ns.writeStorage(STATE_STORAGE_KEY, JSON.stringify({ preset: state.preset, counters: state.counters }));
     }
 
     function vibrate(pattern) {
@@ -118,7 +144,6 @@
         elements.target.textContent = hasTarget ? `/ ${state.target}` : '';
         elements.laps.textContent = String(state.laps);
         elements.total.textContent = String(state.total);
-        elements.undo.disabled = state.total === 0;
         elements.tap.setAttribute('aria-label', hasTarget
             ? `Sayaç: ${state.count} / ${state.target}, ${state.laps} tur. Saymak için dokunun.`
             : `Sayaç: ${state.count}. Saymak için dokunun.`);
@@ -153,29 +178,28 @@
         render();
     }
 
-    function undo() {
-        if (state.total === 0) return;
-        if (state.count > 0) {
-            state.count -= 1;
-        } else if (state.laps > 0) {
-            state.laps -= 1;
-            state.count = Math.max(state.target - 1, 0);
+    // Yalnızca seçili zikrin o anki turdaki sayacını sıfırlar; tur ve toplam korunur.
+    function reset() {
+        if (state.count === 0) {
+            ns.toast('Sayaç zaten sıfır');
+            return;
         }
-        state.total -= 1;
+        state.count = 0;
         vibrate(8);
         saveState();
         render();
     }
 
-    async function reset() {
-        if (state.total === 0) {
-            ns.toast('Sıfırlanacak bir sayaç yok');
+    // Yalnızca seçili zikrin sayaç, tur ve toplamını siler; diğer zikirlerin kaydına dokunmaz.
+    async function clearAll() {
+        if (state.count === 0 && state.laps === 0 && state.total === 0) {
+            ns.toast('Silinecek bir kayıt yok');
             return;
         }
         const confirmed = await ns.confirmDialog({
-            title: 'Sayacı Sıfırla',
-            message: 'Sayaç, tur ve toplam sıfırlanacak. Emin misiniz?',
-            confirmLabel: 'Sıfırla'
+            title: 'Tümünü Sil',
+            message: `"${findPreset(state.preset).label}" için sayaç, tur ve toplam silinecek. Diğer zikirler etkilenmez. Emin misiniz?`,
+            confirmLabel: 'Sil'
         });
         if (!confirmed) return;
         state.count = 0;
@@ -188,11 +212,9 @@
     function selectPreset(key) {
         const preset = findPreset(key);
         if (preset.key === state.preset) return;
+        captureCounter();
         state.preset = preset.key;
-        state.target = preset.target;
-        state.count = 0;
-        state.laps = 0;
-        state.total = 0;
+        applyCounter(preset.key);
         saveState();
         render();
     }
@@ -209,8 +231,9 @@
     }
 
     function bindEvents() {
-        const { tap, presets, targets, undo: undoButton, reset: resetButton, vibration } = state.elements;
-        tap.addEventListener('click', increment);
+        const { card, presets, targets, reset: resetButton, clear: clearButton, vibration } = state.elements;
+        // Kartın her yeri sayar; halka düğmesinin tıklaması (klavye dahil) karta kabarcıklanır, tek sayılır.
+        card.addEventListener('click', increment);
         presets.addEventListener('click', event => {
             const button = event.target.closest('[data-preset]');
             if (button) selectPreset(button.dataset.preset);
@@ -218,8 +241,8 @@
         targets.forEach(button => {
             button.addEventListener('click', () => selectTarget(Number(button.dataset.target)));
         });
-        undoButton.addEventListener('click', undo);
         resetButton.addEventListener('click', reset);
+        clearButton.addEventListener('click', clearAll);
         vibration.addEventListener('click', () => {
             state.vibrationEnabled = !state.vibrationEnabled;
             ns.writeStorage(VIBRATION_STORAGE_KEY, state.vibrationEnabled ? 'on' : 'off');
