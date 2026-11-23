@@ -200,7 +200,7 @@
 
 .tesbihat-dialog {
     width: 100%;
-    max-width: 420px;
+    max-width: 350px;
     padding: 24px 24px 12px;
     border-radius: 16px;
     color: #111;
@@ -273,7 +273,7 @@
 .tesbihat-dialog.tesbihat-notification-dialog {
     display: flex;
     flex-direction: column;
-    min-height: 260px;
+    min-height: 200px;
     padding-bottom: 24px;
 }
 
@@ -385,11 +385,6 @@
 @media (max-width: 480px) {
     .tesbihat-dialog {
         padding: 20px 18px 8px;
-    }
-
-    .tesbihat-dialog.tesbihat-notification-dialog {
-        min-height: 220px;
-        padding-bottom: 20px;
     }
 
     .tesbihat-dialog h2 {
