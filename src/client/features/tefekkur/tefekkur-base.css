@@ -1,0 +1,538 @@
+.tefekkur-page {
+    --tf-text: #111;
+    --tf-muted: #5b6472;
+    --tf-border: #d4d8df;
+    --tf-card-shadow: 0 8px 24px rgba(36, 50, 70, 0.08);
+    --tf-accent: #ff6b33;
+    --tf-accent-dark: #d9531f;
+    --tf-accent-tint: #fff0e8;
+    /* Alt menü mobilde ekranın altında durur; yapışkan kontroller bunun üstünde kalır. */
+    --tf-bottom-offset: 0px;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 10px 20px 28px;
+    color: var(--tf-text);
+    box-sizing: border-box;
+}
+
+.tefekkur-page button {
+    font-family: inherit;
+}
+
+/* Her bölümün kendi rengi vardır: ana listedeki satır ve açılan görünümün başlığı bu
+   renkten beslenir. Her bölüm ayrı bir ton alır; sıcak ve soğuk tonlar dönüşümlü gelir ki alt
+   alta gelen satırlar birbirinden net ayrılsın. Koyu ve açık tonlar ana renkten türetilir,
+   böylece bir bölümün rengini değiştirmek için tek satır yeter. */
+.tefekkur-page [data-section] {
+    --section-dark: color-mix(in srgb, var(--section-color) 72%, #000);
+    --section-tint: color-mix(in srgb, var(--section-color) 12%, #fff);
+}
+
+.tefekkur-page [data-section="ayet"] { --section-color: #0f8a5f; }
+.tefekkur-page [data-section="hadis"] { --section-color: #c7820a; }
+.tefekkur-page [data-section="dua"] { --section-color: #2b67c4; }
+.tefekkur-page [data-section="risale"] { --section-color: #7048c6; }
+.tefekkur-page [data-section="esma"] { --section-color: #0e8196; }
+.tefekkur-page [data-section="zikirmatik"] { --section-color: #e8702a; }
+.tefekkur-page [data-section="kuran-radyo"] { --section-color: #d1426a; }
+.tefekkur-page [data-section="risalet-radyo"] { --section-color: #4a50b5; }
+
+.tefekkur-page .tefekkur-view[hidden] {
+    display: none !important;
+}
+
+/* Sekme içi görünüm geçişi (ana liste → bölüm). Sekmenin ilk açılışını kabuk canlandırır. */
+.tefekkur-page .tefekkur-view.is-entering {
+    animation: tefekkur-view-in 0.32s ease-out both;
+}
+
+@keyframes tefekkur-view-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Alt bilgi (footer) yalnızca Tefekkür ana listesinde görünür. */
+.app-shell-container:has(.tab-view-tefekkur.visible .tefekkur-view:not([data-view="home"]):not([hidden])) #footerRoot {
+    display: none;
+}
+
+.tefekkur-page .tefekkur-back {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    border-radius: 50%;
+    color: var(--section-dark, var(--tf-accent-dark));
+    background: #fff;
+    font-size: 17px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: background 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-back:hover {
+    background: var(--section-tint, var(--tf-accent-tint));
+}
+
+.tefekkur-page .tefekkur-back:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+.tefekkur-page .tefekkur-plain-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 22px;
+    padding: 16px 20px;
+    border-radius: 20px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--section-dark, var(--tf-accent-dark)) 0%, var(--section-color, var(--tf-accent)) 100%);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--section-color, var(--tf-accent)) 30%, transparent);
+}
+
+.tefekkur-page .tefekkur-plain-header-titles {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.tefekkur-page .tefekkur-plain-header h4 {
+    margin: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tefekkur-page .tefekkur-plain-header p {
+    margin: 4px 0 0;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 17px;
+}
+
+.tefekkur-page .tefekkur-header-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.tefekkur-page .tefekkur-header-actions button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-header-actions button:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.tefekkur-page .tefekkur-header-actions button[hidden] {
+    display: none;
+}
+
+.tefekkur-page .tefekkur-header-actions button.is-off {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.tefekkur-page .tefekkur-header-actions button.is-off::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.tefekkur-page .tefekkur-info-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 22px;
+    padding: 16px 18px;
+    border: 1.5px solid color-mix(in srgb, var(--section-color, var(--tf-accent)) 40%, #fff);
+    border-radius: 16px;
+    background: var(--section-tint, var(--tf-accent-tint));
+}
+
+.tefekkur-page .tefekkur-info-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--section-color, var(--tf-accent));
+    font-size: 12px;
+}
+
+.tefekkur-page .tefekkur-info-note p {
+    margin: 0;
+    color: #334155;
+    font-size: 16px;
+    line-height: 1.55;
+}
+
+@font-face {
+    font-family: "KFGQPC Uthman Taha Naskh";
+    src: url("/fonts/uthman-taha-naskh-regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* --- Açılır pencereler (liste, paylaşım, onay) ----------------------------------------- */
+.tefekkur-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.55);
+    animation: tefekkur-sheet-fade 0.18s ease-out both;
+}
+
+.tefekkur-sheet {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 420px;
+    max-height: min(80dvh, 720px);
+    border-radius: 20px;
+    color: #111;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+    animation: tefekkur-sheet-pop 0.22s ease-out both;
+}
+
+.tefekkur-sheet.is-index {
+    max-width: 560px;
+}
+
+.tefekkur-sheet-header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 18px 10px 22px;
+}
+
+.tefekkur-sheet-header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.tefekkur-sheet-close {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    color: #475569;
+    background: #f1f3f6;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.tefekkur-sheet-close:hover {
+    background: #e4e7ec;
+}
+
+.tefekkur-sheet-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 4px 22px 22px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.tefekkur-sheet-message {
+    margin: 0;
+    color: #475569;
+    font-size: 17px;
+    line-height: 1.55;
+}
+
+.tefekkur-sheet-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.tefekkur-sheet-actions button {
+    min-width: 96px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid #d4d8df;
+    border-radius: 12px;
+    color: #111;
+    background: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tefekkur-sheet-actions button.is-danger {
+    border-color: #dc2626;
+    color: #fff;
+    background: #dc2626;
+}
+
+.tefekkur-sheet :is(button, [href]):focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 2px;
+}
+
+.tefekkur-share-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tefekkur-share-options button {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 54px;
+    padding: 0 16px;
+    border: 1px solid #e2e5ea;
+    border-radius: 14px;
+    color: #111;
+    background: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tefekkur-share-options button:hover {
+    background: #f6f7f9;
+}
+
+.tefekkur-share-options i {
+    width: 26px;
+    font-size: 22px;
+    text-align: center;
+}
+
+.tefekkur-share-options [data-share="whatsapp"] i { color: #25d366; }
+
+.tefekkur-index-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tefekkur-index-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "number name" "number arabic";
+    align-items: center;
+    column-gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e2e5ea;
+    border-radius: 14px;
+    color: #111;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tefekkur-index-item:hover {
+    background: #f6f7f9;
+}
+
+.tefekkur-index-item.is-current {
+    border-color: #111;
+    background: #f1f1f1;
+}
+
+.tefekkur-index-number {
+    grid-area: number;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: #555;
+    background: #f0f1f3;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.tefekkur-index-item.is-current .tefekkur-index-number {
+    color: #fff;
+    background: #111;
+}
+
+.tefekkur-index-name {
+    grid-area: name;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tefekkur-index-arabic {
+    grid-area: arabic;
+    overflow: hidden;
+    color: #555;
+    font-family: "KFGQPC Uthman Taha Naskh", "Amiri", "Noto Naskh Arabic", serif;
+    font-size: 18px;
+    line-height: 1.5;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@keyframes tefekkur-sheet-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes tefekkur-sheet-pop {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 1023px) {
+    .tefekkur-page {
+        --tf-bottom-offset: calc(80px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media (max-width: 768px) {
+    .tefekkur-page {
+        padding: 0;
+    }
+
+    .tefekkur-page .tefekkur-plain-header {
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 12px 14px;
+        border-radius: 16px;
+    }
+
+    .tefekkur-page .tefekkur-plain-header h4 {
+        font-size: 22px;
+    }
+
+    .tefekkur-page .tefekkur-plain-header p {
+        font-size: 15px;
+    }
+
+    .tefekkur-page .tefekkur-back {
+        width: 38px;
+        height: 38px;
+        border-width: 1px;
+        font-size: 15px;
+    }
+
+    .tefekkur-page .tefekkur-header-actions button {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        font-size: 15px;
+    }
+
+    .tefekkur-page .tefekkur-info-note {
+        gap: 12px;
+        margin-top: 18px;
+        padding: 14px 16px;
+    }
+
+    .tefekkur-page .tefekkur-info-note p {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 640px) {
+    .tefekkur-page {
+        --tf-bottom-offset: calc(58px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Telefonda pencereler alttan açılan sayfa olarak gelir. */
+    .tefekkur-sheet-backdrop {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .tefekkur-sheet,
+    .tefekkur-sheet.is-index {
+        max-width: none;
+        max-height: 86dvh;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        border-radius: 22px 22px 0 0;
+        animation-name: tefekkur-sheet-rise;
+    }
+
+    .tefekkur-sheet.is-confirm {
+        margin: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .tefekkur-index-list {
+        gap: 6px;
+    }
+
+    .tefekkur-index-item {
+        column-gap: 8px;
+        padding: 8px 10px;
+    }
+
+    .tefekkur-index-name {
+        font-size: 14px;
+    }
+}
+
+@keyframes tefekkur-sheet-rise {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tefekkur-page .tefekkur-view.is-entering,
+    .tefekkur-sheet-backdrop,
+    .tefekkur-sheet {
+        animation: none;
+    }
+}

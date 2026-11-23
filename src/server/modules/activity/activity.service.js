@@ -6,6 +6,8 @@ const { getGroupCollections } = require('../groups/group.models');
 const { isSafeGroupId } = require('../../shared/group-id');
 
 const TESBIHAT_VIEW_ACTION = 'tesbihat_görüntüleme';
+/** Tefekkür sekmesinde ana listeden bir bölüm açıldığında (sekmenin kendi açılışı 'tefekkur_görüntüleme') */
+const TEFEKKUR_SECTION_ACTION = 'tefekkur_bölüm_görüntüleme';
 /** Tesbihat sekmesindeki .tesbihat-view[data-view] değerleri */
 const ALLOWED_SITE_ACTIONS = new Set([
   'grup_görüntüleme',
@@ -15,11 +17,18 @@ const ALLOWED_SITE_ACTIONS = new Set([
   TESBIHAT_VIEW_ACTION,
   'videolar_görüntüleme',
   'tefekkur_görüntüleme',
+  TEFEKKUR_SECTION_ACTION,
   'makaleler_görüntüleme'
 ]);
 const TESBIHAT_VIEWS = new Set(['home', 'location', 'types', 'reader']);
 const TESBIHAT_VAKITS = new Set(['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi']);
 const TESBIHAT_TURS = new Set(['kisa', 'uzun', 'arapca-uzun']);
+/** Tefekkür sekmesindeki .tefekkur-view[data-view] değerleri (ana liste 'home' kaydedilmez) */
+const TEFEKKUR_VIEWS = new Set(['slider', 'zikirmatik', 'radio']);
+const TEFEKKUR_SECTIONS = new Set([
+  'ayet', 'hadis', 'dua', 'risale', 'esma', 'zikirmatik', 'kuran-radyo', 'risalet-radyo'
+]);
+const TEFEKKUR_MODES = new Set(['metin', 'resim']);
 
 function createActivityService({ getSessionMembership }) {
   function getTurkeyMinuteBounds(at = new Date()) {
@@ -78,7 +87,7 @@ function createActivityService({ getSessionMembership }) {
       : extractClientIp(req);
   }
 
-  async function logSiteActivity({ action, req, groupId, deviceInfo, actor, view, vakit, tur }) {
+  async function logSiteActivity({ action, req, groupId, deviceInfo, actor, view, vakit, tur, section, mode }) {
     try {
       const normalizedAction = typeof action === 'string' ? action.trim() : '';
       // Tanımsız eylemler (ör. istemcinin gönderdiği serbest metinler) kaydedilmez.
@@ -86,19 +95,26 @@ function createActivityService({ getSessionMembership }) {
 
       const storedGroupId = isSafeGroupId(groupId) ? String(groupId) : null;
       const storedActor = actor || await resolveLogActor(req, storedGroupId);
-      // Yalnızca tesbihat eyleminde ve bilinen değerlerle saklanır (serbest metin kabul edilmez).
-      const tesbihatDetails = {};
+      // Yalnızca tesbihat / tefekkür bölüm eyleminde ve bilinen değerlerle saklanır (serbest metin kabul edilmez).
+      const activityDetails = {};
       if (normalizedAction === TESBIHAT_VIEW_ACTION && TESBIHAT_VIEWS.has(view)) {
-        tesbihatDetails.view = view;
-        if (TESBIHAT_VAKITS.has(vakit)) tesbihatDetails.vakit = vakit;
-        if (TESBIHAT_TURS.has(tur)) tesbihatDetails.tur = tur;
+        activityDetails.view = view;
+        if (TESBIHAT_VAKITS.has(vakit)) activityDetails.vakit = vakit;
+        if (TESBIHAT_TURS.has(tur)) activityDetails.tur = tur;
       }
+      if (normalizedAction === TEFEKKUR_SECTION_ACTION && TEFEKKUR_VIEWS.has(view) && TEFEKKUR_SECTIONS.has(section)) {
+        activityDetails.view = view;
+        activityDetails.section = section;
+        if (TEFEKKUR_MODES.has(mode)) activityDetails.mode = mode;
+      }
+      // Ayrıntısız bölüm kaydı anlamsızdır (aynı dakikadaki tüm kayıtlarla eşleşip tekrarı da bastırır).
+      if (normalizedAction === TEFEKKUR_SECTION_ACTION && !activityDetails.section) return;
 
       if (await hasLogInSameTurkeyMinute(SiteActivityLog, {
         groupId: storedGroupId,
         action: normalizedAction,
         ipAddress: storedActor,
-        ...tesbihatDetails
+        ...activityDetails
       })) {
         return;
       }
@@ -109,7 +125,7 @@ function createActivityService({ getSessionMembership }) {
         deviceInfo: buildDeviceInfo(req, deviceInfo),
         ipAddress: storedActor,
         groupId: storedGroupId,
-        ...tesbihatDetails
+        ...activityDetails
       });
 
       await log.save();

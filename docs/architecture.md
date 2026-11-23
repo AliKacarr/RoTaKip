@@ -80,6 +80,16 @@ Rota dosyaları HTTP sözleşmesini, servis dosyaları iş kurallarını, model 
 - Genel yardımcılar Express veya Mongoose'a bağlı değilse `shared/` altında tutulur.
 - `app.js` içine iş kuralı veya doğrudan endpoint eklenmez; mimari testi dosyayı 250 satırın altında ve doğrudan `app.get/post` çağrılarından arınmış tutar.
 
+## Tefekkür
+
+Tefekkür sekmesi (`/tefekkur`) tek route olarak çalışır; bölüm ve okuma biçimi sorgu parametreleriyle seçilir (`?bolum=esma`, `?bolum=risale&mod=metin|resim`). Bölümler: ayet, hadis, dua, Risale-i Nur (metin/görsel), Esmaül Hüsna, Zikirmatik ve iki canlı radyo (Kur'an Radyo, Risalet Radyo).
+
+- **İstemci** (`src/client/features/tefekkur/`): `tefekkur-core.js` ortak ad alanını ve bölüm tanımlarını (`SECTIONS`), `tefekkur-tab.js` bölüm geçişlerini ve URL durumunu, `tefekkur-slider.js` kaydırmalı okuyucuyu, `tefekkur-zikirmatik.js` sayacı, `tefekkur-radio.js` radyo oynatıcısını, `tefekkur-share.js` kopyalama ve paylaşımı yönetir. Bu dosyalar `scripts/build-assets.js` içindeki `tefekkur` paketinde sıralı birleştirilir; yeni dosya eklenirse oradaki sıraya da eklenmelidir. Route markup'ı `public/fragments/tefekkur.html` içindedir.
+- **Sunucu** (`src/server/modules/inspiration/`): `tefekkur.routes.js` `/api/tefekkur/*` uç noktalarını (metinler, görseller, radyolar), `tefekkur.service.js` içerik okuma ve radyo listesini sağlar. Servis `app.js` içinde oluşturulur ve `routeDependencies` ile rotaya verilir.
+- **Esmaül Hüsna** verisi `public/esmaulhusna.json` dosyasından okunur. Her kayıt Arapça yazım, açıklama ve `esmaulhusna_video_url` alanı taşır; video bağlantısı yalnızca `https` ve YouTube alan adları için "Tefekkür videosu" düğmesi olarak gösterilir.
+- **Radyolar** yayın adreslerini ortam değişkenlerinden alır: `TEFEKKUR_KURAN_RADYO_URL` ve `TEFEKKUR_RISALET_RADYO_URL` (`.env.example`). Adres boş ya da `https/http` dışındaysa ilgili radyo "kullanılamıyor" durumunda kalır. Site HTTPS ile sunulduğundan `https://` adres tercih edilir.
+- **Etkinlik günlüğü**: bölüm görüntülemeleri `tefekkur_bölüm_görüntüleme` eylemiyle `activity` modülüne yazılır (bölüm anahtarı ve okuma biçimi `activity.service.js` içindeki izinli listeyle doğrulanır). Sekme içi geçişlerde `shell-router.js` "sekme açıldı" kaydını tekrarlamaz.
+
 ## Build ve Test
 
 - `npm run build:assets`: `src/client` kaynaklarından minify edilmiş paketleri `public/` içine yazar ve manifesti günceller.

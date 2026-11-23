@@ -1,100 +1,166 @@
-<div class="quote">
-  <div class="tefekkur-filters" role="group" aria-label="Tefekkür kategorileri">
-    <button class="tefekkur-filter-btn active" type="button" data-filter="all" aria-pressed="true"><i class="fa-solid fa-th-large" aria-hidden="true"></i> Tümü</button>
-    <button class="tefekkur-filter-btn" type="button" data-filter="ayat" aria-pressed="false">Ayet</button>
-    <button class="tefekkur-filter-btn" type="button" data-filter="hadith" aria-pressed="false">Hadis</button>
-    <button class="tefekkur-filter-btn" type="button" data-filter="dua" aria-pressed="false">Dua</button>
-    <button class="tefekkur-filter-btn" type="button" data-filter="quote" aria-pressed="false">Söz</button>
-  </div>
-  <div class="quote-grid-container">
-    <div class="quote-section is-loading" data-category="ayat">
-      <button class="refresh-quote" id="refreshAyat" type="button" title="Yeni ayet getir" disabled><i
-          class="fa-solid fa-arrow-rotate-right"></i></button>
-      <button class="share-quote" type="button" data-target="ayatText" title="Paylaş" disabled>
-        <img src="/images/share.webp" alt="Paylaş" style="width: 24px; height: 24px;">
+<div class="tefekkur-page">
+  <section class="tefekkur-view" data-view="home" aria-label="Tefekkür bölümleri">
+    <div id="tefekkurNowPlaying" class="tefekkur-now-playing" hidden>
+      <button type="button" class="tefekkur-now-playing-open" data-open-radio>
+        <span class="tefekkur-now-playing-eq" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="tefekkur-now-playing-text">
+          <strong id="tefekkurNowPlayingName">Radyo</strong>
+          <small id="tefekkurNowPlayingStatus">Canlı yayında</small>
+        </span>
       </button>
-      <div class="quote-container">
-        <div class="quote-icon">
-          <img src="/images/ayat-icon.webp" alt="Ayet İkonu" loading="lazy">
-          <div class="quote-title">BİR AYET</div>
-        </div>
-        <div id="ayatText" class="quote-text is-loading" aria-busy="true" aria-label="Ayet yükleniyor">
-        </div>
-      </div>
+      <button type="button" id="tefekkurNowPlayingToggle" class="tefekkur-now-playing-button" aria-label="Duraklat"><i class="fa-solid fa-pause" aria-hidden="true"></i></button>
+      <button type="button" id="tefekkurNowPlayingStop" class="tefekkur-now-playing-button" aria-label="Radyoyu kapat"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
 
-    <div class="quote-section is-loading" data-category="hadith">
-      <button class="refresh-quote" id="refreshHadith" type="button" title="Yeni hadis getir" disabled><i
-          class="fa-solid fa-arrow-rotate-right"></i></button>
-      <button class="share-quote" type="button" data-target="hadithText" title="Paylaş" disabled>
-        <img src="/images/share.webp" alt="Paylaş" style="width: 24px; height: 24px;">
+    <ul class="tefekkur-section-list">
+      <li><button type="button" class="tefekkur-section-row" data-section="ayet">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-book-quran" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Ayet<small>Kur'ân-ı Kerîm'den ayetler</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+      <li><button type="button" class="tefekkur-section-row" data-section="hadis">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-scroll" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Hadis<small>Peygamber Efendimizin (a.s.m.) sözleri</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+      <li><button type="button" class="tefekkur-section-row" data-section="dua">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-hands-praying" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Dua<small>Kalbe huzur veren dualar</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+      <li><button type="button" class="tefekkur-section-row" data-section="risale">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Risale-i Nur<small>Metin ya da görsel olarak</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+      <li><button type="button" class="tefekkur-section-row" data-section="esma">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-star-and-crescent" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Esmaül Hüsna<small>Allah'ın (c.c.) 99 güzel ismi</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+      <li><button type="button" class="tefekkur-section-row" data-section="zikirmatik">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-bullseye" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Zikirmatik<small>Dokunarak sayın, tur hedefi belirleyin</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+      <li><button type="button" class="tefekkur-section-row" data-section="kuran-radyo">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Kur'an Radyo<small>Canlı yayın</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+      <li><button type="button" class="tefekkur-section-row" data-section="risalet-radyo">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-radio" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Risalet Radyo<small>Canlı yayın</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+    </ul>
+  </section>
+
+  <section class="tefekkur-view" data-view="slider" aria-labelledby="tefekkurSliderTitle" hidden>
+    <header class="tefekkur-slider-bar">
+      <button type="button" class="tefekkur-slider-back" data-back aria-label="Geri dön"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      <h4 id="tefekkurSliderTitle">Tefekkür</h4>
+      <div id="tefekkurSliderModes" class="tefekkur-slider-modes" role="group" aria-label="Okuma biçimi" hidden></div>
+      <button type="button" id="tefekkurSliderChip" class="tefekkur-slider-chip" hidden>
+        <i class="fa-solid fa-shuffle" aria-hidden="true"></i>
+        <span>Rastgele</span>
       </button>
-      <div class="quote-container">
-        <div class="quote-icon">
-          <img src="/images/hadith-icon.webp" alt="Hadis İkonu" loading="lazy">
-          <div class="quote-title">BİR HADİS</div>
-        </div>
-        <div id="hadithText" class="quote-text is-loading" aria-busy="true" aria-label="Hadis yükleniyor">
-        </div>
-      </div>
+    </header>
+
+    <div id="tefekkurSliderStage" class="tefekkur-slider-stage" role="region" aria-roledescription="kaydırmalı içerik" aria-labelledby="tefekkurSliderTitle">
+      <article id="tefekkurSlide" class="tefekkur-slide" aria-live="polite"></article>
     </div>
 
-    <div class="quote-section is-loading" data-category="dua">
-      <button class="refresh-quote" id="refreshDua" type="button" title="Yeni dua getir" disabled><i
-          class="fa-solid fa-arrow-rotate-right"></i></button>
-      <button class="share-quote" type="button" data-target="duaText" title="Paylaş" disabled>
-        <img src="/images/share.webp" alt="Paylaş" style="width: 24px; height: 24px;">
-      </button>
-      <div class="quote-container">
-        <div class="quote-icon">
-          <img src="/images/dua-icon.webp" alt="Dua İkonu" loading="lazy">
-          <div class="quote-title">BİR DUA</div>
-        </div>
-        <div id="duaText" class="quote-text is-loading" aria-busy="true" aria-label="Dua yükleniyor">
-        </div>
+    <div class="tefekkur-slider-controls">
+      <div class="tefekkur-slider-nav">
+        <button type="button" id="tefekkurSliderPrev" class="tefekkur-slider-step" aria-label="Önceki"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+        <span id="tefekkurSliderCounter" class="tefekkur-slider-counter" aria-live="polite"></span>
+        <button type="button" id="tefekkurSliderNext" class="tefekkur-slider-step" aria-label="Sonraki"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
       </div>
+      <div class="tefekkur-slider-actions">
+        <button type="button" id="tefekkurSliderCopy" class="tefekkur-slider-action is-outline"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Kopyala</span></button>
+        <button type="button" id="tefekkurSliderShare" class="tefekkur-slider-action is-solid"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i><span>Paylaş</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="tefekkur-view" data-view="zikirmatik" aria-labelledby="tefekkurZikirTitle" hidden>
+    <header class="tefekkur-plain-header">
+      <button type="button" class="tefekkur-back" data-back aria-label="Tefekkür bölümlerine dön"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      <div class="tefekkur-plain-header-titles">
+        <h4 id="tefekkurZikirTitle">Zikirmatik</h4>
+        <p id="tefekkurZikirSubtitle">Serbest zikir</p>
+      </div>
+      <div class="tefekkur-header-actions" role="group" aria-label="Zikirmatik ayarları">
+        <button type="button" id="tefekkurZikirVibration" aria-pressed="true" aria-label="Titreşim" title="Titreşim" hidden><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></button>
+        <button type="button" id="tefekkurZikirReset" aria-label="Sayacı sıfırla" title="Sayacı sıfırla"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+      </div>
+    </header>
+
+    <div class="tefekkur-zikir-presets" role="group" aria-label="Zikir seçimi"></div>
+
+    <div class="tefekkur-zikir-card">
+      <p id="tefekkurZikirArabic" class="tefekkur-zikir-arabic" lang="ar" dir="rtl" hidden></p>
+      <button type="button" id="tefekkurZikirTap" class="tefekkur-zikir-ring">
+        <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <circle class="tefekkur-zikir-ring-track" cx="60" cy="60" r="54" />
+          <circle class="tefekkur-zikir-ring-progress" cx="60" cy="60" r="54" pathLength="100" stroke-dasharray="0 100" />
+        </svg>
+        <span class="tefekkur-zikir-ring-inner">
+          <strong id="tefekkurZikirCount">0</strong>
+          <small id="tefekkurZikirTarget">/ 33</small>
+        </span>
+      </button>
+      <p class="tefekkur-zikir-hint">Zikir için ekrana dokunun</p>
+      <dl class="tefekkur-zikir-stats">
+        <div><dt>Tur</dt><dd id="tefekkurZikirLaps">0</dd></div>
+        <div><dt>Toplam</dt><dd id="tefekkurZikirTotal">0</dd></div>
+      </dl>
     </div>
 
-    <div class="quote-section is-loading" data-category="quote">
-      <button class="refresh-quote" id="refreshQuote" type="button" title="Yeni söz getir" disabled><i
-          class="fa-solid fa-arrow-rotate-right"></i></button>
-      <button class="share-quote" type="button" data-target="quoteText" title="Paylaş" disabled>
-        <img src="/images/share.webp" alt="Paylaş" style="width: 24px; height: 24px;">
-      </button>
-      <div class="quote-container">
-        <div class="quote-icon">
-          <img src="/images/lamba.webp" alt="Fikir Lambası" loading="lazy">
-          <div class="quote-title">BİR SÖZ</div>
-        </div>
-        <div id="quoteText" class="quote-text is-loading" aria-busy="true" aria-label="Söz yükleniyor">
-        </div>
+    <div class="tefekkur-zikir-controls">
+      <div class="tefekkur-zikir-targets" role="group" aria-label="Tur hedefi">
+        <button type="button" data-target="33">33</button>
+        <button type="button" data-target="99">99</button>
+        <button type="button" data-target="100">100</button>
+        <button type="button" data-target="500">500</button>
+        <button type="button" data-target="1000">1000</button>
+        <button type="button" data-target="0" aria-label="Hedefsiz">∞</button>
       </div>
+      <button type="button" id="tefekkurZikirUndo" class="tefekkur-zikir-undo"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Geri al</button>
     </div>
-  </div>
+  </section>
+
+  <section class="tefekkur-view" data-view="radio" aria-labelledby="tefekkurRadioTitle" hidden>
+    <header class="tefekkur-plain-header">
+      <button type="button" class="tefekkur-back" data-back aria-label="Tefekkür bölümlerine dön"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      <div class="tefekkur-plain-header-titles">
+        <h4 id="tefekkurRadioTitle">Radyo</h4>
+        <p>Canlı yayın</p>
+      </div>
+    </header>
+
+    <div id="tefekkurRadioCard" class="tefekkur-radio-card" data-state="idle">
+      <div class="tefekkur-radio-art">
+        <i id="tefekkurRadioIcon" class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>
+        <span class="tefekkur-radio-live">CANLI</span>
+      </div>
+      <div class="tefekkur-radio-eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <h5 id="tefekkurRadioName">Radyo</h5>
+      <button type="button" id="tefekkurRadioPlay" class="tefekkur-radio-play" aria-label="Dinle">
+        <i class="fa-solid fa-play" aria-hidden="true"></i>
+        <span class="tefekkur-radio-spinner" aria-hidden="true"></span>
+      </button>
+      <label class="tefekkur-radio-volume" id="tefekkurRadioVolumeRow">
+        <i class="fa-solid fa-volume-low" aria-hidden="true"></i>
+        <input type="range" id="tefekkurRadioVolume" min="0" max="1" step="0.05" value="1" aria-label="Ses düzeyi">
+        <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+      </label>
+    </div>
+
+    <aside class="tefekkur-info-note">
+      <span class="tefekkur-info-icon" aria-hidden="true"><i class="fa-solid fa-info"></i></span>
+      <p>Yayın, bu sayfadan ayrılsanız da çalmaya devam eder. Tefekkür ana sayfasındaki çalar çubuğundan durdurabilirsiniz.</p>
+    </aside>
+  </section>
 </div>
-
-<section class="home-tefekkur-window" data-category="quote" aria-labelledby="homeTefekkurWindowTitle">
-  <h3 id="homeTefekkurWindowTitle">
-    <i class="fa-solid fa-quote-right" aria-hidden="true"></i> Günün Vecizeleri
-  </h3>
-  <div class="home-tefekkur-images">
-    <div class="quote-section-image">
-      <button class="refresh-quote home-tefekkur-refresh" type="button" title="Yeni görsel getir" aria-label="İlk görseli yenile">
-        <i class="fa-solid fa-arrow-rotate-right" aria-hidden="true"></i>
-      </button>
-      <button class="share-quote home-tefekkur-share" type="button" title="Resmi paylaş" aria-label="İlk görseli paylaş">
-        <img src="/images/share.webp" alt="" aria-hidden="true">
-      </button>
-      <img class="home-tefekkur-image" src="/quotes/bir_gorsel1.jpg" data-image-name="bir_gorsel1.jpg" alt="Tefekkür görseli">
-    </div>
-    <div class="quote-section-image">
-      <button class="refresh-quote home-tefekkur-refresh" type="button" title="Yeni görsel getir" aria-label="İkinci görseli yenile">
-        <i class="fa-solid fa-arrow-rotate-right" aria-hidden="true"></i>
-      </button>
-      <button class="share-quote home-tefekkur-share" type="button" title="Resmi paylaş" aria-label="İkinci görseli paylaş">
-        <img src="/images/share.webp" alt="" aria-hidden="true">
-      </button>
-      <img class="home-tefekkur-image" src="/quotes/bir_gorsel2.jpg" data-image-name="bir_gorsel2.jpg" alt="Tefekkür görseli">
-    </div>
-  </div>
-</section>

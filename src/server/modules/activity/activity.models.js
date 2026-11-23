@@ -25,11 +25,14 @@ const siteActivityLogSchema = new mongoose.Schema({
   deviceInfo: Object,
   ipAddress: String,
   groupId: String,
-  // Yalnızca tesbihat_görüntüleme eyleminde: açılan sekme içi görünüm (data-view)
+  // tesbihat_görüntüleme ve tefekkur_bölüm_görüntüleme eylemlerinde: açılan sekme içi görünüm (data-view)
   view: String,
   // Tesbihat görünümünde seçili vakit (sabah, ogle…) ve tür (kisa, uzun, arapca-uzun)
   vakit: String,
-  tur: String
+  tur: String,
+  // Yalnızca tefekkur_bölüm_görüntüleme eyleminde: açılan bölüm (ayet, esma…) ve okuma biçimi (metin, resim)
+  section: String,
+  mode: String
 });
 
 const SiteActivityLog = mongoose.model('SiteActivityLog', siteActivityLogSchema, 'siteactivitylogs');

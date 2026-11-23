@@ -1,0 +1,555 @@
+/* Kaydırmalı okuyucu: üstte başlık çubuğu, ortada kart, altta (yapışkan) gezinme ve
+   Kopyala / Paylaş düğmeleri. Görünüm ekranı doldurur; uzun metinde sayfa kayar ama
+   kontroller alt menünün hemen üstünde kalır. */
+.tefekkur-page .tefekkur-view[data-view="slider"] {
+    display: flex;
+    flex-direction: column;
+    /* Masaüstünde kabuk kapsayıcısının dış boşluğu ve iç dolgusu (~80px) düşülür. */
+    min-height: calc(100dvh - var(--tf-bottom-offset) - 80px);
+}
+
+.tefekkur-page .tefekkur-slider-bar {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 0 10px;
+}
+
+.tefekkur-page .tefekkur-slider-back {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #111;
+    background: transparent;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-slider-back:hover {
+    background: #f1f1f1;
+}
+
+.tefekkur-page .tefekkur-slider-bar h4 {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: #111;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tefekkur-page .tefekkur-slider-chip {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 50px;
+    padding: 0 22px;
+    border: 1.5px solid #b9b9b9;
+    border-radius: 999px;
+    color: #111;
+    background: #e9e9e9;
+    font-size: 19px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-slider-chip:hover:not(:disabled) {
+    background: #dedede;
+}
+
+.tefekkur-page .tefekkur-slider-chip:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+
+.tefekkur-page .tefekkur-slider-chip[hidden] {
+    display: none;
+}
+
+/* Metin / Resim anahtarı (Rastgele düğmesinin solunda). */
+.tefekkur-page .tefekkur-slider-modes {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: stretch;
+    gap: 2px;
+    min-height: 50px;
+    padding: 3px;
+    border: 1.5px solid #b9b9b9;
+    border-radius: 999px;
+    background: #e9e9e9;
+    box-sizing: border-box;
+}
+
+.tefekkur-page .tefekkur-slider-modes[hidden] {
+    display: none;
+}
+
+.tefekkur-page .tefekkur-slider-mode {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    color: #444;
+    background: transparent;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-slider-mode:hover:not(.is-active) {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.tefekkur-page .tefekkur-slider-mode.is-active {
+    color: #fff;
+    background: var(--section-color, #ff6b33);
+}
+
+.tefekkur-page .tefekkur-slider-mode:focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 1px;
+}
+
+.tefekkur-page .tefekkur-slider-stage {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: 24px 4px;
+    overflow: hidden;
+    /* Dikey kaydırma tarayıcıda kalır; yatay hareket slayt değiştirmek için yakalanır. */
+    touch-action: pan-y;
+}
+
+.tefekkur-page .tefekkur-slide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+    will-change: transform;
+}
+
+.tefekkur-page .tefekkur-slide.is-dragging {
+    user-select: none;
+}
+
+.tefekkur-page .tefekkur-slide-rule {
+    display: block;
+    width: 56px;
+    height: 4px;
+    border-radius: 4px;
+    background: #111;
+}
+
+/* Sade siyah-beyaz okuyucuda bölümü hatırlatan tek renkli öğe üst çizgidir. */
+.tefekkur-page .tefekkur-slide-rule.is-top {
+    margin-bottom: 44px;
+    background: var(--section-color, #111);
+}
+
+.tefekkur-page .tefekkur-slide-rule.is-bottom {
+    margin-top: 40px;
+    background: #a8a8a8;
+}
+
+.tefekkur-page .tefekkur-slide-arabic {
+    margin: 0 0 26px;
+    color: #111;
+    font-family: "KFGQPC Uthman Taha Naskh", "Amiri", "Noto Naskh Arabic", "Traditional Arabic", serif;
+    font-size: 52px;
+    line-height: 1.6;
+}
+
+.tefekkur-page .tefekkur-slide-title {
+    margin: 0 0 16px;
+    color: #111;
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.tefekkur-page .tefekkur-slide-text {
+    margin: 0;
+    color: #2b2b2b;
+    font-size: 24px;
+    line-height: 1.6;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.tefekkur-page .tefekkur-slide.is-long .tefekkur-slide-text {
+    font-size: 21px;
+}
+
+.tefekkur-page .tefekkur-slide.is-very-long .tefekkur-slide-text {
+    font-size: 19px;
+    text-align: left;
+}
+
+.tefekkur-page .tefekkur-slide-caption {
+    margin: 18px 0 0;
+    color: #6b7280;
+    font-size: 17px;
+    font-style: italic;
+}
+
+.tefekkur-page .tefekkur-slide-video {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 26px;
+    padding: 12px 22px;
+    border: 1.5px solid #d93025;
+    border-radius: 999px;
+    color: #d93025;
+    background: transparent;
+    font-size: 17px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-slide-video:hover {
+    color: #fff;
+    background: #d93025;
+}
+
+.tefekkur-page .tefekkur-slide-video:focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 2px;
+}
+
+.tefekkur-page .tefekkur-slide.is-image {
+    max-width: 720px;
+}
+
+.tefekkur-page .tefekkur-slide-figure {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 0;
+}
+
+.tefekkur-page .tefekkur-slide-figure img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100dvh - var(--tf-bottom-offset) - 300px);
+    min-height: 200px;
+    border-radius: 14px;
+    background: #f3f3f3;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.tefekkur-page .tefekkur-slide.is-message {
+    gap: 14px;
+    color: #475569;
+}
+
+.tefekkur-page .tefekkur-slide-message-icon {
+    color: #9aa0a8;
+    font-size: 40px;
+}
+
+.tefekkur-page .tefekkur-slide-message {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+.tefekkur-page .tefekkur-slide-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    background: #111;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tefekkur-page .tefekkur-slider-controls {
+    position: sticky;
+    bottom: var(--tf-bottom-offset);
+    z-index: 5;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 16px;
+    padding: 14px 0 12px;
+    /* Kabuk kapsayıcısının (main-container) zemin rengiyle aynı: kayan metin altta kaybolur. */
+    background: linear-gradient(180deg, rgba(252, 253, 254, 0) 0%, #fcfdfe 22px);
+}
+
+.tefekkur-page .tefekkur-slider-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 6px;
+}
+
+.tefekkur-page .tefekkur-slider-step {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 0;
+    border-radius: 18px;
+    color: #111;
+    background: #ececec;
+    font-size: 22px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-slider-step:hover:not(:disabled) {
+    background: #e0e0e0;
+}
+
+.tefekkur-page .tefekkur-slider-step:disabled {
+    color: #b8b8b8;
+    background: transparent;
+    cursor: default;
+}
+
+.tefekkur-page .tefekkur-slider-counter {
+    color: #555;
+    font-size: 22px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.tefekkur-page .tefekkur-slider-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.tefekkur-page .tefekkur-slider-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 0 16px;
+    border-radius: 20px;
+    font-size: 21px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-slider-action i {
+    font-size: 22px;
+}
+
+.tefekkur-page .tefekkur-slider-action.is-outline {
+    border: 1.5px solid #b9b9b9;
+    color: #111;
+    background: #fff;
+}
+
+.tefekkur-page .tefekkur-slider-action.is-outline:hover:not(:disabled) {
+    background: #f4f4f4;
+}
+
+.tefekkur-page .tefekkur-slider-action.is-solid {
+    border: 1.5px solid var(--section-color, #ff6b33);
+    color: #fff;
+    background: var(--section-color, #ff6b33);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--section-color, #ff6b33) 30%, transparent);
+}
+
+.tefekkur-page .tefekkur-slider-action.is-solid:hover:not(:disabled) {
+    border-color: var(--section-dark, #d9531f);
+    background: var(--section-dark, #d9531f);
+}
+
+.tefekkur-page .tefekkur-slider-action:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.tefekkur-page :is(.tefekkur-slider-back, .tefekkur-slider-chip, .tefekkur-slider-step, .tefekkur-slider-action, .tefekkur-slide-retry):focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .tefekkur-page .tefekkur-view[data-view="slider"] {
+        min-height: calc(100dvh - var(--tf-bottom-offset) - 35px);
+    }
+
+    .tefekkur-page .tefekkur-slider-bar {
+        gap: 10px;
+        padding: 0 0 6px;
+    }
+
+    .tefekkur-page .tefekkur-slider-back {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+    }
+
+    .tefekkur-page .tefekkur-slider-bar h4 {
+        font-size: 25px;
+    }
+
+    .tefekkur-page .tefekkur-slider-chip {
+        gap: 8px;
+        min-height: 44px;
+        padding: 0 18px;
+        font-size: 17px;
+    }
+
+    .tefekkur-page .tefekkur-slider-modes {
+        min-height: 44px;
+    }
+
+    .tefekkur-page .tefekkur-slider-mode {
+        gap: 6px;
+        padding: 0 12px;
+        font-size: 15px;
+    }
+
+    .tefekkur-page .tefekkur-slider-stage {
+        padding: 18px 2px;
+    }
+
+    .tefekkur-page .tefekkur-slide-rule.is-top {
+        margin-bottom: 36px;
+    }
+
+    .tefekkur-page .tefekkur-slide-rule.is-bottom {
+        margin-top: 34px;
+    }
+
+    .tefekkur-page .tefekkur-slide-arabic {
+        font-size: 46px;
+    }
+
+    .tefekkur-page .tefekkur-slide-title {
+        font-size: 33px;
+    }
+
+    .tefekkur-page .tefekkur-slide-text {
+        font-size: 21px;
+    }
+
+    .tefekkur-page .tefekkur-slide.is-long .tefekkur-slide-text {
+        font-size: 19px;
+    }
+
+    .tefekkur-page .tefekkur-slide.is-very-long .tefekkur-slide-text {
+        font-size: 17px;
+    }
+
+    .tefekkur-page .tefekkur-slider-controls {
+        gap: 12px;
+        padding: 10px 0;
+    }
+
+    .tefekkur-page .tefekkur-slider-step {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        font-size: 20px;
+    }
+
+    .tefekkur-page .tefekkur-slider-counter {
+        font-size: 19px;
+    }
+
+    .tefekkur-page .tefekkur-slider-actions {
+        gap: 12px;
+    }
+
+    .tefekkur-page .tefekkur-slider-action {
+        gap: 10px;
+        min-height: 56px;
+        border-radius: 18px;
+        font-size: 18px;
+    }
+
+    .tefekkur-page .tefekkur-slider-action i {
+        font-size: 19px;
+    }
+
+    .tefekkur-page .tefekkur-slide-figure img {
+        max-height: calc(100dvh - var(--tf-bottom-offset) - 250px);
+    }
+}
+
+@media (max-width: 480px) {
+    .tefekkur-page .tefekkur-slider-bar h4 {
+        font-size: 22px;
+    }
+
+    .tefekkur-page .tefekkur-slider-chip {
+        min-height: 40px;
+        padding: 0 14px;
+        font-size: 15px;
+    }
+
+    /* Dar ekranda anahtar varken başlık sığsın diye düğmelerde yalnız ikon kalır. */
+    .tefekkur-page .tefekkur-slider-modes {
+        min-height: 40px;
+    }
+
+    .tefekkur-page .tefekkur-slider-mode {
+        min-width: 38px;
+        padding: 0 10px;
+    }
+
+    .tefekkur-page .tefekkur-slider-mode span,
+    .tefekkur-page .tefekkur-slider-bar:has(.tefekkur-slider-modes:not([hidden])) .tefekkur-slider-chip span {
+        display: none;
+    }
+
+    .tefekkur-page .tefekkur-slider-bar:has(.tefekkur-slider-modes:not([hidden])) .tefekkur-slider-chip {
+        padding: 0 12px;
+    }
+
+    .tefekkur-page .tefekkur-slide-arabic {
+        font-size: 40px;
+    }
+
+    .tefekkur-page .tefekkur-slide-title {
+        font-size: 29px;
+    }
+
+    .tefekkur-page .tefekkur-slide-text {
+        font-size: 19px;
+    }
+}

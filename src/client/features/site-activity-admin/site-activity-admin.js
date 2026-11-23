@@ -148,6 +148,24 @@
         }
       }
 
+      /** Tefekkür bölüm kaydı → okunur cümle, örn. "Tefekkür: Risale-i Nur (resim) açıldı" */
+      function formatTefekkurBolumEylem(log) {
+        const sectionLabels = {
+          ayet: 'Ayet',
+          hadis: 'Hadis',
+          dua: 'Dua',
+          risale: 'Risale-i Nur',
+          esma: 'Esmaül Hüsna',
+          zikirmatik: 'Zikirmatik',
+          'kuran-radyo': 'Diyanet Kur\'an Radyo',
+          'risalet-radyo': 'Diyanet Risalet Radyo'
+        };
+        const modeLabels = { metin: 'metin', resim: 'resim' };
+        const label = sectionLabels[log.section] || 'Bir bölüm';
+        const mode = modeLabels[log.mode] ? ' (' + modeLabels[log.mode] + ')' : '';
+        return 'Tefekkür: ' + label + mode + ' açıldı';
+      }
+
       /** SiteActivityLog: action + groupId → Türkçe eylem metni */
       function formatSiteActivityEylem(log) {
         const gidRaw = log.groupId != null ? String(log.groupId).trim() : '';
@@ -169,6 +187,8 @@
             return 'Videolar sekmesi açıldı';
           case 'tefekkur_görüntüleme':
             return 'Tefekkür sekmesi açıldı';
+          case 'tefekkur_bölüm_görüntüleme':
+            return escapeHtml(formatTefekkurBolumEylem(log));
           case 'makaleler_görüntüleme':
             return 'Makaleler sekmesi açıldı';
           default:

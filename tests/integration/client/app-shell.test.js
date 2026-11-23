@@ -164,8 +164,8 @@ test('Okuma mesaj paneli stilleri kendi bileşen dosyasında kalır', () => {
 test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer', () => {
   const base = readClient('shell/base.css');
   const shell = readClient('shell/shell.css');
-  const quote = readClient('features/tefekkur/quote.css');
-  const homeTefekkur = readClient('features/tefekkur/home-tefekkur.css');
+  const tefekkurHome = readClient('features/tefekkur/tefekkur-home.css');
+  const tefekkurSlider = readClient('features/tefekkur/tefekkur-slider.css');
   const videos = readClient('features/videos/videos.css');
   const articles = readClient('features/articles/articles.css');
   const footer = readClient('shared/footer.css');
@@ -175,8 +175,8 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.match(base, /@media \(max-width:\s*768px\)[\s\S]*?body\.app-shell-body > \.app-shell-container[\s\S]*?box-sizing:\s*border-box;[\s\S]*?overflow-x:\s*clip;/);
   assert.match(shell, /@media \(max-width:\s*640px\)[\s\S]*?min-height:\s*58px;[\s\S]*?font-size:\s*11px;[\s\S]*?font-size:\s*clamp\(20px, 5\.8vw, 24px\)/);
   assert.match(shell, /@media \(max-width:\s*640px\)[\s\S]*?\.app-navigation\s*\{[^}]*height:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
-  assert.match(quote, /@media \(max-width:\s*768px\)[\s\S]*?\.quote-grid-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
-  assert.match(homeTefekkur, /@media \(max-width:\s*768px\)[\s\S]*?\.home-tefekkur-images\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(tefekkurHome, /@media \(max-width:\s*768px\)[\s\S]*?\.tefekkur-section-row\s*\{[^}]*min-height:\s*68px;/);
+  assert.match(tefekkurSlider, /@media \(max-width:\s*768px\)[\s\S]*?\.tefekkur-slider-action\s*\{[^}]*min-height:\s*56px;/);
   assert.match(videos, /@media \(max-width:\s*768px\)[\s\S]*?\.top-bar\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(videos, /\.videos-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(articles, /\.articles-categories\s*\{[^}]*flex-wrap:\s*nowrap;[^}]*overflow-x:\s*auto;/s);
@@ -422,7 +422,7 @@ test('global fragmentler grup içeriği taşımaz', () => {
   const expectations = [
     ['fragments/tesbihat.html', 'class="tesbihat-page"'],
     ['fragments/videos.html', 'class="videos"'],
-    ['fragments/tefekkur.html', 'class="quote"'],
+    ['fragments/tefekkur.html', 'class="tefekkur-page"'],
     ['fragments/articles.html', 'class="articles"']
   ];
   expectations.forEach(([file, marker]) => {
@@ -433,23 +433,21 @@ test('global fragmentler grup içeriği taşımaz', () => {
   });
 
   const tefekkur = readPublic('fragments/tefekkur.html');
-  assert.match(tefekkur, /class="quote-grid-container"/);
-  assert.equal((tefekkur.match(/class="quote-section is-loading"/g) || []).length, 4);
-  assert.doesNotMatch(tefekkur, /quote-loading-placeholder|quote-loading-line/);
-  assert.doesNotMatch(tefekkur, /Allah yolunda sevdiğiniz|Sözlerin en doğrusu|Hangi şeye dikkat etsen/);
-  assert.match(tefekkur, /class="home-tefekkur-window"/);
-  assert.match(tefekkur, /Günün Vecizeleri/);
-  assert.equal((tefekkur.match(/class="quote-section-image"/g) || []).length, 2);
-  assert.match(tefekkur, /src="\/quotes\/bir_gorsel1\.jpg"[^>]*data-image-name="bir_gorsel1\.jpg"/);
-  assert.match(tefekkur, /src="\/quotes\/bir_gorsel2\.jpg"[^>]*data-image-name="bir_gorsel2\.jpg"/);
-  assert.match(readClient('features/tefekkur/quote.css'), /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
-  assert.match(readClient('features/tefekkur/quote.js'), /function tefekkurLoadingMarkup\(\)\s*\{\s*return '';\s*\}/);
-  assert.match(readClient('features/tefekkur/quote.js'), /setTefekkurTextLoading[\s\S]*?showTefekkurText[\s\S]*?fetchTefekkurText/);
-  assert.doesNotMatch(readClient('features/tefekkur/quote.js'), /fetchRandomQuoteImage|refreshQuoteImage|quoteImage/);
-  assert.doesNotMatch(readClient('features/tefekkur/home-tefekkur.css'), /is-loading[\s\S]*?opacity/);
-  assert.match(readClient('features/tefekkur/home-tefekkur.css'), /\.home-tefekkur-images\s*\{[^}]*width:\s*min\(calc\(100% - 40px\),\s*900px\)/s);
-  assert.match(readClient('features/tefekkur/home-tefekkur.js'), /const preloadImage = new Image\(\)/);
-  assert.match(readClient('features/tefekkur/quote.js'), /window\.initializeHomeTefekkurWindow/);
+  assert.deepEqual(
+    Array.from(tefekkur.matchAll(/class="tefekkur-section-row" data-section="([^"]+)"/g), match => match[1]),
+    ['ayet', 'hadis', 'dua', 'risale', 'esma', 'zikirmatik', 'kuran-radyo', 'risalet-radyo']
+  );
+  assert.equal((tefekkur.match(/class="tefekkur-section-list"/g) || []).length, 1);
+  assert.doesNotMatch(tefekkur, /tefekkur-home-hero|tefekkur-list-heading|data-section="vecize"/);
+  assert.deepEqual(
+    Array.from(tefekkur.matchAll(/class="tefekkur-view" data-view="([^"]+)"/g), match => match[1]),
+    ['home', 'slider', 'zikirmatik', 'radio']
+  );
+  assert.match(tefekkur, /id="tefekkurSliderTitle"[\s\S]*?id="tefekkurSliderModes"[\s\S]*?id="tefekkurSliderChip"/);
+  assert.match(tefekkur, /id="tefekkurSliderPrev"[\s\S]*?id="tefekkurSliderCounter"[\s\S]*?id="tefekkurSliderNext"[\s\S]*?id="tefekkurSliderCopy"[\s\S]*?Kopyala[\s\S]*?id="tefekkurSliderShare"[\s\S]*?Paylaş/);
+  assert.doesNotMatch(tefekkur, /quote-section|home-tefekkur-window|scroll-fade-in/);
+  assert.match(readClient('features/tefekkur/tefekkur-slider.css'), /\.tefekkur-slider-stage\s*\{[^}]*touch-action:\s*pan-y;/);
+  assert.match(readClient('features/tefekkur/tefekkur-slider.css'), /\.tefekkur-slider-controls\s*\{[^}]*position:\s*sticky;[^}]*bottom:\s*var\(--tf-bottom-offset\);/);
 
   const articles = readPublic('fragments/articles.html');
   assert.deepEqual(
@@ -629,13 +627,31 @@ test('Videolar sekmesindeki yeni rastgele içerik sekme arka plandayken hazırla
   assert.match(videos, /resume: resumeVideos/);
 });
 
-test('Tefekkür yeni metinleri arka planda hazırlayıp birlikte gösterir', () => {
-  const tefekkur = readClient('features/tefekkur/quote.js');
-  assert.match(tefekkur, /function prepareTefekkurContent\(\)[\s\S]*?Promise\.all\(tefekkurContentItems\.map/);
-  assert.match(tefekkur, /async function resumeTefekkurTab\(\)[\s\S]*?startTefekkurContentPreparation\(\)[\s\S]*?initializeHomeTefekkurWindow[\s\S]*?Promise\.all\(\[preparation, imagePreparation\]\)[\s\S]*?content\.forEach/);
-  assert.match(tefekkur, /prepareBeforeReveal:\s*true/);
-  assert.match(tefekkur, /resume:\s*resumeTefekkurTab/);
-  assert.match(tefekkur, /destroy\(\)[\s\S]*?startTefekkurContentPreparation\(\)/);
+test('Tefekkür bölümleri sekme içi URL ile açılır ve kaydırmalı okuyucu kullanır', () => {
+  const tab = readClient('features/tefekkur/tefekkur-tab.js');
+  const slider = readClient('features/tefekkur/tefekkur-slider.js');
+  const core = readClient('features/tefekkur/tefekkur-core.js');
+  assert.match(tab, /params\.get\('bolum'\)[\s\S]*?params\.get\('mod'\)/);
+  assert.match(tab, /prepareBeforeReveal:\s*true/);
+  assert.match(tab, /async resume\(\)\s*\{\s*await render\(readRoute\(\)\);/);
+  assert.match(tab, /HISTORY_MARKER[\s\S]*?window\.history\.back\(\)/);
+  assert.match(core, /risale:\s*\{[\s\S]*?kind:\s*'slides'[\s\S]*?defaultMode:\s*'metin'[\s\S]*?metin:[\s\S]*?resim:/);
+  assert.match(tab, /\.tefekkur-slider-mode[\s\S]*?\{ replace: true \}/);
+  assert.match(tab, /async function prepareContent\(\)[\s\S]*?connectionAllowsPreparation\(\)[\s\S]*?ns\.slider\.prefetch\(source\)[\s\S]*?ns\.radio\.preload\(\)/);
+  assert.match(tab, /await render\(readRoute\(\)\);\s*schedulePreparation\(\);/);
+  assert.match(tab, /action:\s*'tefekkur_bölüm_görüntüleme'[\s\S]*?section:\s*route\.bolum[\s\S]*?mode:\s*route\.mod/);
+  assert.match(tab, /if \(route\.view !== 'home'\) logTefekkurView\(route\);/);
+  assert.match(readClient('features/site-activity-admin/site-activity-admin.js'), /case 'tefekkur_bölüm_görüntüleme':[\s\S]*?formatTefekkurBolumEylem\(log\)/);
+  assert.match(core, /esma:\s*\{[\s\S]*?source:\s*\{\s*type:\s*'esma'\s*\}[\s\S]*?chip:\s*'index'/);
+  assert.match(slider, /addEventListener\('pointerdown'[\s\S]*?addEventListener\('pointermove'[\s\S]*?addEventListener\('pointerup'[\s\S]*?addEventListener\('pointercancel'/);
+  assert.match(slider, /event\.key !== 'ArrowLeft' && event\.key !== 'ArrowRight'/);
+  assert.match(slider, /counter\.textContent = ready \? `\$\{state\.index \+ 1\} \/ \$\{total\}`/);
+  assert.match(slider, /\/esmaulhusna\.json/);
+  assert.match(slider, /\/api\/tefekkur\/images\/[\s\S]*?\/api\/tefekkur\/texts\//);
+
+  const esma = JSON.parse(readPublic('esmaulhusna.json'));
+  assert.equal(esma.length, 99);
+  esma.forEach(entry => assert.match(entry.esmaulhusna_arabic, /[؀-ۿ]/));
 });
 
 test('sekme girişleri rota türüne uygun animasyon kullanır', () => {
@@ -813,7 +829,7 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.doesNotMatch(readClient('features/readings/analytics/stats-section.js'), /waitForRoutePlaceholder|stats-loading/);
   assert.match(readClient('features/videos/videos.js'), /await window\.waitForRoutePlaceholder\(videosContainer\)/);
   assert.match(readClient('features/articles/articles.js'), /await window\.waitForRoutePlaceholder\(container\)/);
-  assert.match(readClient('features/tefekkur/quote.js'), /hasExistingText[\s\S]*?!hasExistingText[\s\S]*?setTefekkurTextLoading/);
+  assert.doesNotMatch(readClient('features/tefekkur/tefekkur-slider.js'), /waitForRoutePlaceholder|loading-placeholder/);
   assert.doesNotMatch(readClient('shell/shell.css'), /tab-view[\s\S]*?scale\(0\.995\)/);
 });
 
@@ -843,8 +859,8 @@ test('grup pencereleri global sekmelerde yüklenmez', () => {
   assert.doesNotMatch(commonOverlays, /id="sharePanel"/);
   assert.doesNotMatch(commonOverlays, /id="scrollToTopBtn"/);
   assert.match(readClient('shared/share-modal.css'), /\.share-panel\s*\{/);
-  assert.doesNotMatch(readClient('features/tefekkur/quote.css'), /\.share-panel\s*\{/);
-  assert.match(readClient('features/tefekkur/share-quote.js'), /requiredShareControls[\s\S]*?some\(control => !control\)/);
+  assert.doesNotMatch(readClient('features/tefekkur/tefekkur-base.css'), /\.share-panel\s*\{/);
+  assert.doesNotMatch(readClient('features/tefekkur/tefekkur-share.js'), /sharePanel|ensureHtml2Canvas/);
 });
 
 test('eski yüzen grup navigasyonu kaldırılmıştır', () => {

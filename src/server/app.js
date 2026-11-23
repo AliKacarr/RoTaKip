@@ -36,6 +36,8 @@ const { registerInvitationRoutes } = require('./modules/invitations/invitation.r
 const inspirationModels = require('./modules/inspiration/inspiration.models');
 const inspirationService = require('./modules/inspiration/inspiration.service');
 const { registerInspirationRoutes } = require('./modules/inspiration/inspiration.routes');
+const { registerTefekkurRoutes } = require('./modules/inspiration/tefekkur.routes');
+const { createTefekkurService } = require('./modules/inspiration/tefekkur.service');
 const joinRequestClaims = require('./modules/join-requests/join-request.claims');
 const joinRequestModel = require('./modules/join-requests/join-request.models');
 const { registerJoinRequestRoutes } = require('./modules/join-requests/join-request.routes');
@@ -83,6 +85,7 @@ const activityService = createActivityService({
   getSessionMembership: authMiddleware.getSessionMembership
 });
 const tesbihatService = createTesbihatService({ reverseGeocode: createReverseGeocoder() });
+const tefekkurService = createTefekkurService({ models: inspirationModels, publicPath });
 
 const routeDependencies = {
   ...activityModels,
@@ -100,6 +103,7 @@ const routeDependencies = {
   ...joinRequestModel,
   ...rateLimiters,
   ...readingEditPolicy,
+  ...tefekkurService,
   ...tesbihatService,
   ...uploadMiddleware,
   ...userService,
@@ -130,6 +134,7 @@ registerInvitationRoutes(app, routeDependencies);
 registerAdminAuthRoutes(app, routeDependencies);
 registerActivityRoutes(app, routeDependencies);
 registerInspirationRoutes(app, routeDependencies);
+registerTefekkurRoutes(app, routeDependencies);
 registerJoinRequestRoutes(app, routeDependencies);
 registerHealthRoutes(app, { isDatabaseConnected });
 registerProfileRoutes(app, routeDependencies);

@@ -1,0 +1,519 @@
+/* --- Zikirmatik ------------------------------------------------------------------------ */
+.tefekkur-page .tefekkur-zikir-presets {
+    display: flex;
+    gap: 8px;
+    margin: 0 -2px 18px;
+    padding: 2px 2px 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.tefekkur-page .tefekkur-zikir-presets::-webkit-scrollbar {
+    display: none;
+}
+
+.tefekkur-page .tefekkur-zikir-presets button,
+.tefekkur-page .tefekkur-zikir-targets button {
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding: 0 16px;
+    border: 1.5px solid color-mix(in srgb, var(--section-color) 35%, #fff);
+    border-radius: 999px;
+    color: var(--section-dark);
+    background: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-zikir-presets button:hover,
+.tefekkur-page .tefekkur-zikir-targets button:hover {
+    background: var(--section-tint);
+}
+
+.tefekkur-page .tefekkur-zikir-presets button.is-active,
+.tefekkur-page .tefekkur-zikir-targets button.is-active {
+    border-color: var(--section-color);
+    color: #fff;
+    background: var(--section-color);
+}
+
+.tefekkur-page .tefekkur-zikir-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 26px 20px 22px;
+    border: 1px solid color-mix(in srgb, var(--section-color) 25%, #fff);
+    border-radius: 24px;
+    background: linear-gradient(180deg, var(--section-tint) 0%, #fff 70%);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--section-color) 14%, transparent);
+}
+
+.tefekkur-page .tefekkur-zikir-arabic {
+    margin: 0;
+    color: var(--section-dark);
+    font-family: "KFGQPC Uthman Taha Naskh", "Amiri", "Noto Naskh Arabic", serif;
+    font-size: 34px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.tefekkur-page .tefekkur-zikir-arabic[hidden] {
+    display: none;
+}
+
+.tefekkur-page .tefekkur-zikir-ring {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 270px;
+    height: 270px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tefekkur-page .tefekkur-zikir-ring svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.tefekkur-page .tefekkur-zikir-ring-track,
+.tefekkur-page .tefekkur-zikir-ring-progress {
+    fill: none;
+    stroke-width: 8;
+}
+
+.tefekkur-page .tefekkur-zikir-ring-track {
+    stroke: color-mix(in srgb, var(--section-color) 18%, #fff);
+}
+
+.tefekkur-page .tefekkur-zikir-ring-progress {
+    stroke: var(--section-color);
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-zikir-ring-inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 206px;
+    height: 206px;
+    border-radius: 50%;
+    color: var(--section-dark);
+    background: #fff;
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--section-color) 24%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--section-color) 30%, #fff);
+    transition: transform 0.12s ease;
+}
+
+.tefekkur-page .tefekkur-zikir-ring-inner strong {
+    font-size: 72px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.tefekkur-page .tefekkur-zikir-ring-inner small {
+    color: var(--tf-muted);
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.tefekkur-page .tefekkur-zikir-ring:active .tefekkur-zikir-ring-inner {
+    transform: scale(0.95);
+}
+
+.tefekkur-page .tefekkur-zikir-ring.is-pulsing .tefekkur-zikir-ring-inner {
+    animation: tefekkur-zikir-pulse 0.22s ease-out;
+}
+
+.tefekkur-page .tefekkur-zikir-ring.is-lap .tefekkur-zikir-ring-inner {
+    animation: tefekkur-zikir-lap 0.6s ease-out;
+}
+
+.tefekkur-page .tefekkur-zikir-ring:focus-visible {
+    outline: 3px solid var(--section-color);
+    outline-offset: 6px;
+}
+
+@keyframes tefekkur-zikir-pulse {
+    0% { transform: scale(0.94); }
+    100% { transform: scale(1); }
+}
+
+@keyframes tefekkur-zikir-lap {
+    0% { transform: scale(0.92); background: var(--section-tint); }
+    60% { transform: scale(1.04); background: var(--section-tint); }
+    100% { transform: scale(1); background: #fff; }
+}
+
+.tefekkur-page .tefekkur-zikir-hint {
+    margin: 0;
+    color: var(--tf-muted);
+    font-size: 15px;
+}
+
+.tefekkur-page .tefekkur-zikir-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    width: min(100%, 360px);
+    margin: 4px 0 0;
+}
+
+.tefekkur-page .tefekkur-zikir-stats div {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--section-color) 22%, #fff);
+    text-align: center;
+}
+
+.tefekkur-page .tefekkur-zikir-stats dt {
+    color: var(--tf-muted);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.tefekkur-page .tefekkur-zikir-stats dd {
+    margin: 2px 0 0;
+    color: var(--section-dark);
+    font-size: 26px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.tefekkur-page .tefekkur-zikir-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.tefekkur-page .tefekkur-zikir-targets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tefekkur-page .tefekkur-zikir-targets button {
+    min-width: 54px;
+    padding: 0 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.tefekkur-page .tefekkur-zikir-undo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1.5px solid #c9ccd2;
+    border-radius: 14px;
+    color: #333;
+    background: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tefekkur-page .tefekkur-zikir-undo:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+
+/* --- Radyo ----------------------------------------------------------------------------- */
+.tefekkur-page .tefekkur-radio-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 34px 22px 28px;
+    border: 1px solid color-mix(in srgb, var(--section-color) 25%, #fff);
+    border-radius: 24px;
+    background: linear-gradient(180deg, var(--section-tint) 0%, #fff 75%);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--section-color) 14%, transparent);
+    text-align: center;
+}
+
+.tefekkur-page .tefekkur-radio-art {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 150px;
+    border-radius: 36px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--section-dark) 0%, var(--section-color) 100%);
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--section-color) 35%, transparent);
+    font-size: 60px;
+}
+
+.tefekkur-page .tefekkur-radio-live {
+    position: absolute;
+    top: -10px;
+    right: -14px;
+    padding: 4px 10px;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    color: #fff;
+    background: #9ca3af;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.tefekkur-page .tefekkur-radio-card[data-state="playing"] .tefekkur-radio-live {
+    background: #dc2626;
+}
+
+.tefekkur-page .tefekkur-radio-eq {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 5px;
+    height: 26px;
+    margin-top: 6px;
+}
+
+.tefekkur-page .tefekkur-radio-eq span {
+    width: 6px;
+    height: 20%;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--section-color) 45%, #fff);
+}
+
+.tefekkur-page .tefekkur-radio-card[data-state="playing"] .tefekkur-radio-eq span {
+    background: var(--section-color);
+    animation: tefekkur-eq 1s ease-in-out infinite;
+}
+
+.tefekkur-page .tefekkur-radio-card[data-state="playing"] .tefekkur-radio-eq span:nth-child(2) { animation-delay: -0.2s; }
+.tefekkur-page .tefekkur-radio-card[data-state="playing"] .tefekkur-radio-eq span:nth-child(3) { animation-delay: -0.5s; }
+.tefekkur-page .tefekkur-radio-card[data-state="playing"] .tefekkur-radio-eq span:nth-child(4) { animation-delay: -0.7s; }
+.tefekkur-page .tefekkur-radio-card[data-state="playing"] .tefekkur-radio-eq span:nth-child(5) { animation-delay: -0.35s; }
+
+.tefekkur-page .tefekkur-radio-card h5 {
+    margin: 0;
+    color: var(--tf-text);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.tefekkur-page .tefekkur-radio-play {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    margin-top: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--section-color);
+    box-shadow: 0 12px 26px color-mix(in srgb, var(--section-color) 40%, transparent);
+    font-size: 32px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-radio-play:hover:not(:disabled) {
+    background: var(--section-dark);
+}
+
+.tefekkur-page .tefekkur-radio-play:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.tefekkur-page .tefekkur-radio-play:disabled {
+    background: #c4c7cc;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.tefekkur-page .tefekkur-radio-play:focus-visible {
+    outline: 3px solid var(--section-color);
+    outline-offset: 4px;
+}
+
+.tefekkur-page .tefekkur-radio-card[data-state="loading"] .tefekkur-radio-play i {
+    visibility: hidden;
+}
+
+.tefekkur-page .tefekkur-radio-spinner {
+    position: absolute;
+    inset: 22px;
+    display: none;
+    border: 4px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: tefekkur-spin 0.8s linear infinite;
+}
+
+.tefekkur-page .tefekkur-radio-card[data-state="loading"] .tefekkur-radio-spinner {
+    display: block;
+}
+
+.tefekkur-page .tefekkur-radio-volume {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(100%, 320px);
+    margin-top: 6px;
+    color: var(--tf-muted);
+    font-size: 16px;
+}
+
+.tefekkur-page .tefekkur-radio-volume[hidden],
+.tefekkur-page .tefekkur-radio-card[data-state="unavailable"] .tefekkur-radio-volume {
+    display: none;
+}
+
+.tefekkur-page .tefekkur-radio-volume input {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: var(--section-color);
+}
+
+@keyframes tefekkur-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .tefekkur-page .tefekkur-zikir-presets {
+        margin-bottom: 14px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-presets button,
+    .tefekkur-page .tefekkur-zikir-targets button {
+        min-height: 38px;
+        padding: 0 13px;
+        font-size: 15px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-card {
+        gap: 12px;
+        padding: 20px 14px 18px;
+        border-radius: 20px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-arabic {
+        font-size: 28px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-ring {
+        width: 236px;
+        height: 236px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-ring-inner {
+        width: 180px;
+        height: 180px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-ring-inner strong {
+        font-size: 60px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-controls {
+        flex-direction: column;
+        align-items: stretch;
+        margin-top: 14px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-targets {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-targets button {
+        min-width: 0;
+        padding: 0 4px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-undo {
+        justify-content: center;
+    }
+
+    .tefekkur-page .tefekkur-radio-card {
+        padding: 28px 16px 22px;
+        border-radius: 20px;
+    }
+
+    .tefekkur-page .tefekkur-radio-art {
+        width: 124px;
+        height: 124px;
+        border-radius: 30px;
+        font-size: 50px;
+    }
+
+    .tefekkur-page .tefekkur-radio-card h5 {
+        font-size: 24px;
+    }
+
+    .tefekkur-page .tefekkur-radio-play {
+        width: 78px;
+        height: 78px;
+        font-size: 28px;
+    }
+
+    .tefekkur-page .tefekkur-radio-spinner {
+        inset: 19px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tefekkur-page .tefekkur-zikir-ring {
+        width: 216px;
+        height: 216px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-ring-inner {
+        width: 164px;
+        height: 164px;
+    }
+
+    .tefekkur-page .tefekkur-zikir-ring-inner strong {
+        font-size: 52px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tefekkur-page .tefekkur-zikir-ring-progress,
+    .tefekkur-page .tefekkur-zikir-ring-inner,
+    .tefekkur-page .tefekkur-radio-play {
+        transition: none;
+    }
+
+    .tefekkur-page .tefekkur-zikir-ring.is-pulsing .tefekkur-zikir-ring-inner,
+    .tefekkur-page .tefekkur-zikir-ring.is-lap .tefekkur-zikir-ring-inner,
+    .tefekkur-page .tefekkur-radio-card[data-state="playing"] .tefekkur-radio-eq span {
+        animation: none;
+    }
+
+    .tefekkur-page .tefekkur-radio-card[data-state="playing"] .tefekkur-radio-eq span {
+        height: 70%;
+    }
+}

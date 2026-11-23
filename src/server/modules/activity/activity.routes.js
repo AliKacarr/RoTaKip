@@ -244,7 +244,7 @@ function registerActivityRoutes(app, dependencies) {
   // Ziyaret logu endpoint'i
   app.post('/api/log-visit', publicLogLimiter, async (req, res) => {
     try {
-      const { deviceInfo, groupId, action, view, vakit, tur } = req.body || {};
+      const { deviceInfo, groupId, action, view, vakit, tur, section, mode } = req.body || {};
       const siteAction = (action || 'grup_görüntüleme').toString().trim();
       const shouldWriteAccessLog = (
         siteAction === 'grup_görüntüleme'
@@ -275,7 +275,9 @@ function registerActivityRoutes(app, dependencies) {
         actor: storedActor,
         view,
         vakit,
-        tur
+        tur,
+        section,
+        mode
       });
       res.json({ success: true });
     } catch (error) {
@@ -287,7 +289,7 @@ function registerActivityRoutes(app, dependencies) {
   // Ziyaret logu için adblock'a daha az takılan alternatif endpoint
   app.post('/api/visit-event', publicLogLimiter, async (req, res) => {
     try {
-      const { deviceInfo, groupId, action, view, vakit, tur } = req.body || {};
+      const { deviceInfo, groupId, action, view, vakit, tur, section, mode } = req.body || {};
       const siteAction = (action || 'grup_görüntüleme').toString().trim();
       const shouldWriteAccessLog = (
         siteAction === 'grup_görüntüleme'
@@ -318,7 +320,9 @@ function registerActivityRoutes(app, dependencies) {
         actor: storedActor,
         view,
         vakit,
-        tur
+        tur,
+        section,
+        mode
       });
       res.json({ success: true });
     } catch (error) {

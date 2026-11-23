@@ -1,0 +1,218 @@
+.tefekkur-page .tefekkur-section-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tefekkur-page .tefekkur-section-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    min-height: 78px;
+    padding: 12px 20px 12px 14px;
+    /* Tesbihat vakit satırları gibi: tam renkli kenarlık ve dolgun renkli zemin. */
+    border: 1px solid var(--section-color, var(--tf-border));
+    border-radius: 16px;
+    color: var(--tf-text);
+    background: color-mix(in srgb, var(--section-color, #fff) 18%, #fff);
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--tf-card-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-section-row:hover {
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--section-color, #888) 28%, transparent);
+    transform: translateY(-2px);
+}
+
+.tefekkur-page .tefekkur-section-row:focus-visible {
+    outline: 3px solid var(--section-color, var(--tf-accent));
+    outline-offset: 2px;
+}
+
+.tefekkur-page .tefekkur-section-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--section-color, var(--tf-accent));
+    font-size: 23px;
+}
+
+.tefekkur-page .tefekkur-section-name {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.tefekkur-page .tefekkur-section-name small {
+    margin-top: 2px;
+    color: var(--tf-muted);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.tefekkur-page .tefekkur-section-chevron {
+    flex: 0 0 auto;
+    color: var(--section-dark, var(--tf-muted));
+    font-size: 18px;
+}
+
+/* Radyo çalarken ana listenin üstünde görünen mini çalar. */
+.tefekkur-page .tefekkur-now-playing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 8px 8px 12px;
+    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--section-dark, #0f6330) 0%, var(--section-color, #15803d) 100%);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--section-color, #15803d) 28%, transparent);
+}
+
+.tefekkur-page .tefekkur-now-playing[hidden] {
+    display: none;
+}
+
+.tefekkur-page .tefekkur-now-playing-open {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 4px;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tefekkur-page .tefekkur-now-playing-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.tefekkur-page .tefekkur-now-playing-text strong {
+    overflow: hidden;
+    font-size: 17px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tefekkur-page .tefekkur-now-playing-text small {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+}
+
+.tefekkur-page .tefekkur-now-playing-eq {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: flex-end;
+    gap: 3px;
+    width: 22px;
+    height: 20px;
+}
+
+.tefekkur-page .tefekkur-now-playing-eq span {
+    flex: 1 1 0;
+    height: 30%;
+    border-radius: 2px;
+    background: #fff;
+}
+
+.tefekkur-page .tefekkur-now-playing[data-state="playing"] .tefekkur-now-playing-eq span {
+    animation: tefekkur-eq 0.9s ease-in-out infinite;
+}
+
+.tefekkur-page .tefekkur-now-playing[data-state="playing"] .tefekkur-now-playing-eq span:nth-child(2) { animation-delay: -0.3s; }
+.tefekkur-page .tefekkur-now-playing[data-state="playing"] .tefekkur-now-playing-eq span:nth-child(3) { animation-delay: -0.6s; }
+
+.tefekkur-page .tefekkur-now-playing-button {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.tefekkur-page .tefekkur-now-playing-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes tefekkur-eq {
+    0%, 100% { height: 25%; }
+    50% { height: 100%; }
+}
+
+@media (max-width: 768px) {
+    .tefekkur-page .tefekkur-section-list {
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .tefekkur-page .tefekkur-section-row {
+        gap: 12px;
+        min-height: 68px;
+        padding: 10px 14px;
+        border-radius: 14px;
+    }
+
+    .tefekkur-page .tefekkur-section-icon {
+        width: 46px;
+        height: 46px;
+        font-size: 19px;
+    }
+
+    .tefekkur-page .tefekkur-section-name {
+        font-size: 17px;
+    }
+
+    .tefekkur-page .tefekkur-section-name small {
+        font-size: 13px;
+    }
+
+    .tefekkur-page .tefekkur-section-chevron {
+        font-size: 15px;
+    }
+
+    .tefekkur-page .tefekkur-now-playing {
+        margin-top: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tefekkur-page .tefekkur-section-row {
+        transition: none;
+    }
+
+    .tefekkur-page .tefekkur-section-row:hover {
+        transform: none;
+    }
+
+    .tefekkur-page .tefekkur-now-playing[data-state="playing"] .tefekkur-now-playing-eq span {
+        height: 70%;
+        animation: none;
+    }
+}

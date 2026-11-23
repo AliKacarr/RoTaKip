@@ -50,6 +50,8 @@ const groupWarmups = new Map();
 const okumalarStyleLinks = new Set();
 let activeView = null;
 let activeLifecycle = null;
+// Son gösterilen sekme: sekme içi geçişlerde (ör. Tefekkür'de bölümden geri dönmek) "sekme açıldı" tekrar kaydedilmez.
+let activeRouteName = null;
 let mountedGroupId = null;
 let navigationSequence = 0;
 let routeTransitionLoader = null;
@@ -736,6 +738,7 @@ async function navigate(url, options = {}) {
   const sequence = ++navigationSequence;
   keepInitialTabLoaderVisible();
   removeRouteTransitionLoader();
+  const previousRouteName = activeRouteName;
   const isInitialNavigation = activeView === null;
   const route = resolveRoute(url.pathname);
   if (!route) {
@@ -894,7 +897,8 @@ async function navigate(url, options = {}) {
     if (route.name === 'groups') activeView.classList.remove('is-preparing-return');
     await hideStatus();
     if (sequence !== navigationSequence) return;
-    logTabView(route);
+    if (previousRouteName !== route.name) logTabView(route);
+    activeRouteName = route.name;
     if (revealAfterLifecycle) {
       await revealRouteAfterLoader(activeView, { useInitialTabLoader, transitionLoader, sequence });
     }
