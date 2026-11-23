@@ -166,6 +166,24 @@
         return 'Tefekkür: ' + label + mode + ' açıldı';
       }
 
+      /** Makale kategori kaydı → okunur cümle, örn. "Makaleler: Kader kategorisi açıldı" */
+      function formatMakaleKategoriEylem(log) {
+        const categoryLabels = {
+          'think-it': 'Think It',
+          kader: 'Kader',
+          'allahin-varliginin-delilleri': 'Allah\'ın Varlığının Delilleri',
+          'sen-kimsin': 'Sen Kimsin',
+          'islamda-adalet': 'İslam\'da Adalet',
+          hadisler: 'Hadisler',
+          'ahiretin-varliginin-delilleri': 'Ahiretin Varlığının Delilleri',
+          'kainat-rehberi': 'Kâinat Rehberi',
+          'gayeli-ve-planli-yaratilis': 'Gayeli ve Planlı Yaratılış',
+          'temel-sorgulama': 'Temel Sorgulama',
+          evrim: 'Evrim'
+        };
+        return 'Makaleler: ' + (categoryLabels[log.section] || 'Bir') + ' kategorisi açıldı';
+      }
+
       /** SiteActivityLog: action + groupId → Türkçe eylem metni */
       function formatSiteActivityEylem(log) {
         const gidRaw = log.groupId != null ? String(log.groupId).trim() : '';
@@ -191,6 +209,8 @@
             return escapeHtml(formatTefekkurBolumEylem(log));
           case 'makaleler_görüntüleme':
             return 'Makaleler sekmesi açıldı';
+          case 'makaleler_kategori_görüntüleme':
+            return escapeHtml(formatMakaleKategoriEylem(log));
           default:
             return escapeHtml(action || 'bilinmeyen eylem') +
               (gid ? '<br><span style="color:#5f5f5f;font-size:0.92em;">Grup: ' + escapeHtml(gid) + '</span>' : '');

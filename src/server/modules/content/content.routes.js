@@ -2,6 +2,8 @@
 
 const mongoose = require('mongoose');
 
+const { createArticleService } = require('./article.service');
+
 const VIDEO_LIST_TYPES = new Set(['random', 'latest', 'most-viewed']);
 const DEFAULT_VIDEO_LIMIT = 6;
 const MAX_VIDEO_LIMIT = 24;
@@ -103,49 +105,65 @@ function waitForDatabase(timeoutMs = 3000) {
   });
 }
 
-function registerArticleRoutes(app) {
+async function getArticlesCollection() {
+  if (!mongoose.connection.db || mongoose.connection.readyState !== 1) {
+    await waitForDatabase();
+  }
+  const db = mongoose.connection.db;
+  if (!db) throw new Error('Veritabanı bağlantısı kurulamadı');
+  return db.collection('articles');
+}
+
+function registerArticleRoutes(app, { articleService = createArticleService({ getCollection: getArticlesCollection }) } = {}) {
+  function respondWithFailure(res, error, logMessage) {
+    if (/DB not ready/i.test(error?.message || '')) {
+      return res.status(503).json({
+        success: false,
+        message: 'Veritabanı hazır değil, lütfen tekrar deneyin.'
+      });
+    }
+    console.error(logMessage, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Makaleler yüklenemedi'
+    });
+  }
+
+  // Sekme açılırken her kategorinin ilk birkaç makalesi tek istekte hazırlanır.
+  app.get('/api/articles/preview', async (req, res) => {
+    try {
+      const preview = await articleService.listPreview(req.query.perCategory);
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      return res.json({ success: true, ...preview });
+    } catch (error) {
+      return respondWithFailure(res, error, 'Makale önizlemeleri yüklenirken hata:');
+    }
+  });
+
+  // Kategori sayfası kalan makaleleri kaydırdıkça `offset` / `limit` ile ister.
   app.get('/api/articles', async (req, res) => {
     try {
-      if (!mongoose.connection.db || mongoose.connection.readyState !== 1) {
-        try {
-          await waitForDatabase();
-        } catch (_) {
-          return res.status(503).json({
-            success: false,
-            message: 'Veritabanı hazır değil, lütfen tekrar deneyin.'
-          });
-        }
-      }
-
-      const db = mongoose.connection.db;
-      if (!db) {
-        return res.status(503).json({
+      const page = await articleService.listCategoryPage(req.query.category, {
+        offset: req.query.offset,
+        limit: req.query.limit
+      });
+      if (!page) {
+        return res.status(400).json({
           success: false,
-          message: 'Veritabanı bağlantısı kurulamadı'
+          message: 'Geçerli bir makale kategorisi belirtin'
         });
       }
-
-      const articles = await db.collection('articles').find({}).toArray();
-      const categories = [...new Set(articles.map(article => article.category))];
-
-      return res.json({
-        success: true,
-        articles,
-        categories
-      });
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      return res.json({ success: true, ...page });
     } catch (error) {
-      console.error('Makaleler yüklenirken hata:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Makaleler yüklenemedi'
-      });
+      return respondWithFailure(res, error, 'Makaleler yüklenirken hata:');
     }
   });
 }
 
-function registerContentRoutes(app) {
+function registerContentRoutes(app, options = {}) {
   registerVideoRoutes(app);
-  registerArticleRoutes(app);
+  registerArticleRoutes(app, options);
 }
 
 module.exports = {

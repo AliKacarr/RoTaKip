@@ -30,7 +30,8 @@ const siteActivityLogSchema = new mongoose.Schema({
   // Tesbihat görünümünde seçili vakit (sabah, ogle…) ve tür (kisa, uzun, arapca-uzun)
   vakit: String,
   tur: String,
-  // Yalnızca tefekkur_bölüm_görüntüleme eyleminde: açılan bölüm (ayet, esma…) ve okuma biçimi (metin, resim)
+  // tefekkur_bölüm_görüntüleme eyleminde: açılan bölüm (ayet, esma…) ve okuma biçimi (metin, resim);
+  // makaleler_kategori_görüntüleme eyleminde: açılan kategorinin slug'ı (kader, evrim…)
   section: String,
   mode: String
 });

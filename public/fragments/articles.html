@@ -1,26 +1,30 @@
 <div class="articles">
-      <div class="articles-top-bar">
-        <div class="articles-categories" role="group" aria-label="Makale kategorileri">
-          <button class="category-btn active" data-category="all">
-            <i class="fa-solid fa-th-large"></i> Tümü
-          </button>
-          <button class="category-btn" data-category="Think It"><i class="fa-solid fa-tag"></i> Think It</button>
-          <button class="category-btn" data-category="Kader"><i class="fa-solid fa-tag"></i> Kader</button>
-          <button class="category-btn" data-category="Allah'ın Varlığının Delilleri"><i class="fa-solid fa-tag"></i> Allah'ın Varlığının Delilleri</button>
-          <button class="category-btn" data-category="Sen Kimsin"><i class="fa-solid fa-tag"></i> Sen Kimsin</button>
-          <button class="category-btn" data-category="İslam'da Adalet"><i class="fa-solid fa-tag"></i> İslam'da Adalet</button>
-          <button class="category-btn" data-category="Hadisler"><i class="fa-solid fa-tag"></i> Hadisler</button>
-          <button class="category-btn" data-category="Ahiret'in Varlığının Delilleri"><i class="fa-solid fa-tag"></i> Ahiret'in Varlığının Delilleri</button>
-          <button class="category-btn" data-category="Kâinat Rehberi"><i class="fa-solid fa-tag"></i> Kâinat Rehberi</button>
-          <button class="category-btn" data-category="Gayeli ve Planlı Yaratılış"><i class="fa-solid fa-tag"></i> Gayeli ve Planlı Yaratılış</button>
-          <button class="category-btn" data-category="Temel Sorgulama"><i class="fa-solid fa-tag"></i> Temel Sorgulama</button>
-          <button class="category-btn" data-category="Evrim"><i class="fa-solid fa-tag"></i> Evrim</button>
-        </div>
+  <section class="articles-view" data-view="home" aria-label="Makale kategorileri">
+    <ul class="articles-category-grid">
+      <li><button type="button" class="articles-category-card" data-category="Think It" data-slug="think-it"><span class="articles-category-name">Think It</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Kader" data-slug="kader"><span class="articles-category-name">Kader</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Allah'ın Varlığının Delilleri" data-slug="allahin-varliginin-delilleri"><span class="articles-category-name">Allah'ın Varlığının Delilleri</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Sen Kimsin" data-slug="sen-kimsin"><span class="articles-category-name">Sen Kimsin</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="İslam'da Adalet" data-slug="islamda-adalet"><span class="articles-category-name">İslam'da Adalet</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Hadisler" data-slug="hadisler"><span class="articles-category-name">Hadisler</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Ahiretin Varlığının Delilleri" data-slug="ahiretin-varliginin-delilleri"><span class="articles-category-name">Ahiretin Varlığının Delilleri</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Kâinat Rehberi" data-slug="kainat-rehberi"><span class="articles-category-name">Kâinat Rehberi</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Gayeli ve Planlı Yaratılış" data-slug="gayeli-ve-planli-yaratilis"><span class="articles-category-name">Gayeli ve Planlı Yaratılış</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Temel Sorgulama" data-slug="temel-sorgulama"><span class="articles-category-name">Temel Sorgulama</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+      <li><button type="button" class="articles-category-card" data-category="Evrim" data-slug="evrim"><span class="articles-category-name">Evrim</span><i class="fa-solid fa-chevron-right articles-category-chevron" aria-hidden="true"></i></button></li>
+    </ul>
+  </section>
+
+  <section class="articles-view" data-view="category" aria-labelledby="articlesCategoryTitle" hidden>
+    <header class="articles-category-header">
+      <button type="button" class="articles-back" data-back aria-label="Kategorilere dön"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+      <div class="articles-category-heading">
+        <h2 id="articlesCategoryTitle" class="articles-category-title"></h2>
+        <p id="articlesCategoryCount" class="articles-category-count" hidden></p>
       </div>
-      <div id="articlesContainer" class="articles-container" style="position: relative;"></div>
-      <div class="articles-bottom-bar">
-        <button id="loadMoreArticles" class="load-more-btn" type="button">
-          <i class="fa-solid fa-plus"></i> Daha Fazla Yükle
-        </button>
-      </div>
-    </div>
+    </header>
+    <div id="articlesContainer" class="articles-container"></div>
+    <div id="articlesStatus" class="articles-status" role="status" aria-live="polite" hidden></div>
+    <div id="articlesSentinel" class="articles-sentinel" aria-hidden="true"></div>
+  </section>
+</div>

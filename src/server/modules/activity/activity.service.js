@@ -8,6 +8,8 @@ const { isSafeGroupId } = require('../../shared/group-id');
 const TESBIHAT_VIEW_ACTION = 'tesbihat_görüntüleme';
 /** Tefekkür sekmesinde ana listeden bir bölüm açıldığında (sekmenin kendi açılışı 'tefekkur_görüntüleme') */
 const TEFEKKUR_SECTION_ACTION = 'tefekkur_bölüm_görüntüleme';
+/** Makaleler sekmesinde bir kategori sayfası açıldığında (sekmenin kendi açılışı 'makaleler_görüntüleme') */
+const ARTICLE_CATEGORY_ACTION = 'makaleler_kategori_görüntüleme';
 /** Tesbihat sekmesindeki .tesbihat-view[data-view] değerleri */
 const ALLOWED_SITE_ACTIONS = new Set([
   'grup_görüntüleme',
@@ -18,7 +20,8 @@ const ALLOWED_SITE_ACTIONS = new Set([
   'videolar_görüntüleme',
   'tefekkur_görüntüleme',
   TEFEKKUR_SECTION_ACTION,
-  'makaleler_görüntüleme'
+  'makaleler_görüntüleme',
+  ARTICLE_CATEGORY_ACTION
 ]);
 const TESBIHAT_VIEWS = new Set(['home', 'location', 'types', 'reader']);
 const TESBIHAT_VAKITS = new Set(['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi']);
@@ -29,6 +32,13 @@ const TEFEKKUR_SECTIONS = new Set([
   'ayet', 'hadis', 'dua', 'risale', 'esma', 'zikirmatik', 'kuran-radyo', 'risalet-radyo'
 ]);
 const TEFEKKUR_MODES = new Set(['metin', 'resim']);
+/** Makaleler sekmesindeki .articles-view[data-view] değeri (kategori listesi 'home' kaydedilmez) */
+const ARTICLE_VIEWS = new Set(['category']);
+/** public/fragments/articles.html içindeki kategori kartlarının data-slug değerleri; birebir aynı kalmalıdır. */
+const ARTICLE_CATEGORY_SLUGS = new Set([
+  'think-it', 'kader', 'allahin-varliginin-delilleri', 'sen-kimsin', 'islamda-adalet', 'hadisler',
+  'ahiretin-varliginin-delilleri', 'kainat-rehberi', 'gayeli-ve-planli-yaratilis', 'temel-sorgulama', 'evrim'
+]);
 
 function createActivityService({ getSessionMembership }) {
   function getTurkeyMinuteBounds(at = new Date()) {
@@ -107,8 +117,13 @@ function createActivityService({ getSessionMembership }) {
         activityDetails.section = section;
         if (TEFEKKUR_MODES.has(mode)) activityDetails.mode = mode;
       }
-      // Ayrıntısız bölüm kaydı anlamsızdır (aynı dakikadaki tüm kayıtlarla eşleşip tekrarı da bastırır).
-      if (normalizedAction === TEFEKKUR_SECTION_ACTION && !activityDetails.section) return;
+      if (normalizedAction === ARTICLE_CATEGORY_ACTION && ARTICLE_VIEWS.has(view) && ARTICLE_CATEGORY_SLUGS.has(section)) {
+        activityDetails.view = view;
+        activityDetails.section = section;
+      }
+      // Ayrıntısız bölüm/kategori kaydı anlamsızdır (aynı dakikadaki tüm kayıtlarla eşleşip tekrarı da bastırır).
+      if ((normalizedAction === TEFEKKUR_SECTION_ACTION || normalizedAction === ARTICLE_CATEGORY_ACTION)
+        && !activityDetails.section) return;
 
       if (await hasLogInSameTurkeyMinute(SiteActivityLog, {
         groupId: storedGroupId,
@@ -146,5 +161,7 @@ function createActivityService({ getSessionMembership }) {
 }
 
 module.exports = {
+  ARTICLE_CATEGORY_ACTION,
+  ARTICLE_CATEGORY_SLUGS,
   createActivityService
 };

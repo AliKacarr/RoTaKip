@@ -90,3 +90,44 @@ test('tefekkür alanları tesbihat ve diğer eylem kayıtlarına karışmaz', as
   assert.equal(saved[0].view, 'home');
   assert.equal(saved[1].view, undefined);
 });
+
+const ARTICLE_ACTION = 'makaleler_kategori_görüntüleme';
+
+test('makale kategori kaydı görünüm ve kategori slug\'ını saklar', async () => {
+  const { saved } = await withFakeLog(false, async logSiteActivity => {
+    await logSiteActivity({ action: ARTICLE_ACTION, req: request, view: 'category', section: 'kader' });
+  });
+  assert.equal(saved.length, 1);
+  assert.deepEqual(
+    { action: saved[0].action, view: saved[0].view, section: saved[0].section },
+    { action: ARTICLE_ACTION, view: 'category', section: 'kader' }
+  );
+  assert.equal(saved[0].ipAddress, '203.0.113.7');
+});
+
+test('makale kategori kaydı bilinmeyen değerleri ve kategori listesini kaydetmez', async () => {
+  const { saved } = await withFakeLog(false, async logSiteActivity => {
+    await logSiteActivity({ action: ARTICLE_ACTION, req: request, view: 'home', section: 'kader' });
+    await logSiteActivity({ action: ARTICLE_ACTION, req: request, view: 'category', section: '<script>' });
+    await logSiteActivity({ action: ARTICLE_ACTION, req: request, view: 'category' });
+    await logSiteActivity({ action: ARTICLE_ACTION, req: request, view: 'category', section: 'ayet' });
+  });
+  assert.equal(saved.length, 0);
+});
+
+test('makale kategori kaydı aynı dakikada tekrarlanmaz', async () => {
+  const { saved, queries } = await withFakeLog(true, async logSiteActivity => {
+    await logSiteActivity({ action: ARTICLE_ACTION, req: request, view: 'category', section: 'evrim' });
+  });
+  assert.equal(saved.length, 0);
+  assert.equal(queries[0].section, 'evrim');
+});
+
+test('makale kategori slug listesi fragmentteki kategori kartlarıyla birebir aynıdır', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { ARTICLE_CATEGORY_SLUGS } = require('../../../src/server/modules/activity/activity.service');
+  const fragment = fs.readFileSync(path.join(__dirname, '../../../public/fragments/articles.html'), 'utf8');
+  const slugs = Array.from(fragment.matchAll(/data-slug="([^"]+)"/g), match => match[1]);
+  assert.deepEqual([...slugs].sort(), [...ARTICLE_CATEGORY_SLUGS].sort());
+});

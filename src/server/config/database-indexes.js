@@ -1,5 +1,7 @@
 'use strict';
 
+const mongoose = require('mongoose');
+
 const { UserGroup } = require('../modules/groups/group.models');
 const { Invite } = require('../modules/invitations/invitation.models');
 const { JoinRequest } = require('../modules/join-requests/join-request.models');
@@ -55,8 +57,20 @@ async function ensureJoinRequestTtlIndex() {
   }
 }
 
+// Makale kategori sayfaları `category` filtresi ve `_id` sırasıyla sayfalanır.
+async function ensureArticleIndexes() {
+  try {
+    await mongoose.connection.db
+      .collection('articles')
+      .createIndex({ category: 1, _id: 1 }, { name: 'articles_category_id' });
+  } catch (error) {
+    console.error('articles index hatası:', error.message);
+  }
+}
+
 async function initializeDatabaseIndexes() {
   await Promise.all([
+    ensureArticleIndexes(),
     ensureApplicationIndexes(),
     ensureInviteTtlIndex(),
     ensureJoinRequestTtlIndex()

@@ -179,7 +179,7 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.match(tefekkurSlider, /@media \(max-width:\s*768px\)[\s\S]*?\.tefekkur-slider-action\s*\{[^}]*min-height:\s*56px;/);
   assert.match(videos, /@media \(max-width:\s*768px\)[\s\S]*?\.top-bar\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(videos, /\.videos-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
-  assert.match(articles, /\.articles-categories\s*\{[^}]*flex-wrap:\s*nowrap;[^}]*overflow-x:\s*auto;/s);
+  assert.match(articles, /\.articles-category-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s);
   assert.match(articles, /\.articles-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(footer, /\.footer-container\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1\.15fr\) minmax\(0, 0\.85fr\);[^}]*"social app"[^}]*"corporate corporate";/s);
   assert.match(footer, /\.footer-section\.kurumsal h4\s*\{[^}]*display:\s*none;[\s\S]*?\.footer-section\.kurumsal ul\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[\s\S]*?\.footer-section\.kurumsal ul li \+ li::before\s*\{[^}]*content:\s*"•";/);
@@ -453,27 +453,68 @@ test('global fragmentler grup içeriği taşımaz', () => {
   assert.deepEqual(
     Array.from(articles.matchAll(/data-category="([^"]+)"/g), match => match[1]),
     [
-      'all',
       'Think It',
       'Kader',
       "Allah'ın Varlığının Delilleri",
       'Sen Kimsin',
       "İslam'da Adalet",
       'Hadisler',
-      "Ahiret'in Varlığının Delilleri",
+      "Ahiretin Varlığının Delilleri",
       'Kâinat Rehberi',
       'Gayeli ve Planlı Yaratılış',
       'Temel Sorgulama',
       'Evrim'
     ]
   );
-  assert.doesNotMatch(readClient('features/articles/articles.js'), /setupCategories|data\.categories/);
+  assert.doesNotMatch(readClient('features/articles/articles.js'), /setupCategories/);
+  // Kategori listesi statik kartlardır; "Daha fazla yükle" düğmesi yoktur, kalan makaleler kaydırdıkça yüklenir.
+  assert.match(articles, /class="articles-category-card"[^>]*data-slug="think-it"/);
+  assert.doesNotMatch(articles, /loadMoreArticles|load-more|Daha Fazla Yükle|articles-bottom-bar/);
+  assert.doesNotMatch(readClient('features/articles/articles.js'), /loadMoreArticles|load-more-btn/);
+  assert.doesNotMatch(readClient('features/articles/articles.css'), /\.load-more-btn|\.category-btn/);
+  assert.match(articles, /data-view="home"[\s\S]*?data-view="category"[\s\S]*?id="articlesContainer"[\s\S]*?id="articlesSentinel"/);
   assert.doesNotMatch(articles, /article-loading-image|article-loading-title|article-loading-text/);
   assert.doesNotMatch(readClient('features/articles/articles.js'), /loadingCard|article-loading-/);
   assert.doesNotMatch(readClient('features/articles/articles.js'), /article-loading-spinner/);
   assert.match(readClient('features/articles/articles.css'), /\.article-loading-image\s*\{[^}]*height:\s*175px;[^}]*article-loading/s);
   assert.match(readClient('features/articles/articles.css'), /\.article-image\s*\{[^}]*width:\s*152px;[^}]*height:\s*152px;[^}]*overflow:\s*hidden;/s);
   assert.match(readClient('features/articles/articles.css'), /\.article-image img\s*\{[^}]*height:\s*100%;[^}]*object-fit:\s*cover;/s);
+});
+
+test('makaleler kategori sayfası hazır olunca efektle açılır; makaleler önceden hazırlanır ve kaydırdıkça yüklenir', () => {
+  const script = readClient('features/articles/articles.js');
+  const styles = readClient('features/articles/articles.css');
+
+  // Sekme açılırken (arka planda ısıtılırken de) her kategorinin ilk makaleleri tek istekle alınır.
+  assert.match(script, /this\.loadPreview\(\)\.catch[\s\S]*?this\.render\(this\.readRoute\(\), \{ animate: false \}\);[\s\S]*?this\.schedulePreparation\(\)/);
+  assert.match(script, /\/api\/articles\/preview\?perCategory=\$\{PREVIEW_PER_CATEGORY\}/);
+  assert.match(script, /async prepareContent\(\)[\s\S]*?connectionAllowsPreparation\(\)[\s\S]*?preloadImage/);
+  // Kategori başlığı hemen açılır; makaleler hazır olana kadar container içinde üç noktalı yükleme animasyonu görünür.
+  assert.match(script, /\brender\(route, options = \{\}\)[\s\S]*?this\.showCategoryLoading\(route\.category, options\);[\s\S]*?return this\.fillCategory\(route\.category, sequence\)/);
+  assert.match(script, /showCategoryLoading\(category, options\)[\s\S]*?this\.container\.replaceChildren\(this\.createLoader\(\)\)[\s\S]*?this\.setView\('category', options\)/);
+  assert.match(script, /async fillCategory\(category, sequence\)[\s\S]*?await this\.ensureCategory\(category\)[\s\S]*?await this\.waitForImages\(entry\.articles\)[\s\S]*?this\.showCategoryContent\(entry\)/);
+  assert.doesNotMatch(script, /await this\.render\(/);
+  assert.match(styles, /\.articles-loader\s*\{[^}]*animation:\s*articles-loader-in[^}]*0\.15s/s);
+  assert.match(styles, /\.articles-loader span\s*\{[^}]*border-radius:\s*50%;[^}]*animation:\s*articles-loader-dot/s);
+  // Makale sayısı başlığın sağında, parantez içinde ve yeşil değil nötr renkte yazar.
+  assert.match(script, /\(\$\{total\} içerik\)/);
+  // Kategori sayfasında footer yoktur ve sayfa açılışı etkinlik kaydına yazılır.
+  assert.match(styles, /body:has\(\.tab-view-articles \.articles-view\[data-view="category"\]:not\(\[hidden\]\)\) #footerRoot\s*\{\s*display:\s*none;/);
+  assert.match(script, /action: 'makaleler_kategori_görüntüleme',\s*view: 'category',\s*section: slug/);
+  assert.match(script, /if \(options\.log !== false\) logCategoryView\(/);
+  assert.match(script, /log: false \}\)/);
+  assert.match(styles, /\.articles-category-count\s*\{[^}]*color:\s*#6c757d;/s);
+  assert.match(script, /classList\.add\('is-entering'\)/);
+  assert.match(script, /prefersReducedMotion\(\)/);
+  // Kalan makaleler IntersectionObserver ile sayfalı istenir.
+  assert.match(script, /new IntersectionObserver[\s\S]*?this\.loadMore\(\)/);
+  assert.match(script, /fetchPage\(category, entry\.articles\.length, PAGE_SIZE\)/);
+  // Kategori URL'de saklanır ve sekme dönüşte görünmeden hazırlanır.
+  assert.match(script, /\?kategori=\$\{encodeURIComponent/);
+  assert.match(script, /prepareBeforeReveal: true/);
+  assert.match(styles, /\.articles-view\.is-entering\s*\{[^}]*animation:\s*articles-view-enter[^}]*backwards/s);
+  assert.match(styles, /\.article-card\.is-entering\s*\{[^}]*animation:[^}]*backwards;[^}]*animation-delay:\s*calc\(var\(--card-index, 0\) \* 70ms\)/s);
+  assert.match(styles, /prefers-reduced-motion:\s*reduce[\s\S]*?\.article-card\.is-entering[\s\S]*?animation:\s*none;/);
 });
 
 test('global sekmeler ilk geçişten önce içerikleriyle birlikte arka planda hazırlanır', () => {
@@ -829,7 +870,8 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.doesNotMatch(readClient('features/readings/analytics/longest-series.js'), /waitForRoutePlaceholder|longest-series-loading/);
   assert.doesNotMatch(readClient('features/readings/analytics/stats-section.js'), /waitForRoutePlaceholder|stats-loading/);
   assert.match(readClient('features/videos/videos.js'), /await window\.waitForRoutePlaceholder\(videosContainer\)/);
-  assert.match(readClient('features/articles/articles.js'), /await window\.waitForRoutePlaceholder\(container\)/);
+  assert.match(readClient('features/articles/articles.js'), /await this\.waitForImages\(entry\.articles\)/);
+  assert.doesNotMatch(readClient('features/articles/articles.js'), /waitForRoutePlaceholder/);
   assert.doesNotMatch(readClient('features/tefekkur/tefekkur-slider.js'), /waitForRoutePlaceholder|loading-placeholder/);
   assert.doesNotMatch(readClient('shell/shell.css'), /tab-view[\s\S]*?scale\(0\.995\)/);
 });

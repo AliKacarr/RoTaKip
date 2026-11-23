@@ -90,6 +90,17 @@ Tefekkür sekmesi (`/tefekkur`) tek route olarak çalışır; bölüm ve okuma b
 - **Radyolar** yayın adreslerini ortam değişkenlerinden alır: `TEFEKKUR_KURAN_RADYO_URL` ve `TEFEKKUR_RISALET_RADYO_URL` (`.env.example`). Adres boş ya da `https/http` dışındaysa ilgili radyo "kullanılamıyor" durumunda kalır. Site HTTPS ile sunulduğundan `https://` adres tercih edilir.
 - **Etkinlik günlüğü**: bölüm görüntülemeleri `tefekkur_bölüm_görüntüleme` eylemiyle `activity` modülüne yazılır (bölüm anahtarı ve okuma biçimi `activity.service.js` içindeki izinli listeyle doğrulanır). Sekme içi geçişlerde `shell-router.js` "sekme açıldı" kaydını tekrarlamaz.
 
+## Makaleler
+
+Makaleler sekmesi (`/makaleler`) iki görünümden oluşur: kategori listesi (2 sütunlu kartlar) ve seçilen kategorinin makale listesi. Kategori adresi `?kategori=<slug>` ile saklanır; slug ve kategori adı `public/fragments/articles.html` içindeki kartlarda (`data-slug`, `data-category`) tanımlıdır. Veritabanındaki `articles.category` değeriyle birebir eşleşmelidir.
+
+- **Önceden hazırlık**: sekme açılırken (başka sekme açıkken arka planda ısıtılırken de) `GET /api/articles/preview?perCategory=4` her kategorinin ilk makalelerini tek istekte getirir; görseller boşta kalınca sırayla indirilir (`saveData`/2G bağlantıda görseller indirilmez).
+- **Efekt**: kategori seçilince görünüm, makaleler ve görselleri hazır olunca (en fazla 1,5 sn beklenir) `is-entering` efektiyle açılır; kartlar `--card-index` ile sırayla gelir. `prefers-reduced-motion` altında efekt kapalıdır.
+- **Kalan makaleler**: "Daha fazla yükle" düğmesi yoktur; kategori sayfasında `IntersectionObserver` ile `GET /api/articles?category=&offset=&limit=` sayfalı istenir.
+- **Footer**: kategori sayfasında (`data-view="category"`) alt bilgi gösterilmez; `articles.css` içindeki `body:has(...) #footerRoot` kuralı bunu yönetir.
+- **Etkinlik günlüğü**: kategori sayfası açılışı `makaleler_kategori_görüntüleme` eylemiyle (`view: 'category'`, `section: <slug>`) `activity` modülüne yazılır; "Yeniden dene" tekrar kaydetmez. İzinli slug listesi `activity.service.js` içindeki `ARTICLE_CATEGORY_SLUGS` ile fragmentteki `data-slug` değerleri birebir aynı kalmalıdır (bir test bunu doğrular); yönetici panelindeki okunur adlar `site-activity-admin.js` içindedir.
+- **Sunucu** (`src/server/modules/content/`): `article.service.js` sıralamayı (`_id` artan), sayfalamayı, kategori doğrulamasını (yalnız düz metin) ve önizleme önbelleğini (60 sn) yönetir; liste yanıtlarında makale metni 220 karaktere kısaltılır. `articles` koleksiyonu için `{ category: 1, _id: 1 }` indeksi `config/database-indexes.js` içinde oluşturulur.
+
 ## Build ve Test
 
 - `npm run build:assets`: `src/client` kaynaklarından minify edilmiş paketleri `public/` içine yazar ve manifesti günceller.

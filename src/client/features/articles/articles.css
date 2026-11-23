@@ -1,98 +1,272 @@
 /* ==================== Articles Section Styles ==================== */
 
 .articles {
-  padding:10px 20px;
+  --articles-accent: #1a9948;
+  --articles-text: #1f2430;
+  --articles-loader-color: var(--articles-accent);
+  padding: 10px 20px;
 }
 
-.articles-top-bar {
+.articles-view[hidden],
+.articles-status[hidden] {
+  display: none;
+}
+
+/* Kategori sayfasında (data-view="category") alt bilgi (footer) gösterilmez. */
+body:has(.tab-view-articles .articles-view[data-view="category"]:not([hidden])) #footerRoot {
+  display: none;
+}
+
+/* ---------- Kategori listesi ---------- */
+
+.articles-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  max-width: 780px;
+  margin: 10px auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.articles-category-card {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
-  margin-bottom: 25px;
-  margin-left: 2px;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.articles-bottom-bar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 10px;
-  padding: 20px 0;
-}
-
-.articles-categories {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.category-btn {
-  padding: 13px 22px;
-  border: 2px solid #d0d0d0;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  min-height: 112px;
+  padding: 14px 22px 14px 26px;
+  box-sizing: border-box;
+  border: 1.5px solid #d3dae4;
+  border-radius: 40px;
   background: #ffffff;
-  color: #6c757d;
-  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(36, 50, 70, 0.12);
+  color: var(--articles-text);
+  font: inherit;
   font-size: 21px;
   font-weight: 500;
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+  text-align: left;
   cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.category-btn:hover {
-  border-color: #007bff;
-  color: #007bff;
-  background: #f8f9ff;
-}
-
-.category-btn.active {
-  background: #007bff;
-  border-color: #007bff;
-  color: #ffffff;
-}
-
-.load-more-btn {
-  padding: 15px 26px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 25px;
-  font-size: 20px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.load-more-btn:hover {
+.articles-category-card:hover {
+  border-color: color-mix(in srgb, var(--articles-accent) 55%, #d3dae4);
+  box-shadow: 0 12px 28px rgba(36, 50, 70, 0.16);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-.load-more-btn:active {
+.articles-category-card:active {
   transform: scale(0.98);
-  background: linear-gradient(135deg, #5a67d8 0%, #533483 100%);
-  color: #e0e7ff;
 }
 
-.load-more-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+.articles-category-card:focus-visible,
+.articles-back:focus-visible,
+.articles-retry:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--articles-accent) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.articles-category-name {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.articles-category-chevron {
+  flex: 0 0 auto;
+  color: var(--articles-accent);
+  font-size: 20px;
+  transition: transform 0.2s ease;
+}
+
+.articles-category-card:hover .articles-category-chevron {
+  transform: translateX(3px);
+}
+
+/* ---------- Kategori sayfası ---------- */
+
+.articles-category-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0 18px;
+}
+
+.articles-back {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  box-sizing: border-box;
+  border: 1.5px solid #d3dae4;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(36, 50, 70, 0.12);
+  color: var(--articles-accent);
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.articles-back:hover {
+  border-color: color-mix(in srgb, var(--articles-accent) 55%, #d3dae4);
+  box-shadow: 0 6px 18px rgba(36, 50, 70, 0.18);
+  transform: translateX(-2px);
+}
+
+.articles-category-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  min-width: 0;
+}
+
+.articles-category-count {
+  margin: 0;
+  color: #6c757d;
+  font-size: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.articles-category-count[hidden] {
+  display: none;
+}
+
+.articles-category-title {
+  min-width: 0;
+  margin: 0;
+  color: var(--articles-text);
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: break-word;
 }
 
 .articles-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
   gap: 20px;
-  margin-top: 20px;
+}
+
+.articles-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 28px 16px;
+  color: #6c757d;
+  font-size: 17px;
+  text-align: center;
+}
+
+.articles-status.is-error {
+  color: #b3261e;
+}
+
+.articles-retry {
+  padding: 8px 18px;
+  border: 1px solid var(--articles-accent);
+  border-radius: 20px;
+  background: #ffffff;
+  color: var(--articles-accent);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.articles-sentinel {
+  height: 1px;
+}
+
+/* ---------- Yükleme animasyonu ---------- */
+
+/* Makaleler hızlı hazır olursa görünmeden kalkar: animasyon 150 ms gecikmeyle belirir. */
+.articles-loader {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 45vh;
+  opacity: 0;
+  animation: articles-loader-in 0.2s ease 0.15s forwards;
+}
+
+/* Noktaların döngüsü de 0,15 sn gecikmeyle başlar; böylece animasyon belirdiği anda
+   başından (görünmez durumdan) başlar, ortasından başlıyormuş gibi görünmez. */
+.articles-loader span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--articles-loader-color);
+  animation: articles-loader-dot 1.2s ease-in-out 0.15s infinite backwards;
+}
+
+.articles-loader span:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.articles-loader span:nth-child(3) {
+  animation-delay: 0.45s;
+}
+
+.articles-loader.is-compact {
+  min-height: 0;
+  padding: 4px 0;
+}
+
+/* ---------- Giriş efektleri ---------- */
+
+/* `backwards`: animasyon bittiğinde dönüşüm tutulmaz; kartların hover efekti çalışmaya devam eder. */
+.articles-view.is-entering {
+  animation: articles-view-enter 0.35s ease-out backwards;
+}
+
+.article-card.is-entering {
+  animation: article-card-enter 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+  animation-delay: calc(var(--card-index, 0) * 70ms);
+}
+
+@keyframes articles-loader-in {
+  to { opacity: 1; }
+}
+
+@keyframes articles-loader-dot {
+  0%, 80%, 100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes articles-view-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes article-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ==================== Article Card Styles ==================== */
@@ -233,7 +407,7 @@
 
 .article-text {
   color: #4e4e4e;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.6;
   width: 100%;
   margin-top: 16px;
@@ -381,37 +555,34 @@
     padding: 0;
   }
 
-  .articles-top-bar {
-    min-width: 0;
-    margin: 0 0 18px;
+  .articles-category-grid {
+    gap: 12px;
+    margin-top: 4px;
   }
 
-  .articles-categories {
-    width: 100%;
-    min-width: 0;
-    flex-wrap: nowrap;
-    gap: 8px;
-    padding: 2px 2px 8px;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scroll-snap-type: x proximity;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .category-btn {
-    flex: 0 0 auto;
-    max-width: min(78vw, 280px);
-    padding: 8px 12px;
+  .articles-category-card {
+    min-height: 76px;
+    padding: 10px 14px 10px 18px;
     border-width: 1px;
-    border-radius: 17px;
-    gap: 5px;
-    overflow: hidden;
-    font-size: 14px;
-    line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    scroll-snap-align: start;
+    border-radius: 30px;
+    font-size: 16px;
+    letter-spacing: 0;
+  }
+
+  .articles-category-chevron {
+    font-size: 17px;
+  }
+
+  .articles-category-header {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .articles-back {
+    width: 40px;
+    height: 40px;
+    border-width: 1px;
+    font-size: 16px;
   }
 
   .articles-container {
@@ -476,6 +647,10 @@
     line-height: 1.5;
   }
 
+  .articles-category-count {
+    font-size: 15px;
+  }
+
   .article-share {
     width: 32px;
     height: 32px;
@@ -484,15 +659,6 @@
   .article-share-icon {
     width: 17px;
     height: 17px;
-  }
-
-  .articles-bottom-bar {
-    padding: 16px 0 4px;
-  }
-
-  .load-more-btn {
-    padding: 10px 16px;
-    font-size: 15px;
   }
 }
 
@@ -521,8 +687,28 @@
 
 @media (prefers-reduced-motion: reduce) {
   .article-card,
-  .article-image img {
+  .article-image img,
+  .articles-category-card,
+  .articles-category-chevron,
+  .articles-back {
     transition: none;
+  }
+
+  .articles-view.is-entering,
+  .article-card.is-entering,
+  .articles-loader span {
+    animation: none;
+  }
+
+  .articles-loader {
+    opacity: 1;
+    animation: none;
+  }
+
+  .articles-category-card:hover,
+  .articles-category-card:hover .articles-category-chevron,
+  .articles-back:hover {
+    transform: none;
   }
 
   .article-card:hover,
