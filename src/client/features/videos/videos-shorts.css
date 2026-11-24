@@ -21,6 +21,14 @@
   transform: translateY(-110%);
 }
 
+/* Shorts'a geçerken sekme çubuğu hemen kaybolmaz: kırmızı çizgi "Shorts" yazısının altına kayıp ışıma
+   efektini oynarken görünür kalır (videos-tab.js `holdSectionsForShorts`), sonra her zamanki gibi gizlenir. */
+.videos[data-view="shorts"].is-shorts-entering .videos-sections {
+  opacity: 1;
+  pointer-events: none;
+  transform: none;
+}
+
 /* Shorts'ta bölüm sekmeleri ve kanal seçimi koyu temadadır (siyah arka plan üstünde yüzer). */
 .videos[data-view="shorts"] .videos-sections {
   --videos-text: #ffffff;
@@ -47,16 +55,68 @@
   color: #ffffff;
 }
 
-/* Sağ üstteki tam ekran düğmesi (yalnız telefon/tablet): tarayıcı adres çubuğunu gizlemek için. */
+/* Sağ üstteki yatay üç nokta düğmesi (yalnız telefon/tablet): "Tam ekran" (tarayıcı adres çubuğunu gizlemek için)
+   ve "Bu kanalı önerme" seçeneklerini açar. */
 .videos-view[data-view="shorts"] {
   position: relative;
 }
 
-.videos-shorts-fullscreen {
+.videos-shorts-more,
+.videos-shorts-sound {
   display: none;
 }
 
-.videos.is-shorts-paused .videos-shorts-fullscreen {
+/* Ses düğmesi arka plansızdır; dokunuşta beyaz-saydam bir daire hızla büyüyüp kaybolur (videos-tab.js `is-pressed`). */
+.videos-shorts-sound::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.videos-shorts-sound.is-pressed::after {
+  animation: videos-shorts-sound-ripple 0.45s ease-out;
+}
+
+@keyframes videos-shorts-sound-ripple {
+  /* Daire tam boyuta ulaştığında kenar çizgisi belirgin kalır; sonra kaybolur. */
+  from {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+
+  65% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videos-shorts-sound.is-pressed::after {
+    animation: none;
+  }
+}
+
+.videos[data-view="shorts"] .videos-menu {
+  --videos-text: #ffffff;
+  --videos-soft: rgba(255, 255, 255, 0.14);
+  --videos-surface: #212121;
+  --videos-muted: #aaaaaa;
+  color: #ffffff;
+}
+
+.videos.is-shorts-paused .videos-shorts-more,
+.videos.is-shorts-paused .videos-shorts-sound {
   top: calc(var(--videos-sections-height) + 12px);
 }
 
@@ -82,7 +142,9 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 6px 0;
+  /* Çerçeve (.videos-short-frame) slaydın iç yüksekliğini doldurur; dikey boşluk büyüdükçe çerçeve ve
+     (9:16 olduğundan) genişliği de orantılı küçülür. Mobilde (≤768px) çerçeve kenardan kenara kalır. */
+  padding: 20px 0;
   box-sizing: border-box;
   scroll-snap-align: start;
   scroll-snap-stop: always;
@@ -449,7 +511,8 @@
     background: #000000;
   }
 
-  .videos-shorts-fullscreen {
+  .videos-shorts-more,
+  .videos-shorts-sound {
     position: absolute;
     top: 12px;
     right: 12px;
@@ -467,8 +530,18 @@
     cursor: pointer;
   }
 
-  .videos-shorts-fullscreen[hidden] {
+  /* Ses düğmesi yalnız video durdurulunca (bölüm sekmeleri görünürken) üç noktanın soluna gelir. */
+  .videos-shorts-sound {
+    right: 56px;
     display: none;
+    background: transparent;
+    font-size: 18px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .videos.is-shorts-paused .videos-shorts-sound {
+    display: grid;
   }
 
   .videos-short {

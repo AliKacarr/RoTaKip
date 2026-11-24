@@ -136,12 +136,12 @@
   position: relative;
 }
 
+/* Katman küçük resimle aynı boyuttadır ve taşmaya izin verir: video kırpması ve köşe yuvarlaklığı
+   .videos-preview-host'tadır; ilerleme çizgisi videonun alt kenarına bitişiktir, nokta ise çizginin
+   ortasında kalıp kartın dışına (alta ve sola) taşabilir (YouTube önizlemesi gibi). */
 .videos-preview-layer {
   position: absolute;
   z-index: 2;
-  overflow: hidden;
-  border-radius: var(--videos-radius);
-  background: #000000;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -154,6 +154,19 @@
 .videos-preview-host {
   position: absolute;
   inset: 0;
+  overflow: hidden;
+  border-radius: var(--videos-radius) var(--videos-radius) 0 0;
+  background: #000000;
+}
+
+/* Shorts rafı önizlemesi: sessiz döngüdür; ses düğmesi, ilerleme çubuğu ve süre gösterilmez. */
+.videos-preview-layer.is-short .videos-preview-host {
+  border-radius: 12px;
+}
+
+.videos-preview-layer.is-short .videos-preview-controls,
+.videos-preview-layer.is-short .videos-preview-bottom {
+  display: none;
 }
 
 /* iframe dikeyde taşırılır: YouTube'un başlık ve logo şeritleri kırpılır, video kartı tam doldurur. */
@@ -188,15 +201,15 @@
 .videos .videos-preview-button {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 0;
   border-radius: 50%;
   /* Ses simgesi her zaman beyazdır; arka plan başta yarı saydam gridir, birkaç saniye sonra solar. */
   background: rgba(96, 96, 96, 0.55);
   color: #ffffff;
-  font-size: 18px;
+  font-size: 17px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
   cursor: pointer;
   pointer-events: auto;
@@ -240,7 +253,7 @@
 .videos-preview-time {
   position: absolute;
   right: 8px;
-  bottom: 24px;
+  bottom: 12px;
   padding: 2px 6px;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.72);
@@ -263,15 +276,13 @@
   touch-action: none;
 }
 
-/* Çizgi ve nokta, kartın alt kenarından yukarı alınır: nokta (taşan kısmı dahil) önizleme katmanının
-   overflow: hidden kırpmasına takılmaz ve kart gövdesinin altında kalmaz. */
 .videos-preview-seek-track {
   position: absolute;
   right: 0;
-  bottom: 6px;
+  bottom: 0;
   left: 0;
   height: 3px;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
   transition: height 0.15s ease;
 }
 
@@ -285,8 +296,9 @@
 
 .videos-preview-seek-thumb {
   position: absolute;
-  bottom: 2px;
-  left: 0;
+  /* Çizginin (3 px) tam ortasına oturur: 12 px'lik noktanın yarısı çizginin altına taşar. */
+  bottom: -4.5px;
+  left: 8px;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -393,9 +405,12 @@
   object-fit: cover;
 }
 
+/* Önizleme katmanı (z-index: 2) kutunun üstüne biner; gradyan, başlık, "Yeni" rozeti ve ⋯ düğmesi
+   video oynarken de onun üstünde kalır. */
 .videos-short-tile-link::after {
   content: "";
   position: absolute;
+  z-index: 3;
   inset: 45% 0 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.78), transparent);
   pointer-events: none;
@@ -407,7 +422,7 @@
   right: 12px;
   bottom: 14px;
   left: 12px;
-  z-index: 1;
+  z-index: 4;
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -422,7 +437,7 @@
   position: absolute;
   top: 12px;
   left: 12px;
-  z-index: 1;
+  z-index: 4;
   padding: 5px 12px;
   border-radius: 999px;
   background: #ffffff;
@@ -436,7 +451,7 @@
   position: absolute;
   top: 6px;
   right: 6px;
-  z-index: 2;
+  z-index: 5;
   color: #ffffff;
   font-size: 18px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
@@ -481,7 +496,7 @@
 
   /* Mobilde küçük resimler kenardan kenara (1. ekran görüntüsündeki gibi). */
   .videos-card-thumb,
-  .videos-preview-layer {
+  .videos-preview-host {
     border-radius: 0;
   }
 
@@ -507,7 +522,8 @@
     gap: 2px;
   }
 
-  .videos-short-tile {
+  .videos-short-tile,
+  .videos-preview-layer.is-short .videos-preview-host {
     border-radius: 0;
   }
 

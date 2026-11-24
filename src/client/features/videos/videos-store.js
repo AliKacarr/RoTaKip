@@ -35,7 +35,7 @@
     }
 
     function emptyState() {
-        return { v: 1, unfollowed: [], liked: [], saved: [], history: [], completed: [], shelfHiddenUntil: 0 };
+        return { v: 1, unfollowed: [], liked: [], saved: [], history: [], completed: [], shelfHiddenUntil: 0, selectedChannel: '', autoplay: true };
     }
 
     function isSnapshot(item) {
@@ -51,6 +51,8 @@
         state.history = Array.isArray(raw.history) ? raw.history.filter(isSnapshot).slice(0, HISTORY_LIMIT) : [];
         state.shelfHiddenUntil = Number.isFinite(raw.shelfHiddenUntil) ? raw.shelfHiddenUntil : 0;
         state.completed = Array.isArray(raw.completed) ? raw.completed.filter(ns.isVideoId).slice(0, COMPLETED_LIMIT) : [];
+        state.selectedChannel = typeof raw.selectedChannel === 'string' ? raw.selectedChannel.slice(0, 120) : '';
+        state.autoplay = raw.autoplay !== false;
         return state;
     }
 
@@ -144,6 +146,26 @@
             return state.unfollowed.length;
         },
 
+        // ---------- Akışta seçili kanal ----------
+        // Videolar sekmesi yeniden açıldığında kullanıcı aynı kanaldan devam eder ("" = Tümü).
+        selectedChannel: () => state.selectedChannel,
+        setSelectedChannel(channelId) {
+            const next = typeof channelId === 'string' ? channelId.slice(0, 120) : '';
+            if (next === state.selectedChannel) return;
+            state.selectedChannel = next;
+            persist({ immediate: true });
+        },
+
+        // ---------- Otomatik oynatma ----------
+        // İzleme sayfasında video bitince sıradaki video geri sayımla açılır (varsayılan açık).
+        isAutoplay: () => state.autoplay,
+        setAutoplay(enabled) {
+            const next = Boolean(enabled);
+            if (next === state.autoplay) return;
+            state.autoplay = next;
+            persist({ immediate: true });
+        },
+
         // ---------- Ana sayfadaki Shorts rafı ----------
         // "Daha az Shorts videosu göster": raf bu cihazda birkaç gün gizlenir, sonra kendiliğinden döner.
         isShortsShelfHidden() {
@@ -222,6 +244,12 @@
             persist({ immediate: completedNow || isNew });
             if (isNew || completedNow) emit('history', { id: video.id, completed: completedNow });
             else emit('progress', { id: video.id });
+        },
+        // Akıştaki önizlemede yeterince izlenen video "izlendi" olur ve geçmişe girer; önizlemedeki
+        // an konum olarak saklanır (en az WATCHED_SECONDS), böylece video ilerleme çubuğu kazanır.
+        markWatched(video, position = 0, duration = 0) {
+            if (!video || indexes.completed.has(video.id)) return;
+            store.recordProgress(video, Math.max(Number(position) || 0, WATCHED_SECONDS), duration);
         },
         markCompleted(video) {
             if (!video || indexes.completed.has(video.id)) return;

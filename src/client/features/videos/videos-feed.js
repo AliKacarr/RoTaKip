@@ -1,23 +1,32 @@
 // ==================== Videolar: önizlemeli akış ====================
-// Takip edilen kanalların en yeni videoları listelenir. 5 saniye izlenmiş videolar akışta tekrar
-// önerilmez (Hesabım > Geçmiş'te durur); izlenen kısım kırmızı ilerleme çubuğuyla görünür.
-// Üstteki çiplerle tek bir kanala süzülebilir. Görünürdeki kart sessiz olarak önizlenir.
+// Takip edilen kanalların en yeni videoları listelenir. 5 saniye izlenmiş videolar en üstte önerilmez:
+// önce izlenmemişler gelir, onlar bitince (liste hemen sona ermesin diye) izlenmişler en yeniden
+// başlayarak eklenir; izlenen kısım kırmızı ilerleme çubuğuyla görünür. Shorts rafı 3. karttan sonra
+// ve ardından her 12 kartta bir tekrar eder (raflar arasında aynı short gösterilmez).
+// Üstteki çiplerle tek bir kanala süzülebilir. Görünürdeki kart sessiz olarak önizlenir; önizlemede
+// toplam 10 saniye oynayan video "izlendi" sayılır. Shorts rafı ekrandayken ilk kutusu sessizce
+// ilk 5 saniyesini döngüler (izlendi sayılmaz, ilerleme çizgisi gösterilmez).
 
 (function () {
     const ns = window.RoTaKipVideos;
-    const PAGE_SIZE = 12;
+    // Sunucunun ana akış ilk sayfasıyla (HOME_VIDEO_LIMIT) ve en yüksek sayfa boyutuyla aynıdır.
+    const PAGE_SIZE = 24;
     const MIN_VISIBLE_PER_PAGE = 4;
     const MAX_AUTO_PAGES = 4;
+    // İlk Shorts rafı 3. karttan sonra, sonrakiler her 12 kartta bir (yalnız "Tümü" seçiliyken) eklenir.
     const SHELF_AFTER = 3;
+    const SHELF_EVERY = 12;
     const SHELF_SIZE = 4;
     const PREVIEW_HOVER_DELAY_MS = 250;
     const PREVIEW_SCROLL_IDLE_MS = 150;
-    // YouTube'un mobil oynatıcı arayüzü her oynatma başında yaklaşık 3 sn ortada bir duraklat simgesi
-    // gösterir ve bunu kapatmanın yolu yoktur. Dokunmatik cihazlarda video bu süre boyunca gizli oynar;
-    // küçük resim görünür kalır, simge kaybolunca video yumuşakça açılır.
-    const PREVIEW_TOUCH_REVEAL_DELAY_MS = 2600;
     const PREVIEW_TICK_MS = 250;
-    const PREVIEW_MAX_MS = 30 * 1000;
+    // Kartta önizlemeyle toplam bu kadar oynayan video "izlendi" sayılır ve akıştan elenir.
+    const PREVIEW_WATCHED_MS = 10 * 1000;
+    // Shorts rafındaki ilk kutu ekrandayken sessizce ilk 5 saniyesini döngüler (izlendi sayılmaz).
+    const SHORT_LOOP_SECONDS = 5;
+    const SHORT_LOOP_TICK_MS = 100;
+    const SHORT_VISIBLE_START = 0.6;
+    const SHORT_VISIBLE_KEEP = 0.25;
 
     // YouTube'daki gibi alt satır: "▷ 466 B   4 ay önce" (kanal adı bir üst satırda).
     function statsHtml(video) {
@@ -68,12 +77,12 @@
 
     ns.shortTileHtml = function shortTileHtml(video) {
         const id = ns.escape(video.id);
-        return `<div class="videos-short-tile">
+        // Rafta yalnızca izlenmemiş Shorts vardır; bu yüzden kutularda kırmızı ilerleme çizgisi gösterilmez.
+        return `<div class="videos-short-tile" data-video-id="${id}">
             <a class="videos-short-tile-link" href="${ns.escape(ns.shortsUrl(video.id))}" data-open-short="${id}" aria-label="${ns.escape(video.title)}">
                 <img src="${ns.escape(ns.thumbnailUrl(video.id))}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
                 ${isNewShort(video) ? '<span class="videos-short-tile-new">Yeni</span>' : ''}
                 <span class="videos-short-tile-title">${ns.escape(video.title)}</span>
-                ${ns.progressHtml(video.id)}
             </a>
             <button type="button" class="videos-short-tile-more" data-action="shelf-menu" aria-label="Shorts seçenekleri" aria-haspopup="menu"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
         </div>`;
@@ -106,7 +115,15 @@
         renderedFromCache: false,
         ids: new Set(),
         cardCount: 0,
-        shelfInserted: false,
+        channelRestored: false,
+        // 'unwatched': izlenmemişler listelenir; sunucu sayfaları bitince 'watched' ile baştan izlenmişler.
+        pass: 'unwatched',
+        // Raflarda gösterilen shorts (raflar arasında tekrar etmez) ve ana akıştan sonra çekilen shorts.
+        shelfIds: new Set(),
+        extraShorts: [],
+        shortsCursor: null,
+        shortsHasMore: false,
+        shortsLoading: false,
         sequence: 0,
         observer: null,
         active: false,
@@ -126,6 +143,7 @@
             const previousIds = this.home?.videos?.videos?.map(video => video.id).join(',');
             this.home = home;
             this.renderChannelTabs();
+            if (this.restoreSavedChannel()) return;
             if (this.channelId) return;
             const nextIds = home.videos?.videos?.map(video => video.id).join(',');
             const userIsBrowsing = this.active && (window.scrollY > 80 || this.cardCount > PAGE_SIZE);
@@ -134,6 +152,23 @@
                 return;
             }
             this.renderFirstPage({ fromCache });
+        },
+
+        // Sekme açıldığında en son seçilen kanal geri yüklenir (kullanıcı her seferinde yeniden seçmesin).
+        // Kanal artık listede yoksa ya da takipten çıkarılmışsa "Tümü"ne dönülür. Yalnız ilk akışta çalışır.
+        restoreSavedChannel() {
+            if (this.channelRestored) return false;
+            // Kanal listesi henüz gelmediyse (boş yanıt) karar bir sonraki akışa bırakılır.
+            if (!ns.channels.size) return false;
+            this.channelRestored = true;
+            const saved = ns.store.selectedChannel();
+            if (!saved || this.channelId) return false;
+            if (!ns.channels.has(saved) || !ns.store.isFollowing(saved)) {
+                ns.store.setSelectedChannel('');
+                return false;
+            }
+            this.selectChannel(saved);
+            return true;
         },
 
         // Kanal seçimi bölüm sekmelerinin sonundaki açılır liste (combobox) ile yapılır. Varsayılan "Tümü";
@@ -263,8 +298,23 @@
             this.list.replaceChildren();
             this.ids.clear();
             this.cardCount = 0;
-            this.shelfInserted = false;
+            this.pass = 'unwatched';
+            this.shelfIds.clear();
+            this.extraShorts = [];
+            this.shortsCursor = this.home?.shorts?.nextCursor || null;
+            this.shortsHasMore = Boolean(this.home?.shorts?.hasMore && this.shortsCursor);
+            this.shortsLoading = false;
             this.setStatus('');
+        },
+
+        // İzlenmemişlerin sayfaları bitti: "Şimdilik bu kadar" hemen çıkmasın diye en baştan
+        // izlenmiş videolar istenir (izlenmemişlerin altına eklenir).
+        advancePass() {
+            if (this.hasMore || this.pass !== 'unwatched') return false;
+            this.pass = 'watched';
+            this.cursor = null;
+            this.hasMore = true;
+            return true;
         },
 
         renderFirstPage({ fromCache = false } = {}) {
@@ -277,15 +327,17 @@
             this.rendered = true;
             this.renderedFromCache = fromCache;
             this.appendVideos(page.videos);
+            this.advancePass();
             this.list.setAttribute('aria-busy', 'false');
             this.afterAppend();
             ns.publishDailyVideo?.(page.videos[0]);
         },
 
-        // Kanal seçimi: o kanalın tüm videoları (izlenmiş olanlar dahil) sunucudan istenir.
+        // Kanal seçimi: o kanalın videoları sunucudan istenir; önce izlenmemişler, sonra izlenmişler.
         async selectChannel(channelId) {
             if (channelId === this.channelId) return;
             this.channelId = channelId || '';
+            ns.store.setSelectedChannel(this.channelId);
             this.syncChannelSelect();
             if (!this.channelId) {
                 this.renderFirstPage();
@@ -302,13 +354,17 @@
         visibleVideos(videos) {
             return videos.filter(video => {
                 if (!video || this.ids.has(video.id)) return false;
+                if (ns.store.isCompleted(video.id) !== (this.pass === 'watched')) return false;
                 if (this.channelId) return video.channelId === this.channelId;
-                return ns.store.isFollowing(video.channelId) && !ns.store.isCompleted(video.id);
+                return ns.store.isFollowing(video.channelId);
             });
         },
 
         appendVideos(videos) {
-            const fresh = this.visibleVideos(videos || []);
+            // "Tümü"nde izlenmemişler en yeni hep üstte kalmasın diye sayfa içinde karıştırılır; kanal
+            // seçiliyken (kronolojik beklenir) ve izlenmişler aşamasında sıra korunur.
+            const visible = this.visibleVideos(videos || []);
+            const fresh = this.channelId || this.pass === 'watched' ? visible : ns.mixFresh(visible);
             if (!fresh.length) return 0;
             const fragment = document.createDocumentFragment();
             const template = document.createElement('template');
@@ -317,9 +373,11 @@
                 template.innerHTML = cardHtml(video, this.cardCount).trim();
                 fragment.appendChild(template.content.firstElementChild);
                 this.cardCount += 1;
-                if (!this.shelfInserted && !this.channelId && this.cardCount === SHELF_AFTER) this.insertShelf(fragment);
+                if (this.isShelfSlot()) this.insertShelf(fragment);
             });
             this.list.appendChild(fragment);
+            // Shorts rafı ekrandaysa ilk kutusu önizlenir.
+            this.preview.scheduleCenterPick();
             if (ns.prefersReducedMotion()) {
                 this.list.querySelectorAll('.videos-card.is-entering').forEach(card => card.classList.remove('is-entering'));
             } else {
@@ -330,18 +388,61 @@
             return fresh.length;
         },
 
+        // Raf yerleri: 3. karttan sonra ve ardından her SHELF_EVERY kartta bir (kanal süzgecinde raf yok).
+        isShelfSlot() {
+            if (this.channelId || this.cardCount < SHELF_AFTER) return false;
+            return (this.cardCount - SHELF_AFTER) % SHELF_EVERY === 0;
+        },
+
+        // Rafta henüz gösterilmemiş shorts: önce izlenmemişler, sonra izlenmişler.
+        shelfCandidates() {
+            const all = [...(this.home?.shorts?.videos || []), ...this.extraShorts].filter(video => video.type === 'shorts'
+                && !this.shelfIds.has(video.id)
+                && ns.store.isFollowing(video.channelId));
+            // İzlenmemişler en yeni hep başta kalmasın diye karıştırılır; izlenmişler sona eklenir.
+            return [
+                ...ns.mixFresh(all.filter(video => !ns.store.isCompleted(video.id))),
+                ...all.filter(video => ns.store.isCompleted(video.id))
+            ];
+        },
+
         insertShelf(fragment) {
             if (ns.store.isShortsShelfHidden()) return;
-            const shorts = (this.home?.shorts?.videos || [])
-                .filter(video => ns.store.isFollowing(video.channelId) && !ns.store.isCompleted(video.id))
-                .slice(0, SHELF_SIZE);
+            const candidates = this.shelfCandidates();
+            const shorts = candidates.slice(0, SHELF_SIZE);
             // Izgara iki sütunlu; tek kalan kutu boşluk bırakmasın diye çift sayıda gösterilir.
             if (shorts.length % 2) shorts.pop();
-            if (shorts.length < 2) return;
-            const template = document.createElement('template');
-            template.innerHTML = shelfHtml(shorts).trim();
-            fragment.appendChild(template.content.firstElementChild);
-            this.shelfInserted = true;
+            if (shorts.length >= 2) {
+                shorts.forEach(video => this.shelfIds.add(video.id));
+                const template = document.createElement('template');
+                template.innerHTML = shelfHtml(shorts).trim();
+                fragment.appendChild(template.content.firstElementChild);
+            }
+            // Sonraki raf boş kalmasın diye shorts havuzu azaldığında arka planda yeni sayfa istenir.
+            if (candidates.length - shorts.length < SHELF_SIZE) this.loadMoreShorts();
+        },
+
+        async loadMoreShorts() {
+            if (this.shortsLoading || !this.shortsHasMore) return;
+            const sequence = this.sequence;
+            this.shortsLoading = true;
+            try {
+                const page = await ns.api.feed({
+                    type: 'shorts',
+                    before: this.shortsCursor,
+                    excludeKey: ns.store.excludeKey(),
+                    limit: PAGE_SIZE
+                });
+                if (sequence !== this.sequence) return;
+                this.shortsCursor = page.nextCursor;
+                this.shortsHasMore = Boolean(page.hasMore && page.nextCursor);
+                this.extraShorts.push(...(page.videos || []));
+            } catch (error) {
+                if (sequence === this.sequence) this.shortsHasMore = false;
+                console.warn('Raf için shorts yüklenemedi:', error);
+            } finally {
+                if (sequence === this.sequence) this.shortsLoading = false;
+            }
         },
 
         afterAppend() {
@@ -352,10 +453,37 @@
             if (this.hasMore) this.observeSentinel();
             else {
                 this.observer?.disconnect();
-                this.setStatus(this.cardCount ? '<p class="videos-end">Şimdilik bu kadar. Yeni videolar geldikçe burada görünecek.</p>' : '');
+                this.setStatus(this.cardCount ? this.endHtml() : '');
+                // Bitiş kartı çizildiğinde sayfa zaten en alttaysa (kaydırma olayı gelmez) menü hemen görünür.
+                if (this.cardCount) ns.tab?.syncChrome?.();
             }
             // İlk sayfanın çoğu izlenmiş olabilir; ekran boş kalmasın diye sonraki sayfalar da istenir.
             if (this.cardCount < MIN_VISIBLE_PER_PAGE && this.hasMore) this.loadMore(this.sequence);
+        },
+
+        // Akışın sonu: liste (izlenmişler dahil) bittiğinde "bitti" hissi yerine bir sonraki adım önerilir.
+        endHtml() {
+            const total = this.cardCount;
+            const channel = this.channelId ? ns.channels.get(this.channelId) : null;
+            const subject = channel
+                ? `${ns.escape(channel.name || 'Bu kanal')} kanalındaki ${total} videonun`
+                : `Takip ettiğin kanallardaki ${total} videonun`;
+            const title = this.channelId ? 'Bu kanalda hepsi bu kadar!' : 'Hepsini gördün!';
+            const allChannels = this.channelId
+                ? '<button type="button" class="videos-end-link" data-channel-filter=""><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Tüm kanallar</button>'
+                : '';
+            return `<div class="videos-end">
+                <h3 class="videos-end-title">${title}</h3>
+                <p class="videos-end-text">${subject} sonuna geldin. Ekrana ara verip bir kitap aç ya da biraz tefekküre dal; yeni videolar yüklendikçe burada olacak.</p>
+                <div class="videos-end-actions">
+                    <a class="videos-pill" href="/tefekkur" data-app-path="/tefekkur"><i class="fa-solid fa-star" aria-hidden="true"></i> Tefekküre dal</a>
+                    <a class="videos-pill" href="/makaleler" data-app-path="/makaleler"><i class="fa-solid fa-compass" aria-hidden="true"></i> Okumaya geç</a>
+                </div>
+                <div class="videos-end-links">
+                    <button type="button" class="videos-end-link" data-scroll-top><i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Başa dön</button>
+                    ${allChannels}
+                </div>
+            </div>`;
         },
 
         async loadMore(sequence = this.sequence) {
@@ -380,6 +508,7 @@
                     this.hasMore = Boolean(page.hasMore && page.nextCursor);
                     added += this.appendVideos(page.videos);
                     pages += 1;
+                    this.advancePass();
                 }
                 this.setStatus('');
                 this.list.setAttribute('aria-busy', 'false');
@@ -414,7 +543,7 @@
         showEmpty() {
             const message = this.channelId
                 ? 'Bu kanalda henüz video yok.'
-                : 'Takip ettiğin kanallarda gösterilecek yeni video kalmadı.';
+                : 'Takip ettiğin kanallarda henüz video yok.';
             this.setStatus(`<div class="videos-empty"><i class="fa-regular fa-circle-play" aria-hidden="true"></i><p>${message}</p><a class="videos-pill" href="${ns.TAB_PATH}?bolum=hesabim&amp;liste=kanallar" data-library-list="kanallar">Kanalları yönet</a></div>`);
         },
 
@@ -440,6 +569,9 @@
             this.home = null;
             this.rendered = false;
             this.channelId = '';
+            // Takip listesi değişince akış "Tümü"yle baştan başlar; kayıtlı kanal da sıfırlanır.
+            this.channelRestored = true;
+            ns.store.setSelectedChannel('');
             this.clearList();
             this.showLoader();
         },
@@ -470,8 +602,7 @@
         },
 
         firstThumbnails(count) {
-            return (this.home?.videos?.videos || [])
-                .filter(video => !ns.store.isCompleted(video.id))
+            return ns.unwatchedFirst(this.home?.videos?.videos || [])
                 .slice(0, count)
                 .map(video => ns.thumbnailUrl(video.id));
         },
@@ -488,7 +619,6 @@
             card: null,
             videoId: '',
             startTimer: null,
-            stopTimer: null,
             idleTimer: null,
             enabled: false,
             frame: null,
@@ -496,14 +626,18 @@
             // sesli oynatmaya izin vermez).
             soundOn: false,
             soundButton: null,
-            revealTimer: null,
             tickTimer: null,
             seekBar: null,
             seekFill: null,
             seekThumb: null,
             timeLabel: null,
             scrubbing: false,
-            engaged: false,
+            // Önizlenen öğe Shorts rafındaki kutuysa true; kartlardan farklı davranır (sessiz döngü, çubuk yok).
+            isShort: false,
+            watchedMs: 0,
+            lastTickAt: 0,
+            loopSeekAt: 0,
+            watchMarked: false,
 
             init(owner) {
                 this.feed = owner;
@@ -550,11 +684,15 @@
                     const thumb = event.target.closest('.videos-card-thumb');
                     if (!thumb || thumb.contains(event.relatedTarget) || this.layer.contains(event.relatedTarget)) return;
                     window.clearTimeout(this.startTimer);
-                    if (this.card && thumb.closest('.videos-card') === this.card) this.stop();
+                    if (this.card && thumb.closest('.videos-card') === this.card) {
+                        this.stop();
+                        // İmleç karttan ayrılınca ekrandaki Shorts rafı önizlemeye geri döner.
+                        this.scheduleCenterPick();
+                    }
                 });
                 // İmleç ses düğmesinden kartın dışına çıkarsa önizleme durur.
                 this.layer.addEventListener('pointerleave', event => {
-                    if (event.pointerType !== 'mouse' || !this.card) return;
+                    if (event.pointerType !== 'mouse' || !this.card || this.isShort) return;
                     const thumb = this.card.querySelector('.videos-card-thumb');
                     if (!thumb.contains(event.relatedTarget)) this.stop();
                 });
@@ -622,20 +760,30 @@
                 if (!this.enabled || this.frame !== null) return;
                 this.frame = window.requestAnimationFrame(() => {
                     this.frame = null;
-                    if (this.card && !this.isInCenterBand(this.card)) this.stop();
+                    if (this.card && !this.isStillInView(this.card)) this.stop();
                     if (this.card && !ns.isTouchDevice()) this.position();
                     this.scheduleCenterPick();
                 });
             },
 
-            // Dokunmatik cihazlarda kaydırma durduktan sonra ekranın ortasındaki kart önizlenir.
+            // Kaydırma durduktan sonra önizlenecek öğe seçilir. Dokunmatik cihazlarda ekranın ortasındaki
+            // kart önceliklidir; kart yoksa (masaüstünde imleç bir karttayken hiç) ekrandaki Shorts
+            // rafının ilk kutusu sessizce önizlenir.
             scheduleCenterPick() {
                 window.clearTimeout(this.idleTimer);
-                if (!ns.isTouchDevice()) return;
                 this.idleTimer = window.setTimeout(() => {
                     if (!this.allowed()) return;
-                    const card = this.centerCard();
-                    if (card && card !== this.card) this.start(card);
+                    if (ns.isTouchDevice()) {
+                        const card = this.centerCard();
+                        if (card) {
+                            if (card !== this.card) this.start(card);
+                            return;
+                        }
+                    } else if (this.card && !this.isShort) {
+                        return;
+                    }
+                    const tile = this.shelfTile();
+                    if (tile && tile !== this.card) this.start(tile);
                 }, PREVIEW_SCROLL_IDLE_MS);
             },
 
@@ -643,6 +791,29 @@
                 const rect = card.querySelector('.videos-card-thumb').getBoundingClientRect();
                 const middle = rect.top + rect.height / 2;
                 return middle > window.innerHeight * 0.12 && middle < window.innerHeight * 0.82;
+            },
+
+            // Önizlemenin oynadığı alan: kartta küçük resim, Shorts rafında kutunun kendisi.
+            mediaElement(card) {
+                return card.classList.contains('videos-short-tile') ? card : card.querySelector('.videos-card-thumb');
+            },
+
+            visibleRatio(element) {
+                const rect = element.getBoundingClientRect();
+                if (!rect.height) return 0;
+                return (Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0)) / rect.height;
+            },
+
+            // Başlarken kutunun büyük kısmı görünmelidir; durması için ise neredeyse tamamen çıkmalıdır.
+            isStillInView(card) {
+                if (card.classList.contains('videos-short-tile')) return this.visibleRatio(card) >= SHORT_VISIBLE_KEEP;
+                return this.isInCenterBand(card);
+            },
+
+            // Akışta birden çok raf olabilir; ekranda yeterince görünen ilk rafın ilk kutusu seçilir.
+            shelfTile() {
+                const tiles = this.feed.list.querySelectorAll('.videos-shorts-shelf .videos-short-tile:first-child');
+                return [...tiles].find(tile => this.visibleRatio(tile) >= SHORT_VISIBLE_START) || null;
             },
 
             centerCard() {
@@ -665,7 +836,7 @@
 
             position() {
                 if (!this.card) return;
-                const thumb = this.card.querySelector('.videos-card-thumb');
+                const thumb = this.mediaElement(this.card);
                 const rootRect = this.feed.root.getBoundingClientRect();
                 const rect = thumb.getBoundingClientRect();
                 Object.assign(this.layer.style, {
@@ -681,8 +852,14 @@
                 const video = ns.videos.get(card.dataset.videoId);
                 if (!video || video.isLive) return;
                 this.stop();
+                const isShort = card.classList.contains('videos-short-tile');
                 this.card = card;
                 this.videoId = video.id;
+                this.isShort = isShort;
+                this.watchedMs = 0;
+                this.lastTickAt = 0;
+                this.watchMarked = false;
+                this.layer.classList.toggle('is-short', isShort);
                 this.syncControls();
                 // Katman, liste temizlenince kopmasın diye listenin değil bölümün içinde durur.
                 if (this.layer.parentNode !== this.feed.root) this.feed.root.appendChild(this.layer);
@@ -692,7 +869,7 @@
                     if (!this.playerPromise) {
                         const promise = ns.createPlayer(this.host, {
                             videoId: video.id,
-                            muted: !this.soundOn,
+                            muted: isShort || !this.soundOn,
                             controls: false,
                             autoplay: true,
                             loop: true,
@@ -721,7 +898,8 @@
                     } else {
                         const player = await this.playerPromise;
                         if (this.card !== card || this.player !== player) return;
-                        if (this.soundOn) player.unMute();
+                        // Shorts önizlemesi her zaman sessizdir; kartlarda oturum boyunca seçilen ses tercihi geçerlidir.
+                        if (this.soundOn && !isShort) player.unMute();
                         else player.mute();
                         player.load(video.id, { start: 0 });
                         if (player.isFallback) this.showPlaying();
@@ -729,17 +907,7 @@
                 } catch (error) {
                     console.warn('Önizleme başlatılamadı:', error);
                     this.stop();
-                    return;
                 }
-                this.keepAlive();
-            },
-
-            // Önizleme en fazla PREVIEW_MAX_MS sürer; kullanıcı düğmelerle etkileşince süre yenilenir.
-            keepAlive() {
-                window.clearTimeout(this.stopTimer);
-                // Kullanıcı sesi açtıysa ya da çubukla gezindiyse önizleme kendiliğinden durmaz.
-                if (this.engaged) return;
-                this.stopTimer = window.setTimeout(() => this.stop(), PREVIEW_MAX_MS);
             },
 
             onState(state) {
@@ -750,7 +918,6 @@
             toggleSound() {
                 if (!this.player || !this.card) return;
                 this.soundOn = !this.soundOn;
-                this.engaged = true;
                 if (this.soundOn) {
                     this.player.unMute();
                     this.player.play();
@@ -759,7 +926,6 @@
                 }
                 this.syncControls();
                 this.flashSoundButton();
-                this.keepAlive();
             },
 
             // Basınca gri arka plan geri gelir ve birkaç saniye sonra yeniden solar.
@@ -814,10 +980,8 @@
                 const duration = this.player?.duration();
                 if (!duration) return;
                 const clamped = Math.min(1, Math.max(0, ratio));
-                this.engaged = true;
                 this.player.seek(clamped * duration);
                 this.showProgress(clamped);
-                this.keepAlive();
             },
 
             // Çubuk ve kalan süre (YouTube önizlemesindeki gibi geri sayım).
@@ -825,15 +989,42 @@
                 const duration = this.player?.duration() || 0;
                 const clamped = Math.min(1, Math.max(0, ratio));
                 this.seekFill.style.transform = `scaleX(${clamped})`;
-                this.seekThumb.style.left = `${clamped * 100}%`;
+                // Nokta uçlarda yarım kalmasın diye merkezi çizginin her iki ucundan 8 px içeride gezer.
+                this.seekThumb.style.left = `calc(6px + (100% - 12px) * ${clamped})`;
                 this.seekBar.setAttribute('aria-valuenow', String(Math.round(clamped * 100)));
                 this.timeLabel.textContent = duration ? ns.formatDuration(Math.max(0, duration - clamped * duration)) : '';
             },
 
             tick() {
                 if (!this.player || !this.card || this.scrubbing) return;
+                if (this.isShort) {
+                    // Shorts önizlemesi yalnızca ilk SHORT_LOOP_SECONDS saniyeyi döngüler; çubuk yoktur.
+                    const now = window.performance.now();
+                    if (this.player.currentTime() >= SHORT_LOOP_SECONDS && now - this.loopSeekAt > 800) {
+                        this.loopSeekAt = now;
+                        this.player.seek(0);
+                    }
+                    return;
+                }
                 const duration = this.player.duration();
                 if (duration) this.showProgress(this.player.currentTime() / duration);
+                this.countWatched();
+            },
+
+            // Önizlemede gerçekten oynayan süre toplanır; PREVIEW_WATCHED_MS dolunca video "izlendi" olur
+            // ve sonraki akış çiziminden itibaren listelenmez (ekrandaki kart yerinde kalır).
+            countWatched() {
+                const now = window.performance.now();
+                const delta = this.lastTickAt ? Math.min(now - this.lastTickAt, PREVIEW_TICK_MS * 4) : 0;
+                this.lastTickAt = now;
+                if (this.watchMarked) return;
+                // Yedek oynatıcı durum bildirmez; o durumda geçen süre sayılır.
+                const playing = this.player.isFallback || this.player.state() === ns.PLAYER_STATES.PLAYING;
+                if (!playing) return;
+                this.watchedMs += delta;
+                if (this.watchedMs < PREVIEW_WATCHED_MS) return;
+                this.watchMarked = true;
+                ns.store.markWatched(ns.videos.get(this.videoId), this.player.currentTime(), this.player.duration());
             },
 
             syncControls() {
@@ -847,17 +1038,7 @@
             showPlaying() {
                 if (!this.card) return;
                 this.layer.classList.remove('is-loading');
-                // Dokunmatik cihazda YouTube'un duraklat simgesi geçene kadar video gizli tutulur.
-                if (!ns.isTouchDevice() || this.player?.isFallback) {
-                    this.reveal();
-                    return;
-                }
-                if (this.revealTimer || this.layer.classList.contains('is-playing')) return;
-                const videoId = this.videoId;
-                this.revealTimer = window.setTimeout(() => {
-                    this.revealTimer = null;
-                    if (this.card && this.videoId === videoId) this.reveal();
-                }, PREVIEW_TOUCH_REVEAL_DELAY_MS);
+                this.reveal();
             },
 
             reveal() {
@@ -867,7 +1048,7 @@
                 this.card.classList.add('is-previewing');
                 window.clearInterval(this.tickTimer);
                 this.tick();
-                this.tickTimer = window.setInterval(() => this.tick(), PREVIEW_TICK_MS);
+                this.tickTimer = window.setInterval(() => this.tick(), this.isShort ? SHORT_LOOP_TICK_MS : PREVIEW_TICK_MS);
             },
 
             // İzleme sayfası, önizlemenin kaldığı yerden devam eder.
@@ -887,19 +1068,17 @@
 
             stop() {
                 window.clearTimeout(this.startTimer);
-                window.clearTimeout(this.stopTimer);
-                window.clearTimeout(this.revealTimer);
-                this.revealTimer = null;
                 window.clearInterval(this.tickTimer);
                 this.tickTimer = null;
-                this.engaged = false;
                 this.scrubbing = false;
                 this.layer.classList.remove('is-scrubbing');
                 if (this.seekFill) this.showProgress(0);
                 if (this.card) this.card.classList.remove('is-previewing');
                 this.card = null;
                 this.videoId = '';
-                this.layer.classList.remove('is-playing', 'is-loading');
+                this.isShort = false;
+                this.lastTickAt = 0;
+                this.layer.classList.remove('is-playing', 'is-loading', 'is-short');
                 try {
                     this.player?.pause();
                 } catch (_error) {

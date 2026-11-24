@@ -69,13 +69,13 @@
   text-align: left;
 }
 
-/* "Kanal  49 Mn görüntüleme  3 gün önce" tek satır */
+/* "@kanalhandle  49 Mn görüntüleme  3 gün önce": handle hiç kısaltılmaz; dar ekranda satır alta sarar. */
 .videos-watch-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 10px;
+  gap: 2px 10px;
   margin: 0;
-  overflow: hidden;
   color: var(--videos-muted);
   font-size: 15px;
   white-space: nowrap;
@@ -86,16 +86,13 @@
 }
 
 .videos .videos-watch-meta-channel {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
+  flex: 0 0 auto;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--videos-text);
   font-size: 15px;
   font-weight: 500;
-  text-overflow: ellipsis;
   cursor: pointer;
 }
 
@@ -107,10 +104,12 @@
   margin-top: 4px;
 }
 
+/* Kanal tarafı (avatar + takip düğmesi) sağdaki şeffaf eylem düğmelerinden (44 px) daha baskın
+   görünmesin diye bilerek biraz küçüktür: avatar 38 px, takip düğmesi 36 px yüksekliğindedir. */
 .videos-watch-channel {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -124,16 +123,16 @@
 }
 
 .videos-avatar-md {
-  --avatar-size: 44px;
+  --avatar-size: 38px;
 }
 
 .videos-watch-channel .videos-follow {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 20px;
-  font-size: 15px;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
 }
 
 .videos-watch-channel .videos-follow.is-following {
@@ -141,11 +140,11 @@
 }
 
 .videos-watch-channel .videos-follow.is-following .fa-bell {
-  font-size: 19px;
+  font-size: 16px;
 }
 
 .videos-watch-channel .videos-follow.is-following .fa-chevron-down {
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .videos-watch-actions {
@@ -166,6 +165,243 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.videos-watch-next-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ---------- Otomatik oynatma anahtarı ----------
+   Gri ray üzerinde düğme: açıkken sağda, beyaz ve siyah (yuvarlak köşeli) oynat simgeli; kapalıyken
+   solda, soluk ve beyaz duraklat simgeli (YouTube oynatıcısındaki gibi). Düğme rayın İÇİNDE durur
+   (ray onu çevreler, taşmaz). Ölçüler: ray 42×24 px (genişlik az artırıldı, yükseklik etiket satırından
+   biraz büyük), düğme 20 px, kenar boşluğu 2 px, simge 12 px. */
+.videos .videos-autoplay {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--videos-muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.videos-autoplay-label {
+  line-height: 20px;
+}
+
+.videos-autoplay-track {
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: #909090;
+}
+
+.videos-autoplay-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #cfcfcf;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  transition: left 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.videos-autoplay.is-on .videos-autoplay-knob {
+  left: calc(100% - 22px);
+  background: #ffffff;
+  color: #0f0f0f;
+}
+
+.videos-autoplay-icon {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+/* Açıkken yalnız oynat, kapalıyken yalnız duraklat simgesi görünür. */
+.videos-autoplay-icon-pause,
+.videos-autoplay.is-on .videos-autoplay-icon-play {
+  display: block;
+}
+
+.videos-autoplay-icon-play,
+.videos-autoplay.is-on .videos-autoplay-icon-pause {
+  display: none;
+}
+
+.videos .videos-autoplay:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--videos-accent) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* ---------- Sıradaki video geri sayımı ----------
+   Oynatıcının üstünü kaplar. Dış katman kapsayıcıdır (container-type); içteki ölçüler katman
+   genişliğine (cqw) göre ayarlanır, böylece telefondaki küçük oynatıcıda da masaüstündeki büyük
+   oynatıcıda da aynı oranda görünür. */
+.videos-autonext {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  container-type: inline-size;
+  background: rgba(0, 0, 0, 0.9);
+  color: #ffffff;
+  animation: videos-autonext-enter 0.25s ease-out;
+}
+
+.videos-autonext-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 3cqw;
+  height: 100%;
+  padding: 4cqw 4.5cqw;
+  box-sizing: border-box;
+}
+
+.videos-autonext-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.videos-autonext-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(13px, 3.4cqw, 22px);
+  font-weight: 600;
+}
+
+.videos-autonext-count {
+  color: #ffffff;
+}
+
+.videos .videos-autonext-close {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: clamp(32px, 7cqw, 48px);
+  height: clamp(32px, 7cqw, 48px);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #ffffff;
+  font-size: clamp(20px, 5cqw, 34px);
+  cursor: pointer;
+}
+
+.videos .videos-autonext-video {
+  display: grid;
+  grid-template-columns: 48% minmax(0, 1fr);
+  align-items: center;
+  gap: 4cqw;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.videos-autonext-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: clamp(8px, 2cqw, 14px);
+  background: #1f1f1f;
+}
+
+.videos-autonext-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videos-autonext-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2cqw;
+  min-width: 0;
+}
+
+.videos-autonext-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(14px, 3.6cqw, 24px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.videos-autonext-channel {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: clamp(12px, 3cqw, 20px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.videos-autonext-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2.5cqw;
+}
+
+.videos .videos-autonext-cancel,
+.videos .videos-autonext-play {
+  min-height: clamp(34px, 9cqw, 56px);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  font-size: clamp(13px, 3.4cqw, 20px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.videos .videos-autonext-cancel {
+  background: #272727;
+  color: #ffffff;
+}
+
+.videos .videos-autonext-play {
+  background: #ffffff;
+  color: #0f0f0f;
+}
+
+.videos .videos-autonext-close:focus-visible,
+.videos .videos-autonext-video:focus-visible,
+.videos .videos-autonext-cancel:focus-visible,
+.videos .videos-autonext-play:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+}
+
+@keyframes videos-autonext-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .videos-watch-related {
@@ -233,7 +469,8 @@
 }
 
 .videos.has-mini-player .videos-watch-info,
-.videos.has-mini-player .videos-watch-next {
+.videos.has-mini-player .videos-watch-next,
+.videos.has-mini-player .videos-autonext {
   display: none;
 }
 
@@ -248,7 +485,6 @@
   margin: 0;
   border-radius: 14px;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
-  animation: videos-mini-enter 0.16s ease-out;
   transition: bottom 0.3s ease;
 }
 
@@ -262,11 +498,8 @@
   cursor: grabbing;
 }
 
-/* Hızlı belirir: yalnız hafif ölçek, opaklık hemen görünür. */
-@keyframes videos-mini-enter {
-  from { opacity: 0.35; transform: scale(0.94); }
-  to { opacity: 1; transform: none; }
-}
+/* Mini oynatıcıya geçişte oynatıcının bulunduğu yerden küçülüp sağ alta kayması CSS'te değil,
+   videos-mini.js `shrinkFrom` içinde Web Animations ile (FLIP) yapılır. */
 
 /* Mini oynatıcıda YouTube'un üst başlık ve alt kontrol şeritleri kırpılır (iframe dikeyde taşırılır);
    yalnız video ve bizim düğmelerimiz görünür. Boyut değişimi iframe'i yeniden yüklemez. */
@@ -358,6 +591,14 @@
 @media (prefers-reduced-motion: reduce) {
   .videos.has-mini-player .videos-watch-stage {
     animation: none;
+    transition: none;
+  }
+
+  .videos-autonext {
+    animation: none;
+  }
+
+  .videos-autoplay-knob {
     transition: none;
   }
 }

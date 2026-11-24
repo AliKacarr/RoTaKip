@@ -1,8 +1,8 @@
 // ==================== Videolar: Shorts ====================
 // /videolar?bolum=shorts[&v=<videoId>]. Dikey, tam ekran kaydırmalı akış: ekrana oturan short
 // kendiliğinden oynar. Tek bir oynatıcı aktif slaytın üstüne konumlanır ve videolar arasında
-// yeniden kullanılır; ses bir kez açılınca sonraki shorts'larda da açık kalır. İzlenmiş shorts
-// sonraki açılışlarda tekrar önerilmez.
+// yeniden kullanılır; ses bir kez açılınca sonraki shorts'larda da açık kalır. Önce izlenmemiş
+// shorts gelir; onlar bitince liste hemen sona ermez, izlenmiş shorts da en yeniden başlayarak eklenir.
 
 (function () {
     const ns = window.RoTaKipVideos;
@@ -53,8 +53,11 @@
         ids: new Set(),
         cursor: null,
         hasMore: false,
+        // 'unwatched': izlenmemişler listelenir; sunucu sayfaları bitince 'watched' ile baştan izlenmişler.
+        pass: 'unwatched',
         loading: false,
         prepared: false,
+        stale: false,
         preparing: null,
         observer: null,
         activeIndex: -1,
@@ -107,12 +110,14 @@
                     const home = this.home || await ns.tab.homeReady();
                     if (sequence !== this.sequence) return;
                     const page = home?.shorts || { videos: [], nextCursor: null, hasMore: false };
+                    this.pass = 'unwatched';
                     this.cursor = page.nextCursor;
                     this.hasMore = Boolean(page.hasMore && page.nextCursor);
                     this.items = [];
                     this.ids.clear();
                     this.scroller.replaceChildren();
                     this.append(page.videos);
+                    this.advancePass();
                     this.prepared = true;
                 }
                 if (startId && !this.ids.has(startId)) {
@@ -133,11 +138,22 @@
                 && video.type === 'shorts'
                 && !this.ids.has(video.id)
                 && ns.store.isFollowing(video.channelId)
-                && !ns.store.isCompleted(video.id));
+                && ns.store.isCompleted(video.id) === (this.pass === 'watched'));
+        },
+
+        // İzlenmemişlerin sayfaları bitti: liste sona ermeden en baştan izlenmiş shorts istenir.
+        advancePass() {
+            if (this.hasMore || this.pass !== 'unwatched') return false;
+            this.pass = 'watched';
+            this.cursor = null;
+            this.hasMore = true;
+            return true;
         },
 
         append(videos) {
-            const fresh = this.visible(videos);
+            // İzlenmemişler aşamasında en yeni shorts hep başta kalmasın diye sayfa içinde karıştırılır.
+            const visible = this.visible(videos);
+            const fresh = this.pass === 'unwatched' ? ns.mixFresh(visible) : visible;
             if (!fresh.length) return 0;
             this.scroller.querySelector('.videos-short-end')?.remove();
             const template = document.createElement('template');
@@ -187,6 +203,7 @@
                     this.hasMore = Boolean(page.hasMore && page.nextCursor);
                     added += this.append(page.videos);
                     pages += 1;
+                    this.advancePass();
                 }
                 if (!this.hasMore) this.renderEnd();
             } catch (error) {
@@ -199,8 +216,8 @@
         renderEnd() {
             if (this.scroller.querySelector('.videos-short-end')) return;
             const message = this.items.length
-                ? 'Takip ettiğin kanallardaki yeni shorts\'ların hepsini izledin.'
-                : 'Şu an izlemediğin yeni bir short yok.';
+                ? 'Takip ettiğin kanallardaki shorts\'ların sonuna geldin.'
+                : 'Takip ettiğin kanallarda henüz short yok.';
             this.scroller.insertAdjacentHTML('beforeend', `<div class="videos-short-end">
                 <i class="fa-solid fa-bolt" aria-hidden="true"></i>
                 <p>${message}</p>
@@ -212,6 +229,7 @@
         reset() {
             this.sequence += 1;
             this.prepared = false;
+            this.pass = 'unwatched';
             this.home = null;
             this.stopPlayback();
             this.activeIndex = -1;
@@ -221,6 +239,11 @@
         },
 
         async enter(route) {
+            // Shorts'tan çıkılıp dönüldüğünde liste baştan hazırlanır: izlenenler (5 sn+) sona kayar.
+            if (this.stale) {
+                this.stale = false;
+                this.reset();
+            }
             this.active = true;
             this.userPaused = false;
             ns.tab.setShortsPaused(false);
@@ -253,6 +276,7 @@
 
         leave() {
             this.active = false;
+            this.stale = this.prepared;
             ns.tab.setShortsPaused(false);
             this.saveProgress();
             this.stopPlayback();
@@ -584,6 +608,7 @@
                 player.unMute();
                 this.muted = false;
             }
+            ns.tab.syncShortsSound();
         },
 
         // Videoya dokunma: sessiz başladıysa önce sesi açar, sonra oynat/duraklat işlevi görür.
@@ -604,6 +629,18 @@
                     else this.player.play();
                 }
             }
+            ns.tab.syncShortsSound();
+        },
+
+        // Duraklatılmış videodaki ses düğmesi: videoyu yeniden başlatmadan yalnız sesi açar/kapatır.
+        toggleMute() {
+            this.muted = !this.muted;
+            this.userMuted = this.muted;
+            if (this.player) {
+                if (this.muted) this.player.mute();
+                else this.player.unMute();
+            }
+            ns.tab.syncShortsSound();
         },
 
         step(direction) {
@@ -632,8 +669,7 @@
         },
 
         firstPosters(count) {
-            return (this.home?.shorts?.videos || [])
-                .filter(video => !ns.store.isCompleted(video.id))
+            return ns.unwatchedFirst(this.home?.shorts?.videos || [])
                 .slice(0, count)
                 .map(video => ns.thumbnailUrl(video.id));
         }

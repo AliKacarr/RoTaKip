@@ -1,12 +1,43 @@
 // ==================== Videolar: izleme sayfası ====================
 // /videolar?izle=<videoId>. Akıştan açılan video, eldeki bilgilerle beklemeden çizilir; "Sıradaki"
 // listesi (önce aynı kanal, sonra en yeniler) sunucudan gelir. İzleme ilerlemesi cihazda saklanır
-// ve yarım kalan video kaldığı yerden devam eder.
+// ve yarım kalan video kaldığı yerden devam eder. Otomatik oynatma açıksa video bitince oynatıcının
+// üstünde geri sayım çıkar ve süre dolunca "Sıradaki" listesindeki ilk uygun video açılır.
 
 (function () {
     const ns = window.RoTaKipVideos;
     const PROGRESS_TICK_MS = 1000;
     const PROGRESS_SAVE_EVERY = 5;
+    const AUTONEXT_SECONDS = 5;
+    // "Sıradaki" listesi aşağı inildikçe uzar: sunucudaki en yeni videolardan sayfa sayfa eklenir.
+    const MORE_PAGE_SIZE = 24;
+    const MORE_MIN_PER_LOAD = 6;
+    const MORE_MAX_PAGES = 4;
+
+    // YouTube'daki "Sıradaki video N içinde oynatılacak" katmanı.
+    function autonextHtml(video, seconds) {
+        const title = ns.escape(video.title);
+        return `<div class="videos-autonext-inner">
+            <div class="videos-autonext-head">
+                <p class="videos-autonext-text">Sıradaki video <strong class="videos-autonext-count">${seconds}</strong> içinde oynatılacak</p>
+                <button type="button" class="videos-autonext-close" data-action="autonext-cancel" aria-label="Otomatik oynatmayı iptal et"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <button type="button" class="videos-autonext-video" data-action="autonext-play" aria-label="Şimdi oynat: ${title}">
+                <span class="videos-autonext-thumb">
+                    <img src="${ns.escape(ns.thumbnailUrl(video.id, 'mqdefault'))}" alt="" decoding="async" referrerpolicy="no-referrer">
+                    ${ns.durationBadgeHtml(video)}
+                </span>
+                <span class="videos-autonext-info">
+                    <span class="videos-autonext-title">${title}</span>
+                    <span class="videos-autonext-channel">${ns.escape(video.channelName)}</span>
+                </span>
+            </button>
+            <div class="videos-autonext-actions">
+                <button type="button" class="videos-autonext-cancel" data-action="autonext-cancel">İptal</button>
+                <button type="button" class="videos-autonext-play" data-action="autonext-play">Şimdi oynat</button>
+            </div>
+        </div>`;
+    }
 
     function relatedItemHtml(video) {
         const id = ns.escape(video.id);
@@ -44,9 +75,26 @@
         progressTimer: null,
         recordedThisView: false,
         active: false,
+        stage: null,
+        autoplayButton: null,
+        relatedVideos: [],
+        // Gösterilen geri sayım: { element, timer, video }.
+        autonext: null,
+        relatedStatus: null,
+        relatedSentinel: null,
+        relatedObserver: null,
+        relatedIds: new Set(),
+        moreCursor: null,
+        moreHasMore: false,
+        moreLoading: false,
 
         init(page) {
+            this.relatedStatus = page.querySelector('#videosWatchRelatedStatus');
+            this.relatedSentinel = page.querySelector('#videosWatchRelatedSentinel');
             this.root = page.querySelector('[data-view="watch"]');
+            this.stage = page.querySelector('.videos-watch-stage');
+            this.autoplayButton = page.querySelector('[data-action="autoplay-toggle"]');
+            this.syncAutoplayButton();
             this.playerHost = page.querySelector('#videosWatchPlayer');
             this.message = page.querySelector('#videosWatchMessage');
             this.title = page.querySelector('#videosWatchTitle');
@@ -59,8 +107,10 @@
         enter(route, { start = 0 } = {}) {
             this.active = true;
             const sameVideo = route.videoId === this.videoId;
+            this.hideAutonext();
             if (sameVideo && this.video) {
                 this.renderInfo(this.video);
+                this.observeRelated();
                 if (ns.tab.isActive()) this.ensurePlayer(start);
                 return;
             }
@@ -68,6 +118,7 @@
             const sequence = ++this.sequence;
             this.videoId = route.videoId;
             this.recordedThisView = false;
+            this.resetRelated();
             this.hideMessage();
             const known = ns.videos.get(route.videoId) || ns.store.historyEntry(route.videoId);
             this.video = known || null;
@@ -100,7 +151,77 @@
 
         leave() {
             this.active = false;
+            this.hideAutonext();
+            this.relatedObserver?.disconnect();
             this.leavePlayback();
+        },
+
+        // ---------- Otomatik oynatma ----------
+
+        toggleAutoplay() {
+            const enabled = !ns.store.isAutoplay();
+            ns.store.setAutoplay(enabled);
+            this.syncAutoplayButton();
+            if (!enabled) this.hideAutonext();
+            ns.toast(enabled ? 'Otomatik oynatma açık' : 'Otomatik oynatma kapalı');
+        },
+
+        // Açıkken düğme sağda ve oynat simgeli, kapalıyken solda ve duraklat simgeli (simgeler CSS ile değişir).
+        syncAutoplayButton() {
+            const button = this.autoplayButton;
+            if (!button) return;
+            const enabled = ns.store.isAutoplay();
+            button.classList.toggle('is-on', enabled);
+            button.setAttribute('aria-checked', enabled ? 'true' : 'false');
+        },
+
+        // Sıradaki: "Sıradaki" listesinden Shorts ve canlı yayın olmayan ilk video (izlenmemişler önce).
+        nextVideo() {
+            const candidates = this.relatedVideos.filter(video => video
+                && video.type !== 'shorts'
+                && video.id !== this.videoId
+                && !video.isLive
+                && video.duration);
+            return ns.unwatchedFirst(candidates)[0] || null;
+        },
+
+        // Video bittiğinde (yalnız izleme sayfası açıkken; mini oynatıcıda değil) geri sayım başlar.
+        showAutonext() {
+            this.hideAutonext();
+            if (!ns.store.isAutoplay() || !this.active || !ns.tab.isActive()) return;
+            if (ns.tab.currentView() !== 'watch' || ns.tab.isMiniActive()) return;
+            const video = this.nextVideo();
+            if (!video || !this.stage) return;
+            const element = document.createElement('div');
+            element.className = 'videos-autonext';
+            element.setAttribute('role', 'dialog');
+            element.setAttribute('aria-label', 'Sıradaki video');
+            element.innerHTML = autonextHtml(video, AUTONEXT_SECONDS);
+            this.stage.appendChild(element);
+            let remaining = AUTONEXT_SECONDS;
+            const timer = window.setInterval(() => {
+                remaining -= 1;
+                if (remaining <= 0) {
+                    this.playNext();
+                    return;
+                }
+                const count = element.querySelector('.videos-autonext-count');
+                if (count) count.textContent = String(remaining);
+            }, 1000);
+            this.autonext = { element, timer, video };
+        },
+
+        hideAutonext() {
+            if (!this.autonext) return;
+            window.clearInterval(this.autonext.timer);
+            this.autonext.element.remove();
+            this.autonext = null;
+        },
+
+        playNext() {
+            const video = this.autonext?.video;
+            this.hideAutonext();
+            if (video) ns.tab.navigateTo({ view: 'watch', videoId: video.id });
         },
 
         // ---------- Mini oynatıcı ----------
@@ -129,6 +250,8 @@
         // Sekmeden çıkılınca görünüm DOM'dan kalkar (iframe zaten durur); yalnız sayaçlar bırakılır.
         suspend() {
             this.active = false;
+            this.hideAutonext();
+            this.relatedObserver?.disconnect();
             this.stopProgressTimer();
         },
 
@@ -157,7 +280,7 @@
             this.title.classList.remove('is-skeleton');
             this.title.textContent = video.title;
             const date = ns.formatRelativeDate(video.publishedAt);
-            this.meta.innerHTML = `<button type="button" class="videos-watch-meta-channel" data-channel-filter="${ns.escape(video.channelId)}">${ns.escape(video.channelName)}</button>
+            this.meta.innerHTML = `<button type="button" class="videos-watch-meta-channel" data-channel-filter="${ns.escape(video.channelId)}">${ns.escape(ns.channelHandleLabel(video.channelId, video.channelName))}</button>
                 <span>${ns.escape(ns.formatViews(video.views))}</span>
                 ${date ? `<span>${ns.escape(date)}</span>` : ''}`;
             const following = ns.store.isFollowing(video.channelId);
@@ -177,10 +300,96 @@
         },
 
         renderRelated(videos) {
-            const list = (videos || []).filter(video => ns.store.isFollowing(video.channelId) || video.channelId === this.video?.channelId);
+            const list = this.visibleRelated(videos);
+            this.relatedVideos = list;
+            list.forEach(video => this.relatedIds.add(video.id));
             this.related.innerHTML = list.length
                 ? list.map(relatedItemHtml).join('')
                 : '<p class="videos-muted">Şimdilik başka video yok.</p>';
+            // Ayrıntıdaki ilk liste kısadır; aşağı inildikçe en yeni videolardan devamı eklenir.
+            this.moreHasMore = true;
+            this.observeRelated();
+        },
+
+        visibleRelated(videos) {
+            return (videos || []).filter(video => video
+                && video.id !== this.videoId
+                && !this.relatedIds.has(video.id)
+                && (ns.store.isFollowing(video.channelId) || video.channelId === this.video?.channelId));
+        },
+
+        resetRelated() {
+            this.relatedVideos = [];
+            this.relatedIds = new Set();
+            this.moreCursor = null;
+            this.moreHasMore = false;
+            this.moreLoading = false;
+            this.relatedObserver?.disconnect();
+            this.setRelatedStatus('');
+        },
+
+        setRelatedStatus(html) {
+            if (!this.relatedStatus) return;
+            this.relatedStatus.innerHTML = html;
+            this.relatedStatus.hidden = !html;
+        },
+
+        // Liste sonundaki gözcü ekrana yaklaşınca yeni öneriler yüklenir.
+        observeRelated() {
+            if (!this.active || !this.moreHasMore || !this.relatedSentinel || !('IntersectionObserver' in window)) return;
+            if (!this.relatedObserver) {
+                this.relatedObserver = new IntersectionObserver(entries => {
+                    if (entries.some(entry => entry.isIntersecting)) this.loadMoreRelated();
+                }, { rootMargin: '500px 0px' });
+            }
+            this.relatedObserver.disconnect();
+            this.relatedObserver.observe(this.relatedSentinel);
+        },
+
+        async loadMoreRelated() {
+            if (this.moreLoading || !this.moreHasMore || !this.video) return;
+            const sequence = this.sequence;
+            this.moreLoading = true;
+            this.setRelatedStatus('<div class="videos-loader is-compact" aria-label="Yeni öneriler yükleniyor"><span></span><span></span><span></span></div>');
+            try {
+                let added = 0;
+                let pages = 0;
+                while (this.moreHasMore && added < MORE_MIN_PER_LOAD && pages < MORE_MAX_PAGES) {
+                    const page = await ns.api.feed({
+                        type: this.video.type === 'shorts' ? 'shorts' : 'video',
+                        before: this.moreCursor,
+                        excludeKey: ns.store.excludeKey(),
+                        limit: MORE_PAGE_SIZE
+                    });
+                    if (sequence !== this.sequence) return;
+                    this.moreCursor = page.nextCursor;
+                    this.moreHasMore = Boolean(page.hasMore && page.nextCursor);
+                    added += this.appendRelated(page.videos);
+                    pages += 1;
+                }
+            } catch (error) {
+                if (sequence !== this.sequence) return;
+                console.warn('Yeni öneriler yüklenemedi:', error);
+                this.moreHasMore = false;
+            } finally {
+                if (sequence === this.sequence) {
+                    this.moreLoading = false;
+                    this.setRelatedStatus('');
+                    // Gözcü hâlâ ekrana yakınsa (kısa liste) bir sonraki sayfa için yeniden izlenir.
+                    this.observeRelated();
+                }
+            }
+        },
+
+        appendRelated(videos) {
+            const fresh = ns.mixFresh(this.visibleRelated(videos));
+            if (!fresh.length) return 0;
+            // Liste boşken görünen "Şimdilik başka video yok" notu ilk eklemede kalkar.
+            this.related.querySelector('.videos-muted')?.remove();
+            fresh.forEach(video => this.relatedIds.add(video.id));
+            this.relatedVideos.push(...fresh);
+            this.related.insertAdjacentHTML('beforeend', fresh.map(relatedItemHtml).join(''));
+            return fresh.length;
         },
 
         refreshState() {
@@ -252,6 +461,7 @@
 
         // Sekmeden çıkılınca görünüm DOM'dan kaldırılır ve iframe kopar; dönüşte yeniden oluşturulur.
         disposePlayer() {
+            this.hideAutonext();
             this.stopProgressTimer();
             const player = this.player;
             this.player = null;
@@ -267,6 +477,8 @@
             this.syncMiniToggle(state);
             if (state === STATES.PLAYING) {
                 this.hideMessage();
+                // Kullanıcı videoyu yeniden başlattı / geri sardı: geri sayım iptal edilir.
+                this.hideAutonext();
                 if (!this.active) {
                     this.player.pause();
                     return;
@@ -279,6 +491,7 @@
             } else if (state === STATES.ENDED) {
                 this.stopProgressTimer();
                 if (this.video) ns.store.markCompleted(this.video);
+                this.showAutonext();
             }
         },
 

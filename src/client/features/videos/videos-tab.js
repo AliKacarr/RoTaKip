@@ -16,6 +16,8 @@
     const PREPARE_SHORT_POSTERS = 2;
     // Menü gizleme: sayfanın üstüne bu kadar yakınken hep görünür; bu kadar piksel kayınca yön değişimi algılanır.
     const CHROME_SHOW_NEAR_TOP_PX = 90;
+    const CHROME_SHOW_NEAR_END_PX = 120;
+    const SHORTS_SECTIONS_HOLD_MS = 1000;
     const CHROME_SCROLL_DELTA_PX = 8;
     const CHROME_SUPPRESS_MS = 600;
     // Etkinlik kaydındaki bölüm adları (sunucuda activity.service.js VIDEO_SECTIONS ile aynı olmalıdır).
@@ -123,6 +125,8 @@
             && previous?.view === 'watch'
             && (route.view === 'feed' || route.view === 'library')
             && ns.watch.canMinimize();
+        if (route.view === 'shorts' && previous && changedView) holdSectionsForShorts();
+        else if (route.view !== 'shorts') releaseSectionsHold();
         if (previous && changedView && !minimize) sections[previous.view].leave();
         if (route.view === 'watch') setMini(false);
         else if (minimize) setMini(true);
@@ -155,14 +159,70 @@
             if (selected) tab.setAttribute('aria-current', 'page');
             else tab.removeAttribute('aria-current');
         });
+        placeIndicator();
+    }
+
+    // Seçili sekmenin altındaki kırmızı çizgi tek bir gösterge öğesidir; sekme değişince eski konumundan
+    // yenisine sağa/sola kayar (genişleme yok). İlk yerleşimde (ve görünüm gizliyken ölçülemediğinde)
+    // kayma olmaz; yalnız sonraki değişimlerde geçiş ve yükselen ışıma oynar.
+    function placeIndicator({ silent = false } = {}) {
+        const nav = page?.querySelector('.videos-sections');
+        const indicator = nav?.querySelector('.videos-section-indicator');
+        if (!indicator) return;
+        const tab = nav.querySelector('.videos-section-tab.is-active');
+        // Sekme görünümü gizliyken (ısıtılmış sekme) ölçü sıfırdır; görünür olunca yeniden denenir.
+        if (!tab || !tab.offsetWidth) {
+            if (!tab) indicator.classList.remove('is-visible');
+            return;
+        }
+        const x = `${tab.offsetLeft}px`;
+        const width = `${tab.offsetWidth}px`;
+        const unchanged = indicator.style.getPropertyValue('--indicator-x') === x
+            && indicator.style.getPropertyValue('--indicator-w') === width;
+        if (unchanged && indicator.classList.contains('is-visible')) return;
+        const firstPlacement = !indicator.classList.contains('is-ready');
+        indicator.style.setProperty('--indicator-x', x);
+        indicator.style.setProperty('--indicator-w', width);
+        indicator.classList.add('is-visible');
+        if (firstPlacement) {
+            // Geçişler, ilk konum yerleştikten sonraki karede açılır; gösterge yerine kaymasın.
+            window.requestAnimationFrame(() => indicator.classList.add('is-ready'));
+            return;
+        }
+        // Yükselen ışıma yalnız sekme gerçekten değişince oynar (yeniden boyutlandırma/yazı tipi değil).
+        if (silent || ns.prefersReducedMotion()) return;
+        indicator.classList.remove('is-rising');
+        void indicator.offsetWidth;
+        indicator.classList.add('is-rising');
+    }
+
+    // Shorts'a geçilirken sekme çubuğu hemen gizlenmez: kırmızı gösterge "Shorts" yazısının altına kayıp
+    // yükselen ışıma efektini oynar (slide 0,34 sn + ışıma 0,7 sn), ardından çubuk her zamanki gibi gizlenir.
+    // Doğrudan Shorts'ta açılışta (önceki görünüm yok) ve hareket azaltma açıkken beklenmez.
+    let sectionsHoldTimer = null;
+
+    function releaseSectionsHold() {
+        window.clearTimeout(sectionsHoldTimer);
+        sectionsHoldTimer = null;
+        page?.classList.remove('is-shorts-entering');
+    }
+
+    function holdSectionsForShorts() {
+        if (!page || ns.prefersReducedMotion()) return;
+        window.clearTimeout(sectionsHoldTimer);
+        page.classList.add('is-shorts-entering');
+        sectionsHoldTimer = window.setTimeout(releaseSectionsHold, SHORTS_SECTIONS_HOLD_MS);
     }
 
     // ---------- Mini oynatıcı ----------
 
     function setMini(on) {
+        // Mini oynatıcıya yeni geçiliyorsa oynatıcı bulunduğu yerden sağ alta küçülerek kayar.
+        const first = on && !miniActive ? ns.mini.capture() : null;
         miniActive = on;
         page?.classList.toggle('has-mini-player', on);
         ns.mini.sync(on);
+        if (first) ns.mini.shrinkFrom(first);
     }
 
     function closeMini() {
@@ -190,6 +250,18 @@
 
     function setShortsPaused(paused) {
         page?.classList.toggle('is-shorts-paused', Boolean(paused));
+        if (paused) syncShortsSound();
+    }
+
+    // Duraklatılmış Shorts'taki ses düğmesinin simgesi ve etiketi videonun ses durumunu yansıtır.
+    function syncShortsSound() {
+        const button = page?.querySelector('.videos-shorts-sound');
+        if (!button) return;
+        const muted = Boolean(ns.shorts.muted);
+        button.setAttribute('aria-label', muted ? 'Sesi aç' : 'Sesi kapat');
+        button.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        const icon = button.querySelector('i');
+        if (icon) icon.className = muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
     }
 
     function restoreFeedScroll() {
@@ -269,7 +341,7 @@
         loadHome().then(() => {
             if (currentRoute?.view === 'shorts' && isActive()) ns.shorts.enter(currentRoute);
         });
-        ns.feed.renderChips();
+        ns.feed.renderChannelTabs();
     }
 
     // Okumalar sekmesindeki "Günün Videosu" (daily-gift.js) akıştaki ilk videoyu kullanır.
@@ -320,6 +392,11 @@
         }
         closeMenu();
         const saved = ns.store.isSaved(videoId);
+        // Kanal zaten takip edilmiyorsa (ör. izleme sayfasından ya da bağlantıyla gelinen kanal) "takip et" önerilir.
+        const following = ns.store.isFollowing(video.channelId);
+        const followItem = following
+            ? `<button type="button" role="menuitem" data-action="unfollow" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-ban" aria-hidden="true"></i> Bu kanalı takipten çıkar</button>`
+            : `<button type="button" role="menuitem" data-action="follow" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-plus" aria-hidden="true"></i> Bu kanalı takip et</button>`;
         menu = document.createElement('div');
         menu.className = 'videos-menu';
         menu.dataset.videoId = videoId;
@@ -328,7 +405,7 @@
             <button type="button" role="menuitem" data-action="share" data-video-id="${ns.escape(videoId)}"><i class="fa-solid fa-share" aria-hidden="true"></i> Paylaş</button>
             <button type="button" role="menuitem" data-action="save" data-video-id="${ns.escape(videoId)}"><i class="${saved ? 'fa-solid' : 'fa-regular'} fa-bookmark" aria-hidden="true"></i> ${saved ? 'Kaydedilenlerden çıkar' : 'Daha sonra izle'}</button>
             <a role="menuitem" href="${ns.escape(ns.youtubeUrl(video))}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube" aria-hidden="true"></i> YouTube'da aç</a>
-            <button type="button" role="menuitem" data-action="unfollow" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-ban" aria-hidden="true"></i> Bu kanalı takipten çıkar</button>`;
+            ${followItem}`;
         page.appendChild(menu);
         const pageRect = page.getBoundingClientRect();
         const rect = button.getBoundingClientRect();
@@ -380,6 +457,22 @@
         openAnchoredMenu(button, 'shelf', '<button type="button" role="menuitem" data-action="shelf-less"><i class="fa-regular fa-circle-xmark" aria-hidden="true"></i> Daha az Shorts videosu göster</button>');
     }
 
+    // Shorts sağ üst menüsü (yatay ⋯, yalnız telefon/tablet): "Tam ekran" ve "Bu kanalı önerme".
+    // Tam ekran desteklenmiyorsa (iPhone Safari) yalnız kanal seçeneği gösterilir.
+    function openShortsMoreMenu(button) {
+        const video = ns.shorts.currentVideo();
+        const items = [];
+        if (document.fullscreenEnabled) {
+            const on = isFullscreen();
+            items.push(`<button type="button" role="menuitem" data-action="shorts-fullscreen"><i class="fa-solid ${on ? 'fa-compress' : 'fa-expand'}" aria-hidden="true"></i> ${on ? 'Tam ekrandan çık' : 'Tam ekran'}</button>`);
+        }
+        if (video?.channelId && ns.store.isFollowing(video.channelId)) {
+            items.push(`<button type="button" role="menuitem" data-action="shorts-hide-channel" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-ban" aria-hidden="true"></i> Bu kanalı önerme</button>`);
+        }
+        if (!items.length) return;
+        openAnchoredMenu(button, 'shorts-more', items.join(''));
+    }
+
     // Hesabım koleksiyon menüsü (⋯): koleksiyondaki tüm videoları kaldırır.
     function openCollectionMenu(button) {
         const { store, title } = button.dataset;
@@ -421,6 +514,18 @@
             ns.feed.preview.toggleSound();
             return;
         }
+        if (action === 'autoplay-toggle') {
+            ns.watch.toggleAutoplay();
+            return;
+        }
+        if (action === 'autonext-cancel') {
+            ns.watch.hideAutonext();
+            return;
+        }
+        if (action === 'autonext-play') {
+            ns.watch.playNext();
+            return;
+        }
         if (action === 'like' || action === 'save') {
             const video = findVideo(videoId);
             if (!video) return;
@@ -442,8 +547,29 @@
             openShelfMenu(button);
             return;
         }
+        if (action === 'shorts-sound') {
+            ns.shorts.toggleMute();
+            // Dokunuş efekti: sınıf kaldırılıp yeniden eklenerek animasyon her tıklamada baştan oynar.
+            button.classList.remove('is-pressed');
+            void button.offsetWidth;
+            button.classList.add('is-pressed');
+            return;
+        }
+        if (action === 'shorts-more') {
+            openShortsMoreMenu(button);
+            return;
+        }
         if (action === 'shorts-fullscreen') {
+            closeMenu();
             toggleFullscreen();
+            return;
+        }
+        if (action === 'shorts-hide-channel') {
+            const channelId = button.dataset.channelId;
+            closeMenu();
+            if (!channelId) return;
+            ns.store.setFollow(channelId, false);
+            ns.toast(`${ns.channels.get(channelId)?.name || 'Bu kanal'} artık önerilmeyecek`);
             return;
         }
         if (action === 'collection-menu') {
@@ -457,7 +583,8 @@
         if (action === 'shelf-less') {
             closeMenu();
             ns.store.hideShortsShelf();
-            page.querySelector('.videos-shorts-shelf')?.remove();
+            ns.feed.preview.stop();
+            page.querySelectorAll('.videos-shorts-shelf').forEach(shelf => shelf.remove());
             ns.toast('Ana sayfada daha az Shorts videosu gösterilecek');
             return;
         }
@@ -474,7 +601,7 @@
     }
 
     function onClick(event) {
-        if (menu && !event.target.closest('.videos-menu, [data-action="menu"], [data-action="shelf-menu"], [data-action="collection-menu"]')) closeMenu();
+        if (menu && !event.target.closest('.videos-menu, [data-action="menu"], [data-action="shelf-menu"], [data-action="collection-menu"], [data-action="shorts-more"]')) closeMenu();
 
         const miniButton = event.target.closest('[data-mini]');
         if (miniButton) {
@@ -559,6 +686,22 @@
             return;
         }
 
+        // Diğer sekmelere (Tefekkür, Makaleler) kabuk üzerinden, sayfa yenilenmeden geçilir.
+        const appLink = event.target.closest('[data-app-path]');
+        if (appLink) {
+            if (isModifiedClick(event)) return;
+            event.preventDefault();
+            const path = appLink.dataset.appPath;
+            if (typeof window.navigateRoTaKip === 'function') window.navigateRoTaKip(path);
+            else window.location.assign(path);
+            return;
+        }
+
+        if (event.target.closest('[data-scroll-top]')) {
+            window.scrollTo({ top: 0, behavior: ns.prefersReducedMotion() ? 'auto' : 'smooth' });
+            return;
+        }
+
         if (event.target.closest('[data-retry="feed"]')) ns.feed.retry();
     }
 
@@ -579,6 +722,9 @@
 
     function bindEvents() {
         page.addEventListener('click', onClick);
+        page.querySelector('.videos-shorts-sound')?.addEventListener('animationend', event => {
+            event.currentTarget.classList.remove('is-pressed');
+        });
         ns.mini.init(page);
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape') closeMenu();
@@ -587,11 +733,14 @@
             if (menu) closeMenu();
         }, { passive: true });
         window.addEventListener('scroll', onChromeScroll, { passive: true });
-        document.addEventListener('fullscreenchange', syncFullscreenButton);
+        document.addEventListener('fullscreenchange', syncFullscreenMenu);
         ns.store.subscribe(onStoreChange);
         // Kabuk, önceden ısıtılmış sekmeyi ilk kez gösterirken resume() çağırmaz; gezinme
         // tamamlandığında yayınlanan olayla sekmenin görünür olduğu anlaşılır.
         window.addEventListener('rotakip:primary-content-ready', onNavigationSettled);
+        // Ekran boyutu ve yazı tipi yüklemesi sekme ölçülerini değiştirir; gösterge yeniden hizalanır.
+        window.addEventListener('resize', () => placeIndicator({ silent: true }), { passive: true });
+        document.fonts?.ready.then(() => placeIndicator({ silent: true }));
     }
 
     // ---------- Menü ve bölüm sekmelerini kaydırmaya göre gizleme ----------
@@ -619,12 +768,12 @@
         const inShorts = enabled && currentRoute?.view === 'shorts';
         document.body.classList.toggle('videos-shorts-view', inShorts);
         if (!inShorts) exitFullscreen();
-        syncFullscreenButton();
+        syncFullscreenMenu();
     }
 
     // Shorts kendi iç kaydırıcısında kaydığından telefon tarayıcısı adres çubuğunu kendiliğinden gizlemez.
-    // Shorts'un sağ üstündeki tam ekran düğmesi sayfayı tam ekrana alır; Shorts'tan ayrılınca çıkılır.
-    // Tam ekran yalnızca Shorts'ta ve yalnızca bu düğmeyle açılır (iPhone Safari desteklemez: düğme gizlenir).
+    // Shorts'un sağ üstündeki ⋯ menüsündeki "Tam ekran" sayfayı tam ekrana alır; Shorts'tan ayrılınca çıkılır.
+    // Tam ekran yalnızca Shorts'ta ve yalnızca bu menüyle açılır (iPhone Safari desteklemez: seçenek gizlenir).
     function isFullscreen() {
         return document.fullscreenElement === document.documentElement;
     }
@@ -643,15 +792,9 @@
         root.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
     }
 
-    function syncFullscreenButton() {
-        const button = page?.querySelector('.videos-shorts-fullscreen');
-        if (!button) return;
-        button.hidden = !document.fullscreenEnabled;
-        const on = isFullscreen();
-        button.setAttribute('aria-label', on ? 'Tam ekrandan çık' : 'Tam ekran');
-        button.setAttribute('aria-pressed', on ? 'true' : 'false');
-        const icon = button.querySelector('i');
-        if (icon) icon.className = on ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+    // Tam ekran durumu değişince (ör. Esc ile çıkış) ya da Shorts'tan ayrılınca açık ⋯ menüsü eskimesin diye kapanır.
+    function syncFullscreenMenu() {
+        if (menu?.dataset.menu === 'shorts-more') closeMenu();
     }
 
     // Görünüm değişimi ve kaydırma konumu geri yüklemesi programatik kaydırmadır; gizleme tetiklememeli.
@@ -661,6 +804,12 @@
         chromeSuppressUntil = performance.now() + CHROME_SUPPRESS_MS;
     }
 
+    // Akışın sonuna (bitiş kartı görünürken sayfanın en altına) inilince menü ve sekmeler geri gelir.
+    function isAtFeedEnd(y) {
+        if (currentRoute?.view !== 'feed' || !page?.querySelector('.videos-end')) return false;
+        return window.innerHeight + y >= document.documentElement.scrollHeight - CHROME_SHOW_NEAR_END_PX;
+    }
+
     function onChromeScroll() {
         if (chromeFrame !== null) return;
         chromeFrame = window.requestAnimationFrame(() => {
@@ -668,7 +817,7 @@
             if (!isActive()) return;
             const y = Math.max(0, window.scrollY);
             // Shorts ve Hesabım'da bölüm sekmeleri ile alt menü kaydırınca da yerinde kalır.
-            if (currentRoute?.view === 'shorts' || currentRoute?.view === 'library' || y <= CHROME_SHOW_NEAR_TOP_PX) {
+            if (currentRoute?.view === 'shorts' || currentRoute?.view === 'library' || y <= CHROME_SHOW_NEAR_TOP_PX || isAtFeedEnd(y)) {
                 setChromeHidden(false);
                 lastScrollY = y;
                 return;
@@ -706,6 +855,7 @@
         const wasActive = active;
         active = true;
         setChromeEnabled(true);
+        placeIndicator();
         const route = readRoute();
         if (routeKey(route) !== routeKey(currentRoute)) {
             render(route);
@@ -747,6 +897,7 @@
         if (!page) return;
         active = true;
         setChromeEnabled(true);
+        placeIndicator();
         const route = readRoute();
         if (routeKey(route) !== routeKey(currentRoute)) {
             render(route);
@@ -776,7 +927,9 @@
         syncSectionTabs,
         isMiniActive: () => miniActive,
         setShortsPaused,
+        syncShortsSound,
         currentView: () => currentRoute?.view || null,
+        syncChrome: onChromeScroll,
         homeReady,
         loadHome,
         navigateTo
@@ -784,6 +937,9 @@
 
     window.RoTaKipVideoTab = {
         prepareBeforeReveal: true,
+        // Sekme içinde gezinirken (izleme ↔ akış) kabuk görünümü gizleyip yeniden açmaz: sekme girişi
+        // efekti oynamaz, mini oynatıcıya geçiş ve görünüm değişimi doğrudan görünür.
+        keepVisibleInTab: true,
         init,
         resume,
         destroy

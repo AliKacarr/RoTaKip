@@ -262,7 +262,7 @@ async function getView(route) {
   }
 }
 
-async function activateView(route, preparedView = null) {
+async function activateView(route, preparedView = null, options = {}) {
   const view = preparedView || await getView(route);
   if (activeView && activeView !== view) activeView.remove();
   const isReturningToOkumalar = route.name === 'okumalar' && lifecycleCache.has(view);
@@ -270,7 +270,9 @@ async function activateView(route, preparedView = null) {
   view.classList.toggle('is-resuming', isReturningToOkumalar);
   view.classList.toggle('is-preparing-return', isPreparingGroupsFirstLoad);
   view.classList.remove('is-initial-route-reveal');
-  view.classList.remove('visible');
+  // Sekme kendi içinde gezindiğinde (ör. Videolar: izleme → akış) görünüm zaten açıktır; sekme girişi
+  // efekti (solma + kayma) yeniden oynatılmaz, geçişi sekmenin kendi görünümleri yönetir.
+  if (!options.keepVisible) view.classList.remove('visible');
   if (view.parentNode !== tabContent) tabContent.appendChild(view);
   activeView = view;
 }
@@ -789,6 +791,8 @@ async function navigate(url, options = {}) {
     }
     let groupContext = null;
     let groupViewPrepared = false;
+    // Aynı sekme içinde gezilirken (keepVisibleInTab bildiren sekmeler) görünüm gizlenip yeniden açılmaz.
+    let keepVisible = false;
     if (route.requiresGroup) {
       const criticalScripts = isInviteOnboarding
         ? GROUP_COMMON_SCRIPTS
@@ -849,7 +853,11 @@ async function navigate(url, options = {}) {
         routeStyleLinks.forEach(link => { link.disabled = false; });
       }
       if (sequence !== navigationSequence) return;
-      await activateView(route);
+      keepVisible = !isInitialNavigation
+        && previousRouteName === route.name
+        && Boolean(activeView?.classList.contains('visible'))
+        && lifecycleCache.get(activeView)?.keepVisibleInTab === true;
+      await activateView(route, null, { keepVisible });
       if (sequence !== navigationSequence) return;
       activeView.classList.toggle('is-initial-route-reveal', isInitialNavigation);
       setOkumalarStylesEnabled(false);
@@ -862,7 +870,7 @@ async function navigate(url, options = {}) {
       && activeLifecycle?.prepareBeforeReveal === true
       && typeof activeLifecycle.resume === 'function';
     if (resumeBeforeReveal) {
-      activeView.classList.add('is-preparing-return');
+      if (!keepVisible) activeView.classList.add('is-preparing-return');
       activeView
         .querySelector('.tracker-table-layout')
         ?.classList.add('is-restoring-position');

@@ -3,7 +3,8 @@
 const VIDEO_TYPES = new Set(['video', 'shorts']);
 const FEED_DEFAULT_LIMIT = 12;
 const FEED_MAX_LIMIT = 24;
-const HOME_VIDEO_LIMIT = 12;
+// Ana akışın ilk sayfası; istemci en yeni üçte biri eskilerle karıştırdığından (ns.mixFresh) geniş tutulur.
+const HOME_VIDEO_LIMIT = 24;
 const HOME_SHORTS_LIMIT = 12;
 const RELATED_CHANNEL_LIMIT = 6;
 const RELATED_MAX = 12;

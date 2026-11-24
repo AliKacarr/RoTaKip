@@ -1,5 +1,6 @@
 <div class="videos">
   <nav class="videos-sections" aria-label="Video bölümleri">
+    <span class="videos-section-indicator" aria-hidden="true"></span>
     <a class="videos-section-tab" data-section="feed" href="/videolar">Videolar</a>
     <a class="videos-section-tab" data-section="shorts" href="/videolar?bolum=shorts">Shorts</a>
     <a class="videos-section-tab" data-section="library" href="/videolar?bolum=hesabim">Hesabım</a>
@@ -33,15 +34,29 @@
         </div>
       </div>
       <aside class="videos-watch-next" aria-labelledby="videosWatchNextTitle">
-        <h2 id="videosWatchNextTitle" class="videos-block-title">Sıradaki</h2>
+        <div class="videos-watch-next-head">
+          <h2 id="videosWatchNextTitle" class="videos-block-title">Sıradaki</h2>
+          <button type="button" class="videos-autoplay is-on" role="switch" aria-checked="true" data-action="autoplay-toggle">
+            <span class="videos-autoplay-label">Otomatik oynat</span>
+            <span class="videos-autoplay-track" aria-hidden="true">
+              <span class="videos-autoplay-knob">
+                <svg class="videos-autoplay-icon videos-autoplay-icon-play" viewBox="0 0 24 24" focusable="false"><path d="M7 5.2v13.6L18.2 12z" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>
+                <svg class="videos-autoplay-icon videos-autoplay-icon-pause" viewBox="0 0 24 24" focusable="false"><rect x="5.6" y="4.6" width="4.6" height="14.8" rx="1.8" fill="currentColor"/><rect x="13.8" y="4.6" width="4.6" height="14.8" rx="1.8" fill="currentColor"/></svg>
+              </span>
+            </span>
+          </button>
+        </div>
         <div id="videosWatchRelated" class="videos-watch-related"></div>
+        <div id="videosWatchRelatedStatus" class="videos-status" role="status" aria-live="polite" hidden></div>
+        <div id="videosWatchRelatedSentinel" class="videos-sentinel" aria-hidden="true"></div>
       </aside>
     </div>
   </section>
 
   <section class="videos-view" data-view="shorts" aria-label="Shorts" hidden>
     <div id="videosShorts" class="videos-shorts" tabindex="-1"></div>
-    <button type="button" class="videos-shorts-fullscreen" data-action="shorts-fullscreen" aria-label="Tam ekran" aria-pressed="false" hidden><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
+    <button type="button" class="videos-shorts-sound" data-action="shorts-sound" aria-label="Sesi kapat" aria-pressed="false"><i class="fa-solid fa-volume-high" aria-hidden="true"></i></button>
+    <button type="button" class="videos-shorts-more" data-action="shorts-more" aria-label="Diğer seçenekler" aria-haspopup="menu"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
   </section>
 
   <section class="videos-view" data-view="library" aria-label="Hesabım" hidden>

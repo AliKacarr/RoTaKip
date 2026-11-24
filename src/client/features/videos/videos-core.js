@@ -125,6 +125,40 @@
         return videos || [];
     };
 
+    // Listeler önce izlenmemişleri, sonra izlenmişleri (kendi sıralarını koruyarak) gösterir.
+    ns.unwatchedFirst = function unwatchedFirst(videos) {
+        const list = (videos || []).filter(Boolean);
+        return [
+            ...list.filter(video => !ns.store?.isCompleted(video.id)),
+            ...list.filter(video => ns.store?.isCompleted(video.id))
+        ];
+    };
+
+    // Listeler en yeniden eskiye gelir; izlenmemiş olduğu için en yeni videolar hep en üstte kalmasın diye
+    // bir sayfadaki en yeni üçte biri ("taze") kalan eskilerle karıştırılır: sıralamanın yaklaşık %40'ı
+    // taze videolardır. Eskiler kendi aralarında, tazeler kendi aralarında sırasını korur. Üst sıra
+    // taze değil eski bir videoyla başlar (örüntü: eski, taze, eski, taze, eski, eski, taze, ...).
+    const FRESH_MIX_RATIO = 0.4;
+    const FRESH_MIX_BUCKET = 1 / 3;
+    const FRESH_MIX_MIN_ITEMS = 4;
+
+    ns.mixFresh = function mixFresh(videos) {
+        const list = (videos || []).filter(Boolean);
+        if (list.length < FRESH_MIX_MIN_ITEMS) return list;
+        const freshCount = Math.max(1, Math.round(list.length * FRESH_MIX_BUCKET));
+        const fresh = list.slice(0, freshCount);
+        const aged = list.slice(freshCount);
+        const mixed = [];
+        let freshIndex = 0;
+        let agedIndex = 0;
+        for (let slot = 0; slot < list.length; slot += 1) {
+            const wantFresh = Math.floor((slot + 1) * FRESH_MIX_RATIO + 0.5) > Math.floor(slot * FRESH_MIX_RATIO + 0.5);
+            const takeFresh = (wantFresh && freshIndex < fresh.length) || agedIndex >= aged.length;
+            mixed.push(takeFresh ? fresh[freshIndex++] : aged[agedIndex++]);
+        }
+        return mixed;
+    };
+
     ns.rememberChannels = function rememberChannels(channels) {
         if (!Array.isArray(channels) || !channels.length) return;
         ns.channels = new Map(channels.map(channel => [channel.id, channel]));
