@@ -19,6 +19,8 @@
     const CHROME_SHOW_NEAR_END_PX = 120;
     const SHORTS_SECTIONS_HOLD_MS = 1000;
     const CHROME_SCROLL_DELTA_PX = 8;
+    // Menü ve bölüm sekmeleri yukarı kaydırır kaydırmaz değil, bu kadar piksel kesintisiz yukarı kayınca geri gelir.
+    const CHROME_SHOW_AFTER_UP_PX = 140;
     const CHROME_SUPPRESS_MS = 600;
     // Etkinlik kaydındaki bölüm adları (sunucuda activity.service.js VIDEO_SECTIONS ile aynı olmalıdır).
     const LOG_SECTIONS = { feed: 'videolar', watch: 'izle', shorts: 'shorts', library: 'hesabim' };
@@ -42,6 +44,7 @@
     let chromeFrame = null;
     let chromeSuppressUntil = 0;
     let lastScrollY = 0;
+    let scrollUpDistance = 0;
 
     // ---------- Yönlendirme ----------
 
@@ -833,6 +836,7 @@
     function resetChrome() {
         setChromeHidden(false);
         lastScrollY = window.scrollY;
+        scrollUpDistance = 0;
         chromeSuppressUntil = performance.now() + CHROME_SUPPRESS_MS;
     }
 
@@ -852,13 +856,20 @@
             if (currentRoute?.view === 'shorts' || currentRoute?.view === 'library' || y <= CHROME_SHOW_NEAR_TOP_PX || isAtFeedEnd(y)) {
                 setChromeHidden(false);
                 lastScrollY = y;
+                scrollUpDistance = 0;
                 return;
             }
             const delta = y - lastScrollY;
             if (Math.abs(delta) < CHROME_SCROLL_DELTA_PX) return;
             lastScrollY = y;
-            if (delta < 0) setChromeHidden(false);
-            else if (performance.now() > chromeSuppressUntil) setChromeHidden(true);
+            if (delta < 0) {
+                // Yukarı kayma mesafesi birikir; yeterli olunca geri gelir. Aşağı kayma sayacı sıfırlar.
+                scrollUpDistance += -delta;
+                if (scrollUpDistance >= CHROME_SHOW_AFTER_UP_PX) setChromeHidden(false);
+            } else {
+                scrollUpDistance = 0;
+                if (performance.now() > chromeSuppressUntil) setChromeHidden(true);
+            }
         });
     }
 

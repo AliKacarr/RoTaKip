@@ -720,6 +720,13 @@ test('Shorts iframe\'i yatay (16:9) tutulur; YouTube\'un dikey Shorts arayüzü 
   assert.match(shorts, /const frameWidth = videoHeight \* \(16 \/ 9\);[\s\S]*?width: `\$\{frameWidth\}px`,\s*height: `\$\{videoHeight\}px`/);
 });
 
+test('Shorts listesi temizlenirken oynatıcı katmanı DOM\'dan sökülmez (iframe yeniden yüklenip oynatıcı kopmasın)', () => {
+  const shorts = readClient('features/videos/videos-shorts.js');
+  assert.match(shorts, /clearSlides\(\) \{[\s\S]*?child !== this\.layer/);
+  assert.doesNotMatch(shorts, /scroller\.replaceChildren\(\)/);
+  assert.doesNotMatch(shorts, /scroller\.innerHTML\s*=/);
+});
+
 test('Videolar Shorts sağ üstteki yatay ⋯ menüsünden tam ekrana alınır ya da kanal önerilmez, Shorts dışında çıkılır', () => {
   assert.match(readPublic('fragments/videos.html'), /data-view="shorts"[\s\S]*?class="videos-shorts-more" data-action="shorts-more"[^>]*><i class="fa-solid fa-ellipsis"/);
   const tab = readClient('features/videos/videos-tab.js');

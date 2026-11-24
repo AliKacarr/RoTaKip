@@ -115,7 +115,7 @@
                     this.hasMore = Boolean(page.hasMore && page.nextCursor);
                     this.items = [];
                     this.ids.clear();
-                    this.scroller.replaceChildren();
+                    this.clearSlides();
                     this.append(page.videos);
                     this.advancePass();
                     this.prepared = true;
@@ -225,6 +225,16 @@
             </div>`);
         },
 
+        // Slaytlar ve mesajlar silinir, oynatıcı katmanı yerinde kalır: iframe DOM'dan sökülüp geri takılırsa
+        // yeniden yüklenir ve YouTube oynatıcı nesnesi ona bağlı kalamaz (short açılır ama oynamaz).
+        clearSlides() {
+            Array.from(this.scroller.children).forEach(child => {
+                if (child !== this.layer) child.remove();
+            });
+            // Eski konumda kalan katman kaydırma alanını uzatmasın; bir sonraki oynatmada yeniden konumlanır.
+            Object.assign(this.layer.style, { top: '0px', left: '0px', width: '0px', height: '0px' });
+        },
+
         // Takip listesi değişti: liste bir sonraki açılışta baştan hazırlanır.
         reset() {
             this.sequence += 1;
@@ -235,7 +245,7 @@
             this.activeIndex = -1;
             this.items = [];
             this.ids.clear();
-            this.scroller.replaceChildren();
+            this.clearSlides();
         },
 
         async enter(route) {
@@ -249,7 +259,10 @@
             ns.tab.setShortsPaused(false);
             this.ensureObserver();
             const loading = !this.prepared;
-            if (loading) this.scroller.innerHTML = '<div class="videos-short-loading"><div class="videos-loader" aria-label="Shorts yükleniyor"><span></span><span></span><span></span></div></div>';
+            if (loading) {
+                this.clearSlides();
+                this.scroller.insertAdjacentHTML('beforeend', '<div class="videos-short-loading"><div class="videos-loader" aria-label="Shorts yükleniyor"><span></span><span></span><span></span></div></div>');
+            }
             await this.prepare(route.videoId);
             if (!this.active) return;
             this.scroller.querySelector('.videos-short-loading')?.remove();
