@@ -67,12 +67,13 @@
         </article>`;
     }
 
-    // "Yeni" rozeti: son iki gün içinde yüklenen Shorts videoları.
-    const SHORT_NEW_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
-
+    // "Yeni" rozeti: yalnızca bugün (yerel saate göre gün başlangıcından itibaren) yüklenen Shorts videoları.
     function isNewShort(video) {
         const time = Date.parse(video.publishedAt);
-        return Number.isFinite(time) && Date.now() - time < SHORT_NEW_WINDOW_MS;
+        if (!Number.isFinite(time)) return false;
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        return time >= startOfToday.getTime();
     }
 
     ns.shortTileHtml = function shortTileHtml(video) {

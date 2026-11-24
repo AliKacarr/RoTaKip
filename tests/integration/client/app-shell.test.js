@@ -676,7 +676,13 @@ test('Videolar sekmesinde footer yoktur; menü ve bölüm sekmeleri kaydırmaya 
   const base = readClient('features/videos/videos-base.css');
   // Seçici yalnızca açık sekmeyi hedefler (kabuğun arka planda ısıttığı görünüm #tabContent dışındadır).
   assert.match(base, /body:has\(#tabContent > \.tab-view-videos\) #footerRoot\s*\{\s*display:\s*none;/);
-  assert.match(base, /\.videos\.is-chrome-hidden \.videos-sections\s*\{[^}]*opacity:\s*0;[^}]*transform:\s*translateY\(-110%\)/);
+  assert.match(base, /\.videos\.is-chrome-hidden \.videos-sections\s*\{[^}]*opacity:\s*0;[^}]*transform:\s*translateY\(calc\(-100% - 2px\)\)/);
+  // Yapışkan çubukta bulanıklaştırma yoktur (kaydırırken içindeki sekmeler titrerdi); çubuk kendi katmanındadır.
+  const sectionsRule = base.match(/\n\.videos-sections\s*\{[^}]*\}/)[0];
+  assert.doesNotMatch(sectionsRule, /backdrop-filter\s*:/);
+  assert.match(sectionsRule, /will-change:\s*transform;/);
+  // Alt menüdeki `-1px` taşma gibi: çubuk üst kenardan 1px taşar, üstünde akış görünmez.
+  assert.match(base, /\.videos-sections\s*\{[^}]*position:\s*sticky;[^}]*top:\s*-1px;[^}]*height:\s*calc\(var\(--videos-sections-height\) \+ 1px\);[^}]*padding:\s*1px 4px 0;/);
   assert.match(base, /@media \(max-width:\s*1023px\)[\s\S]*?body\.videos-chrome-hidden \.app-navigation\s*\{[^}]*transform:\s*translateY/);
   assert.match(base, /prefers-reduced-motion:\s*reduce[\s\S]*?body\.videos-chrome-active \.app-navigation\s*\{\s*transition:\s*none;/);
 

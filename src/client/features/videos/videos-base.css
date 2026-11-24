@@ -41,23 +41,29 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
 
 /* ---------- Bölüm sekmeleri ---------- */
 
+/* Çubuk, alt menüdeki gibi (`inset: auto 0 -1px 0`) ekranın üst kenarından 1px taşar: alt piksel konumlarında
+   çubuğun üstünde akıştan bir çizgi görünmez. Taşan 1px üst iç boşlukla (`padding-top`) telafi edilir; sekmeler
+   ve kenar boşlukları eski yerinde kalır. */
 .videos-sections {
   transition: transform 0.3s ease, opacity 0.25s ease;
   position: sticky;
-  top: 0;
+  top: -1px;
   z-index: 30;
   display: flex;
   align-items: stretch;
   justify-content: flex-start;
   gap: 28px;
-  height: var(--videos-sections-height);
-  margin: -6px 0 14px;
-  padding: 0 4px;
+  height: calc(var(--videos-sections-height) + 1px);
+  margin: -7px 0 14px;
+  padding: 1px 4px 0;
   box-sizing: border-box;
   overflow-x: auto;
   scrollbar-width: none;
-  background: rgba(252, 253, 254, 0.96);
-  backdrop-filter: blur(12px);
+  background: rgba(252, 253, 254);
+  /* Alt menü gibi (mobilde bulanıklaştırması kapalıdır) bu çubukta da arka plan bulanıklaştırması yoktur: yapışkan
+     çubuk kaydırılırken her karede yeniden çizilir ve içindeki sekmeler titrer. Arka plan zaten opaktır. Çubuk
+     ayrı bir katmanda (will-change) taşınır; içerik sayfayla birlikte yeniden çizilmez. */
+  will-change: transform;
 }
 
 .videos-sections::-webkit-scrollbar {
@@ -72,7 +78,8 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
 .videos.is-chrome-hidden .videos-sections {
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-110%);
+  /* Alt menüdeki `calc(100% + 2px)` gibi: gizliyken çubuğun alt kenarı ekranda ince çizgi bırakmaz. */
+  transform: translateY(calc(-100% - 2px));
 }
 
 /* YouTube'daki gibi düz metin sekmeler; seçili olanın altında kırmızı yuvarlak çizgi durur. */
@@ -752,9 +759,10 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
 
   .videos-sections {
     gap: 26px;
-    margin: 0 0 8px;
+    margin: -1px 0 8px;
     padding: 0 16px;
-    background: rgba(255, 255, 255, 0.97);
+    padding-top: 1px;
+    background: rgba(255, 255, 255);
   }
 
   .videos-section-tab {
