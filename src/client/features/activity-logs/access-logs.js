@@ -1,3 +1,85 @@
+/**
+ * "Yenile" düğmesinin durum geçişleri (boşta → yükleniyor → yenilendi/hata → boşta).
+ * Durum `data-refresh-state` özniteliğinde tutulur; görünüm CSS'tedir.
+ */
+const LABELS = Object.freeze({
+    idle: 'Yenile',
+    loading: 'Yenile',
+    success: 'Yenilendi!',
+    error: 'Hata!'
+});
+const MIN_LOADING_MS = 900;
+const SPIN_TURN_TIMEOUT_MS = 1200;
+const RESET_DELAY_MS = 2000;
+
+function delay(ms) {
+    return new Promise(resolve => window.setTimeout(resolve, ms));
+}
+
+function createRefreshButton(button) {
+    const label = button.querySelector('.refresh-text');
+    const icon = button.querySelector('.refresh-icon');
+    let resetTimer = null;
+    let startedAt = 0;
+
+    function setState(state) {
+        window.clearTimeout(resetTimer);
+        if (state === 'idle') button.removeAttribute('data-refresh-state');
+        else button.dataset.refreshState = state;
+        label.textContent = LABELS[state];
+    }
+
+    function isBusy() {
+        return button.dataset.refreshState === 'loading';
+    }
+
+    // Dönen ikon yarıda kesilip başa sıçramasın diye mevcut tur bitene kadar beklenir.
+    function finishSpinTurn() {
+        if (!icon || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve();
+        return new Promise(resolve => {
+            let timeout = null;
+            const done = () => {
+                window.clearTimeout(timeout);
+                icon.removeEventListener('animationiteration', done);
+                resolve();
+            };
+            icon.addEventListener('animationiteration', done);
+            timeout = window.setTimeout(done, SPIN_TURN_TIMEOUT_MS);
+        });
+    }
+
+    // Sonucu gösterir, kısa süre sonra düğmeyi eski haline döndürür.
+    function show(state) {
+        setState(state);
+        resetTimer = window.setTimeout(() => setState('idle'), RESET_DELAY_MS);
+    }
+
+    return {
+        isBusy,
+        /** Yenilemeyi başlatır; zaten sürüyorsa false döner. */
+        start() {
+            if (isBusy()) return false;
+            startedAt = Date.now();
+            setState('loading');
+            return true;
+        },
+        /**
+         * Yenileme bitince çağrılır: en az bir süre yüklenir, dönen ikon turunu tamamlar,
+         * `beforeShow` çalışır ve sonuç (Yenilendi!/Hata!) gösterilir.
+         */
+        async finish(isSuccess, beforeShow) {
+            await delay(Math.max(0, MIN_LOADING_MS - (Date.now() - startedAt)));
+            await finishSpinTurn();
+            if (typeof beforeShow === 'function') beforeShow();
+            show(isSuccess ? 'success' : 'error');
+        },
+        /** Yenileme dışındaki (ilk yükleme gibi) hatalarda sonucu hemen gösterir. */
+        showError() {
+            if (!isBusy()) show('error');
+        }
+    };
+}
+
     function escapeHtml(value) {
       const div = document.createElement('div');
       div.textContent = String(value == null ? '' : value);
@@ -48,77 +130,46 @@
         accessDenied.style.display = 'block';
       }
 
+      const refreshAdminLogsButton = document.getElementById('refreshAdminLogsButton');
+      const refresh = createRefreshButton(refreshAdminLogsButton);
+
       // Check admin access on page load
       checkAdminAccess();
 
       // Add refresh button functionality
       refreshAdminLogsButton.addEventListener('click', function () {
-        if (activeGroupId) {
-          // Clear any active filters
-          const filterContainer = document.getElementById('filterContainer');
-          if (filterContainer) {
-            filterContainer.innerHTML = '';
-          }
-
-          // Add loading animation to button
-          refreshAdminLogsButton.classList.add('refresh-admin-logs-button-loading');
-
-          // Store the current view state and selected date if any
-          const isDateGroupVisible = document.getElementById('dateGroupContainer').style.display === 'block';
-          const selectedDateTitle = document.getElementById('selectedDateTitle').textContent;
-          const selectedDate = selectedDateTitle.replace(' Kayıtları', '');
-
-          // Record the start time of the refresh
-          const refreshStartTime = Date.now();
-          const minimumAnimationTime = 1500; // 1.5 seconds minimum animation time
-
-          // Load logs without updating button state
-          loadLogs(activeGroupId, false).then(() => {
-            // Calculate how long the refresh has been running
-            const refreshDuration = Date.now() - refreshStartTime;
-
-            // If the refresh was too quick, wait before finishing
-            if (refreshDuration < minimumAnimationTime) {
-              setTimeout(() => {
-                finishRefresh();
-              }, minimumAnimationTime - refreshDuration);
-            } else {
-              finishRefresh();
-            }
-
-            function finishRefresh() {
-              // If we were viewing a date group, restore that view immediately
-              if (isDateGroupVisible && selectedDate) {
-                // Find the date group in the updated data
-                const dateCards = document.querySelectorAll('.date-summary-item');
-                for (const card of dateCards) {
-                  if (card.querySelector('h4').textContent.includes(selectedDate)) {
-                    // Simulate a click on the date card to show that date's logs
-                    card.click();
-                    break;
-                  }
-                }
-              }
-
-              // Remove loading animation from button
-              refreshAdminLogsButton.classList.remove('refresh-admin-logs-button-loading');
-
-              // Show success indicator on button
-              const originalText = refreshAdminLogsButton.querySelector('.refresh-text').textContent;
-              refreshAdminLogsButton.querySelector('.refresh-text').textContent = 'Yenilendi!';
-              refreshAdminLogsButton.classList.add('refresh-admin-logs-button-success');
-
-              // Reset button after 2 seconds
-              setTimeout(() => {
-                refreshAdminLogsButton.querySelector('.refresh-text').textContent = originalText;
-                refreshAdminLogsButton.classList.remove('refresh-admin-logs-button-success');
-              }, 2000);
-            }
-          });
-        } else {
+        if (!activeGroupId) {
           // Show access denied if not authenticated
           showAccessDenied();
+          return;
         }
+        if (!refresh.start()) return;
+
+        // Clear any active filters
+        const filterContainer = document.getElementById('filterContainer');
+        if (filterContainer) {
+          filterContainer.innerHTML = '';
+        }
+
+        // Store the current view state and selected date if any
+        const isDateGroupVisible = document.getElementById('dateGroupContainer').style.display === 'block';
+        const selectedDateTitle = document.getElementById('selectedDateTitle').textContent;
+        const selectedDate = selectedDateTitle.replace(' Kayıtları', '');
+
+        loadLogs(activeGroupId).then(isSuccess => {
+          refresh.finish(isSuccess, () => {
+            // If we were viewing a date group, restore that view
+            if (!isSuccess || !isDateGroupVisible || !selectedDate) return;
+            const dateCards = document.querySelectorAll('.date-summary-item');
+            for (const card of dateCards) {
+              if (card.querySelector('h4').textContent.includes(selectedDate)) {
+                // Simulate a click on the date card to show that date's logs
+                card.click();
+                break;
+              }
+            }
+          });
+        });
       });
 
       // Add back button functionality
@@ -142,11 +193,11 @@
         });
 
         // --- FIX: Always reload all logs when returning to all logs view ---
-        loadLogs(activeGroupId, true);
+        loadLogs(activeGroupId);
       });
 
       // Function to load logs
-      async function loadLogs(groupId, updateButtonState = true) {
+      async function loadLogs(groupId) {
         try {
           // Store the current view state
           const isDateGroupVisible = document.getElementById('dateGroupContainer').style.display === 'block';
@@ -177,13 +228,7 @@
             document.getElementById('dateSummaryContainer').style.display = 'none';
             document.getElementById('paginationContainer').style.display = 'none';
 
-            // Only update button state if this is a direct call (not from refresh button)
-            if (updateButtonState) {
-              // Remove loading animation from button
-              refreshAdminLogsButton.classList.remove('refresh-admin-logs-button-loading');
-            }
-
-            return;
+            return true;
           } else {
             noLogs.style.display = 'none';
             document.getElementById('dateSummaryContainer').style.display = 'block';
@@ -282,7 +327,7 @@
                   document.getElementById('paginationContainer').style.display = 'flex';
                   const fc = document.getElementById('filterContainer');
                   if (fc) fc.innerHTML = '';
-                  await loadLogs(groupId, true);
+                  await loadLogs(groupId);
                 } catch (err) {
                   console.error(err);
                   alert('Kayıtlar silinirken bir hata oluştu.');
@@ -380,11 +425,7 @@
             }
           };
 
-          // Remove loading animation from button
-          if (refreshAdminLogsButton) {
-            refreshAdminLogsButton.classList.remove('refresh-admin-logs-button-loading');
-
-          }
+          return true;
 
         } catch (error) {
           console.error('Error loading logs:', error);
@@ -393,20 +434,9 @@
           document.getElementById('dateSummaryContainer').style.display = 'none';
           document.getElementById('paginationContainer').style.display = 'none';
 
-          // Remove loading animation from button
-          if (refreshAdminLogsButton) {
-            refreshAdminLogsButton.classList.remove('refresh-admin-logs-button-loading');
-
-            // Show error indicator on button
-            refreshAdminLogsButton.querySelector('.refresh-text').textContent = 'Hata!';
-            refreshAdminLogsButton.style.backgroundColor = '#f44336';
-
-            // Reset button after 2 seconds
-            setTimeout(() => {
-              refreshAdminLogsButton.querySelector('.refresh-text').textContent = 'Yenile';
-              refreshAdminLogsButton.style.backgroundColor = '';
-            }, 2000);
-          }
+          // Yenileme sürüyorsa sonucu yenileme akışı gösterir.
+          refresh.showError();
+          return false;
         }
       }
 

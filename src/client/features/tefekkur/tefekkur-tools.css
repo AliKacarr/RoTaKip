@@ -351,6 +351,23 @@
     display: block;
 }
 
+.tefekkur-page .tefekkur-radio-status {
+    width: min(100%, 320px);
+    margin: 4px 0 0;
+    padding: 10px 14px;
+    border: 1px solid #f3c4c0;
+    border-radius: 12px;
+    color: #b3261e;
+    background: #fdeeed;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.tefekkur-page .tefekkur-radio-status[hidden] {
+    display: none;
+}
+
 .tefekkur-page .tefekkur-radio-volume {
     display: flex;
     align-items: center;

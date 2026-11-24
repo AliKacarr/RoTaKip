@@ -31,6 +31,7 @@
             icon: document.getElementById('tefekkurRadioIcon'),
             name: document.getElementById('tefekkurRadioName'),
             play: document.getElementById('tefekkurRadioPlay'),
+            status: document.getElementById('tefekkurRadioStatus'),
             volumeRow: document.getElementById('tefekkurRadioVolumeRow'),
             volume: document.getElementById('tefekkurRadioVolume'),
             nowPlaying: document.getElementById('tefekkurNowPlaying'),
@@ -100,6 +101,8 @@
         state.status = status;
         render();
         updateMediaSession();
+        // Hata mini oynatıcıda değil radyo sayfasında gösterilir; kullanıcı o sayfada değilse kısa bir uyarı yeterli.
+        if (status === 'error' && state.viewKey !== state.activeKey) ns.toast(STATUS_TEXT.error, 'error');
     }
 
     function updateMediaSession() {
@@ -201,12 +204,15 @@
             elements.play.disabled = status === 'unavailable';
             elements.play.setAttribute('aria-label', isRunning ? 'Duraklat' : 'Dinle');
             elements.play.querySelector('i').className = `fa-solid ${isRunning ? 'fa-pause' : 'fa-play'}`;
+            elements.status.textContent = status === 'error' ? STATUS_TEXT.error : '';
+            elements.status.hidden = status !== 'error';
         }
 
         elements.volumeRow.hidden = !state.supportsVolume;
         if (state.audio) elements.volume.value = String(state.audio.volume);
 
-        const showMini = Boolean(state.activeKey) && state.status !== 'idle';
+        // Bağlantı hatasında ana sayfadaki mini oynatıcı gösterilmez.
+        const showMini = Boolean(state.activeKey) && state.status !== 'idle' && state.status !== 'error';
         elements.nowPlaying.hidden = !showMini;
         if (showMini) {
             const isRunning = state.status === 'playing' || state.status === 'loading';
@@ -214,8 +220,7 @@
             elements.nowPlaying.dataset.section = state.activeKey;
             elements.nowPlayingName.textContent = sectionOf(state.activeKey)?.label || 'Radyo';
             elements.nowPlayingStatus.textContent = state.status === 'playing' ? 'Canlı yayında'
-                : state.status === 'loading' ? 'Bağlanılıyor…'
-                    : state.status === 'error' ? 'Bağlantı hatası' : 'Duraklatıldı';
+                : state.status === 'loading' ? 'Bağlanılıyor…' : 'Duraklatıldı';
             elements.nowPlayingToggle.setAttribute('aria-label', isRunning ? 'Duraklat' : 'Devam et');
             elements.nowPlayingToggle.querySelector('i').className = `fa-solid ${isRunning ? 'fa-pause' : 'fa-play'}`;
         }
