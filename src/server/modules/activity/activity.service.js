@@ -10,6 +10,8 @@ const TESBIHAT_VIEW_ACTION = 'tesbihat_görüntüleme';
 const TEFEKKUR_SECTION_ACTION = 'tefekkur_bölüm_görüntüleme';
 /** Makaleler sekmesinde bir kategori sayfası açıldığında (sekmenin kendi açılışı 'makaleler_görüntüleme') */
 const ARTICLE_CATEGORY_ACTION = 'makaleler_kategori_görüntüleme';
+/** Videolar sekmesinde bir bölüm (akış, izleme, shorts, kitaplık) açıldığında (sekmenin kendi açılışı 'videolar_görüntüleme') */
+const VIDEO_SECTION_ACTION = 'videolar_bölüm_görüntüleme';
 /** Tesbihat sekmesindeki .tesbihat-view[data-view] değerleri */
 const ALLOWED_SITE_ACTIONS = new Set([
   'grup_görüntüleme',
@@ -21,7 +23,8 @@ const ALLOWED_SITE_ACTIONS = new Set([
   'tefekkur_görüntüleme',
   TEFEKKUR_SECTION_ACTION,
   'makaleler_görüntüleme',
-  ARTICLE_CATEGORY_ACTION
+  ARTICLE_CATEGORY_ACTION,
+  VIDEO_SECTION_ACTION
 ]);
 const TESBIHAT_VIEWS = new Set(['home', 'location', 'types', 'reader']);
 const TESBIHAT_VAKITS = new Set(['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi']);
@@ -39,6 +42,9 @@ const ARTICLE_CATEGORY_SLUGS = new Set([
   'think-it', 'kader', 'allahin-varliginin-delilleri', 'sen-kimsin', 'islamda-adalet', 'hadisler',
   'ahiretin-varliginin-delilleri', 'kainat-rehberi', 'gayeli-ve-planli-yaratilis', 'temel-sorgulama', 'evrim'
 ]);
+
+/** Videolar sekmesindeki bölüm değerleri (src/client/features/videos/videos-tab.js ile aynı kalmalıdır) */
+const VIDEO_SECTIONS = new Set(['videolar', 'izle', 'shorts', 'hesabim']);
 
 function createActivityService({ getSessionMembership }) {
   function getTurkeyMinuteBounds(at = new Date()) {
@@ -121,8 +127,13 @@ function createActivityService({ getSessionMembership }) {
         activityDetails.view = view;
         activityDetails.section = section;
       }
+      if (normalizedAction === VIDEO_SECTION_ACTION && VIDEO_SECTIONS.has(section)) {
+        activityDetails.section = section;
+      }
       // Ayrıntısız bölüm/kategori kaydı anlamsızdır (aynı dakikadaki tüm kayıtlarla eşleşip tekrarı da bastırır).
-      if ((normalizedAction === TEFEKKUR_SECTION_ACTION || normalizedAction === ARTICLE_CATEGORY_ACTION)
+      if ((normalizedAction === TEFEKKUR_SECTION_ACTION
+        || normalizedAction === ARTICLE_CATEGORY_ACTION
+        || normalizedAction === VIDEO_SECTION_ACTION)
         && !activityDetails.section) return;
 
       if (await hasLogInSameTurkeyMinute(SiteActivityLog, {
@@ -163,5 +174,7 @@ function createActivityService({ getSessionMembership }) {
 module.exports = {
   ARTICLE_CATEGORY_ACTION,
   ARTICLE_CATEGORY_SLUGS,
+  VIDEO_SECTION_ACTION,
+  VIDEO_SECTIONS,
   createActivityService
 };

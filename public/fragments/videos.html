@@ -1,24 +1,50 @@
 <div class="videos">
-      <div class="top-bar" role="group" aria-label="Video sıralama seçenekleri">
-        <button id="randomBtn" type="button">
-          <i class="fa-solid fa-shuffle"></i> Rastgele
-        </button>
-        <button id="latestBtn" type="button">
-          <i class="fa-solid fa-forward-fast"></i> Son Yüklenen
-        </button>
-        <button id="mostViewedBtn" type="button">
-          <i class="fa-solid fa-chart-line"></i> Popüler
-        </button>
-        <button id="refreshBtn" type="button">
-          <i class="fa-solid fa-rotate"></i> Yenile
-        </button>
-      </div>
-      <div id="videos" class="videos-container" style="position: relative;"></div>
+  <nav class="videos-sections" aria-label="Video bölümleri">
+    <a class="videos-section-tab" data-section="feed" href="/videolar">Videolar</a>
+    <a class="videos-section-tab" data-section="shorts" href="/videolar?bolum=shorts">Shorts</a>
+    <a class="videos-section-tab" data-section="library" href="/videolar?bolum=hesabim">Hesabım</a>
+  </nav>
 
-      <div id="videoModal" class="video-modal">
-        <div class="modal-content-video">
-          <button type="button" class="close" aria-label="Videoyu kapat">&times;</button>
-          <iframe id="videoFrame" title="Video oynatıcı" frameborder="0" allowfullscreen loading="lazy"></iframe>
+  <section class="videos-view" data-view="feed" aria-label="Video akışı">
+    <div id="videosFeed" class="videos-feed" aria-busy="true"></div>
+    <div id="videosFeedStatus" class="videos-status" role="status" aria-live="polite" hidden></div>
+    <div id="videosFeedSentinel" class="videos-sentinel" aria-hidden="true"></div>
+  </section>
+
+  <section class="videos-view" data-view="watch" aria-labelledby="videosWatchTitle" hidden>
+    <div class="videos-watch-layout">
+      <div class="videos-watch-main">
+        <div class="videos-watch-stage">
+          <div id="videosWatchPlayer" class="videos-watch-player"></div>
+          <div id="videosWatchMessage" class="videos-watch-message" hidden></div>
+          <div class="videos-mini-controls">
+            <button type="button" class="videos-mini-expand" data-mini="expand" aria-label="Videoyu büyüt"></button>
+            <button type="button" class="videos-mini-button videos-mini-toggle" data-mini="toggle" aria-label="Duraklat"><i class="fa-solid fa-pause" aria-hidden="true"></i></button>
+            <button type="button" class="videos-mini-button videos-mini-close" data-mini="close" aria-label="Mini oynatıcıyı kapat"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+          </div>
+        </div>
+        <div class="videos-watch-info">
+          <h1 id="videosWatchTitle" class="videos-watch-title"></h1>
+          <p id="videosWatchMeta" class="videos-watch-meta"></p>
+          <div class="videos-watch-bar">
+            <div id="videosWatchChannel" class="videos-watch-channel"></div>
+            <div id="videosWatchActions" class="videos-watch-actions"></div>
+          </div>
         </div>
       </div>
+      <aside class="videos-watch-next" aria-labelledby="videosWatchNextTitle">
+        <h2 id="videosWatchNextTitle" class="videos-block-title">Sıradaki</h2>
+        <div id="videosWatchRelated" class="videos-watch-related"></div>
+      </aside>
     </div>
+  </section>
+
+  <section class="videos-view" data-view="shorts" aria-label="Shorts" hidden>
+    <div id="videosShorts" class="videos-shorts" tabindex="-1"></div>
+    <button type="button" class="videos-shorts-fullscreen" data-action="shorts-fullscreen" aria-label="Tam ekran" aria-pressed="false" hidden><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
+  </section>
+
+  <section class="videos-view" data-view="library" aria-label="Hesabım" hidden>
+    <div id="videosLibrary" class="videos-library"></div>
+  </section>
+</div>

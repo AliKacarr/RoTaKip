@@ -266,6 +266,17 @@ function createRefreshButton(button) {
         return 'Makaleler: ' + (categoryLabels[log.section] || 'Bir') + ' kategorisi açıldı';
       }
 
+      /** Video bölüm kaydı → okunur cümle, örn. "Videolar: Shorts açıldı" */
+      function formatVideoBolumEylem(log) {
+        const sectionLabels = {
+          videolar: 'Video akışı',
+          izle: 'Video izleme sayfası',
+          shorts: 'Shorts',
+          hesabim: 'Hesabım'
+        };
+        return 'Videolar: ' + (sectionLabels[log.section] || 'Bir bölüm') + ' açıldı';
+      }
+
       /** SiteActivityLog: action + groupId → Türkçe eylem metni */
       function formatSiteActivityEylem(log) {
         const gidRaw = log.groupId != null ? String(log.groupId).trim() : '';
@@ -285,6 +296,8 @@ function createRefreshButton(button) {
             return escapeHtml(formatTesbihatEylem(log));
           case 'videolar_görüntüleme':
             return 'Videolar sekmesi açıldı';
+          case 'videolar_bölüm_görüntüleme':
+            return escapeHtml(formatVideoBolumEylem(log));
           case 'tefekkur_görüntüleme':
             return 'Tefekkür sekmesi açıldı';
           case 'tefekkur_bölüm_görüntüleme':

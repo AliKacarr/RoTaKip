@@ -119,8 +119,19 @@ const bundles = {
   },
   videos: {
     sourceRoot: path.join(clientSourcePath, 'features', 'videos'),
-    css: ['videos.css'],
-    js: ['videos.js']
+    css: ['videos-base.css', 'videos-feed.css', 'videos-watch.css', 'videos-shorts.css', 'videos-library.css'],
+    // Sıra önemlidir: çekirdek → depo → oynatıcı → bölümler → sekme yönetimi.
+    js: [
+      'videos-core.js',
+      'videos-store.js',
+      'videos-player.js',
+      'videos-feed.js',
+      'videos-watch.js',
+      'videos-shorts.js',
+      'videos-library.js',
+      'videos-mini.js',
+      'videos-tab.js'
+    ]
   },
   tefekkur: {
     sourceRoot: path.join(clientSourcePath, 'features', 'tefekkur'),

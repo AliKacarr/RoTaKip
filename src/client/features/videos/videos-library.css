@@ -1,0 +1,413 @@
+/* ==================== Videolar: Hesabım ==================== */
+
+.videos-library {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding-bottom: 12px;
+}
+
+.videos-library-title {
+  margin: 0 0 4px;
+  color: var(--videos-text);
+  font-size: 26px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.videos-library-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.videos-library-heading {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 10px;
+}
+
+.videos-library-heading > i {
+  color: var(--videos-muted);
+  font-size: 14px;
+}
+
+.videos-library-empty {
+  padding: 4px 0;
+}
+
+/* ---------- Geçmiş rafı ---------- */
+
+.videos-shelf-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 210px;
+  scroll-snap-align: start;
+}
+
+.videos-shelf-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--videos-soft);
+}
+
+.videos-shelf-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videos-shelf-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.videos-shelf-meta {
+  overflow: hidden;
+  color: var(--videos-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Kanallar ---------- */
+
+.videos-channel-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+/* Hesabım rafları yana kaydırılır; kaydırma çubuğu görünmez. */
+.videos-library .videos-shelf-row,
+.videos-channel-row {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.videos-library .videos-shelf-row::-webkit-scrollbar,
+.videos-channel-row::-webkit-scrollbar {
+  display: none;
+}
+
+.videos-channel-chip {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 76px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.videos-channel-chip > span:last-child {
+  width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.videos-channel-chip .videos-avatar {
+  --avatar-size: 60px;
+}
+
+.videos-channel-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.videos-channel-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--videos-line);
+}
+
+.videos-channel-item:last-child {
+  border-bottom: 0;
+}
+
+.videos-channel-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.videos-channel-name {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Koleksiyonlar (Beğenilenler / Kaydedilenler) ---------- */
+
+.videos-collections {
+  gap: 10px;
+}
+
+.videos-collection {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.videos-collection-link {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.videos-collection-more {
+  flex: 0 0 auto;
+  align-self: center;
+  color: var(--videos-text);
+  font-size: 18px;
+}
+
+/* Kapak YouTube'daki gibi: üstte kapağın arkasından taşan dar bir şerit, içinde ortalanmış küçük resim. */
+.videos-collection-art {
+  position: relative;
+  display: block;
+  padding-top: 7px;
+}
+
+.videos-collection-stack {
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 10px 10px 0 0;
+  background: var(--videos-soft);
+}
+
+.videos-collection-stack img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(8px) saturate(1.1);
+  transform: scale(1.4);
+}
+
+.videos-collection-stack::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.videos-collection-cover {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--videos-soft);
+}
+
+.videos-collection-backdrop {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(14px) saturate(1.1);
+  transform: scale(1.3);
+}
+
+.videos-collection-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.videos-collection-poster {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.videos-collection-icon {
+  position: absolute;
+  z-index: 3;
+  right: 7px;
+  bottom: 7px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-size: 12px;
+}
+
+/* Boş koleksiyon: düz gri yerine yumuşak renk geçişi ve ortada soluk simge. */
+.videos-collection-art.is-empty .videos-collection-stack {
+  background: #e6dff0;
+}
+
+.videos-collection-art.is-empty .videos-collection-cover {
+  background: linear-gradient(135deg, #f7ece6 0%, #efe6f5 100%);
+}
+
+.videos-collection-art.is-empty .videos-collection-cover::before {
+  display: none;
+}
+
+.videos-collection-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--videos-accent) 55%, #ffffff);
+  font-size: 30px;
+}
+
+.videos-collection-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.videos-collection-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.videos-collection-meta {
+  color: var(--videos-muted);
+  font-size: 13px;
+}
+
+/* ---------- Liste sayfaları ---------- */
+
+.videos-list-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.videos-list-header .videos-library-title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 22px;
+}
+
+.videos-back {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--videos-soft);
+  cursor: pointer;
+}
+
+.videos-list-note {
+  margin-top: -14px;
+}
+
+.videos-library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.videos-library-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.videos-library-row .videos-row {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.videos-remove {
+  margin-top: 6px;
+  color: var(--videos-muted) !important;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .videos-library {
+    padding: 4px 14px 12px;
+  }
+
+  .videos-library .videos-shelf-row,
+  .videos-channel-row {
+    margin-inline: -14px;
+    padding-inline: 14px;
+    scroll-padding-inline: 14px;
+  }
+
+  .videos-shelf-item {
+    width: 46vw;
+    max-width: 210px;
+  }
+
+  .videos-collection-link {
+    grid-template-columns: 136px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .videos-library-title {
+    font-size: 22px;
+  }
+
+  .videos-list-header {
+    flex-wrap: wrap;
+  }
+}

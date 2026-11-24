@@ -1,0 +1,537 @@
+/* ==================== Videolar: akış ==================== */
+
+/* ---------- Kartlar ---------- */
+
+.videos-feed {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 28px 18px;
+}
+
+.videos-card {
+  min-width: 0;
+}
+
+.videos-card.is-entering {
+  animation: videos-card-enter 0.45s ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 60ms);
+}
+
+@keyframes videos-card-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.videos-card-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--videos-radius);
+  background: var(--videos-soft);
+}
+
+.videos-card-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.videos-card:hover .videos-card-thumb img {
+  transform: scale(1.02);
+}
+
+/* Önizleme oynarken süre rozeti ve ilerleme çubuğu oynatıcının altında kalır. */
+.videos-card.is-previewing .videos-badge {
+  opacity: 0;
+}
+
+.videos-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 2px 0;
+}
+
+.videos-card-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.videos-card-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.videos-card-channel {
+  flex: 0 0 auto;
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.videos-card-meta {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.videos-card-channel-name,
+.videos-card-stats {
+  overflow: hidden;
+  color: var(--videos-muted);
+  font-size: 15px;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* "▷ 466 B   4 ay önce" */
+.videos-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.videos-card-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.videos-card-play {
+  flex: 0 0 auto;
+}
+
+.videos-card-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.videos-card-actions .videos-icon-button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  font-size: 17px;
+}
+
+/* ---------- Sessiz önizleme katmanı ---------- */
+
+.videos-view[data-view="feed"] {
+  position: relative;
+}
+
+.videos-preview-layer {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: var(--videos-radius);
+  background: #000000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.videos-preview-layer.is-playing {
+  opacity: 1;
+}
+
+.videos-preview-host {
+  position: absolute;
+  inset: 0;
+}
+
+/* iframe dikeyde taşırılır: YouTube'un başlık ve logo şeritleri kırpılır, video kartı tam doldurur. */
+.videos-preview-host .videos-player-frame,
+.videos-preview-host iframe {
+  position: absolute;
+  left: 0;
+  top: -60px;
+  width: 100%;
+  height: calc(100% + 120px);
+  border: 0;
+  pointer-events: none;
+}
+
+/* ---------- Önizleme ses düğmesi, ilerleme çubuğu ve kalan süre ---------- */
+
+.videos-preview-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  visibility: hidden;
+}
+
+.videos-preview-layer.is-playing .videos-preview-controls {
+  visibility: visible;
+}
+
+.videos .videos-preview-button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  /* Ses simgesi her zaman beyazdır; arka plan başta yarı saydam gridir, birkaç saniye sonra solar. */
+  background: rgba(96, 96, 96, 0.55);
+  color: #ffffff;
+  font-size: 18px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Sessiz/sesli simgeleri farklı genişlikte olduğundan sabit kutuya oturtulur; düğme boyutu değişmez. */
+.videos .videos-preview-button i {
+  display: block;
+  width: 24px;
+  line-height: 24px;
+  text-align: center;
+}
+
+/* Gri arka plan oynatma başladıktan birkaç saniye sonra solar; yalnız beyaz simge kalır. */
+.videos-preview-layer.is-playing .videos-preview-button {
+  animation: videos-preview-button-fade 0.6s ease 3s forwards;
+}
+
+@keyframes videos-preview-button-fade {
+  to { background-color: transparent; }
+}
+
+.videos-preview-bottom {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  visibility: hidden;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent);
+}
+
+.videos-preview-layer.is-playing .videos-preview-bottom {
+  visibility: visible;
+}
+
+.videos-preview-layer.is-fallback .videos-preview-bottom {
+  display: none;
+}
+
+.videos-preview-time {
+  position: absolute;
+  right: 8px;
+  bottom: 24px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.videos-preview-time:empty {
+  display: none;
+}
+
+/* Dokunma alanı geniş, görünen çizgi ince. */
+.videos-preview-seek {
+  position: relative;
+  height: 18px;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* Çizgi ve nokta, kartın alt kenarından yukarı alınır: nokta (taşan kısmı dahil) önizleme katmanının
+   overflow: hidden kırpmasına takılmaz ve kart gövdesinin altında kalmaz. */
+.videos-preview-seek-track {
+  position: absolute;
+  right: 0;
+  bottom: 6px;
+  left: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.4);
+  transition: height 0.15s ease;
+}
+
+.videos-preview-seek-fill {
+  display: block;
+  height: 100%;
+  background: var(--videos-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.videos-preview-seek-thumb {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--videos-accent);
+  transform: translateX(-50%);
+  transition: transform 0.15s ease;
+}
+
+.videos-preview-seek:hover .videos-preview-seek-track,
+.videos-preview-layer.is-scrubbing .videos-preview-seek-track {
+  height: 5px;
+}
+
+.videos-preview-layer.is-scrubbing .videos-preview-seek-thumb {
+  transform: translateX(-50%) scale(1.35);
+}
+
+.videos-preview-seek:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -2px;
+}
+
+.videos .videos-preview-button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* ---------- Shorts rafı ---------- */
+
+.videos-shorts-shelf {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 6px 0 4px;
+}
+
+.videos-shelf-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+/* Shorts rafı: başlık + ⋯ menüsü ve iki sütunlu (masaüstünde dört sütunlu) 2:3 kutu ızgarası. */
+.videos-shorts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.videos-shorts-heading {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.videos .videos-shorts-more,
+.videos .videos-short-tile-more {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.videos .videos-shorts-more {
+  font-size: 20px;
+}
+
+.videos-shorts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.videos-short-tile {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000000;
+}
+
+/* `.videos a { color: inherit }` kuralını geçmek için `.videos` ile başlar; başlık her zaman beyazdır. */
+.videos .videos-short-tile-link {
+  position: absolute;
+  inset: 0;
+  display: block;
+  color: #ffffff;
+}
+
+.videos-short-tile-link img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videos-short-tile-link::after {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), transparent);
+  pointer-events: none;
+}
+
+.videos .videos-short-tile-title {
+  position: absolute;
+  color: #ffffff;
+  right: 12px;
+  bottom: 14px;
+  left: 12px;
+  z-index: 1;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.videos-short-tile-new {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--videos-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.videos .videos-short-tile-more {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  color: #ffffff;
+  font-size: 18px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.videos .videos-shorts-more:focus-visible,
+.videos .videos-short-tile-more:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--videos-accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+/* ---------- Duyarlı düzen ---------- */
+
+@media (max-width: 768px) {
+  /* YouTube mobildeki gibi: kartlar beyaz, altı yuvarlak; aralarında gri alan görünür. */
+  .videos-feed {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 15px;
+    margin-top: -8px;
+    padding-top: 0;
+    padding-bottom: 12px;
+    background: #f0f0f3;
+  }
+
+  .videos-feed > .videos-card,
+  .videos-feed > .videos-shorts-shelf {
+    border-radius: 0 0 var(--videos-radius) var(--videos-radius);
+    background: var(--videos-surface);
+  }
+
+  /* Shorts rafı tam yuvarlak bir kart; kutular arasında yalnız ince boşluk vardır. */
+  .videos-feed > .videos-shorts-shelf {
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--videos-radius);
+  }
+
+  /* Kartlar arası boşluk (gap) ile kart alt boşluğu (padding-bottom) eşit tutulur. */
+  .videos-feed > .videos-card {
+    padding-bottom: 15px;
+  }
+
+  /* Mobilde küçük resimler kenardan kenara (1. ekran görüntüsündeki gibi). */
+  .videos-card-thumb,
+  .videos-preview-layer {
+    border-radius: 0;
+  }
+
+  .videos-card-body {
+    padding: 12px 14px 0;
+  }
+
+  .videos-card-title {
+    font-size: 16px;
+  }
+
+  .videos-shorts-head {
+    margin-bottom: 0;
+    padding: 14px 14px 12px 16px;
+  }
+
+  .videos-shorts-heading {
+    font-size: 26px;
+  }
+
+  .videos-shorts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .videos-short-tile {
+    border-radius: 0;
+  }
+
+  .videos-shelf-row {
+    margin-inline: -14px;
+    padding-inline: 14px;
+    scroll-padding-inline: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .videos-card-actions .videos-icon-button {
+    min-width: 32px;
+    padding: 0 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videos-card.is-entering {
+    animation: none;
+  }
+
+  .videos-card-thumb img,
+  .videos-preview-layer {
+    transition: none;
+  }
+}

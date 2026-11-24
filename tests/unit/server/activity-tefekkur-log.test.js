@@ -131,3 +131,39 @@ test('makale kategori slug listesi fragmentteki kategori kartlarıyla birebir ay
   const slugs = Array.from(fragment.matchAll(/data-slug="([^"]+)"/g), match => match[1]);
   assert.deepEqual([...slugs].sort(), [...ARTICLE_CATEGORY_SLUGS].sort());
 });
+
+const VIDEO_ACTION = 'videolar_bölüm_görüntüleme';
+
+test('video bölüm kaydı yalnız bilinen bölümü saklar', async () => {
+  const { saved } = await withFakeLog(false, async logSiteActivity => {
+    await logSiteActivity({ action: VIDEO_ACTION, req: request, section: 'shorts', view: 'slider', mode: 'resim' });
+    await logSiteActivity({ action: VIDEO_ACTION, req: request, section: 'hesabim' });
+  });
+  assert.deepEqual(
+    saved.map(({ action, view, section, mode }) => ({ action, view, section, mode })),
+    [
+      { action: VIDEO_ACTION, view: undefined, section: 'shorts', mode: undefined },
+      { action: VIDEO_ACTION, view: undefined, section: 'hesabim', mode: undefined }
+    ]
+  );
+});
+
+test('video bölüm kaydı bilinmeyen veya eksik bölümü kaydetmez', async () => {
+  const { saved } = await withFakeLog(false, async logSiteActivity => {
+    await logSiteActivity({ action: VIDEO_ACTION, req: request });
+    await logSiteActivity({ action: VIDEO_ACTION, req: request, section: '<script>' });
+    await logSiteActivity({ action: VIDEO_ACTION, req: request, section: 'ayet' });
+  });
+  assert.equal(saved.length, 0);
+});
+
+test('video bölüm listesi istemcideki bölüm adlarıyla birebir aynıdır', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { VIDEO_SECTIONS } = require('../../../src/server/modules/activity/activity.service');
+  const source = fs.readFileSync(path.join(__dirname, '../../../src/client/features/videos/videos-tab.js'), 'utf8');
+  const match = /const LOG_SECTIONS = \{([^}]+)\}/.exec(source);
+  assert.ok(match, 'videos-tab.js LOG_SECTIONS tanımlamalı');
+  const sections = Array.from(match[1].matchAll(/'([a-z]+)'/g), item => item[1]);
+  assert.deepEqual([...new Set(sections)].sort(), [...VIDEO_SECTIONS].sort());
+});

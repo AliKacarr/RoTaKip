@@ -4,7 +4,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
-const { registerContentRoutes } = require('../../../src/server/modules/content/content.routes');
+const { registerVideoRoutes } = require('../../../src/server/modules/content/video.routes');
+const { createVideoService } = require('../../../src/server/modules/content/video.service');
 const { registerHealthRoutes } = require('../../../src/server/modules/system/health.routes');
 const { registerPublicPageRoutes } = require('../../../src/server/modules/pages/page.routes');
 const { isSafeGroupId } = require('../../../src/server/shared/group-id');
@@ -173,17 +174,24 @@ test('eski groupid ve grupid bağlantıları sorgu parametrelerini kanonik adres
   });
 });
 
-test('video API geçersiz liste türünü veritabanına erişmeden reddeder', async () => {
+test('video akış API geçersiz türü ve cursor değerini veritabanına erişmeden reddeder', async () => {
   const app = createFakeApp();
-  registerContentRoutes(app);
-
-  const route = app.routes.find(item => item.path === '/api/videos');
-  const response = createResponse();
-  await route.handlers.at(-1)({ query: { type: 'invalid', limit: '6' } }, response);
-
-  assert.equal(response.statusCode, 400);
-  assert.deepEqual(response.body, {
-    success: false,
-    message: 'Geçersiz video liste türü'
+  registerVideoRoutes(app, {
+    videoService: createVideoService({
+      getCollection: async () => {
+        throw new Error('veritabanına erişilmemeli');
+      }
+    })
   });
+
+  const route = app.routes.find(item => item.path === '/api/videos/feed');
+  for (const query of [{ type: 'invalid' }, { type: 'video', before: 'abc' }, { type: ['video'] }]) {
+    const response = createResponse();
+    await route.handlers.at(-1)({ query }, response);
+    assert.equal(response.statusCode, 400);
+    assert.deepEqual(response.body, {
+      success: false,
+      message: 'Geçersiz video akışı isteği'
+    });
+  }
 });

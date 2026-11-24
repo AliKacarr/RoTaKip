@@ -26,6 +26,9 @@ const { registerAdminAuthRoutes } = require('./modules/auth/admin-auth.routes');
 const { registerAuthRoutes } = require('./modules/auth/auth.routes');
 const { handleLoginStreak } = require('./modules/auth/login-streak.service');
 const { registerContentRoutes } = require('./modules/content/content.routes');
+const { getContentCollection } = require('./modules/content/content-db');
+const { registerVideoRoutes } = require('./modules/content/video.routes');
+const { createVideoService } = require('./modules/content/video.service');
 const groupModels = require('./modules/groups/group.models');
 const groupService = require('./modules/groups/group.service');
 const groupSettings = require('./modules/groups/group-settings');
@@ -86,6 +89,7 @@ const activityService = createActivityService({
 });
 const tesbihatService = createTesbihatService({ reverseGeocode: createReverseGeocoder() });
 const tefekkurService = createTefekkurService({ models: inspirationModels, publicPath });
+const videoService = createVideoService({ getCollection: getContentCollection });
 
 const routeDependencies = {
   ...activityModels,
@@ -117,13 +121,15 @@ const routeDependencies = {
   isSafeGroupId,
   publicPath,
   sessionCookieName: sessionConfig.cookieName,
-  syncErpReadingsOnDemand: erpService.syncErpReadingsOnDemand
+  syncErpReadingsOnDemand: erpService.syncErpReadingsOnDemand,
+  videoService
 };
 
 registerProtectedPageRoutes(app, routeDependencies);
 configureStaticFiles(app, publicPath);
 registerPublicPageRoutes(app, routeDependencies);
 registerContentRoutes(app);
+registerVideoRoutes(app, routeDependencies);
 registerTesbihatRoutes(app, routeDependencies);
 registerDropboxRoutes(app, routeDependencies);
 registerGroupRoutes(app, routeDependencies);

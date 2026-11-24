@@ -166,7 +166,8 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   const shell = readClient('shell/shell.css');
   const tefekkurHome = readClient('features/tefekkur/tefekkur-home.css');
   const tefekkurSlider = readClient('features/tefekkur/tefekkur-slider.css');
-  const videos = readClient('features/videos/videos.css');
+  const videosBase = readClient('features/videos/videos-base.css');
+  const videosFeed = readClient('features/videos/videos-feed.css');
   const articles = readClient('features/articles/articles.css');
   const footer = readClient('shared/footer.css');
   const footerHtml = readPublic('fragments/footer.html');
@@ -177,8 +178,8 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.match(shell, /@media \(max-width:\s*640px\)[\s\S]*?\.app-navigation\s*\{[^}]*height:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(tefekkurHome, /@media \(max-width:\s*768px\)[\s\S]*?\.tefekkur-section-row\s*\{[^}]*min-height:\s*68px;/);
   assert.match(tefekkurSlider, /@media \(max-width:\s*768px\)[\s\S]*?\.tefekkur-slider-action\s*\{[^}]*min-height:\s*56px;/);
-  assert.match(videos, /@media \(max-width:\s*768px\)[\s\S]*?\.top-bar\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(videos, /\.videos-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(videosBase, /@media \(max-width:\s*768px\)[\s\S]*?\.videos-sections\s*\{[^}]*padding:\s*0 16px;/);
+  assert.match(videosFeed, /@media \(max-width:\s*768px\)[\s\S]*?\.videos-feed\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(articles, /\.articles-category-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s);
   assert.match(articles, /\.articles-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(footer, /\.footer-container\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1\.15fr\) minmax\(0, 0\.85fr\);[^}]*"social app"[^}]*"corporate corporate";/s);
@@ -651,21 +652,197 @@ test('davet onboarding görünümü okuma verilerini ve bileşenlerini başlatma
   assert.match(adminModal, /function handleWelcomeModalClose\(\)[\s\S]*?window\.location\.replace\('\/gruplar'\)[\s\S]*?window\.location\.replace\(cleanUrl\)/);
 });
 
-test('Videolar doğrudan yenilendiğinde veri ve kart görünürlüğü tamamlanır', () => {
-  const videos = readClient('features/videos/videos.js');
-  assert.match(videos, /return showRandomVideos\(\)/);
-  assert.doesNotMatch(videos, /scroll-fade-in|observeScrollFadeIn/);
+test('Videolar sekmesi akış, izleme, Shorts ve Hesabım bölümlerinden oluşur; modal kullanmaz', () => {
+  const fragment = readPublic('fragments/videos.html');
+  ['feed', 'watch', 'shorts', 'library'].forEach(view => {
+    assert.match(fragment, new RegExp(`class="videos-view" data-view="${view}"`));
+  });
+  assert.match(fragment, /data-section="feed" href="\/videolar"[\s\S]*?data-section="shorts" href="\/videolar\?bolum=shorts"[\s\S]*?data-section="library" href="\/videolar\?bolum=hesabim"/);
+  assert.doesNotMatch(fragment, /videoModal|videoFrame|video-modal/);
+  assert.doesNotMatch(readClient('features/videos/videos-base.css'), /(^|\n)\s*iframe\s*\{/);
+
+  const tab = readClient('features/videos/videos-tab.js');
+  assert.match(tab, /window\.RoTaKipVideoTab = \{[\s\S]*?prepareBeforeReveal:\s*true,[\s\S]*?init,[\s\S]*?resume,[\s\S]*?destroy/);
+  assert.match(tab, /params\.get\('izle'\)[\s\S]*?bolum === 'shorts'[\s\S]*?bolum === 'hesabim'/);
+  assert.doesNotMatch(readClient('features/videos/videos-feed.js'), /scroll-fade-in|observeScrollFadeIn/);
 });
 
-test('Videolar sekmesindeki yeni rastgele içerik sekme arka plandayken hazırlanır', () => {
-  const videos = readClient('features/videos/videos.js');
-  assert.match(videos, /function resumeVideos\(\)/);
-  assert.match(videos, /activeButton\?\.id === 'randomBtn'[\s\S]*?showPreparedRandomVideos\(\)[\s\S]*?Promise\.resolve\(\)/);
-  assert.match(videos, /function prepareRandomVideos\(\)[\s\S]*?preloadVideoThumbnails\(videos\)/);
-  assert.match(videos, /destroy\(\)[\s\S]*?activeButton\?\.id === 'randomBtn'[\s\S]*?startRandomVideoPreparation\(\)/);
-  assert.match(videos, /prepareBeforeReveal:\s*true/);
-  assert.match(videos, /videoRequestSequence/);
-  assert.match(videos, /resume: resumeVideos/);
+test('Videolar sekmesinde footer yoktur; menü ve bölüm sekmeleri kaydırmaya göre gizlenir', () => {
+  const base = readClient('features/videos/videos-base.css');
+  // Seçici yalnızca açık sekmeyi hedefler (kabuğun arka planda ısıttığı görünüm #tabContent dışındadır).
+  assert.match(base, /body:has\(#tabContent > \.tab-view-videos\) #footerRoot\s*\{\s*display:\s*none;/);
+  assert.match(base, /\.videos\.is-chrome-hidden \.videos-sections\s*\{[^}]*opacity:\s*0;[^}]*transform:\s*translateY\(-110%\)/);
+  assert.match(base, /@media \(max-width:\s*1023px\)[\s\S]*?body\.videos-chrome-hidden \.app-navigation\s*\{[^}]*transform:\s*translateY/);
+  assert.match(base, /prefers-reduced-motion:\s*reduce[\s\S]*?body\.videos-chrome-active \.app-navigation\s*\{\s*transition:\s*none;/);
+
+  const tab = readClient('features/videos/videos-tab.js');
+  assert.match(tab, /function onChromeScroll\(\)[\s\S]*?currentRoute\?\.view === 'shorts'[\s\S]*?setChromeHidden\(/);
+  // Sekmeden ayrılırken menü eski haline döner.
+  assert.match(tab, /function destroy\(\)[\s\S]*?setChromeEnabled\(false\)/);
+  assert.match(readClient('features/videos/videos-watch.css'), /\.videos-watch-stage\s*\{[^}]*top:\s*var\(--videos-sticky-top\)/);
+  // Kaydırma tutturması ilk çipi kenara yapıştırdığından çip satırında kullanılmaz.
+  assert.doesNotMatch(readClient('features/videos/videos-feed.css'), /\.videos-chips\s*\{[^}]*scroll-snap-type/);
+});
+
+test('Videolar Hesabım görünümü: başlıksız, gizli kaydırma çubuklu, ⋯ menülü koleksiyonlar; sekmeler gizlenmez', () => {
+  const fragment = readPublic('fragments/videos.html');
+  assert.match(fragment, /data-section="library"[^>]*>Hesabım<\/a>/);
+  const library = readClient('features/videos/videos-library.js');
+  assert.doesNotMatch(library, /videos-library-header/);
+  assert.match(library, /videos-collections">\s*<h2 class="videos-block-title">Kitaplık<\/h2>/);
+  assert.match(library, /videos-collection-stack[\s\S]*?videos-collection-cover[\s\S]*?data-action="collection-menu"/);
+  const css = readClient('features/videos/videos-library.css');
+  assert.match(css, /\.videos-channel-row::-webkit-scrollbar\s*\{\s*display:\s*none;/);
+  assert.match(css, /\.videos-library \.videos-shelf-row,\s*\.videos-channel-row\s*\{\s*scrollbar-width:\s*none;/);
+  const tab = readClient('features/videos/videos-tab.js');
+  assert.match(tab, /function onChromeScroll\(\)[\s\S]*?currentRoute\?\.view === 'library'[\s\S]*?setChromeHidden\(false\)/);
+  assert.match(tab, /action === 'collection-clear'/);
+  assert.match(readClient('features/videos/videos-store.js'), /clearList\(listName\)/);
+});
+
+test('Video ve Shorts 5 saniye oynatılınca izlendi sayılır; ilerleme ve devam konumu bundan bağımsızdır', () => {
+  const store = readClient('features/videos/videos-store.js');
+  assert.match(store, /const WATCHED_SECONDS = 5;/);
+  assert.match(store, /function isWatchedProgress\(position, duration\)[\s\S]*?Math\.min\(WATCHED_SECONDS, duration\)/);
+  assert.doesNotMatch(store, /COMPLETED_RATIO|SHORTS_COMPLETED/);
+  assert.match(store, /resumePosition\(id\)\s*\{\s*const entry = indexes\.history\.get\(id\);\s*if \(!entry \|\| !entry\.duration\) return 0;/);
+  assert.match(readClient('features/videos/videos-shorts.js'), /currentTime\(\) >= ns\.store\.WATCHED_SECONDS/);
+  assert.match(readClient('features/videos/videos-watch.js'), /currentTime\(\) >= ns\.store\.WATCHED_SECONDS/);
+});
+
+test('Shorts iframe\'i yatay (16:9) tutulur; YouTube\'un dikey Shorts arayüzü çerçeve dışında kalır', () => {
+  const shorts = readClient('features/videos/videos-shorts.js');
+  assert.match(shorts, /const frameWidth = videoHeight \* \(16 \/ 9\);[\s\S]*?width: `\$\{frameWidth\}px`,\s*height: `\$\{videoHeight\}px`/);
+});
+
+test('Videolar Shorts yalnızca sağ üstteki düğmeyle tam ekrana alınır, Shorts dışında çıkılır', () => {
+  assert.match(readPublic('fragments/videos.html'), /data-view="shorts"[\s\S]*?class="videos-shorts-fullscreen" data-action="shorts-fullscreen"/);
+  const tab = readClient('features/videos/videos-tab.js');
+  assert.match(tab, /function syncShortsTheme\(\)[\s\S]*?if \(!inShorts\) exitFullscreen\(\);/);
+  assert.match(tab, /function toggleFullscreen\(\)[\s\S]*?requestFullscreen\(\{ navigationUI: 'hide' \}\)/);
+  assert.match(tab, /action === 'shorts-fullscreen'/);
+  assert.match(tab, /addEventListener\('fullscreenchange', syncFullscreenButton\)/);
+  assert.doesNotMatch(tab, /enterImmersive/);
+  assert.match(readClient('features/videos/videos-shorts.css'), /\.videos-shorts-fullscreen\s*\{[^}]*position:\s*absolute;[^}]*right:\s*12px;/);
+});
+
+test('Videolar bölüm sekmeleri YouTube gibi düz metin ve kırmızı alt çizgilidir', () => {
+  const fragment = readPublic('fragments/videos.html');
+  assert.doesNotMatch(fragment.match(/<nav class="videos-sections"[\s\S]*?<\/nav>/)[0], /<i class=|<svg/);
+  const base = readClient('features/videos/videos-base.css');
+  assert.match(base, /\.videos-sections\s*\{[^}]*justify-content:\s*flex-start;[^}]*overflow-x:\s*auto;/);
+  assert.match(base, /\.videos-section-tab::after\s*\{[^}]*height:\s*3px;[^}]*border-radius:\s*3px;[^}]*background:\s*var\(--videos-accent\)/);
+  assert.doesNotMatch(base, /\.videos-section-tab\.is-active\s*\{[^}]*background:\s*var\(--videos-text\)/);
+});
+
+test('Video kartının alt satırı "▷ 466 B   4 ay önce" biçimindedir', () => {
+  const feed = readClient('features/videos/videos-feed.js');
+  assert.match(feed, /function statsHtml\(video\)[\s\S]*?videos-card-play[\s\S]*?formatViewsCompact\(video\.views\)[\s\S]*?videos-card-date/);
+  assert.doesNotMatch(feed, /videos-card-stats">\$\{ns\.escape\(ns\.formatMeta/);
+  assert.match(readClient('features/videos/videos-core.js'), /ns\.formatViewsCompact = function/);
+  assert.match(readClient('features/videos/videos-feed.css'), /\.videos-card-stats\s*\{[^}]*display:\s*flex;[^}]*gap:\s*14px;/);
+});
+
+test('Videolar önizlemesinde ses düğmesi bulunur; altyazı yoktur', () => {
+  const feed = readClient('features/videos/videos-feed.js');
+  assert.match(feed, /data-action="preview-sound"/);
+  assert.match(feed, /toggleSound\(\)[\s\S]*?this\.player\.unMute\(\)/);
+  assert.match(readClient('features/videos/videos-tab.js'), /action === 'preview-sound'/);
+  assert.match(readClient('features/videos/videos-feed.css'), /\.videos-preview-layer\.is-playing \.videos-preview-controls\s*\{\s*visibility:\s*visible;/);
+  ['videos-feed.js', 'videos-tab.js', 'videos-player.js', 'videos-store.js'].forEach(file => {
+    assert.doesNotMatch(readClient(`features/videos/${file}`), /[Cc]aptions/);
+  });
+});
+
+test('Videolar kanal seçimi bölüm sekmelerinin sonundaki açılır liste (combobox) ile yapılır', () => {
+  const fragment = readPublic('fragments/videos.html');
+  assert.doesNotMatch(fragment, /videosChips|videos-chips/);
+  const feed = readClient('features/videos/videos-feed.js');
+  assert.match(feed, /renderChannelTabs\(\)\s*\{[\s\S]*?class="videos-channel-select" role="combobox"/);
+  assert.match(feed, /role="option"[\s\S]*?data-channel-filter/);
+  assert.match(feed, /option\('', 'Tümü'/);
+  assert.doesNotMatch(feed, /videos-channel-tab/);
+  const tab = readClient('features/videos/videos-tab.js');
+  // Kanal seçimi bölüm geçişi değil kanal süzgeci olarak ele alınır.
+  assert.match(tab, /closest\('\.videos-section-tab\[data-section\], \[data-section-link\]'\)/);
+  assert.match(readClient('features/videos/videos-base.css'), /\.videos \.videos-channel-select\s*\{[^}]*margin-left:\s*auto;/);
+});
+
+test('Videolar önizlemesinde sürüklenebilir ilerleme çubuğu ve kalan süre bulunur', () => {
+  const feed = readClient('features/videos/videos-feed.js');
+  assert.match(feed, /videos-preview-seek" role="slider"/);
+  assert.match(feed, /bindSeek\(\)\s*\{[\s\S]*?setPointerCapture[\s\S]*?seekToRatio/);
+  assert.match(feed, /showProgress\(ratio\)\s*\{[\s\S]*?formatDuration\(Math\.max\(0, duration - clamped \* duration\)\)/);
+  assert.match(readClient('features/videos/videos-player.js'), /seek: seconds => ready && player\.seekTo\(/);
+  const css = readClient('features/videos/videos-feed.css');
+  assert.match(css, /\.videos \.videos-preview-button\s*\{[^}]*background:\s*rgba\(96,\s*96,\s*96,\s*0\.55\);[^}]*color:\s*#ffffff;/);
+  assert.doesNotMatch(css, /is-faded/);
+  assert.match(css, /\.videos-preview-seek\s*\{[^}]*touch-action:\s*none;/);
+});
+
+test('Videolar izleme sayfasından akışa dönünce video mini oynatıcıda sürer; Shorts tam ekrandır', () => {
+  const tab = readClient('features/videos/videos-tab.js');
+  assert.match(tab, /const minimize = changedView[\s\S]*?previous\?\.view === 'watch'[\s\S]*?ns\.watch\.canMinimize\(\)/);
+  // Sekme içi geri/ileri destroy() → resume() yolundan geçer; izleme videosu destroy()'da durdurulmaz.
+  assert.match(tab, /function destroy\(\)[\s\S]*?currentRoute\.view !== 'watch'\) sections\[currentRoute\.view\]\.leave\(\)/);
+  const css = readClient('features/videos/videos-watch.css');
+  assert.match(css, /\.videos\.has-mini-player \.videos-watch-stage\s*\{[^}]*position:\s*fixed;/);
+  assert.match(css, /\.tab-view-videos\.visible\s*\{[^}]*transform:\s*none;[^}]*animation-fill-mode:\s*backwards;/);
+  assert.match(readPublic('fragments/videos.html'), /data-mini="expand"[\s\S]*?data-mini="toggle"[\s\S]*?data-mini="close"/);
+  const shorts = readClient('features/videos/videos-shorts.css');
+  assert.match(shorts, /\.videos\[data-view="shorts"\]:not\(\.is-shorts-paused\) \.videos-sections\s*\{[^}]*opacity:\s*0;/);
+  assert.match(readClient('features/videos/videos-shorts.js'), /ns\.tab\.setShortsPaused\(this\.userPaused\)/);
+});
+
+test('Mini oynatıcı sürüklenir, Shorts sesi açık başlar ve durdurulunca kırmızı daireli çubukla sarılır', () => {
+  const mini = readClient('features/videos/videos-mini.js');
+  assert.match(mini, /ns\.mini = \{ init, sync \}/);
+  assert.match(mini, /setPointerCapture[\s\S]*?stage\.classList\.add\('is-dragging'\)/);
+  const watchCss = readClient('features/videos/videos-watch.css');
+  assert.match(watchCss, /\.videos-mini-controls[\s\S]*?touch-action:\s*none;/);
+  assert.match(watchCss, /animation:\s*videos-mini-enter 0\.16s/);
+  const shorts = readClient('features/videos/videos-shorts.js');
+  assert.match(shorts, /applySound\(player\)[\s\S]*?this\.userMuted/);
+  assert.match(shorts, /bindSeek\(\)[\s\S]*?!this\.userPaused/);
+  const shortsCss = readClient('features/videos/videos-shorts.css');
+  assert.match(shortsCss, /\.videos-short\.is-paused \.videos-short-seek-thumb\s*\{[^}]*display:\s*block;/);
+  // Kendi "Sesi aç" düğmemiz yoktur; sessiz başlayan Shorts'a dokunmak sesi açar.
+  assert.doesNotMatch(shortsCss + shorts, /videos-short-sound/);
+  assert.match(shorts, /tap\(\)\s*\{\s*if \(this\.muted\) this\.toggleSound\(\);\s*else this\.togglePlay\(\);/);
+  assert.match(readClient('features/videos/videos-tab.js'), /action === 'short-toggle'\) ns\.shorts\.tap\(\)/);
+  // Beğeni/kaydetme bildirimi gösterilmez; bildirim kutusu içeriği kadar genişler.
+  assert.doesNotMatch(readClient('features/videos/videos-tab.js'), /Beğendiğin videolara eklendi|Kaydedilenlere eklendi/);
+  assert.match(readClient('features/videos/videos-base.css'), /\.videos-toast\s*\{[^}]*width:\s*max-content;/);
+});
+
+test('Shorts görünümünde alt menü koyu temaya geçer', () => {
+  const tab = readClient('features/videos/videos-tab.js');
+  assert.match(tab, /function syncShortsTheme\(\)[\s\S]*?const inShorts = enabled && currentRoute\?\.view === 'shorts';\s*document\.body\.classList\.toggle\('videos-shorts-view', inShorts\)/);
+  assert.match(tab, /resetChrome\(\);[^]*?syncShortsTheme\(\);/);
+  assert.match(readClient('features/videos/videos-shorts.css'), /body\.videos-shorts-view \.app-navigation\s*\{[^}]*background:\s*#0f0f0f;/);
+});
+
+test('Videolar önizlemesi oynatıcıyı önceden kurar ve dokunmatikte YouTube simgesi geçene kadar bekler', () => {
+  const feed = readClient('features/videos/videos-feed.js');
+  assert.match(feed, /enable\(\)\s*\{[\s\S]*?ns\.idle\(\(\) => this\.prewarm\(\)/);
+  assert.match(feed, /prewarm\(retry = true\)[\s\S]*?autoplay:\s*false/);
+  assert.match(feed, /PREVIEW_TOUCH_REVEAL_DELAY_MS = 2600/);
+  assert.match(feed, /showPlaying\(\)[\s\S]*?ns\.isTouchDevice\(\)[\s\S]*?this\.revealTimer = window\.setTimeout/);
+  assert.match(feed, /PREVIEW_SCROLL_IDLE_MS = 150/);
+});
+
+test('Videolar sekmesi başka sekmedeyken ana akışı ve ilk küçük resimleri önceden hazırlar', () => {
+  const tab = readClient('features/videos/videos-tab.js');
+  const store = readClient('features/videos/videos-store.js');
+  // Önce cihazdaki son yanıt çizilir, ardından sunucudan tazelenir.
+  assert.match(tab, /function loadHome\([\s\S]*?ns\.store\.readHomeCache\(excludeKey\)[\s\S]*?ns\.api\.home\(excludeKey\)[\s\S]*?ns\.store\.writeHomeCache/);
+  assert.match(tab, /function schedulePreparation\(\)[\s\S]*?connectionAllowsPreparation\(\)[\s\S]*?firstThumbnails[\s\S]*?firstPosters[\s\S]*?preloadImage/);
+  // Isınmış sekmenin ilk gösterimi için kabuğun gezinme olayı dinlenir.
+  assert.match(tab, /rotakip:primary-content-ready/);
+  assert.match(store, /const HOME_CACHE_KEY = 'rotakip:videos:home-cache'/);
+  // YouTube oynatıcı betiği yalnızca Videolar sekmesinde yüklenir.
+  assert.match(readClient('features/videos/videos-player.js'), /loadExternalScriptOnce\(API_SRC\)/);
+  assert.match(readClient('features/videos/videos-player.js'), /www\.youtube-nocookie\.com/);
 });
 
 test('Tefekkür bölümleri sekme içi URL ile açılır ve kaydırmalı okuyucu kullanır', () => {
@@ -869,7 +1046,7 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(readClient('features/groups/group-bootstrap.js'), /ensureLongestStreaks\(\)[\s\S]*?longestStreaksPromise/);
   assert.doesNotMatch(readClient('features/readings/analytics/longest-series.js'), /waitForRoutePlaceholder|longest-series-loading/);
   assert.doesNotMatch(readClient('features/readings/analytics/stats-section.js'), /waitForRoutePlaceholder|stats-loading/);
-  assert.match(readClient('features/videos/videos.js'), /await window\.waitForRoutePlaceholder\(videosContainer\)/);
+  assert.doesNotMatch(readClient('features/videos/videos-feed.js'), /waitForRoutePlaceholder/);
   assert.match(readClient('features/articles/articles.js'), /await this\.waitForImages\(entry\.articles\)/);
   assert.doesNotMatch(readClient('features/articles/articles.js'), /waitForRoutePlaceholder/);
   assert.doesNotMatch(readClient('features/tefekkur/tefekkur-slider.js'), /waitForRoutePlaceholder|loading-placeholder/);
