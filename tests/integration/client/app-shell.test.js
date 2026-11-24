@@ -755,6 +755,14 @@ test('Videolar bölüm sekmeleri YouTube gibi düz metin ve kırmızı alt çizg
   assert.match(base, /\.videos-section-indicator\.is-rising::before\s*\{[^}]*animation:\s*videos-tab-rise/);
   assert.match(base, /@keyframes videos-tab-rise/);
   assert.match(readClient('features/videos/videos-tab.js'), /function placeIndicator\([\s\S]*?--indicator-x[\s\S]*?is-ready/);
+  // Sekme açılışında (resume/activate) gösterge anında oturur; kayma ve ışıma yalnız sekme içi görünüm değişiminde oynar.
+  assert.match(readClient('features/videos/videos-tab.js'), /render\(route, \{ animateIndicator: false \}\)/);
+  // `is-rising` ışıma bitince kalkar; kalırsa görünüm DOM'a geri takılınca animasyon kendiliğinden yeniden başlar.
+  assert.match(readClient('features/videos/videos-tab.js'), /animationName === 'videos-tab-rise'\) event\.currentTarget\.classList\.remove\('is-rising'\)/);
+  // Açılış ışıması, görünümün yukarı kayma animasyonu bittikten sonra (kabuk açılışı tamamlanınca) bir kez oynar.
+  assert.match(readClient('features/videos/videos-tab.js'), /function playEntryGlow\(\)[\s\S]*?getAnimations[\s\S]*?Promise\.allSettled\([\s\S]*?\.then\(run\)/);
+  assert.match(readClient('features/videos/videos-tab.js'), /function onNavigationSettled\(\)[\s\S]*?activate\(\);\s*if \(entryGlowPending && active\)[\s\S]*?playEntryGlow\(\)/);
+  assert.match(readClient('features/videos/videos-tab.js'), /syncSectionTabs\(\{ animate: animateIndicator && Boolean\(previous\) && changedView \}\)/);
   assert.doesNotMatch(base, /\.videos-section-tab\.is-active\s*\{[^}]*background:\s*var\(--videos-text\)/);
 });
 

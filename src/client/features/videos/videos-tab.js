@@ -29,6 +29,8 @@
     let initPromise = null;
     let currentRoute = null;
     let active = false;
+    // Sekme (yeniden) açıldı; ışıma kabuk açılışı bitince (`rotakip:primary-content-ready`) oynayacak.
+    let entryGlowPending = false;
     let lastLoggedKey = '';
     let feedScrollY = 0;
     let homePromise = null;
@@ -117,7 +119,9 @@
 
     // ---------- Çizim ----------
 
-    function render(route, { start = 0 } = {}) {
+    // `animateIndicator: false` sekme açılırken/geri dönülürken verilir: gösterge yerine anında oturur,
+    // kayma ve yükselen ışıma yalnız sekme içinde kullanıcı görünüm değiştirince oynar.
+    function render(route, { start = 0, animateIndicator = true } = {}) {
         const previous = currentRoute;
         const changedView = previous?.view !== route.view;
         // İzleme sayfasından akışa / kitaplığa dönülürken video mini oynatıcıda sürer.
@@ -136,7 +140,7 @@
         page.querySelectorAll('.videos-view').forEach(view => {
             view.hidden = view.dataset.view !== route.view && !(miniActive && view.dataset.view === 'watch');
         });
-        syncSectionTabs();
+        syncSectionTabs({ animate: animateIndicator && Boolean(previous) && changedView });
         page.dataset.view = route.view;
         resetChrome();
         syncShortsTheme();
@@ -150,7 +154,7 @@
 
     // Seçili sekme görünümün sekmesidir (izleme sayfası "Videolar" altında sayılır); kanal süzgeci
     // sekmelerin sonundaki açılır listede gösterilir.
-    function syncSectionTabs() {
+    function syncSectionTabs({ animate = false } = {}) {
         if (!page) return;
         const view = currentRoute?.view;
         page.querySelectorAll('.videos-section-tab').forEach(tab => {
@@ -159,13 +163,14 @@
             if (selected) tab.setAttribute('aria-current', 'page');
             else tab.removeAttribute('aria-current');
         });
-        placeIndicator();
+        placeIndicator({ animate });
     }
 
-    // Seçili sekmenin altındaki kırmızı çizgi tek bir gösterge öğesidir; sekme değişince eski konumundan
-    // yenisine sağa/sola kayar (genişleme yok). İlk yerleşimde (ve görünüm gizliyken ölçülemediğinde)
-    // kayma olmaz; yalnız sonraki değişimlerde geçiş ve yükselen ışıma oynar.
-    function placeIndicator({ silent = false } = {}) {
+    // Seçili sekmenin altındaki kırmızı çizgi tek bir gösterge öğesidir; kullanıcı sekme değiştirince eski
+    // konumundan yenisine sağa/sola kayar (genişleme yok) ve yükselen ışıma oynar. Diğer tüm yerleşimlerde
+    // (ilk yerleşim, sekme açılışı, yeniden boyutlandırma, yazı tipi yüklemesi) gösterge anında oturur:
+    // açılış sırasındaki ölçü düzeltmeleri kayma ve ışıma olarak görünmez.
+    function placeIndicator({ animate = false } = {}) {
         const nav = page?.querySelector('.videos-sections');
         const indicator = nav?.querySelector('.videos-section-indicator');
         if (!indicator) return;
@@ -181,19 +186,41 @@
             && indicator.style.getPropertyValue('--indicator-w') === width;
         if (unchanged && indicator.classList.contains('is-visible')) return;
         const firstPlacement = !indicator.classList.contains('is-ready');
+        const instant = firstPlacement || !animate || ns.prefersReducedMotion();
+        if (instant) indicator.style.transition = 'none';
         indicator.style.setProperty('--indicator-x', x);
         indicator.style.setProperty('--indicator-w', width);
         indicator.classList.add('is-visible');
-        if (firstPlacement) {
+        if (instant) {
+            void indicator.offsetWidth;
+            indicator.style.transition = '';
             // Geçişler, ilk konum yerleştikten sonraki karede açılır; gösterge yerine kaymasın.
-            window.requestAnimationFrame(() => indicator.classList.add('is-ready'));
+            if (firstPlacement) window.requestAnimationFrame(() => indicator.classList.add('is-ready'));
             return;
         }
-        // Yükselen ışıma yalnız sekme gerçekten değişince oynar (yeniden boyutlandırma/yazı tipi değil).
-        if (silent || ns.prefersReducedMotion()) return;
+        riseIndicator(indicator);
+    }
+
+    function riseIndicator(indicator) {
         indicator.classList.remove('is-rising');
         void indicator.offsetWidth;
         indicator.classList.add('is-rising');
+    }
+
+    // Sekme açılışında yükselen ışıma, görünümün yukarı kayarak belirme animasyonu (`global-tab-view-enter`)
+    // bittikten sonra bir kez oynar; böylece gösterge henüz belirirken efekt başlamaz.
+    // Animasyon yoksa (hareket azaltma, zaten görünür) hemen oynar.
+    function playEntryGlow() {
+        const indicator = page?.querySelector('.videos-section-indicator');
+        if (!indicator || ns.prefersReducedMotion()) return;
+        const view = page.closest('.tab-view-videos');
+        const animations = view?.getAnimations?.() ?? [];
+        const run = () => {
+            if (!active || !indicator.classList.contains('is-visible')) return;
+            riseIndicator(indicator);
+        };
+        if (!animations.length) run();
+        else Promise.allSettled(animations.map(animation => animation.finished)).then(run);
     }
 
     // Shorts'a geçilirken sekme çubuğu hemen gizlenmez: kırmızı gösterge "Shorts" yazısının altına kayıp
@@ -722,6 +749,11 @@
 
     function bindEvents() {
         page.addEventListener('click', onClick);
+        // Işıma bitince `is-rising` kalkar: sınıf kalırsa görünüm DOM'a geri takıldığında (sekmeler arası dönüş)
+        // CSS animasyonu kendiliğinden yeniden başlar ve `playEntryGlow` ile art arda iki ışıma görünür.
+        page.querySelector('.videos-section-indicator')?.addEventListener('animationend', event => {
+            if (event.animationName === 'videos-tab-rise') event.currentTarget.classList.remove('is-rising');
+        });
         page.querySelector('.videos-shorts-sound')?.addEventListener('animationend', event => {
             event.currentTarget.classList.remove('is-pressed');
         });
@@ -739,8 +771,8 @@
         // tamamlandığında yayınlanan olayla sekmenin görünür olduğu anlaşılır.
         window.addEventListener('rotakip:primary-content-ready', onNavigationSettled);
         // Ekran boyutu ve yazı tipi yüklemesi sekme ölçülerini değiştirir; gösterge yeniden hizalanır.
-        window.addEventListener('resize', () => placeIndicator({ silent: true }), { passive: true });
-        document.fonts?.ready.then(() => placeIndicator({ silent: true }));
+        window.addEventListener('resize', () => placeIndicator(), { passive: true });
+        document.fonts?.ready.then(() => placeIndicator());
     }
 
     // ---------- Menü ve bölüm sekmelerini kaydırmaya göre gizleme ----------
@@ -841,6 +873,10 @@
             return;
         }
         activate();
+        if (entryGlowPending && active) {
+            entryGlowPending = false;
+            playEntryGlow();
+        }
     }
 
     function disposePlayers() {
@@ -854,11 +890,12 @@
         if (window.location.pathname.replace(/\/$/, '') !== TAB_PATH) return;
         const wasActive = active;
         active = true;
+        if (!wasActive) entryGlowPending = true;
         setChromeEnabled(true);
         placeIndicator();
         const route = readRoute();
         if (routeKey(route) !== routeKey(currentRoute)) {
-            render(route);
+            render(route, { animateIndicator: false });
             return;
         }
         if (!wasActive) {
@@ -876,6 +913,7 @@
         Object.values(sections).forEach(section => section.init(page));
         bindEvents();
         active = Boolean(page.closest('#tabContent')) && window.location.pathname.replace(/\/$/, '') === TAB_PATH;
+        entryGlowPending = active;
         setChromeEnabled(active);
         const firstContent = loadHome();
         render(readRoute());
@@ -895,12 +933,13 @@
     async function resume() {
         await init();
         if (!page) return;
+        if (!active) entryGlowPending = true;
         active = true;
         setChromeEnabled(true);
         placeIndicator();
         const route = readRoute();
         if (routeKey(route) !== routeKey(currentRoute)) {
-            render(route);
+            render(route, { animateIndicator: false });
             return;
         }
         currentRoute = route;
@@ -913,6 +952,8 @@
         closeMenu();
         if (currentRoute?.view === 'feed' && active) feedScrollY = window.scrollY;
         active = false;
+        entryGlowPending = false;
+        page?.querySelector('.videos-section-indicator')?.classList.remove('is-rising');
         lastLoggedKey = '';
         setChromeEnabled(false);
         // İzleme sayfasındaki video burada durdurulmaz: sekme içi geri/ileri (popstate) de destroy()
