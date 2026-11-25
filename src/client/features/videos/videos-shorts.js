@@ -55,6 +55,8 @@
         hasMore: false,
         // 'unwatched': izlenmemişler listelenir; sunucu sayfaları bitince 'watched' ile baştan izlenmişler.
         pass: 'unwatched',
+        // Akışta seçili kanal; doluysa Shorts yalnız o kanalın short'larını gösterir ("Tümü"nde boş).
+        channelId: '',
         loading: false,
         prepared: false,
         stale: false,
@@ -109,10 +111,15 @@
                 if (!this.prepared) {
                     const home = this.home || await ns.tab.homeReady();
                     if (sequence !== this.sequence) return;
-                    const page = home?.shorts || { videos: [], nextCursor: null, hasMore: false };
+                    this.channelId = ns.feed.channelId || '';
+                    // Ana sayfanın shorts havuzu tüm kanalları kapsar; kanal seçiliyken sunucudan o kanalın
+                    // short'ları baştan istenir (loadMore).
+                    const page = this.channelId
+                        ? { videos: [], nextCursor: null, hasMore: true }
+                        : home?.shorts || { videos: [], nextCursor: null, hasMore: false };
                     this.pass = 'unwatched';
                     this.cursor = page.nextCursor;
-                    this.hasMore = Boolean(page.hasMore && page.nextCursor);
+                    this.hasMore = Boolean(this.channelId || (page.hasMore && page.nextCursor));
                     this.items = [];
                     this.ids.clear();
                     this.clearSlides();
@@ -138,7 +145,7 @@
                 && video.type === 'shorts'
                 && !this.ids.has(video.id)
                 && !ns.store.isDisliked(video.id)
-                && ns.store.isFollowing(video.channelId)
+                && (this.channelId ? video.channelId === this.channelId : ns.store.isFollowing(video.channelId))
                 && ns.store.isCompleted(video.id) === (this.pass === 'watched'));
         },
 
@@ -196,7 +203,8 @@
                     const page = await ns.api.feed({
                         type: 'shorts',
                         before: this.cursor,
-                        excludeKey: ns.store.excludeKey(),
+                        channelId: this.channelId,
+                        excludeKey: this.channelId ? '' : ns.store.excludeKey(),
                         limit: PAGE_SIZE
                     });
                     if (sequence !== this.sequence) return;
@@ -216,9 +224,9 @@
 
         renderEnd() {
             if (this.scroller.querySelector('.videos-short-end')) return;
-            const message = this.items.length
-                ? 'Takip ettiğin kanallardaki shorts\'ların sonuna geldin.'
-                : 'Takip ettiğin kanallarda henüz short yok.';
+            const message = this.channelId
+                ? (this.items.length ? 'Bu kanaldaki shorts\'ların sonuna geldin.' : 'Bu kanalda henüz short yok.')
+                : (this.items.length ? 'Takip ettiğin kanallardaki shorts\'ların sonuna geldin.' : 'Takip ettiğin kanallarda henüz short yok.');
             this.scroller.insertAdjacentHTML('beforeend', `<div class="videos-short-end">
                 <i class="fa-solid fa-bolt" aria-hidden="true"></i>
                 <p>${message}</p>
@@ -255,6 +263,8 @@
                 this.stale = false;
                 this.reset();
             }
+            // Akışta kanal seçimi değiştiyse liste o kanala göre baştan hazırlanır.
+            if (this.prepared && this.channelId !== (ns.feed.channelId || '')) this.reset();
             this.active = true;
             this.userPaused = false;
             ns.tab.setShortsPaused(false);

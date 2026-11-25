@@ -18,6 +18,8 @@
     const CHROME_SHOW_NEAR_TOP_PX = 90;
     const CHROME_SHOW_NEAR_END_PX = 120;
     const SHORTS_SECTIONS_HOLD_MS = 1000;
+    // Bölümler arası geçişlerde ana akış verisi arka planda bu süreden sık yenilenmez.
+    const HOME_REFRESH_MIN_MS = 20000;
     const CHROME_SCROLL_DELTA_PX = 8;
     // Menü ve bölüm sekmeleri yukarı kaydırır kaydırmaz değil, bu kadar piksel kesintisiz yukarı kayınca geri gelir.
     const CHROME_SHOW_AFTER_UP_PX = 140;
@@ -38,6 +40,7 @@
     let homePromise = null;
     let homeResolve = null;
     let homeData = null;
+    let homeLoadedAt = 0;
     let menu = null;
     let miniActive = false;
     let chromeHidden = false;
@@ -138,7 +141,17 @@
         if (route.view === 'watch') setMini(false);
         else if (minimize) setMini(true);
         else if (miniActive && route.view === 'shorts') closeMini();
+        // Shorts ya da Hesabım'dan akışa dönüşte kaldığı yerden devam edilmez: akış baştan, güncel veriyle
+        // hazırlanır. (İzleme sayfasından dönüş bunun dışındadır; kaydırma konumu korunur.) Shorts'a
+        // girişte liste zaten baştan kurulur; taze veri bir sonraki girişte kullanılır.
+        const refreshFeed = changedView && route.view === 'feed' && (previous?.view === 'shorts' || previous?.view === 'library');
+        if (previous && changedView && previous.view !== 'watch' && route.view !== 'watch') refreshHome();
         currentRoute = route;
+        if (refreshFeed) {
+            feedScrollY = 0;
+            ns.feed.refresh();
+            window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        }
 
         page.querySelectorAll('.videos-view').forEach(view => {
             view.hidden = view.dataset.view !== route.view && !(miniActive && view.dataset.view === 'watch');
@@ -327,6 +340,7 @@
     function applyHome(data, { fromCache = false } = {}) {
         if (!data) return;
         homeData = data;
+        if (!fromCache) homeLoadedAt = Date.now();
         ns.rememberChannels(data.channels);
         ns.rememberVideos(data.videos?.videos);
         ns.rememberVideos(data.shorts?.videos);
@@ -359,6 +373,14 @@
             return homeData;
         });
         return homeData ? Promise.resolve(homeData) : request;
+    }
+
+    // Akış verisi arka planda sunucudan tazelenir (çok sık değil); gelince akış/Shorts onu kullanır.
+    function refreshHome() {
+        const now = Date.now();
+        if (!homeData || now - homeLoadedAt < HOME_REFRESH_MIN_MS) return;
+        homeLoadedAt = now;
+        loadHome({ force: true });
     }
 
     // Takip listesi değişti: akış ve Shorts yeni listeyle baştan hazırlanır.

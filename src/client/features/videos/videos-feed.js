@@ -13,6 +13,8 @@
     const PAGE_SIZE = 24;
     const MIN_VISIBLE_PER_PAGE = 4;
     const MAX_AUTO_PAGES = 4;
+    // Yenilemede sıra öncekiyle aynı çıkarsa en fazla bu kadar kez yeniden karıştırılır.
+    const REFRESH_RESHUFFLE_TRIES = 5;
     // İlk Shorts rafı 3. karttan sonra, sonrakiler her 12 kartta bir (yalnız "Tümü" seçiliyken) eklenir.
     const SHELF_AFTER = 3;
     const SHELF_EVERY = 12;
@@ -332,6 +334,31 @@
             this.list.setAttribute('aria-busy', 'false');
             this.afterAppend();
             ns.publishDailyVideo?.(page.videos[0]);
+        },
+
+        cardOrder() {
+            return Array.from(this.list.querySelectorAll('.videos-card'), card => card.dataset.videoId).join(',');
+        },
+
+        // Başka bir bölümden dönüşte akış baştan kurulur (kaldığı yerden devam etmez): izlenmişler sona
+        // kayar, izlenmemişler rastgele yeniden karıştırılır; sıra bir öncekiyle aynı çıkarsa (az video
+        // varsa olabilir) birkaç kez yeniden denenir. Kanal seçiliyse o kanalın listesi baştan istenir.
+        refresh() {
+            const previousOrder = this.cardOrder();
+            if (this.channelId) {
+                const sequence = ++this.sequence;
+                this.clearList();
+                this.cursor = null;
+                this.hasMore = true;
+                this.showLoader();
+                this.loadMore(sequence);
+                return;
+            }
+            if (!this.home) return;
+            for (let attempt = 0; attempt < REFRESH_RESHUFFLE_TRIES; attempt += 1) {
+                this.renderFirstPage();
+                if (!previousOrder || this.cardOrder() !== previousOrder) return;
+            }
         },
 
         // Kanal seçimi: o kanalın videoları sunucudan istenir; önce izlenmemişler, sonra izlenmişler.

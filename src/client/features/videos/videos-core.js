@@ -136,18 +136,28 @@
 
     // Listeler en yeniden eskiye gelir; izlenmemiş olduğu için en yeni videolar hep en üstte kalmasın diye
     // bir sayfadaki en yeni üçte biri ("taze") kalan eskilerle karıştırılır: sıralamanın yaklaşık %40'ı
-    // taze videolardır. Eskiler kendi aralarında, tazeler kendi aralarında sırasını korur. Üst sıra
-    // taze değil eski bir videoyla başlar (örüntü: eski, taze, eski, taze, eski, eski, taze, ...).
+    // taze videolardır. Tazeler ve eskiler kendi içlerinde rastgele sıralanır; böylece her hazırlıkta
+    // (sayfa açılışı, bölümler arası dönüş) sıra değişir. Üst sıra taze değil eski bir videoyla başlar
+    // (örüntü: eski, taze, eski, taze, eski, eski, taze, ...).
     const FRESH_MIX_RATIO = 0.4;
     const FRESH_MIX_BUCKET = 1 / 3;
     const FRESH_MIX_MIN_ITEMS = 4;
+
+    function shuffled(items) {
+        const copy = items.slice();
+        for (let index = copy.length - 1; index > 0; index -= 1) {
+            const swap = Math.floor(Math.random() * (index + 1));
+            [copy[index], copy[swap]] = [copy[swap], copy[index]];
+        }
+        return copy;
+    }
 
     ns.mixFresh = function mixFresh(videos) {
         const list = (videos || []).filter(Boolean);
         if (list.length < FRESH_MIX_MIN_ITEMS) return list;
         const freshCount = Math.max(1, Math.round(list.length * FRESH_MIX_BUCKET));
-        const fresh = list.slice(0, freshCount);
-        const aged = list.slice(freshCount);
+        const fresh = shuffled(list.slice(0, freshCount));
+        const aged = shuffled(list.slice(freshCount));
         const mixed = [];
         let freshIndex = 0;
         let agedIndex = 0;
