@@ -178,7 +178,7 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.match(shell, /@media \(max-width:\s*640px\)[\s\S]*?\.app-navigation\s*\{[^}]*height:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(tefekkurHome, /@media \(max-width:\s*768px\)[\s\S]*?\.tefekkur-section-row\s*\{[^}]*min-height:\s*68px;/);
   assert.match(tefekkurSlider, /@media \(max-width:\s*768px\)[\s\S]*?\.tefekkur-slider-action\s*\{[^}]*min-height:\s*56px;/);
-  assert.match(videosBase, /@media \(max-width:\s*768px\)[\s\S]*?\.videos-sections\s*\{[^}]*padding:\s*0 16px;/);
+  assert.match(videosBase, /@media \(max-width:\s*768px\)[\s\S]*?\.videos-sections\s*\{[^}]*padding:\s*0 14px;/);
   assert.match(videosFeed, /@media \(max-width:\s*768px\)[\s\S]*?\.videos-feed\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(articles, /\.articles-category-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s);
   assert.match(articles, /\.articles-container\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
@@ -871,9 +871,12 @@ test('Mini oynatıcı sürüklenir, Shorts sesi açık başlar ve durdurulunca k
   assert.doesNotMatch(watchCss, /videos-mini-enter/);
   const shorts = readClient('features/videos/videos-shorts.js');
   assert.match(shorts, /applySound\(player\)[\s\S]*?this\.userMuted/);
-  assert.match(shorts, /bindSeek\(\)[\s\S]*?!this\.userPaused/);
+  // Çubuk durdurmayı beklemez: oynarken de dokunulan yere sarar ve kırmızı daireyi gösterir.
+  assert.match(shorts, /pointerdown[\s\S]*?if \(!bar \|\| !this\.player\) return;/);
+  assert.match(shorts, /thumb\.style\.left = `calc\(6px \+ \(100% - 12px\) \* \$\{clamped\}\)`/);
   const shortsCss = readClient('features/videos/videos-shorts.css');
-  assert.match(shortsCss, /\.videos-short\.is-paused \.videos-short-seek-thumb\s*\{[^}]*display:\s*block;/);
+  assert.match(shortsCss, /\.videos-short \.videos-short-seek\.is-scrubbing \.videos-short-seek-thumb\s*\{[^}]*display:\s*block;/);
+  assert.match(shortsCss, /\.videos-short\.is-paused \.videos-short-seek-thumb/);
   // Kendi "Sesi aç" düğmemiz yoktur; sessiz başlayan Shorts'a dokunmak sesi açar.
   assert.doesNotMatch(shortsCss + shorts, /videos-short-sound/);
   assert.match(shorts, /tap\(\)\s*\{\s*if \(this\.muted\) this\.toggleSound\(\);\s*else this\.togglePlay\(\);/);

@@ -486,7 +486,8 @@
             const clamped = Math.max(0, Math.min(1, ratio));
             if (bar) bar.style.transform = `scaleX(${clamped})`;
             const thumb = slide?.querySelector('.videos-short-seek-thumb');
-            if (thumb) thumb.style.left = `${clamped * 100}%`;
+            // Nokta uçlarda yarım kalıp kırpılmasın diye çubuğun içinde (6 px içeriden) ilerler; feed önizlemesiyle aynı.
+            if (thumb) thumb.style.left = `calc(6px + (100% - 12px) * ${clamped})`;
             slide?.querySelector('.videos-short-seek')?.setAttribute('aria-valuenow', String(Math.round(clamped * 100)));
         },
 
@@ -495,7 +496,7 @@
             if (duration) this.setProgress(this.player.currentTime() / duration);
         },
 
-        // Durdurulmuş short'ta çubuk (kırmızı daire) sürüklenerek ileri geri sarılır; ← / → tuşları ±5 sn.
+        // Çubuğa dokunulan/sürüklenen yerde kırmızı daire çıkar ve short oraya sarılır (durdurmaya gerek yok); ← / → tuşları ±5 sn.
         seekToRatio(ratio) {
             const duration = this.player?.duration();
             if (!duration || this.player.isFallback) return;
@@ -517,7 +518,7 @@
             let lastLiveSeek = 0;
             this.scroller.addEventListener('pointerdown', event => {
                 const bar = event.target.closest('.videos-short-seek');
-                if (!bar || !this.userPaused || !this.player) return;
+                if (!bar || !this.player) return;
                 event.preventDefault();
                 bar.setPointerCapture(event.pointerId);
                 this.scrubbing = true;
@@ -555,7 +556,8 @@
             this.progressTimer = window.setInterval(() => {
                 if (!this.player || this.player.isFallback) return;
                 const duration = this.player.duration();
-                if (duration) this.setProgress(this.player.currentTime() / duration);
+                // Sürüklerken nokta parmağı/imleci izler; oynatıcının gecikmeli konumu onu geri çekmesin.
+                if (duration && !this.scrubbing) this.setProgress(this.player.currentTime() / duration);
                 this.progressTicks += 1;
                 // Kaydetme normalde birkaç saniyede bir yapılır; 5. saniyeye ulaşılınca hemen "izlendi" işlenir.
                 const reachedWatched = this.player.currentTime() >= ns.store.WATCHED_SECONDS && !ns.store.isCompleted(this.player.videoId());

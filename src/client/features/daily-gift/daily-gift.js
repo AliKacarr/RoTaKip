@@ -461,9 +461,22 @@ function loadDailyVideo() {
             }
         }
         
-        // Video link'ine tıklama event listener ekle
-        if (videoLink) {
-            videoLink.addEventListener('click', function() {
+        // Video link'ine tıklama event listener ekle (modal her açıldığında tekrar eklenmesin)
+        if (videoLink && !videoLink.dataset.bound) {
+            videoLink.dataset.bound = 'true';
+            videoLink.addEventListener('click', function(event) {
+                // Yeni sekme açmadan kabuk üzerinden Videolar sekmesine geç
+                if (!(event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button === 1)
+                    && typeof window.navigateRoTaKip === 'function') {
+                    event.preventDefault();
+                    let path = '/videolar';
+                    try {
+                        const target = new URL(videoLink.href, window.location.origin);
+                        if (target.origin === window.location.origin) path = `${target.pathname}${target.search}`;
+                    } catch (_error) { /* geçersiz adres: Videolar ana sayfasına git */ }
+                    closeDailyTasksModal();
+                    window.navigateRoTaKip(path);
+                }
                 // Video görevini tamamla
                 const videoCheckbox = document.getElementById('taskVideo');
                 if (videoCheckbox && !videoCheckbox.checked) {

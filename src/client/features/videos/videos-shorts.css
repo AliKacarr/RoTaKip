@@ -314,7 +314,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
 }
 
 .videos-short-action {
@@ -353,7 +353,7 @@
   transform: scale(0.88);
 }
 
-/* Sarma çubuğu: oynarken ince bir ilerleme çizgisi; durdurulunca kırmızı daireli, sürüklenebilir çubuk. */
+/* Sarma çubuğu: ince ilerleme çizgisi; durdurulunca ya da dokunulup sürüklenince kırmızı daire çıkar. */
 .videos-short-seek {
   position: absolute;
   right: 0;
@@ -361,7 +361,8 @@
   left: 0;
   z-index: 5;
   height: 34px;
-  pointer-events: none;
+  cursor: pointer;
+  pointer-events: auto;
   touch-action: none;
 }
 
@@ -374,11 +375,6 @@
   left: 0;
   height: var(--videos-short-band, 10px);
   background: #0f0f0f;
-}
-
-.videos-short.is-paused .videos-short-seek {
-  cursor: pointer;
-  pointer-events: auto;
 }
 
 .videos-short-progress {
@@ -397,15 +393,10 @@
   background: rgba(255, 255, 255, 0.45);
 }
 
-.videos-short.is-paused .videos-short-seek.is-scrubbing .videos-short-progress {
-  bottom: var(--videos-short-band, 10px);
-  height: 6px;
-}
-
 .videos-short-seek-thumb {
   position: absolute;
   bottom: calc(var(--videos-short-band, 10px) - 6px);
-  left: 0;
+  left: 6px;
   display: none;
   width: 12px;
   height: 12px;
@@ -416,12 +407,9 @@
   transition: transform 0.15s ease;
 }
 
-.videos-short.is-paused .videos-short-seek-thumb {
+.videos-short.is-paused .videos-short-seek-thumb,
+.videos-short .videos-short-seek.is-scrubbing .videos-short-seek-thumb {
   display: block;
-}
-
-.videos-short.is-paused .videos-short-seek.is-scrubbing .videos-short-seek-thumb {
-  transform: translateX(-50%) scale(1.4);
 }
 
 .videos-short-progress span {
