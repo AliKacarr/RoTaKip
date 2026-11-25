@@ -1,7 +1,0 @@
-# Tefekkür > İlahiler için YouTube bağlantıları (satır başına bir tane).
-# "#" ile başlayan satırlar yok sayılır. Sonra: node scripts/import-ilahiler.js --dry-run
-https://youtu.be/-dEsKKKflOk?si=y54pQ9V7AUt4EjOq
-https://youtu.be/DUPkB8799Ao?si=XmgV2ztSWusQJF3B
-https://youtu.be/bLxAXVFnWD0?si=P8uVkzxt-70A6WR1
-https://youtu.be/S9PAlu-CNe4?si=1civfktOabWPywXp
-https://youtu.be/a1DopfTf4hk?si=25zvfFqfDU4uk_3H
