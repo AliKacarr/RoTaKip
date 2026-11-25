@@ -6,8 +6,13 @@ const assert = require('node:assert/strict');
 const {
   PAGE_MAX_LIMIT,
   PREVIEW_MAX_PER_CATEGORY,
+  SEARCH_MAX_LIMIT,
   createArticleService,
+  foldText,
+  foldWithMap,
   normalizeCategory,
+  normalizeSearchQuery,
+  searchTokens,
   toPublicArticle,
   truncateText
 } = require('../../../src/server/modules/content/article.service');
@@ -198,6 +203,96 @@ test('makale API rotaları önizleme ve sayfalı kategori listesini döner', asy
   await app.routes.get('/api/articles')({ query: { category: { $ne: 'x' } } }, invalidResponse);
   assert.equal(invalidResponse.statusCode, 400);
   assert.equal(invalidResponse.body.success, false);
+});
+
+function createSearchCollection(documents) {
+  const calls = { find: 0 };
+  return {
+    calls,
+    find() {
+      calls.find += 1;
+      let limit = Infinity;
+      return {
+        sort() { return this; },
+        limit(value) { limit = value; return this; },
+        async toArray() { return documents.slice(0, limit); }
+      };
+    }
+  };
+}
+
+const SEARCH_DOCUMENTS = [
+  { _id: 'a1', title: 'Allah’ın Varlığı Hakkında Şüphe', text: 'Varlık delilleri üzerine kısa bir yazı.', category: 'Use It' },
+  { _id: 'a2', title: 'Deprem Kader mi?', text: 'Afetler ve kaderin anlamı.', category: 'Kader' },
+  { _id: 'a3', title: 'Kâinatın Yaratılış Gayesi', text: 'Evren boşuna mı var?', category: 'Sen Kimsin' },
+  { _id: 'a4', title: 'Kötülükler Neden Var?', text: 'Kötülüğe izin verilmesinin hikmeti.', category: 'Kader' },
+  { _id: 'a5', title: 'Evrim İdeolojisi', text: 'Bilim ve ideoloji farkı.', category: 'Evrim' }
+];
+
+test('arama metni Türkçe harf ve aksan duyarsız katlanır, vurgu aralıkları özgün metne eşlenir', () => {
+  assert.equal(foldText('İSLAM’DA Kâinat, Ölüm!'), 'islamda kainat olum');
+  assert.equal(foldText('KADER  nedir?'), 'kader nedir');
+  const { folded, map } = foldWithMap('Allah’ın Varlığı');
+  assert.equal(folded, 'allahin varligi');
+  const start = folded.indexOf('varligi');
+  assert.deepEqual([map[start][0], map[start + 6][1]], [9, 16]);
+
+  assert.equal(normalizeSearchQuery({ $ne: 'x' }), null);
+  assert.equal(normalizeSearchQuery('  kader  '), 'kader');
+  assert.equal(normalizeSearchQuery('a'.repeat(300)).length, 100);
+  assert.deepEqual(searchTokens('Kader nedir?'), ['kader']);
+  assert.deepEqual(searchTokens('ne nedir'), ['ne', 'nedir']);
+  assert.deepEqual(searchTokens('a'), []);
+});
+
+test('makale araması başlık eşleşmesini öne alır, çekim eklerini tanır ve vurgu aralığı döner', async () => {
+  const collection = createSearchCollection(SEARCH_DOCUMENTS);
+  const service = createArticleService({ getCollection: async () => collection });
+
+  const kainat = await service.searchArticles('KAINAT');
+  assert.deepEqual(kainat.articles.map(article => article.id), ['a3']);
+  assert.deepEqual(kainat.articles[0].matches.title, [[0, 6]]);
+
+  const allah = await service.searchArticles('allahin varligi');
+  assert.equal(allah.articles[0].id, 'a1');
+  assert.deepEqual(allah.articles[0].matches.title, [[0, 8], [9, 16]]);
+
+  // "kötülüğe" ile "kötülükler" aynı kökten (kotulu) eşleşir; soru sözcükleri yok sayılır.
+  const evil = await service.searchArticles('kötülüğe neden izin var');
+  assert.equal(evil.articles[0].id, 'a4');
+
+  const kader = await service.searchArticles('Kader nedir?');
+  assert.deepEqual(kader.articles.map(article => article.id), ['a2', 'a4']);
+  assert.ok(kader.articles.every(article => Array.isArray(article.matches.text)));
+
+  // Kısa sözcükler kelime içinde aranmaz: "ev" "Deprem"/"Kader" içinde değil, "Evren"/"Evrim" başında eşleşir.
+  const ev = await service.searchArticles('ev');
+  assert.deepEqual(ev.articles.map(article => article.id).sort(), ['a3', 'a5']);
+
+  assert.deepEqual(await service.searchArticles('x'), { query: 'x', total: 0, articles: [] });
+  assert.equal(await service.searchArticles(['kader']), null);
+  assert.equal((await service.searchArticles('kader', { limit: 1 })).articles.length, 1);
+  assert.equal(collection.calls.find, 1, 'katlanmış makale kopyası önbellekten kullanılır');
+});
+
+test('arama rotası sonuçları döner, geçersiz sorguda 400 verir ve limiti sınırlar', async () => {
+  const collection = createSearchCollection(SEARCH_DOCUMENTS);
+  const articleService = createArticleService({ getCollection: async () => collection });
+  const app = createFakeApp();
+  registerContentRoutes(app, { articleService });
+  const handler = app.routes.get('/api/articles/search');
+
+  const response = createResponse();
+  await handler({ query: { q: 'evrim', limit: '999' } }, response);
+  assert.equal(response.body.success, true);
+  assert.equal(response.body.total, 1);
+  assert.equal(response.body.articles[0].id, 'a5');
+  assert.ok(SEARCH_MAX_LIMIT >= response.body.articles.length);
+  assert.match(response.headers['Cache-Control'], /max-age=60/);
+
+  const invalid = createResponse();
+  await handler({ query: { q: { $ne: '' } } }, invalid);
+  assert.equal(invalid.statusCode, 400);
 });
 
 test('makale API veritabanı hatasında 500, bağlantı hazır değilse 503 döner', async () => {

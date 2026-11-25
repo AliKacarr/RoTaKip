@@ -10,6 +10,27 @@
     const PAGE_SIZE = 6;
     const IMAGE_WAIT_MS = 1500;
     const FALLBACK_IMAGE = '/images/default-article.png';
+    const SEARCH_MIN_LENGTH = 2;
+    const SEARCH_DEBOUNCE_MS = 220;
+    const SEARCH_LIMIT = 30;
+    const SEARCH_CACHE_SIZE = 40;
+
+    // Sunucunun döndürdüğü [başlangıç, bitiş) aralıkları <mark> ile sarılır; metnin geri kalanı kaçışlanır.
+    function highlightHtml(value, ranges) {
+        const text = String(value || '');
+        if (!Array.isArray(ranges) || !ranges.length) return window.escapeHtml(text);
+        let html = '';
+        let cursor = 0;
+        ranges.forEach(range => {
+            const start = Math.max(cursor, Number(range?.[0]) || 0);
+            const end = Math.min(text.length, Number(range?.[1]) || 0);
+            if (end <= start) return;
+            html += window.escapeHtml(text.slice(cursor, start));
+            html += `<mark class="articles-mark">${window.escapeHtml(text.slice(start, end))}</mark>`;
+            cursor = end;
+        });
+        return html + window.escapeHtml(text.slice(cursor));
+    }
 
     function prefersReducedMotion() {
         return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -72,6 +93,19 @@
             this.renderSequence = 0;
             this.loadingMore = false;
             this.observer = null;
+            this.search = {
+                input: null,
+                clearButton: null,
+                results: null,
+                summary: null,
+                list: null,
+                grid: null,
+                timer: null,
+                controller: null,
+                sequence: 0,
+                query: '',
+                cache: new Map()
+            };
 
             this.ready = this.init();
         }
@@ -84,6 +118,14 @@
             this.sentinel = this.page.querySelector('#articlesSentinel');
             this.titleElement = this.page.querySelector('#articlesCategoryTitle');
             this.countElement = this.page.querySelector('#articlesCategoryCount');
+            Object.assign(this.search, {
+                input: this.page.querySelector('#articlesSearchInput'),
+                clearButton: this.page.querySelector('[data-search-clear]'),
+                results: this.page.querySelector('#articlesSearchResults'),
+                summary: this.page.querySelector('#articlesSearchSummary'),
+                list: this.page.querySelector('#articlesSearchList'),
+                grid: this.page.querySelector('.articles-category-grid')
+            });
             this.page.querySelectorAll('.articles-category-card').forEach(button => {
                 this.cards.set(button.dataset.category, button);
                 this.categoryBySlug.set(button.dataset.slug, button.dataset.category);
@@ -157,12 +199,177 @@
                     this.retry();
                     return;
                 }
+                if (event.target.closest('[data-search-clear]')) {
+                    this.clearSearch({ focus: true });
+                    return;
+                }
+                if (event.target.closest('[data-search-retry]')) {
+                    this.search.query = '';
+                    this.runSearch(this.search.input.value);
+                    return;
+                }
                 const card = event.target.closest('.articles-category-card');
                 if (card) {
                     logArticleAction('Makale kategori değiştirme');
                     this.openCategory(card.dataset.category);
                 }
             });
+            this.bindSearchEvents();
+        }
+
+        // ---------- Arama ----------
+
+        bindSearchEvents() {
+            const { input } = this.search;
+            if (!input) return;
+            input.addEventListener('input', () => this.onSearchInput());
+            input.addEventListener('keydown', event => {
+                if (event.key !== 'Escape') return;
+                if (input.value) {
+                    event.preventDefault();
+                    this.clearSearch({ focus: true });
+                } else {
+                    input.blur();
+                }
+            });
+            this.page.querySelector('[data-search-form]')?.addEventListener('submit', event => {
+                event.preventDefault();
+                window.clearTimeout(this.search.timer);
+                this.runSearch(input.value);
+                // Dokunmatik cihazda "Ara" tuşu klavyeyi kapatır; sonuçlar tam ekranda görünür.
+                if (window.matchMedia?.('(pointer: coarse)').matches) input.blur();
+            });
+        }
+
+        onSearchInput() {
+            const { input, clearButton } = this.search;
+            const value = input.value;
+            clearButton.hidden = !value;
+            window.clearTimeout(this.search.timer);
+            if (value.trim().length < SEARCH_MIN_LENGTH) {
+                this.showSearchIdle();
+                return;
+            }
+            this.search.timer = window.setTimeout(() => this.runSearch(value), SEARCH_DEBOUNCE_MS);
+        }
+
+        clearSearch(options = {}) {
+            const { input, clearButton } = this.search;
+            window.clearTimeout(this.search.timer);
+            input.value = '';
+            clearButton.hidden = true;
+            this.showSearchIdle();
+            if (options.focus) input.focus();
+        }
+
+        // Arama boşken kategori kartları görünür; sonuç paneli gizlenir ve süren istek iptal edilir.
+        showSearchIdle() {
+            const search = this.search;
+            search.controller?.abort();
+            search.controller = null;
+            search.query = '';
+            search.sequence += 1;
+            search.results.hidden = true;
+            search.results.removeAttribute('aria-busy');
+            search.list.replaceChildren();
+            search.list.classList.remove('is-stale');
+            search.summary.replaceChildren();
+            search.grid.hidden = false;
+        }
+
+        async runSearch(value) {
+            const search = this.search;
+            const query = String(value || '').trim();
+            if (query.length < SEARCH_MIN_LENGTH) return;
+            const key = query.toLocaleLowerCase('tr').replace(/\s+/g, ' ');
+            if (key === search.query) return;
+            search.query = key;
+            const sequence = ++search.sequence;
+            search.controller?.abort();
+            search.controller = null;
+
+            search.results.hidden = false;
+            search.grid.hidden = true;
+
+            const cached = search.cache.get(key);
+            if (cached) {
+                this.renderSearchResults(query, cached);
+                return;
+            }
+
+            // Önceki sonuçlar yenisi gelene kadar soluk kalır; ilk aramada yükleme animasyonu görünür.
+            search.results.setAttribute('aria-busy', 'true');
+            if (search.list.childElementCount && !search.list.querySelector('.articles-loader')) {
+                search.list.classList.add('is-stale');
+            } else {
+                search.list.replaceChildren(this.createLoader());
+                search.summary.textContent = 'Aranıyor…';
+            }
+
+            const controller = new AbortController();
+            search.controller = controller;
+            try {
+                const params = new URLSearchParams({ q: query, limit: String(SEARCH_LIMIT) });
+                const response = await fetch(`/api/articles/search?${params.toString()}`, {
+                    headers: { Accept: 'application/json' },
+                    signal: controller.signal
+                });
+                if (!response.ok) throw new Error('Arama yapılamadı');
+                const data = await response.json();
+                const result = {
+                    total: Number(data.total) || 0,
+                    articles: Array.isArray(data.articles) ? data.articles : []
+                };
+                search.cache.set(key, result);
+                if (search.cache.size > SEARCH_CACHE_SIZE) search.cache.delete(search.cache.keys().next().value);
+                if (sequence !== search.sequence) return;
+                this.renderSearchResults(query, result);
+            } catch (error) {
+                if (error.name === 'AbortError' || sequence !== search.sequence) return;
+                console.warn('Makale araması yapılamadı:', error);
+                this.showSearchError();
+            } finally {
+                if (search.controller === controller) search.controller = null;
+            }
+        }
+
+        renderSearchResults(query, result) {
+            const search = this.search;
+            search.results.removeAttribute('aria-busy');
+            search.list.classList.remove('is-stale');
+            search.list.replaceChildren();
+            const count = result.articles.length;
+            const quoted = document.createElement('strong');
+            quoted.textContent = `“${query}”`;
+
+            if (!count) {
+                search.summary.replaceChildren(quoted, ' için sonuç bulunamadı. Farklı bir sözcük dene ya da kategorilere göz at.');
+                // Sonuç yoksa kullanıcı boş sayfada kalmasın; kategori kartları yeniden görünür.
+                search.grid.hidden = false;
+                return;
+            }
+
+            const more = result.total > count ? ` (ilk ${count} tanesi)` : '';
+            search.summary.replaceChildren(quoted, ` için ${result.total} sonuç${more}`);
+            search.grid.hidden = true;
+            result.articles.forEach((article, index) => {
+                // Her tuş vuruşunda uzun sıralı giriş beklenmesin diye gecikme ilk birkaç kartla sınırlıdır.
+                search.list.appendChild(this.createArticleCard(article, Math.min(index, 5), article.matches));
+            });
+        }
+
+        showSearchError() {
+            const search = this.search;
+            search.results.removeAttribute('aria-busy');
+            search.list.classList.remove('is-stale');
+            search.list.replaceChildren();
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'articles-retry';
+            button.dataset.searchRetry = '';
+            button.textContent = 'Yeniden dene';
+            search.summary.replaceChildren('Arama yapılamadı. ', button);
+            search.grid.hidden = false;
         }
 
         // ---------- Veri ----------
@@ -468,11 +675,14 @@
 
         // ---------- Kart ----------
 
-        createArticleCard(article, index = 0) {
+        // `matches` yalnız arama sonuçlarında gelir; başlık ve metindeki eşleşmeler vurgulanır.
+        createArticleCard(article, index = 0, matches = null) {
             const card = document.createElement('div');
             card.className = 'article-card is-entering';
             card.style.setProperty('--card-index', String(index));
             const title = window.escapeHtml(article.title);
+            const titleHtml = matches ? highlightHtml(article.title, matches.title) : title;
+            const textHtml = matches ? highlightHtml(article.text, matches.text) : window.escapeHtml(article.text || '');
             const imageUrl = this.imageUrlFor(article);
             const destinationUrl = window.safeExternalUrl(article.destination_url);
             const categoryUrl = window.safeExternalUrl(article.category_url);
@@ -499,10 +709,10 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="article-title">${title}</div>
+                        <div class="article-title">${titleHtml}</div>
                     </div>
                 </div>
-                <div class="article-text">${window.escapeHtml(article.text || '')}</div>
+                <div class="article-text">${textHtml}</div>
             </div>
         `;
 

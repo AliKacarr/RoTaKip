@@ -455,6 +455,7 @@ test('global fragmentler grup içeriği taşımaz', () => {
     Array.from(articles.matchAll(/data-category="([^"]+)"/g), match => match[1]),
     [
       'Think It',
+      'Use It',
       'Kader',
       "Allah'ın Varlığının Delilleri",
       'Sen Kimsin',
@@ -480,6 +481,23 @@ test('global fragmentler grup içeriği taşımaz', () => {
   assert.match(readClient('features/articles/articles.css'), /\.article-loading-image\s*\{[^}]*height:\s*175px;[^}]*article-loading/s);
   assert.match(readClient('features/articles/articles.css'), /\.article-image\s*\{[^}]*width:\s*152px;[^}]*height:\s*152px;[^}]*overflow:\s*hidden;/s);
   assert.match(readClient('features/articles/articles.css'), /\.article-image img\s*\{[^}]*height:\s*100%;[^}]*object-fit:\s*cover;/s);
+});
+
+test('makaleler ana sayfasında kategori kartlarının üstünde arama kutusu bulunur', () => {
+  const articles = readPublic('fragments/articles.html');
+  const script = readClient('features/articles/articles.js');
+  const styles = readClient('features/articles/articles.css');
+
+  assert.match(articles, /data-view="home"[\s\S]*?role="search"[\s\S]*?id="articlesSearchInput"[^>]*type="search"[\s\S]*?id="articlesSearchResults"[^>]*hidden[\s\S]*?class="articles-category-grid"/);
+  assert.match(articles, /id="articlesSearchInput"[^>]*aria-label="Makalelerde ara"/);
+  // Sorgu yazıldıkça gecikmeli istenir, eski istek iptal edilir ve eşleşmeler <mark> ile vurgulanır.
+  assert.match(script, /\/api\/articles\/search\?/);
+  assert.match(script, /SEARCH_DEBOUNCE_MS/);
+  assert.match(script, /new AbortController\(\)/);
+  assert.match(script, /<mark class="articles-mark">/);
+  assert.match(styles, /\.articles-category-grid\[hidden\]/);
+  // iOS odakta yakınlaştırmasın diye telefonda arama yazısı 16 px'ten küçük değildir.
+  assert.match(styles, /@media \(max-width: 768px\)[\s\S]*?\.articles-search-input\s*\{[^}]*font-size:\s*16px;/);
 });
 
 test('makaleler kategori sayfası hazır olunca efektle açılır; makaleler önceden hazırlanır ve kaydırdıkça yüklenir', () => {

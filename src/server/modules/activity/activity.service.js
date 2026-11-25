@@ -39,7 +39,7 @@ const TEFEKKUR_MODES = new Set(['metin', 'resim']);
 const ARTICLE_VIEWS = new Set(['category']);
 /** public/fragments/articles.html içindeki kategori kartlarının data-slug değerleri; birebir aynı kalmalıdır. */
 const ARTICLE_CATEGORY_SLUGS = new Set([
-  'think-it', 'kader', 'allahin-varliginin-delilleri', 'sen-kimsin', 'islamda-adalet', 'hadisler',
+  'think-it', 'use-it', 'kader', 'allahin-varliginin-delilleri', 'sen-kimsin', 'islamda-adalet', 'hadisler',
   'ahiretin-varliginin-delilleri', 'kainat-rehberi', 'gayeli-ve-planli-yaratilis', 'temel-sorgulama', 'evrim'
 ]);
 

@@ -8,13 +8,147 @@
 }
 
 .articles-view[hidden],
-.articles-status[hidden] {
+.articles-status[hidden],
+.articles-category-grid[hidden],
+.articles-search-results[hidden],
+.articles-search-clear[hidden] {
   display: none;
 }
 
 /* Kategori sayfasında (data-view="category") alt bilgi (footer) gösterilmez. */
 body:has(.tab-view-articles .articles-view[data-view="category"]:not([hidden])) #footerRoot {
   display: none;
+}
+
+/* ---------- Arama ---------- */
+
+/* Kategori kartlarıyla aynı genişlikte, yuvarlak hatlı arama kutusu; odakta yeşil halka belirir. */
+.articles-search {
+  max-width: 780px;
+  margin: 10px auto 12px;
+}
+
+.articles-search-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 0 8px 0 22px;
+  box-sizing: border-box;
+  border: 1.5px solid #d3dae4;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(36, 50, 70, 0.08);
+  cursor: text;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.articles-search-field:focus-within {
+  border-color: color-mix(in srgb, var(--articles-accent) 60%, #d3dae4);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--articles-accent) 14%, transparent), 0 6px 16px rgba(36, 50, 70, 0.08);
+}
+
+.articles-search-icon {
+  flex: 0 0 auto;
+  color: var(--articles-accent);
+  font-size: 18px;
+}
+
+.articles-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--articles-text);
+  font: inherit;
+  font-size: 18px;
+}
+
+.articles-search-input::placeholder {
+  color: #8a94a3;
+}
+
+/* Tarayıcının kendi temizleme simgesi yerine aşağıdaki düğme kullanılır. */
+.articles-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.articles-search-clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f4f8;
+  color: #5f6875;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.articles-search-clear:hover {
+  background: #e4e9f0;
+  color: var(--articles-text);
+}
+
+.articles-search-results {
+  max-width: 780px;
+  margin: 0 auto 20px;
+}
+
+.articles-search-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin: 4px 6px 14px;
+  color: #6c757d;
+  font-size: 16px;
+}
+
+.articles-search-summary:empty {
+  display: none;
+}
+
+.articles-search-summary strong {
+  color: var(--articles-text);
+  font-weight: 600;
+}
+
+.articles-search-summary .articles-retry {
+  padding: 4px 14px;
+  font-size: 15px;
+}
+
+.articles-search-list {
+  grid-template-columns: minmax(0, 1fr);
+  transition: opacity 0.15s ease;
+}
+
+/* Yeni sonuçlar gelene kadar öncekiler soluk görünür; liste boşalıp zıplamaz. */
+.articles-search-list.is-stale {
+  opacity: 0.55;
+}
+
+.articles-search-list .articles-loader {
+  min-height: 160px;
+}
+
+.articles-mark {
+  padding: 0 2px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--articles-accent) 20%, transparent);
+  color: inherit;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* ---------- Kategori listesi ---------- */
@@ -65,6 +199,7 @@ body:has(.tab-view-articles .articles-view[data-view="category"]:not([hidden])) 
 }
 
 .articles-category-card:focus-visible,
+.articles-search-clear:focus-visible,
 .articles-back:focus-visible,
 .articles-retry:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--articles-accent) 55%, transparent);
@@ -560,6 +695,38 @@ body:has(.tab-view-articles .articles-view[data-view="category"]:not([hidden])) 
     margin-top: 4px;
   }
 
+  .articles-search {
+    margin: 4px 0 10px;
+  }
+
+  /* 16 px altı yazı iOS'ta odaklanınca sayfayı yakınlaştırır. */
+  .articles-search-field {
+    min-height: 50px;
+    padding: 0 6px 0 16px;
+    gap: 10px;
+    border-width: 1px;
+  }
+
+  .articles-search-input {
+    height: 48px;
+    font-size: 16px;
+  }
+
+  .articles-search-icon {
+    font-size: 16px;
+  }
+
+  .articles-search-clear {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .articles-search-summary {
+    margin: 2px 4px 12px;
+    font-size: 15px;
+  }
+
   .articles-category-card {
     min-height: 76px;
     padding: 10px 14px 10px 18px;
@@ -690,7 +857,9 @@ body:has(.tab-view-articles .articles-view[data-view="category"]:not([hidden])) 
   .article-image img,
   .articles-category-card,
   .articles-category-chevron,
-  .articles-back {
+  .articles-back,
+  .articles-search-field,
+  .articles-search-list {
     transition: none;
   }
 

@@ -252,6 +252,7 @@ function createRefreshButton(button) {
       function formatMakaleKategoriEylem(log) {
         const categoryLabels = {
           'think-it': 'Think It',
+          'use-it': 'Use It',
           kader: 'Kader',
           'allahin-varliginin-delilleri': 'Allah\'ın Varlığının Delilleri',
           'sen-kimsin': 'Sen Kimsin',

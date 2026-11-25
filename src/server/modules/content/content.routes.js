@@ -33,6 +33,23 @@ function registerArticleRoutes(app, { articleService = createArticleService({ ge
     }
   });
 
+  // Kategori listesinin üstündeki arama kutusu: başlık, kategori ve metinde Türkçe karakter duyarsız arar.
+  app.get('/api/articles/search', async (req, res) => {
+    try {
+      const result = await articleService.searchArticles(req.query.q, { limit: req.query.limit });
+      if (!result) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçerli bir arama metni belirtin'
+        });
+      }
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      return res.json({ success: true, ...result });
+    } catch (error) {
+      return respondWithFailure(res, error, 'Makale araması yapılırken hata:');
+    }
+  });
+
   // Kategori sayfası kalan makaleleri kaydırdıkça `offset` / `limit` ile ister.
   app.get('/api/articles', async (req, res) => {
     try {
