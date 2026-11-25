@@ -308,13 +308,13 @@
 
 .videos-short-actions {
   position: absolute;
-  right: 5px;
-  bottom: 22px;
+  right: 6px;
+  bottom: 23px;
   z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 15px;
 }
 
 .videos-short-action {
@@ -322,13 +322,13 @@
   flex-direction: column;
   align-items: center;
   gap: 0;
-  width: 64px;
+  width: 58px;
   padding: 0;
   border: 0;
   background: transparent;
   color: #ffffff !important;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px !important;
+  font-weight: 600 !important;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   cursor: pointer;
 }
@@ -340,11 +340,11 @@
 .videos-short-action i {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 30px;
   border-radius: 50%;
   background: transparent;
-  font-size: 24px;
+  font-size: 22px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
   transition: transform 0.15s ease;
 }
@@ -593,6 +593,11 @@
   body.videos-shorts-view .app-navigation-item.is-active:focus-visible {
     color: #ffffff;
     background: transparent;
+  }
+
+  /* Videolar sekmesinin kırmızı dolu ikonu koyu zeminde beyaz olur. */
+  body.videos-shorts-view .app-navigation-item[data-route="videos"].is-active .app-navigation-icon-filled {
+    color: #ffffff;
   }
 
   body.videos-shorts-view .app-navigation-item::before {

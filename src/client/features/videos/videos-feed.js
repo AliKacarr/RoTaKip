@@ -93,7 +93,7 @@
         return `<section class="videos-shorts-shelf" aria-label="Shorts">
             <div class="videos-shorts-head">
                 <a class="videos-shorts-heading" href="${ns.escape(ns.shortsUrl())}" data-open-short="">Shorts</a>
-                <button type="button" class="videos-shorts-more" data-action="shelf-menu" aria-label="Shorts seçenekleri" aria-haspopup="menu"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+                <button type="button" class="videos-shelf-more" data-action="shelf-menu" aria-label="Shorts seçenekleri" aria-haspopup="menu"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
             </div>
             <div class="videos-shorts-grid">${shorts.map(ns.shortTileHtml).join('')}</div>
         </section>`;

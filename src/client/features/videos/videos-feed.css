@@ -358,7 +358,8 @@
   line-height: 1.2;
 }
 
-.videos .videos-shorts-more,
+/* Raf düğmesi, tam ekran Shorts görünümündeki `.videos-shorts-more` (videos-shorts.css, mutlak konumlu) ile karışmasın diye ayrı sınıf kullanır. */
+.videos .videos-shelf-more,
 .videos .videos-short-tile-more {
   display: grid;
   place-items: center;
@@ -371,7 +372,7 @@
   cursor: pointer;
 }
 
-.videos .videos-shorts-more {
+.videos .videos-shelf-more {
   font-size: 20px;
 }
 
@@ -457,7 +458,7 @@
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
 }
 
-.videos .videos-shorts-more:focus-visible,
+.videos .videos-shelf-more:focus-visible,
 .videos .videos-short-tile-more:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--videos-accent) 45%, transparent);
   outline-offset: 2px;
