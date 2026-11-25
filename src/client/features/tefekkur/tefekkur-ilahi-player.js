@@ -3,7 +3,8 @@
 
     // İlahi oynatıcısı: tek bir YouTube iframe'i, `document.body`'ye bağlı kalıcı bir "sahne" içinde yaşar.
     // Sekme görünümü DOM'dan sökülünce iframe taşınmaz (taşınan iframe baştan yüklenir). Sahne iki durumdadır:
-    //  - full: İlahi sayfasındaki yer tutucunun (slot) üstüne oturur, her karede konumu eşitlenir.
+    //  - full: İlahi sayfasındaki yer tutucunun (slot) üstüne oturur (`absolute`, belge koordinatı); kaydırma
+    //    tarayıcıya bırakılır, konum yalnız yerleşim değişince eşitlenir.
     //  - mini: Sağ alt köşede küçülür; sürüklenebilir, dokununca ilahi sayfası açılır.
     // YouTube iframe'i fare/dokunma olaylarını yuttuğu için mini durumda üstüne şeffaf bir "kalkan" konur.
     const API_SRC = 'https://www.youtube.com/iframe_api';
@@ -190,11 +191,14 @@
         if (slot && slot.isConnected) {
             const rect = slot.getBoundingClientRect();
             if (rect.width > 0 && rect.height > 0) {
-                const key = `${rect.left}|${rect.top}|${rect.width}|${rect.height}`;
+                // Sahne `absolute` olduğundan konum belge koordinatındadır (görünüm + kaydırma).
+                const left = rect.left + window.scrollX;
+                const top = rect.top + window.scrollY;
+                const key = `${left}|${top}|${rect.width}|${rect.height}`;
                 if (key !== lastRect) {
                     lastRect = key;
-                    stage.style.left = `${rect.left}px`;
-                    stage.style.top = `${rect.top}px`;
+                    stage.style.left = `${left}px`;
+                    stage.style.top = `${top}px`;
                     stage.style.width = `${rect.width}px`;
                     stage.style.height = `${rect.height}px`;
                 }
@@ -275,6 +279,7 @@
         mode = 'full';
         lastRect = '';
         stage.classList.remove('is-mini');
+        stage.classList.add('is-full');
         stage.hidden = false;
         stage.style.visibility = '';
         stopProgress();
@@ -288,6 +293,7 @@
         stopSync();
         slot = null;
         mode = 'mini';
+        stage.classList.remove('is-full');
         stage.classList.add('is-mini');
         stage.style.width = '';
         stage.style.height = '';

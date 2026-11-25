@@ -7,7 +7,7 @@
         loading: 'Yayına bağlanılıyor…',
         playing: 'Canlı yayında',
         paused: 'Duraklatıldı',
-        error: 'Yayına bağlanılamadı. Biraz sonra tekrar deneyin.',
+        error: 'Yayına bağlanılamadı. Daha sonra tekrar deneyin.',
         unavailable: 'Bu radyonun yayın adresi henüz eklenmedi.'
     });
 

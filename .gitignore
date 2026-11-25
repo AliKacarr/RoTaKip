@@ -24,6 +24,7 @@ public/uploads/*
 !public/uploads/.gitkeep
 public/groupImages/*
 !public/groupImages/.gitkeep
+scripts/data/ilahi-linkleri.txt
 
 # OS & Editor files
 .DS_Store

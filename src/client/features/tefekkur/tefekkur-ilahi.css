@@ -15,6 +15,12 @@
     display: none;
 }
 
+/* Tam hâlde sahne belge koordinatlarında `absolute` durur: sayfa kaydırılınca tarayıcı onu içerikle
+   birlikte kendisi taşır. `fixed` + her karede konum eşitleme, kaydırma asenkron olduğu için sallanırdı. */
+.tefekkur-ilahi-stage.is-full {
+    position: absolute;
+}
+
 /* Tam hâl: sahne ilahi sayfasındaki yer tutucunun üstüne oturur, çerçeve sahneyi doldurur. */
 .tefekkur-ilahi-frame {
     position: absolute;
@@ -103,10 +109,10 @@
 .tefekkur-ilahi-mini-controls .is-corner,
 .tefekkur-ilahi-mini-controls .is-main {
     position: absolute;
-    top: 4px;
-    width: 32px;
-    height: 32px;
-    font-size: 17px;
+    top: 5px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
 }
 
 .tefekkur-ilahi-mini-controls .is-corner {
@@ -152,14 +158,14 @@
 
 .tefekkur-ilahi-mini-info strong {
     color: #0f0f0f;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     line-height: 1.35;
 }
 
 .tefekkur-ilahi-mini-info span {
     color: #606060;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.35;
 }
 
