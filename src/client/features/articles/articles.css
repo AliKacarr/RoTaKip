@@ -35,7 +35,7 @@ body:has(.tab-view-articles .articles-view[data-view="category"]:not([hidden])) 
   min-height: 58px;
   padding: 0 8px 0 22px;
   box-sizing: border-box;
-  border: 1.5px solid #a3a3a3;
+  border: 1.5px solid #bbbec4;
   border-radius: 999px;
   background: #ffffff;
   box-shadow: 0 6px 16px rgba(36, 50, 70, 0.08);
