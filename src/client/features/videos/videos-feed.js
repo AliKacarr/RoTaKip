@@ -5,7 +5,8 @@
 // ve ardından her 12 kartta bir tekrar eder (raflar arasında aynı short gösterilmez).
 // Üstteki çiplerle tek bir kanala süzülebilir. Görünürdeki kart sessiz olarak önizlenir; önizlemede
 // toplam 10 saniye oynayan video "izlendi" sayılır. Shorts rafı ekrandayken ilk kutusu sessizce
-// ilk 5 saniyesini döngüler (izlendi sayılmaz, ilerleme çizgisi gösterilmez).
+// ilk 5 saniyesini döngüler (izlendi sayılmaz, ilerleme çizgisi gösterilmez). "Tümü"nde 9. karttan
+// sonra bir kez "Gözlerini dinlendir" alanı çıkar: Tefekkür'deki İlahiler ve iki canlı radyoya geçiş.
 
 (function () {
     const ns = window.RoTaKipVideos;
@@ -19,6 +20,13 @@
     const SHELF_AFTER = 3;
     const SHELF_EVERY = 12;
     const SHELF_SIZE = 4;
+    // "Tefekkür'de dinle" alanı akışta yalnız bir kez, bu karttan sonra (yalnız "Tümü" seçiliyken) gösterilir.
+    const LISTEN_AFTER = 9;
+    const LISTEN_ITEMS = Object.freeze([
+        { section: 'ilahi', title: 'İlahiler', text: 'Huzur veren ilahiler', icon: 'fa-solid fa-music', tone: 'ilahi' },
+        { section: 'kuran-radyo', title: 'Kur\'an Radyo', text: 'Diyanet canlı yayın', icon: 'fa-solid fa-tower-broadcast', tone: 'kuran', live: true },
+        { section: 'risalet-radyo', title: 'Risalet Radyo', text: 'Diyanet canlı yayın', icon: 'fa-solid fa-radio', tone: 'risalet', live: true }
+    ]);
     const PREVIEW_HOVER_DELAY_MS = 250;
     const PREVIEW_SCROLL_IDLE_MS = 150;
     const PREVIEW_TICK_MS = 250;
@@ -101,6 +109,33 @@
         </section>`;
     }
 
+    // Tefekkür sekmesindeki dinleme bölümlerine (ilahiler ve canlı radyolar) kabuk üzerinden geçiş.
+    function listenHtml() {
+        const tiles = LISTEN_ITEMS.map(item => {
+            const path = `/tefekkur?bolum=${item.section}`;
+            const live = item.live ? '<span class="videos-listen-live"><span class="videos-listen-live-dot" aria-hidden="true"></span>Canlı</span>' : '';
+            return `<a class="videos-listen-tile is-${item.tone}" href="${path}" data-app-path="${path}">
+                <span class="videos-listen-icon"><i class="${item.icon}" aria-hidden="true"></i></span>
+                ${live}
+                <span class="videos-listen-text">
+                    <span class="videos-listen-name">${ns.escape(item.title)}</span>
+                    <span class="videos-listen-sub">${ns.escape(item.text)}</span>
+                </span>
+                <span class="videos-listen-play" aria-hidden="true"><i class="fa-solid fa-play"></i></span>
+            </a>`;
+        }).join('');
+        return `<section class="videos-listen" aria-labelledby="videosListenTitle">
+            <div class="videos-listen-head">
+                <div>
+                    <h2 id="videosListenTitle" class="videos-listen-heading">Gözlerini dinlendir</h2>
+                    <p class="videos-listen-lead">Ekrandan başını kaldır; Tefekkür'de ilahi ya da canlı radyo dinle.</p>
+                </div>
+                <a class="videos-listen-all" href="/tefekkur" data-app-path="/tefekkur">Tefekkür<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+            </div>
+            <div class="videos-listen-grid">${tiles}</div>
+        </section>`;
+    }
+
     const feed = {
         root: null,
         list: null,
@@ -123,6 +158,7 @@
         pass: 'unwatched',
         // Raflarda gösterilen shorts (raflar arasında tekrar etmez) ve ana akıştan sonra çekilen shorts.
         shelfIds: new Set(),
+        listenShown: false,
         extraShorts: [],
         shortsCursor: null,
         shortsHasMore: false,
@@ -303,6 +339,7 @@
             this.cardCount = 0;
             this.pass = 'unwatched';
             this.shelfIds.clear();
+            this.listenShown = false;
             this.extraShorts = [];
             this.shortsCursor = this.home?.shorts?.nextCursor || null;
             this.shortsHasMore = Boolean(this.home?.shorts?.hasMore && this.shortsCursor);
@@ -402,6 +439,7 @@
                 fragment.appendChild(template.content.firstElementChild);
                 this.cardCount += 1;
                 if (this.isShelfSlot()) this.insertShelf(fragment);
+                if (this.isListenSlot()) this.insertListen(fragment);
             });
             this.list.appendChild(fragment);
             // Shorts rafı ekrandaysa ilk kutusu önizlenir.
@@ -420,6 +458,18 @@
         isShelfSlot() {
             if (this.channelId || this.cardCount < SHELF_AFTER) return false;
             return (this.cardCount - SHELF_AFTER) % SHELF_EVERY === 0;
+        },
+
+        // Dinleme alanı akış başına yalnız bir kez eklenir (kanal süzgecinde gösterilmez).
+        isListenSlot() {
+            return !this.listenShown && !this.channelId && this.cardCount === LISTEN_AFTER;
+        },
+
+        insertListen(fragment) {
+            this.listenShown = true;
+            const template = document.createElement('template');
+            template.innerHTML = listenHtml().trim();
+            fragment.appendChild(template.content.firstElementChild);
         },
 
         // Rafta henüz gösterilmemiş shorts: önce izlenmemişler, sonra izlenmişler.

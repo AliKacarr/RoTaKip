@@ -464,6 +464,208 @@
   outline-offset: 2px;
 }
 
+/* ---------- "Gözlerini dinlendir": Tefekkür'deki ilahi ve radyolara geçiş ---------- */
+
+.videos-listen {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 6px 0 4px;
+}
+
+.videos-listen-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.videos-listen-heading {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.videos-listen-lead {
+  margin: 4px 0 0;
+  color: var(--videos-muted);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.videos .videos-listen-all {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--videos-line);
+  border-radius: 999px;
+  background: var(--videos-surface);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.videos .videos-listen-all i {
+  font-size: 11px;
+}
+
+.videos .videos-listen-all:hover {
+  border-color: #d4d4d4;
+  background: var(--videos-soft);
+}
+
+.videos-listen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Her kutu kendi tonunda koyu bir degrade; simge sol üstte, metin altta, oynat düğmesi sağ altta. */
+.videos .videos-listen-tile {
+  --listen-from: #134e4a;
+  --listen-to: #0f766e;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-width: 0;
+  min-height: 150px;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: var(--videos-radius);
+  background: linear-gradient(135deg, var(--listen-from), var(--listen-to));
+  color: #ffffff;
+  isolation: isolate;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.videos .videos-listen-tile.is-kuran {
+  --listen-from: #14532d;
+  --listen-to: #15803d;
+}
+
+.videos .videos-listen-tile.is-risalet {
+  --listen-from: #1e1b4b;
+  --listen-to: #4338ca;
+}
+
+/* Arka planda büyük, soluk bir halka: düz degradeye derinlik katar. */
+.videos-listen-tile::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -40px;
+  bottom: -60px;
+  width: 170px;
+  height: 170px;
+  border: 22px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+.videos .videos-listen-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 15, 15, 0.18);
+}
+
+.videos .videos-listen-tile:focus-visible,
+.videos .videos-listen-all:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--videos-accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.videos-listen-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 19px;
+}
+
+.videos-listen-live {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.videos-listen-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--videos-accent);
+  box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  animation: videos-listen-pulse 1.8s ease-out infinite;
+}
+
+@keyframes videos-listen-pulse {
+  70% { box-shadow: 0 0 0 7px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+.videos-listen-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-right: 48px;
+}
+
+.videos-listen-name {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.videos-listen-sub {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.videos-listen-play {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--listen-from);
+  font-size: 14px;
+  transition: transform 0.25s ease;
+}
+
+.videos-listen-play i {
+  /* Üçgen simge görsel olarak ortada dursun diye hafifçe sağa kaydırılır. */
+  transform: translateX(1px);
+}
+
+.videos .videos-listen-tile:hover .videos-listen-play {
+  transform: scale(1.08);
+}
+
 /* ---------- Duyarlı düzen ---------- */
 
 @media (max-width: 768px) {
@@ -533,6 +735,114 @@
     padding-inline: 14px;
     scroll-padding-inline: 14px;
   }
+
+  /* Dinleme alanı da Shorts rafı gibi tam yuvarlak beyaz bir karttır. */
+  .videos-feed > .videos-listen {
+    padding: 14px 14px 16px;
+    border-radius: var(--videos-radius);
+    background: var(--videos-surface);
+  }
+
+  .videos-listen-heading {
+    font-size: 24px;
+  }
+
+  .videos-listen-lead {
+    font-size: 14px;
+  }
+
+  .videos-listen-grid {
+    gap: 8px;
+  }
+
+  .videos .videos-listen-tile {
+    gap: 14px;
+    min-height: 136px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .videos-listen-live {
+    top: 12px;
+    right: 12px;
+  }
+
+  .videos-listen-play {
+    right: 12px;
+    bottom: 12px;
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+}
+
+/* Dar ekranda kutular alt alta, yatay satırlar olur: simge solda, metin ortada, oynat düğmesi sağda. */
+@media (max-width: 640px) {
+  .videos-listen-head {
+    align-items: center;
+  }
+
+  .videos-listen-lead {
+    display: none;
+  }
+
+  .videos-listen-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .videos .videos-listen-tile {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 72px;
+    /* Sağda mutlak konumlu oynat düğmesine yer kalır. */
+    padding-right: 58px;
+  }
+
+  .videos-listen-tile::before {
+    right: 30px;
+    bottom: -90px;
+  }
+
+  .videos-listen-icon {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    font-size: 17px;
+  }
+
+  .videos-listen-text {
+    flex: 1 1 auto;
+    padding-right: 0;
+  }
+
+  .videos-listen-name {
+    font-size: 16px;
+  }
+
+  .videos-listen-sub {
+    font-size: 13px;
+  }
+
+  /* Canlı rozeti adın yanına, akışa alınır. */
+  .videos-listen-live {
+    position: static;
+    order: 3;
+    flex: 0 0 auto;
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .videos-listen-play {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+  }
+
+  .videos .videos-listen-tile:hover .videos-listen-play {
+    transform: translateY(-50%) scale(1.08);
+  }
 }
 
 @media (max-width: 480px) {
@@ -543,8 +853,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .videos-card.is-entering {
+  .videos-card.is-entering,
+  .videos-listen-live-dot {
     animation: none;
+  }
+
+  .videos .videos-listen-tile,
+  .videos-listen-play {
+    transition: none;
   }
 
   .videos-card-thumb img,
