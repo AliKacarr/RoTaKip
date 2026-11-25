@@ -25,6 +25,8 @@
         status: 'idle',
         sequence: 0,
         animating: false,
+        transition: null,
+        adopt: null,
         drag: null,
         neighbor: null
     };
@@ -148,6 +150,14 @@
         }
         if (!item) {
             renderMessage(state.emptyIcon || 'fa-regular fa-folder-open', state.emptyMessage || 'Bu bölüme henüz içerik eklenmedi.', false);
+            return;
+        }
+        if (state.adopt) {
+            // Geçişte gelen komşu kartın hazır içeriği (çözülmüş resim dahil) olduğu gibi devralınır.
+            const adopted = state.adopt;
+            state.adopt = null;
+            slide.className = adopted.className;
+            slide.replaceChildren(...adopted.childNodes);
             return;
         }
         fillSlide(slide, item, state.index);
@@ -341,38 +351,110 @@
     }
 
     // direction: +1 sonraki (içerik sola kayar), -1 önceki (içerik sağa kayar)
+    // Süren geçişi hemen bitirir: animasyonlar iptal edilir, çıkan kart kaldırılır. Hedef kart geçişin
+    // başında zaten gerçek karta yerleştirildiği için burada yalnız görsel kalıntılar temizlenir.
+    // Böylece hızlı art arda basışlar/kaydırmalar animasyonun bitmesini beklemeden yeni geçişi başlatabilir.
+    function finishTransition(run = state.transition) {
+        if (!run || run.done) return;
+        run.done = true;
+        run.animations.forEach(animation => animation.cancel());
+        run.leaver.remove();
+        if (state.transition === run) {
+            state.transition = null;
+            state.animating = false;
+        }
+    }
+
+    // Gelen komşu kartın içeriği geçişin başında gerçek karta taşınır; resim yeniden çözülmez.
+    // Çıkan kart, yerinde kalan bir kopya olarak kayıp gider. Gerçek kart baştan son yerleşimindedir:
+    // sahne yüksekliği değişse bile geçişin sonunda kartın yerinden oynaması (titreme) olmaz.
+    function startTransition(nextIndex, direction, fromOffset, neighbor) {
+        const { slide, stage } = state.elements;
+        const width = stageWidth();
+        const incoming = neighbor.el.firstElementChild;
+        const incomingTop = incoming.getBoundingClientRect().top;
+
+        // Çıkan kartın, sahne yeniden boyutlanmadan önceki konumunu kopya olarak sabitle.
+        const dragTransform = slide.style.transform;
+        slide.style.transform = '';
+        const slideRect = slide.getBoundingClientRect();
+        const stageRect = stage.getBoundingClientRect();
+        slide.style.transform = dragTransform;
+        const leaver = createElement('div', 'tefekkur-slide-neighbor is-leaving');
+        leaver.setAttribute('aria-hidden', 'true');
+        Object.assign(leaver.style, {
+            inset: 'auto',
+            padding: '0',
+            top: `${slideRect.top - stageRect.top - stage.clientTop}px`,
+            left: `${slideRect.left - stageRect.left - stage.clientLeft}px`,
+            width: `${slideRect.width}px`,
+            height: `${slideRect.height}px`
+        });
+        const outgoing = slide.cloneNode(true);
+        outgoing.removeAttribute('id');
+        outgoing.removeAttribute('aria-live');
+        outgoing.classList.remove('is-dragging');
+        outgoing.style.transform = '';
+        leaver.appendChild(outgoing);
+        stage.appendChild(leaver);
+
+        const stageBefore = stageRect.height;
+        state.adopt = incoming;
+        state.index = nextIndex;
+        render();
+        const stageAfter = stage.getBoundingClientRect().height;
+        renderCounter(nextIndex);
+
+        // Kalan mesafe kısaldıkça süre de kısalır; kart parmağın bıraktığı yerden devam eder.
+        const duration = Math.round(270 + 150 * Math.max(0, 1 - Math.abs(fromOffset) / width));
+        const options = { duration, easing: SLIDE_EASING, fill: 'forwards' };
+        // Gelen kart komşunun durduğu yükseklikten başlar (sahne eski yüksekliğindeyken ortalanmıştı).
+        const finalTop = slide.getBoundingClientRect().top;
+        const lift = incomingTop - finalTop;
+        const run = {
+            target: nextIndex,
+            done: false,
+            leaver,
+            animations: [
+                slide.animate([
+                    { transform: `translate(${direction * width + fromOffset}px, ${lift}px)` },
+                    { transform: 'translate(0, 0)' }
+                ], options),
+                leaver.animate(slideKeyframes(fromOffset, -direction * width), options)
+            ]
+        };
+        // Sahne yüksekliği iki kart arasında değişiyorsa ani sıçrama yerine geçiş süresince akıcı değişir.
+        if (Math.abs(stageAfter - stageBefore) > 0.5) {
+            const sizing = window.getComputedStyle(stage);
+            const inset = sizing.boxSizing === 'border-box' ? 0 : parseFloat(sizing.paddingTop) + parseFloat(sizing.paddingBottom);
+            run.animations.push(stage.animate([
+                { flexBasis: `${stageBefore - inset}px` },
+                { flexBasis: `${stageAfter - inset}px` }
+            ], { duration, easing: SLIDE_EASING }));
+        }
+        return run;
+    }
+
+    // direction: +1 sonraki (içerik sola kayar), -1 önceki (içerik sağa kayar)
     async function goTo(nextIndex, { fromOffset = 0 } = {}) {
         const total = state.items.length;
+        finishTransition();
         if (state.animating || state.status !== 'ready' || nextIndex === state.index || nextIndex < 0 || nextIndex >= total) {
             if (fromOffset) snapBack(fromOffset);
             return;
         }
         const direction = nextIndex > state.index ? 1 : -1;
-        state.animating = true;
-        try {
-            const { slide } = state.elements;
-            const neighbor = canAnimate() ? ensureNeighbor(nextIndex, direction) : null;
-            if (neighbor) {
-                const width = stageWidth();
-                placeSlides(fromOffset);
-                renderCounter(nextIndex);
-                // Kalan mesafe kısaldıkça süre de kısalır; kart parmağın bıraktığı yerden devam eder.
-                const duration = Math.round(270 + 150 * Math.max(0, 1 - Math.abs(fromOffset) / width));
-                const animations = [
-                    slide.animate(slideKeyframes(fromOffset, -direction * width), { duration, easing: SLIDE_EASING, fill: 'forwards' }),
-                    neighbor.el.animate(slideKeyframes(direction * width + fromOffset, 0), { duration, easing: SLIDE_EASING, fill: 'forwards' })
-                ];
-                await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
-                state.index = nextIndex;
-                render();
-                animations.forEach(animation => animation.cancel());
-            } else {
-                state.index = nextIndex;
-                render();
-            }
-        } finally {
-            state.animating = false;
+        const neighbor = canAnimate() ? ensureNeighbor(nextIndex, direction) : null;
+        if (!neighbor) {
+            state.index = nextIndex;
+            render();
+            return;
         }
+        const run = startTransition(nextIndex, direction, fromOffset, neighbor);
+        state.transition = run;
+        state.animating = true;
+        await Promise.all(run.animations.map(animation => animation.finished.catch(() => {})));
+        finishTransition(run);
     }
 
     async function snapBack(fromOffset) {
@@ -480,7 +562,9 @@
     // hareket yakalanır. Fare ile sürükleme kapalıdır, masaüstünde metin seçilebilsin.
 
     function onPointerDown(event) {
-        if (event.pointerType === 'mouse' || !event.isPrimary || state.animating) return;
+        if (event.pointerType === 'mouse' || !event.isPrimary) return;
+        finishTransition();
+        if (state.animating) return;
         if (state.status !== 'ready' || state.items.length < 2) return;
         state.drag = { id: event.pointerId, x: event.clientX, y: event.clientY, dx: 0, active: false, time: performance.now() };
     }
@@ -609,6 +693,7 @@
     async function show(source) {
         const key = sourceKeyOf(source.source);
         const sequence = ++state.sequence;
+        finishTransition();
         const { title, chip } = state.elements;
         if (source.filter) renderFilterButton(source.filter);
         else renderModes(source.modes, source.activeMode);

@@ -64,8 +64,8 @@
                 reload: true,
                 emptyIcon: 'fa-regular fa-star',
                 emptyMessage: filter === 'all'
-                    ? 'Henüz kaydettiğin bir içerik yok. Beğendiğin kartlarda yıldıza dokunarak buraya ekleyebilirsin.'
-                    : `${ns.favorites.filterInfo(filter).label} bölümünden kaydettiğin bir içerik yok.`
+                    ? 'Henüz kaydettiğin bir tefekkür yok. Beğendiğin içerikleri kartlardaki yıldıza dokunarak buraya ekleyebilirsin.'
+                    : `${ns.favorites.filterInfo(filter).label} bölümünden kaydettiğin bir tefekkür yok.`
             };
         }
         const mode = ns.findMode(section, route.mod);
