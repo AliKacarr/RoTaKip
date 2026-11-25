@@ -142,6 +142,7 @@ const bundles = {
       'tefekkur-slider.js',
       'tefekkur-zikirmatik.js',
       'tefekkur-radio.js',
+      'tefekkur-favorites.js',
       'tefekkur-tab.js'
     ]
   },

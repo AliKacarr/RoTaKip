@@ -40,6 +40,11 @@
         if (!section) return { view: 'home' };
         if (section.kind === 'radio') return { view: 'radio', bolum: key };
         if (section.kind === 'zikirmatik') return { view: 'zikirmatik', bolum: key };
+        // Kaydedilenler okuyucuda açılır; `mod` kaydı süzülen bölümdür (yoksa Tümü).
+        if (section.kind === 'saved') {
+            const filter = ns.favorites.normalizeFilter(requestedMode);
+            return filter === 'all' ? { view: 'slider', bolum: key } : { view: 'slider', bolum: key, mod: filter };
+        }
         if (!section.modes) return { view: 'slider', bolum: key };
         const mod = ns.findMode(section, requestedMode) ? requestedMode : preferredMode(key, section);
         return { view: 'slider', bolum: key, mod };
@@ -47,9 +52,26 @@
 
     function sliderSource(route) {
         const section = ns.findSection(route.bolum);
+        if (section.kind === 'saved') {
+            const filter = ns.favorites.normalizeFilter(route.mod);
+            return {
+                section: '',
+                label: section.label,
+                title: section.label,
+                source: { type: 'saved', category: filter },
+                chip: 'random',
+                filter,
+                reload: true,
+                emptyIcon: 'fa-regular fa-star',
+                emptyMessage: filter === 'all'
+                    ? 'Henüz kaydettiğin bir içerik yok. Beğendiğin kartlarda yıldıza dokunarak buraya ekleyebilirsin.'
+                    : `${ns.favorites.filterInfo(filter).label} bölümünden kaydettiğin bir içerik yok.`
+            };
+        }
         const mode = ns.findMode(section, route.mod);
         if (mode) {
             return {
+                section: route.bolum,
                 label: section.label,
                 title: section.label,
                 source: mode.source,
@@ -59,6 +81,7 @@
             };
         }
         return {
+            section: route.bolum,
             label: section.label,
             title: section.label,
             source: section.source,
@@ -167,6 +190,14 @@
                 ns.navigate(routeForSection(row.dataset.section));
                 return;
             }
+            // Kaydedilenlerde tür düğmesi: seçim penceresi açılır, seçilen tür geçmişe yeni kayıt eklemez.
+            const savedFilter = event.target.closest('[data-saved-filter]');
+            if (savedFilter && currentRoute.view === 'slider') {
+                ns.favorites.openFilterSheet(currentRoute.mod, filter => {
+                    ns.navigate(routeForSection(currentRoute.bolum, filter), { replace: true });
+                });
+                return;
+            }
             // Metin / Resim anahtarı geçmişe yeni kayıt eklemez; geri tuşu yine ana listeye döner.
             const mode = event.target.closest('.tefekkur-slider-mode');
             if (mode && currentRoute.view === 'slider') {
@@ -214,6 +245,7 @@
         ns.slider.init();
         ns.zikirmatik.init();
         ns.radio.init();
+        ns.favorites.init();
         bindEvents();
         await render(readRoute());
         schedulePreparation();

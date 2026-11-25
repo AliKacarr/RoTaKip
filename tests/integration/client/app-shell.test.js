@@ -436,7 +436,7 @@ test('global fragmentler grup içeriği taşımaz', () => {
   const tefekkur = readPublic('fragments/tefekkur.html');
   assert.deepEqual(
     Array.from(tefekkur.matchAll(/class="tefekkur-section-row" data-section="([^"]+)"/g), match => match[1]),
-    ['ayet', 'hadis', 'dua', 'risale', 'esma', 'zikirmatik', 'kuran-radyo', 'risalet-radyo']
+    ['ayet', 'hadis', 'dua', 'risale', 'esma', 'zikirmatik', 'kuran-radyo', 'risalet-radyo', 'kaydedilenler']
   );
   assert.equal((tefekkur.match(/class="tefekkur-section-list"/g) || []).length, 1);
   assert.doesNotMatch(tefekkur, /tefekkur-home-hero|tefekkur-list-heading|data-section="vecize"/);
@@ -444,7 +444,8 @@ test('global fragmentler grup içeriği taşımaz', () => {
     Array.from(tefekkur.matchAll(/class="tefekkur-view" data-view="([^"]+)"/g), match => match[1]),
     ['home', 'slider', 'zikirmatik', 'radio']
   );
-  assert.match(tefekkur, /id="tefekkurSliderTitle"[\s\S]*?id="tefekkurSliderModes"[\s\S]*?id="tefekkurSliderChip"/);
+  // Kaydet yıldızı Metin / Resim anahtarının, o da Rastgele/Liste düğmesinin solunda durur.
+  assert.match(tefekkur, /id="tefekkurSliderTitle"[\s\S]*?id="tefekkurSliderSave"[\s\S]*?id="tefekkurSliderModes"[\s\S]*?id="tefekkurSliderChip"/);
   assert.match(tefekkur, /id="tefekkurSliderPrev"[\s\S]*?id="tefekkurSliderCounter"[\s\S]*?id="tefekkurSliderNext"[\s\S]*?id="tefekkurSliderCopy"[\s\S]*?Kopyala[\s\S]*?id="tefekkurSliderShare"[\s\S]*?Paylaş/);
   assert.doesNotMatch(tefekkur, /quote-section|home-tefekkur-window|scroll-fade-in/);
   assert.match(readClient('features/tefekkur/tefekkur-slider.css'), /\.tefekkur-slider-stage\s*\{[^}]*touch-action:\s*pan-y;/);
@@ -881,8 +882,11 @@ test('Mini oynatıcı sürüklenir, Shorts sesi açık başlar ve durdurulunca k
   assert.doesNotMatch(shortsCss + shorts, /videos-short-sound/);
   assert.match(shorts, /tap\(\)\s*\{\s*if \(this\.muted\) this\.toggleSound\(\);\s*else this\.togglePlay\(\);/);
   assert.match(readClient('features/videos/videos-tab.js'), /action === 'short-toggle'\) ns\.shorts\.tap\(\)/);
-  // Beğeni/kaydetme bildirimi gösterilmez; bildirim kutusu içeriği kadar genişler.
-  assert.doesNotMatch(readClient('features/videos/videos-tab.js'), /Beğendiğin videolara eklendi|Kaydedilenlere eklendi/);
+  // Kaydetme bildirim verir (izleme, Shorts, akış kartı ve menü aynı eylemden geçer); beğeni bildirimi
+  // gösterilmez. Bildirim kutusu içeriği kadar genişler.
+  const tabSource = readClient('features/videos/videos-tab.js');
+  assert.match(tabSource, /ns\.store\.toggleSave\(video\);\s*ns\.toast\(saved \? 'Kaydedilenlere eklendi' : 'Kaydedilenlerden çıkarıldı'\)/);
+  assert.doesNotMatch(tabSource, /Beğendiğin videolara eklendi/);
   assert.match(readClient('features/videos/videos-base.css'), /\.videos-toast\s*\{[^}]*width:\s*max-content;/);
 });
 

@@ -36,6 +36,7 @@
 .tefekkur-page [data-section="zikirmatik"] { --section-color: #e8702a; }
 .tefekkur-page [data-section="kuran-radyo"] { --section-color: #d1426a; }
 .tefekkur-page [data-section="risalet-radyo"] { --section-color: #4a50b5; }
+.tefekkur-page [data-section="kaydedilenler"] { --section-color: #ff6b33; }
 
 .tefekkur-page .tefekkur-view[hidden] {
     display: none !important;

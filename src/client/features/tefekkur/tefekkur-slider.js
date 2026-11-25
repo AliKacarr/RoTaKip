@@ -12,8 +12,13 @@
         elements: null,
         sources: new Map(),
         sourceKey: null,
+        // Kaydedilenlere yazılan bölüm ve okuma biçimi (ör. risale + resim).
+        section: '',
+        mode: '',
         label: '',
         emptyMessage: '',
+        emptyIcon: '',
+        pressingSave: false,
         chip: null,
         items: [],
         index: 0,
@@ -28,6 +33,7 @@
         return {
             view: document.querySelector('.tefekkur-view[data-view="slider"]'),
             title: document.getElementById('tefekkurSliderTitle'),
+            save: document.getElementById('tefekkurSliderSave'),
             modes: document.getElementById('tefekkurSliderModes'),
             chip: document.getElementById('tefekkurSliderChip'),
             stage: document.getElementById('tefekkurSliderStage'),
@@ -82,6 +88,8 @@
     }
 
     function loadItems(source) {
+        // Kaydedilenler her açılışta güncel listeden okunur (önbelleğe alınmaz).
+        if (source.type === 'saved') return Promise.resolve(ns.favorites.itemsFor(source.category));
         const key = sourceKeyOf(source);
         if (!state.sources.has(key)) {
             const request = requestItems(source).catch(error => {
@@ -139,7 +147,7 @@
             return;
         }
         if (!item) {
-            renderMessage('fa-regular fa-folder-open', state.emptyMessage || 'Bu bölüme henüz içerik eklenmedi.', false);
+            renderMessage(state.emptyIcon || 'fa-regular fa-folder-open', state.emptyMessage || 'Bu bölüme henüz içerik eklenmedi.', false);
             return;
         }
         fillSlide(slide, item, state.index);
@@ -150,10 +158,11 @@
         slide.replaceChildren();
         if (item.image) {
             slide.className = 'tefekkur-slide is-image';
+            // Görsellerde rozet gösterilmez; resim kartın tamamını kaplar.
             const figure = createElement('figure', 'tefekkur-slide-figure');
             const image = document.createElement('img');
             image.src = item.image;
-            image.alt = `${state.label} görseli ${index + 1}`;
+            image.alt = `${item.badge || state.label} görseli ${index + 1}`;
             image.decoding = 'async';
             image.draggable = false;
             figure.appendChild(image);
@@ -165,6 +174,8 @@
         slide.className = 'tefekkur-slide is-text';
         slide.classList.toggle('is-long', length > LONG_TEXT_LENGTH);
         slide.classList.toggle('is-very-long', length > VERY_LONG_TEXT_LENGTH);
+        // Kaydedilenlerde kartın hangi bölümden olduğunu gösteren küçük rozet.
+        if (item.badge) slide.appendChild(createElement('span', 'tefekkur-slide-badge', item.badge));
         slide.appendChild(createElement('span', 'tefekkur-slide-rule is-top'));
         if (item.arabic) {
             const arabic = createElement('p', 'tefekkur-slide-arabic', item.arabic);
@@ -214,6 +225,43 @@
         if (state.chip === 'index') {
             chip.querySelector('span').textContent = total > 0 ? `${total} İsim` : '99 İsim';
         }
+        renderSaveButton();
+    }
+
+    // Kaydet yıldızı: geçerli kart kaydedilmişse dolu ve turuncudur. Turuncu dolgu yalnız düğmeye basılınca
+    // merkezden kenarlara yayılır; kart değişince (kaydırma) doğrudan yeni duruma geçilir.
+    function renderSaveButton() {
+        const { save } = state.elements;
+        const item = currentItem();
+        const ready = state.status === 'ready' && Boolean(item);
+        const saved = ready && ns.favorites.has(item.key);
+        save.classList.toggle('is-instant', !state.pressingSave);
+        save.disabled = !ready;
+        save.classList.toggle('is-saved', saved);
+        save.setAttribute('aria-pressed', String(saved));
+        const label = saved ? 'Kaydedilenlerden çıkar' : 'Kaydet';
+        save.setAttribute('aria-label', label);
+        save.title = label;
+    }
+
+    function toggleSaved() {
+        const item = currentItem();
+        if (state.status !== 'ready' || !item) return;
+        // Kaydedilenler okuyucusunda kartlar kendi bölümlerini taşır. Yıldızı çıkarılan kart okuyucudan
+        // silinmez; yanlışlıkla çıkarılırsa yıldıza yeniden dokunarak geri eklenebilir.
+        // Kayıt değişince `favorites.onChange` düğmeyi yeniden çizer; bu çizim animasyonlu olsun diye bayrak açılır.
+        state.pressingSave = true;
+        let saved;
+        try {
+            saved = ns.favorites.toggle(item, { section: item.section || state.section, mode: item.mode ?? state.mode });
+            if (saved !== null) renderSaveButton();
+        } finally {
+            state.pressingSave = false;
+        }
+        if (saved === null) return;
+        // Bildirim kartın bölümünü belirtir: "Ayet kaydedilenlere eklendi".
+        const label = item.badge || state.label;
+        ns.toast(saved ? `${label} kaydedilenlere eklendi` : `${label} kaydedilenlerden çıkarıldı`);
     }
 
     function preloadNeighbours() {
@@ -227,7 +275,7 @@
         });
         const item = currentItem();
         if (!item) return;
-        const prepare = () => ns.share.prepareFile(item, state.label).catch(() => {});
+        const prepare = () => ns.share.prepareFile(item, item.badge || state.label).catch(() => {});
         if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(prepare, { timeout: 1500 });
         else window.setTimeout(prepare, 300);
     }
@@ -485,11 +533,16 @@
     }
 
     function bindEvents() {
-        const { stage, prev, next, copy, share, chip } = state.elements;
+        const { stage, prev, next, copy, share, chip, save } = state.elements;
+        save.addEventListener('click', toggleSaved);
+        // Kaydedilenler sayfasından çıkarılan kart okuyucuda açıksa yıldız da söner.
+        ns.favorites.onChange(() => {
+            if (state.elements) renderSaveButton();
+        });
         prev.addEventListener('click', () => step(-1));
         next.addEventListener('click', () => step(1));
         copy.addEventListener('click', copyCurrent);
-        share.addEventListener('click', () => ns.share.shareItem(currentItem(), { label: state.label }));
+        share.addEventListener('click', () => ns.share.shareItem(currentItem(), { label: currentItem()?.badge || state.label }));
         chip.addEventListener('click', () => {
             if (state.chip === 'index') openIndexSheet();
             else jumpRandom();
@@ -536,14 +589,35 @@
         }));
     }
 
+    // Kaydedilenlerde Metin / Resim anahtarının yerine tek bir "tür" düğmesi çıkar; basınca tür seçim
+    // penceresi açılır (yönlendirici `data-saved-filter` düğmesini ele alır). Dar ekranda yalnız ikon kalır.
+    function renderFilterButton(filter) {
+        const container = state.elements.modes;
+        const info = ns.favorites.filterInfo(filter);
+        const button = createElement('button', 'tefekkur-slider-mode is-active is-filter');
+        button.type = 'button';
+        button.dataset.savedFilter = info.key;
+        button.setAttribute('aria-haspopup', 'dialog');
+        button.setAttribute('aria-label', `Tür: ${info.label}. Değiştirmek için dokunun`);
+        button.title = 'Türe göre süz';
+        button.innerHTML = `<i class="${info.icon}" aria-hidden="true"></i>`;
+        button.appendChild(createElement('span', '', info.label));
+        container.hidden = false;
+        container.replaceChildren(button);
+    }
+
     async function show(source) {
         const key = sourceKeyOf(source.source);
         const sequence = ++state.sequence;
         const { title, chip } = state.elements;
-        renderModes(source.modes, source.activeMode);
+        if (source.filter) renderFilterButton(source.filter);
+        else renderModes(source.modes, source.activeMode);
         state.currentSource = source;
+        state.section = source.section || '';
+        state.mode = source.activeMode || '';
         state.label = source.label;
         state.emptyMessage = source.emptyMessage;
+        state.emptyIcon = source.emptyIcon || '';
         state.chip = source.chip || 'random';
         title.textContent = source.title || source.label;
         chip.hidden = false;
@@ -551,7 +625,8 @@
         chip.querySelector('span').textContent = state.chip === 'index' ? 'Liste' : 'Rastgele';
         chip.setAttribute('aria-label', state.chip === 'index' ? `${source.label} listesini aç` : 'Rastgele bir içeriğe geç');
 
-        if (state.sourceKey === key && state.status === 'ready') {
+        // Kaydedilenler (`reload`) her açılışta güncel kayıtlarla yeniden okunur.
+        if (!source.reload && state.sourceKey === key && state.status === 'ready') {
             render();
             return;
         }
@@ -564,7 +639,8 @@
             const items = await loadItems(source.source);
             if (sequence !== state.sequence) return;
             state.items = items;
-            state.index = readStoredPosition(key, items.length);
+            // Kaydedilenler en yeni kayıttan başlar; diğer bölümler kaldığı karttan devam eder.
+            state.index = source.reload ? 0 : readStoredPosition(key, items.length);
             state.status = 'ready';
         } catch (error) {
             if (sequence !== state.sequence) return;

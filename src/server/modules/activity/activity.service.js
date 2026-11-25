@@ -32,7 +32,7 @@ const TESBIHAT_TURS = new Set(['kisa', 'uzun', 'arapca-uzun']);
 /** Tefekkür sekmesindeki .tefekkur-view[data-view] değerleri (ana liste 'home' kaydedilmez) */
 const TEFEKKUR_VIEWS = new Set(['slider', 'zikirmatik', 'radio']);
 const TEFEKKUR_SECTIONS = new Set([
-  'ayet', 'hadis', 'dua', 'risale', 'esma', 'zikirmatik', 'kuran-radyo', 'risalet-radyo'
+  'ayet', 'hadis', 'dua', 'risale', 'esma', 'zikirmatik', 'kuran-radyo', 'risalet-radyo', 'kaydedilenler'
 ]);
 const TEFEKKUR_MODES = new Set(['metin', 'resim']);
 /** Makaleler sekmesindeki .articles-view[data-view] değeri (kategori listesi 'home' kaydedilmez) */

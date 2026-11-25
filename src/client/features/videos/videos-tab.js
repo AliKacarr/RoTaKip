@@ -606,7 +606,11 @@
             if (!video) return;
             if (action === 'like') ns.store.toggleLike(video);
             else if (action === 'dislike') ns.store.toggleDislike(video);
-            else ns.store.toggleSave(video);
+            else {
+                // İzleme, Shorts, akış kartı ve menüdeki "Kaydet" düğmeleri bu yoldan geçer; hepsi bildirim verir.
+                const saved = ns.store.toggleSave(video);
+                ns.toast(saved ? 'Kaydedilenlere eklendi' : 'Kaydedilenlerden çıkarıldı');
+            }
             closeMenu();
             return;
         }
