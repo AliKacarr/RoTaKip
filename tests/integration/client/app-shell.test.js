@@ -436,14 +436,23 @@ test('global fragmentler grup içeriği taşımaz', () => {
   const tefekkur = readPublic('fragments/tefekkur.html');
   assert.deepEqual(
     Array.from(tefekkur.matchAll(/class="tefekkur-section-row" data-section="([^"]+)"/g), match => match[1]),
-    ['ayet', 'hadis', 'dua', 'risale', 'esma', 'zikirmatik', 'kuran-radyo', 'risalet-radyo', 'kaydedilenler']
+    ['ayet', 'hadis', 'dua', 'risale', 'esma', 'ilahi', 'kuran-radyo', 'risalet-radyo', 'zikirmatik', 'kaydedilenler']
   );
   assert.equal((tefekkur.match(/class="tefekkur-section-list"/g) || []).length, 1);
   assert.doesNotMatch(tefekkur, /tefekkur-home-hero|tefekkur-list-heading|data-section="vecize"/);
   assert.deepEqual(
     Array.from(tefekkur.matchAll(/class="tefekkur-view" data-view="([^"]+)"/g), match => match[1]),
-    ['home', 'slider', 'zikirmatik', 'radio']
+    ['home', 'slider', 'zikirmatik', 'radio', 'ilahi']
   );
+  // İlahi çaları: YouTube sahnesi kalıcı bir yer tutucuya oturur; kontroller sade ve sıralı kalır.
+  assert.match(tefekkur, /id="tefekkurIlahiMenu"[\s\S]*?id="tefekkurIlahiSlot"[\s\S]*?id="tefekkurIlahiLike"[\s\S]*?id="tefekkurIlahiDislike"[\s\S]*?id="tefekkurIlahiShare"[\s\S]*?id="tefekkurIlahiPrev"[\s\S]*?id="tefekkurIlahiToggle"[\s\S]*?id="tefekkurIlahiNext"[\s\S]*?id="tefekkurIlahiList"/);
+  const ilahiCss = readClient('features/tefekkur/tefekkur-ilahi.css');
+  assert.match(ilahiCss, /\.tefekkur-ilahi-stage\s*\{[^}]*position:\s*fixed;/);
+  // Çerçeve kuralı yalnız oynatıcıyı hedefler; `> div` olursa mini kontroller ve kalkan tam modda da görünür.
+  assert.doesNotMatch(ilahiCss, /\.tefekkur-ilahi-frame\s*>\s*div/);
+  // Mini oynatıcıda yalnız kapat ve oynat/duraklat düğmeleri bulunur.
+  const playerSource = readClient('features/tefekkur/tefekkur-ilahi-player.js');
+  assert.deepEqual(Array.from(playerSource.matchAll(/<button[^>]*data-mini="([^"]+)"/g), match => match[1]), ['close', 'toggle']);
   // Kaydet yıldızı Metin / Resim anahtarının, o da Rastgele/Liste düğmesinin solunda durur.
   assert.match(tefekkur, /id="tefekkurSliderTitle"[\s\S]*?id="tefekkurSliderSave"[\s\S]*?id="tefekkurSliderModes"[\s\S]*?id="tefekkurSliderChip"/);
   assert.match(tefekkur, /id="tefekkurSliderPrev"[\s\S]*?id="tefekkurSliderCounter"[\s\S]*?id="tefekkurSliderNext"[\s\S]*?id="tefekkurSliderCopy"[\s\S]*?Kopyala[\s\S]*?id="tefekkurSliderShare"[\s\S]*?Paylaş/);

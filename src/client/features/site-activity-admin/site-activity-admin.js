@@ -239,6 +239,7 @@ function createRefreshButton(button) {
           risale: 'Risale-i Nur',
           esma: 'Esmaül Hüsna',
           zikirmatik: 'Zikirmatik',
+          ilahi: 'İlahiler',
           'kuran-radyo': 'Diyanet Kur\'an Radyo',
           'risalet-radyo': 'Diyanet Risalet Radyo'
         };

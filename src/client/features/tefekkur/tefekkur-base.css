@@ -29,14 +29,15 @@
 }
 
 .tefekkur-page [data-section="ayet"] { --section-color: #0f8a5f; }
-.tefekkur-page [data-section="hadis"] { --section-color: #c7820a; }
+.tefekkur-page [data-section="hadis"] { --section-color: #b98a3e; }
 .tefekkur-page [data-section="dua"] { --section-color: #2b67c4; }
-.tefekkur-page [data-section="risale"] { --section-color: #7048c6; }
+.tefekkur-page [data-section="risale"] { --section-color: #c4452d; }
 .tefekkur-page [data-section="esma"] { --section-color: #0e8196; }
-.tefekkur-page [data-section="zikirmatik"] { --section-color: #e8702a; }
-.tefekkur-page [data-section="kuran-radyo"] { --section-color: #d1426a; }
-.tefekkur-page [data-section="risalet-radyo"] { --section-color: #4a50b5; }
-.tefekkur-page [data-section="kaydedilenler"] { --section-color: #ff6b33; }
+.tefekkur-page [data-section="zikirmatik"] { --section-color: #5b6b7a; }
+.tefekkur-page [data-section="ilahi"] { --section-color: #8a46bc; }
+.tefekkur-page [data-section="kuran-radyo"] { --section-color: #4c9a2a; }
+.tefekkur-page [data-section="risalet-radyo"] { --section-color: #d1426a; }
+.tefekkur-page [data-section="kaydedilenler"] { --section-color: #ff6b33; --section-row-tint: 25%; }
 
 .tefekkur-page .tefekkur-view[hidden] {
     display: none !important;

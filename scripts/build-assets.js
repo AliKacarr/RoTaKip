@@ -135,7 +135,7 @@ const bundles = {
   },
   tefekkur: {
     sourceRoot: path.join(clientSourcePath, 'features', 'tefekkur'),
-    css: ['tefekkur-base.css', 'tefekkur-home.css', 'tefekkur-slider.css', 'tefekkur-tools.css'],
+    css: ['tefekkur-base.css', 'tefekkur-home.css', 'tefekkur-slider.css', 'tefekkur-tools.css', 'tefekkur-ilahi.css'],
     js: [
       'tefekkur-core.js',
       'tefekkur-share.js',
@@ -143,6 +143,9 @@ const bundles = {
       'tefekkur-zikirmatik.js',
       'tefekkur-radio.js',
       'tefekkur-favorites.js',
+      'tefekkur-ilahi-queue.js',
+      'tefekkur-ilahi-player.js',
+      'tefekkur-ilahi.js',
       'tefekkur-tab.js'
     ]
   },

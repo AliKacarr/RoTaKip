@@ -43,8 +43,26 @@ const locationLookupLimiter = createRateLimiter(
   { success: false, message: locationLookupMessage }
 );
 
+const ilahiSuggestionMessage = 'Çok fazla öneri gönderdiniz. Lütfen daha sonra tekrar deneyin.';
+const ilahiSuggestionLimiter = createRateLimiter(
+  60 * 60 * 1000,
+  10,
+  ilahiSuggestionMessage,
+  { success: false, message: ilahiSuggestionMessage }
+);
+
+const ilahiReportMessage = 'Çok fazla bildirim gönderdiniz. Lütfen daha sonra tekrar deneyin.';
+const ilahiReportLimiter = createRateLimiter(
+  60 * 60 * 1000,
+  20,
+  ilahiReportMessage,
+  { success: false, message: ilahiReportMessage }
+);
+
 module.exports = {
   accountCreationLimiter,
+  ilahiReportLimiter,
+  ilahiSuggestionLimiter,
   imageProxyLimiter,
   locationLookupLimiter,
   loginLimiter,

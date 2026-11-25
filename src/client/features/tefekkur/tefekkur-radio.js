@@ -140,6 +140,8 @@
             return;
         }
         const audio = ensureAudio();
+        // Tek ses kuralı: radyo başlayınca çalan ilahi (ve köşedeki mini oynatıcısı) kapatılır.
+        ns.ilahi?.dispose();
         state.activeKey = key;
         setStatus('loading');
         // Canlı yayında duraklatıp devam edince eski tampondan değil, güncel yayından başlanır.
@@ -269,6 +271,7 @@
         activeKey() {
             return state.activeKey;
         },
+        stop,
         render
     };
 })();

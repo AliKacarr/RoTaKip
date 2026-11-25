@@ -225,6 +225,52 @@
         openFallbackSheet({ item, text, file, label });
     }
 
+    // Dosyası olmayan, yalnız bağlantı içeren paylaşım (ör. ilahi videosu).
+    async function shareLink({ title, text, url, label }) {
+        if (!url) return;
+        if (typeof navigator.share === 'function') {
+            try {
+                await navigator.share({ title: `RoTaKip · ${label}`, text, url });
+                return;
+            } catch (error) {
+                if (error?.name === 'AbortError') return;
+                console.warn('Paylaşım menüsü açılamadı:', error);
+            }
+        }
+        const message = [text || title, url].filter(Boolean).join('\n');
+        ns.openSheet({
+            title: `${label} · Paylaş`,
+            className: 'is-share',
+            labelId: 'tefekkurShareTitle',
+            render(body, close) {
+                body.innerHTML = `
+                    <div class="tefekkur-share-options">
+                        <button type="button" data-share="whatsapp" data-autofocus><i class="fa-brands fa-whatsapp" aria-hidden="true"></i><span>WhatsApp'ta paylaş</span></button>
+                        <button type="button" data-share="x"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i><span>X'te paylaş</span></button>
+                        <button type="button" data-share="copy"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Bağlantıyı kopyala</span></button>
+                    </div>
+                `;
+                body.addEventListener('click', async event => {
+                    const option = event.target.closest('[data-share]')?.dataset.share;
+                    if (!option) return;
+                    if (option === 'whatsapp') {
+                        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+                    } else if (option === 'x') {
+                        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text || title || '')}&url=${encodeURIComponent(url)}`, '_blank', 'noopener');
+                    } else if (option === 'copy') {
+                        try {
+                            await ns.copyText(url);
+                            ns.toast('Bağlantı kopyalandı');
+                        } catch (_error) {
+                            ns.toast('Kopyalanamadı', 'error');
+                        }
+                    }
+                    close();
+                });
+            }
+        });
+    }
+
     function imageToPngBlob(url) {
         return new Promise((resolve, reject) => {
             const image = new Image();
@@ -263,6 +309,7 @@
         composeText,
         copyItem,
         prepareFile,
-        shareItem
+        shareItem,
+        shareLink
     };
 })();

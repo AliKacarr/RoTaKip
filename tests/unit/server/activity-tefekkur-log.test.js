@@ -37,13 +37,15 @@ test('tefekkür bölüm kaydı görünüm, bölüm ve okuma biçimini saklar', a
   const { saved } = await withFakeLog(false, async logSiteActivity => {
     await logSiteActivity({ action: ACTION, req: request, view: 'slider', section: 'risale', mode: 'resim' });
     await logSiteActivity({ action: ACTION, req: request, view: 'radio', section: 'kuran-radyo', mode: null });
+    await logSiteActivity({ action: ACTION, req: request, view: 'ilahi', section: 'ilahi', mode: null });
   });
-  assert.equal(saved.length, 2);
+  assert.equal(saved.length, 3);
   assert.deepEqual(
     saved.map(({ action, view, section, mode }) => ({ action, view, section, mode })),
     [
       { action: ACTION, view: 'slider', section: 'risale', mode: 'resim' },
-      { action: ACTION, view: 'radio', section: 'kuran-radyo', mode: undefined }
+      { action: ACTION, view: 'radio', section: 'kuran-radyo', mode: undefined },
+      { action: ACTION, view: 'ilahi', section: 'ilahi', mode: undefined }
     ]
   );
   assert.equal(saved[0].ipAddress, '203.0.113.7');

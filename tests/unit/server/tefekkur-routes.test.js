@@ -18,6 +18,9 @@ function createFakeApp() {
     routes,
     get(routePath, handler) {
       routes.set(routePath, handler);
+    },
+    post(routePath, ...handlers) {
+      routes.set(`POST ${routePath}`, handlers[handlers.length - 1]);
     }
   };
 }
@@ -194,4 +197,83 @@ test('tefekkür rotaları geçersiz bölümü 404, hatayı 500 olarak döndürü
   const radios = createResponse();
   app.routes.get('/api/tefekkur/radios')({}, radios);
   assert.equal(radios.body.radios[0].key, 'kuran-radyo');
+});
+
+test('ilahi rotaları listeyi döner, geçersiz öneriyi 400, hatayı 500 yapar', async () => {
+  const app = createFakeApp();
+  const submitted = [];
+  const reported = [];
+  registerTefekkurRoutes(app, {
+    ilahiReportLimiter: (_req, _res, next) => next(),
+    reportTefekkurIlahi: async (videoId, reason) => {
+      if (reason === 'patla') throw new Error('db kapalı');
+      reported.push([videoId, reason]);
+      return videoId === 'DUPkB8799Ao' ? { ok: true } : { ok: false, reason: 'unknown' };
+    },
+    ilahiSuggestionLimiter: (_req, _res, next) => next(),
+    listTefekkurIlahiler: async () => [{ videoId: 'DUPkB8799Ao', baslik: 'İlahi', kanalAdi: 'Kanal', sureSaniye: 245 }],
+    submitTefekkurIlahiOnerisi: async url => {
+      if (url === 'patla') throw new Error('db kapalı');
+      submitted.push(url);
+      if (url === 'https://youtu.be/-dEsKKKflOk') return { ok: true, existing: true };
+      return url === 'https://youtu.be/DUPkB8799Ao' ? { ok: true } : { ok: false, reason: 'invalid' };
+    }
+  });
+
+  const list = createResponse();
+  await app.routes.get('/api/tefekkur/ilahiler')({}, list);
+  assert.equal(list.body.items[0].videoId, 'DUPkB8799Ao');
+  assert.equal(list.headers['Cache-Control'], 'public, max-age=300');
+
+  const submit = app.routes.get('POST /api/tefekkur/ilahi-onerileri');
+  const ok = createResponse();
+  await submit({ body: { url: 'https://youtu.be/DUPkB8799Ao' } }, ok);
+  assert.deepEqual(ok.body, { success: true, existing: false });
+
+  const existing = createResponse();
+  await submit({ body: { url: 'https://youtu.be/-dEsKKKflOk' } }, existing);
+  assert.deepEqual(existing.body, { success: true, existing: true });
+
+  const report = app.routes.get('POST /api/tefekkur/ilahi-bildirimleri');
+  const reportOk = createResponse();
+  await report({ body: { videoId: 'DUPkB8799Ao', reason: 'acilmiyor' } }, reportOk);
+  assert.deepEqual(reportOk.body, { success: true });
+  assert.deepEqual(reported, [['DUPkB8799Ao', 'acilmiyor']]);
+
+  const reportUnknown = createResponse();
+  await report({ body: { videoId: 'aaaaaaaaaaa', reason: 'kalite' } }, reportUnknown);
+  assert.equal(reportUnknown.statusCode, 400);
+
+  const reportNoBody = createResponse();
+  await report({}, reportNoBody);
+  assert.equal(reportNoBody.statusCode, 400);
+
+  const originalError = console.error;
+  console.error = () => {};
+  const reportFailed = createResponse();
+  try {
+    await report({ body: { videoId: 'DUPkB8799Ao', reason: 'patla' } }, reportFailed);
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(reportFailed.statusCode, 500);
+
+  const invalid = createResponse();
+  await submit({ body: { url: 'https://example.com' } }, invalid);
+  assert.equal(invalid.statusCode, 400);
+  assert.equal(invalid.body.success, false);
+
+  const noBody = createResponse();
+  await submit({}, noBody);
+  assert.equal(noBody.statusCode, 400);
+
+  const originalConsoleError = console.error;
+  console.error = () => {};
+  const failed = createResponse();
+  try {
+    await submit({ body: { url: 'patla' } }, failed);
+  } finally {
+    console.error = originalConsoleError;
+  }
+  assert.equal(failed.statusCode, 500);
 });

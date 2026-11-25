@@ -3,7 +3,7 @@
 
     // Ana listedeki bölümler. `kind` hangi görünümün açılacağını belirler:
     //  - slides: kaydırmalı okuyucu (`modes` varsa başlıkta Metin / Resim anahtarı çıkar)
-    //  - zikirmatik / radio: kendi araç görünümleri
+    //  - zikirmatik / radio / ilahi: kendi araç görünümleri
     //  - saved: okuyucuda yıldızla kaydedilenlerin listesi (tefekkur-favorites.js)
     ns.SECTIONS = Object.freeze({
         ayet: {
@@ -41,6 +41,7 @@
             emptyMessage: 'Esmaül Hüsna listesi yüklenemedi.'
         },
         zikirmatik: { label: 'Zikirmatik', kind: 'zikirmatik' },
+        ilahi: { label: 'İlahiler', kind: 'ilahi' },
         'kuran-radyo': { label: 'Diyanet Kur\'an Radyo', kind: 'radio', icon: 'fa-solid fa-tower-broadcast' },
         'risalet-radyo': { label: 'Diyanet Risalet Radyo', kind: 'radio', icon: 'fa-solid fa-radio' },
         kaydedilenler: { label: 'Kaydedilenler', kind: 'saved' }

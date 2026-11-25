@@ -38,9 +38,9 @@
         <span class="tefekkur-section-name">Esmaül Hüsna<small>Allah'ın (c.c.) 99 güzel ismi</small></span>
         <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
       </button></li>
-      <li><button type="button" class="tefekkur-section-row" data-section="zikirmatik">
-        <span class="tefekkur-section-icon"><i class="fa-solid fa-bullseye" aria-hidden="true"></i></span>
-        <span class="tefekkur-section-name">Zikirmatik<small>Günlük zikirlerinizi çekin</small></span>
+      <li><button type="button" class="tefekkur-section-row" data-section="ilahi">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-music" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">İlahiler<small>Huzur veren ilahiler</small></span>
         <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
       </button></li>
       <li><button type="button" class="tefekkur-section-row" data-section="kuran-radyo">
@@ -51,6 +51,11 @@
       <li><button type="button" class="tefekkur-section-row" data-section="risalet-radyo">
         <span class="tefekkur-section-icon"><i class="fa-solid fa-radio" aria-hidden="true"></i></span>
         <span class="tefekkur-section-name">Risalet Radyo<small>Canlı yayın</small></span>
+        <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
+      </button></li>
+      <li><button type="button" class="tefekkur-section-row" data-section="zikirmatik">
+        <span class="tefekkur-section-icon"><i class="fa-solid fa-bullseye" aria-hidden="true"></i></span>
+        <span class="tefekkur-section-name">Zikirmatik<small>Günlük zikirlerinizi çekin</small></span>
         <i class="fa-solid fa-chevron-right tefekkur-section-chevron" aria-hidden="true"></i>
       </button></li>
       <li><button type="button" class="tefekkur-section-row" data-section="kaydedilenler">
@@ -167,5 +172,41 @@
       <span class="tefekkur-info-icon" aria-hidden="true"><i class="fa-solid fa-info"></i></span>
       <p>Yayın, bu sayfadan ayrılsanız da çalmaya devam eder. Tefekkür ana sayfasındaki çalar çubuğundan durdurabilirsiniz.</p>
     </aside>
+  </section>
+
+  <section class="tefekkur-view" data-view="ilahi" aria-labelledby="tefekkurIlahiTitle" hidden>
+    <header class="tefekkur-slider-bar">
+      <button type="button" class="tefekkur-slider-back" data-back aria-label="Geri dön"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      <h4 id="tefekkurIlahiTitle">İlahiler</h4>
+      <button type="button" id="tefekkurIlahiMenu" class="tefekkur-ilahi-menu-open" aria-label="Seçenekler" title="Seçenekler" aria-haspopup="dialog"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+    </header>
+
+    <div class="tefekkur-ilahi-deck">
+      <div id="tefekkurIlahiSlot" class="tefekkur-ilahi-slot"></div>
+      <div class="tefekkur-ilahi-info" aria-live="polite">
+        <h5 id="tefekkurIlahiTrackTitle"></h5>
+        <p id="tefekkurIlahiTrackChannel"></p>
+      </div>
+      <div class="tefekkur-ilahi-actions">
+        <div class="tefekkur-ilahi-reactions" role="group" aria-label="İlahiyi değerlendir">
+          <button type="button" id="tefekkurIlahiLike" aria-label="Beğendim" title="Beğendim" aria-pressed="false"><i class="fa-regular fa-thumbs-up" aria-hidden="true"></i></button>
+          <button type="button" id="tefekkurIlahiDislike" aria-label="Beğenmedim" title="Beğenmedim" aria-pressed="false"><i class="fa-regular fa-thumbs-down" aria-hidden="true"></i></button>
+          <button type="button" id="tefekkurIlahiShare" aria-label="Paylaş" title="Paylaş"><i class="fa-solid fa-share" aria-hidden="true"></i></button>
+        </div>
+        <div class="tefekkur-ilahi-transport" role="group" aria-label="Oynatma kontrolleri">
+          <button type="button" id="tefekkurIlahiPrev" aria-label="Önceki"><i class="fa-solid fa-backward-step" aria-hidden="true"></i></button>
+          <button type="button" id="tefekkurIlahiToggle" class="is-main" aria-label="Oynat"><i class="fa-solid fa-play" aria-hidden="true"></i></button>
+          <button type="button" id="tefekkurIlahiNext" aria-label="Sonraki"><i class="fa-solid fa-forward-step" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tefekkur-ilahi-tabs" role="group" aria-label="İlahi listeleri">
+      <button type="button" data-list="queue" aria-pressed="true">Sıradaki</button>
+      <button type="button" data-list="liked" aria-pressed="false"><i class="fa-regular fa-thumbs-up" aria-hidden="true"></i>Beğendiklerim<span data-count></span></button>
+      <button type="button" data-list="disliked" aria-pressed="false"><i class="fa-regular fa-thumbs-down" aria-hidden="true"></i>Beğenmediklerim<span data-count></span></button>
+    </div>
+
+    <ul id="tefekkurIlahiList" class="tefekkur-ilahi-list"></ul>
   </section>
 </div>

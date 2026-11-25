@@ -18,7 +18,7 @@
     border: 1px solid var(--section-color, var(--tf-border));
     border-radius: 16px;
     color: var(--tf-text);
-    background: color-mix(in srgb, var(--section-color, #fff) 18%, #fff);
+    background: color-mix(in srgb, var(--section-color, #fff) var(--section-row-tint, 18%), #fff);
     text-align: left;
     cursor: pointer;
     box-shadow: var(--tf-card-shadow);
@@ -75,7 +75,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 12px;
+    margin-bottom: 12px;
     padding: 8px 8px 8px 12px;
     border-radius: 16px;
     color: #fff;
@@ -198,7 +198,7 @@
     }
 
     .tefekkur-page .tefekkur-now-playing {
-        margin-top: 10px;
+        margin: 0 0 10px 0;
     }
 }
 

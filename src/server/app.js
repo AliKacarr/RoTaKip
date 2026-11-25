@@ -39,6 +39,7 @@ const { registerInvitationRoutes } = require('./modules/invitations/invitation.r
 const inspirationModels = require('./modules/inspiration/inspiration.models');
 const inspirationService = require('./modules/inspiration/inspiration.service');
 const { registerInspirationRoutes } = require('./modules/inspiration/inspiration.routes');
+const { createIlahiService } = require('./modules/inspiration/ilahi.service');
 const { registerTefekkurRoutes } = require('./modules/inspiration/tefekkur.routes');
 const { createTefekkurService } = require('./modules/inspiration/tefekkur.service');
 const joinRequestClaims = require('./modules/join-requests/join-request.claims');
@@ -89,6 +90,7 @@ const activityService = createActivityService({
 });
 const tesbihatService = createTesbihatService({ reverseGeocode: createReverseGeocoder() });
 const tefekkurService = createTefekkurService({ models: inspirationModels, publicPath });
+const ilahiService = createIlahiService({ getCollection: getContentCollection });
 const videoService = createVideoService({ getCollection: getContentCollection });
 
 const routeDependencies = {
@@ -100,6 +102,7 @@ const routeDependencies = {
   ...groupModels,
   ...groupService,
   ...groupSettings,
+  ...ilahiService,
   ...inactiveMemberPolicy,
   ...invitationModel,
   ...inspirationModels,

@@ -68,9 +68,24 @@ async function ensureArticleIndexes() {
   }
 }
 
+// Tefekkür ilahileri, kullanıcı önerileri ve bildirimleri video kimliğiyle tekil tutulur.
+async function ensureIlahiIndexes() {
+  try {
+    const db = mongoose.connection.db;
+    await Promise.all([
+      db.collection('ilahiler').createIndex({ videoId: 1 }, { unique: true, name: 'ilahiler_video_id' }),
+      db.collection('ilahi_onerileri').createIndex({ videoId: 1 }, { unique: true, name: 'ilahi_onerileri_video_id' }),
+      db.collection('ilahi_bildirimleri').createIndex({ videoId: 1 }, { unique: true, name: 'ilahi_bildirimleri_video_id' })
+    ]);
+  } catch (error) {
+    console.error('ilahi index hatası:', error.message);
+  }
+}
+
 async function initializeDatabaseIndexes() {
   await Promise.all([
     ensureArticleIndexes(),
+    ensureIlahiIndexes(),
     ensureApplicationIndexes(),
     ensureInviteTtlIndex(),
     ensureJoinRequestTtlIndex()

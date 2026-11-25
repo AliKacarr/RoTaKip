@@ -40,6 +40,7 @@
         if (!section) return { view: 'home' };
         if (section.kind === 'radio') return { view: 'radio', bolum: key };
         if (section.kind === 'zikirmatik') return { view: 'zikirmatik', bolum: key };
+        if (section.kind === 'ilahi') return { view: 'ilahi', bolum: key };
         // Kaydedilenler okuyucuda açılır; `mod` kaydı süzülen bölümdür (yoksa Tümü).
         if (section.kind === 'saved') {
             const filter = ns.favorites.normalizeFilter(requestedMode);
@@ -143,6 +144,8 @@
         });
         if (shownView && previousView !== route.view) replayEnterAnimation(shownView);
         if (route.view !== 'radio') ns.radio.hide();
+        // İlahi sayfasından ayrılınca çalan ilahi köşede mini oynatıcıya dönüşür.
+        if (route.view !== 'ilahi') ns.ilahi.hide();
         // İçerik yüklenmesini beklemeden kaydedilir; yavaş bağlantıda ya da hatada da bölümün açıldığı görünür.
         if (route.view !== 'home') logTefekkurView(route);
 
@@ -154,6 +157,8 @@
             ns.zikirmatik.show();
         } else if (route.view === 'radio') {
             await ns.radio.show(route.bolum);
+        } else if (route.view === 'ilahi') {
+            await ns.ilahi.show();
         }
         return sequence === renderSequence;
     }
@@ -232,6 +237,7 @@
         });
         for (const source of sources) await ns.slider.prefetch(source);
         await ns.radio.preload();
+        await ns.ilahi.preload();
     }
 
     function schedulePreparation() {
@@ -245,6 +251,7 @@
         ns.slider.init();
         ns.zikirmatik.init();
         ns.radio.init();
+        ns.ilahi.init();
         ns.favorites.init();
         bindEvents();
         await render(readRoute());
@@ -265,7 +272,10 @@
         async resume() {
             await render(readRoute());
         },
-        // Radyo bilerek durdurulmaz: kullanıcı başka sekmeye geçse de yayın sürer.
-        destroy() {}
+        // Radyo bilerek durdurulmaz: kullanıcı başka sekmeye geçse de yayın sürer. Çalan ilahi köşede
+        // mini oynatıcı olarak sürer; yalnız hedef Videolar sekmesiyse yok edilir.
+        destroy() {
+            ns.ilahi.leaveTab();
+        }
     };
 })();

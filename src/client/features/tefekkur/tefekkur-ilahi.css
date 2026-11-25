@@ -1,0 +1,711 @@
+/* --- İlahiler: kalıcı oynatıcı sahnesi (body'de; .tefekkur-page dışında) ------------------- */
+.tefekkur-ilahi-stage {
+    --ilahi-color: #a63d9c;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 8500;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #000;
+}
+
+.tefekkur-ilahi-stage[hidden] {
+    display: none;
+}
+
+/* Tam hâl: sahne ilahi sayfasındaki yer tutucunun üstüne oturur, çerçeve sahneyi doldurur. */
+.tefekkur-ilahi-frame {
+    position: absolute;
+    inset: 0;
+}
+
+.tefekkur-ilahi-frame > #tefekkurIlahiHost,
+.tefekkur-ilahi-frame > iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.tefekkur-ilahi-shield,
+.tefekkur-ilahi-mini-controls,
+.tefekkur-ilahi-mini-progress,
+.tefekkur-ilahi-mini-info {
+    display: none;
+}
+
+/* Köşedeki mini hâl (YouTube mini oynatıcısı gibi): üstte video ve üzerinde kontroller, altında başlık.
+   Video sürüklenir, dokununca ilahi sayfası açılır. */
+.tefekkur-ilahi-stage.is-mini {
+    display: flex;
+    flex-direction: column;
+    width: 260px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.tefekkur-ilahi-stage.is-mini .tefekkur-ilahi-frame {
+    position: relative;
+    inset: auto;
+    flex: 0 0 auto;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+}
+
+.tefekkur-ilahi-stage.is-mini .tefekkur-ilahi-shield {
+    position: absolute;
+    inset: 0;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+}
+
+/* Kontroller videonun üstünde, hafif karartma üzerinde; boş yerler alttaki kalkana (sürükleme/açma) geçer. */
+.tefekkur-ilahi-stage.is-mini .tefekkur-ilahi-mini-controls {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.5));
+    pointer-events: none;
+}
+
+.tefekkur-ilahi-mini-controls button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: transparent;
+    font-size: 16px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.tefekkur-ilahi-mini-controls button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tefekkur-ilahi-mini-controls button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+}
+
+/* Mini hâlde yalnız iki düğme vardır: sol üstte oynat/duraklat, sağ üstte kapat. */
+.tefekkur-ilahi-mini-controls .is-corner,
+.tefekkur-ilahi-mini-controls .is-main {
+    position: absolute;
+    top: 4px;
+    width: 32px;
+    height: 32px;
+    font-size: 17px;
+}
+
+.tefekkur-ilahi-mini-controls .is-corner {
+    right: 4px;
+}
+
+.tefekkur-ilahi-mini-controls .is-main {
+    left: 4px;
+}
+
+.tefekkur-ilahi-stage.is-mini .tefekkur-ilahi-mini-progress {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+}
+
+.tefekkur-ilahi-mini-progress span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--ilahi-color);
+}
+
+.tefekkur-ilahi-stage.is-mini .tefekkur-ilahi-mini-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    padding: 8px 12px 10px;
+}
+
+.tefekkur-ilahi-mini-info strong,
+.tefekkur-ilahi-mini-info span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tefekkur-ilahi-mini-info strong {
+    color: #0f0f0f;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.tefekkur-ilahi-mini-info span {
+    color: #606060;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+/* --- İlahiler sayfası (YouTube izleme sayfası düzeni) -------------------------------------- */
+/* Üç nokta menüsü: arka plansız, yatay; üzerine gelince geri düğmesi gibi hafif gri. */
+.tefekkur-page .tefekkur-ilahi-menu-open {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #111;
+    background: transparent;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-ilahi-menu-open:hover {
+    background: #f1f1f1;
+}
+
+.tefekkur-page .tefekkur-ilahi-slot {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    background: #f1f1f1;
+}
+
+.tefekkur-page .tefekkur-ilahi-info {
+    margin: 14px 2px 0;
+    min-height: 62px;
+}
+
+.tefekkur-page .tefekkur-ilahi-info h5 {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.tefekkur-page .tefekkur-ilahi-info p {
+    margin: 4px 0 0;
+    overflow: hidden;
+    color: var(--tf-muted);
+    font-size: 17px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tefekkur-page .tefekkur-ilahi-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Tepki düğmeleri (beğen, beğenme, paylaş): arka plansız yalın ikonlar; aktif olan bölüm rengine boyanır. */
+.tefekkur-page .tefekkur-ilahi-reactions {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 4px;
+}
+
+.tefekkur-page .tefekkur-ilahi-reactions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #111;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-ilahi-reactions button:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.tefekkur-page .tefekkur-ilahi-reactions button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.tefekkur-page .tefekkur-ilahi-reactions .is-active {
+    color: var(--section-color, var(--tf-accent));
+}
+
+.tefekkur-page .tefekkur-ilahi-transport {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.tefekkur-page .tefekkur-ilahi-transport button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 0;
+    border-radius: 18px;
+    color: #111;
+    background: #ececec;
+    font-size: 22px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-ilahi-transport button:hover {
+    background: #e0e0e0;
+}
+
+.tefekkur-page .tefekkur-ilahi-transport .is-main {
+    color: #fff;
+    background: var(--section-color, var(--tf-accent));
+}
+
+.tefekkur-page .tefekkur-ilahi-transport .is-main:hover {
+    background: var(--section-dark, var(--tf-accent-dark));
+}
+
+.tefekkur-page .tefekkur-ilahi-reactions button:focus-visible,
+.tefekkur-page .tefekkur-ilahi-transport button:focus-visible,
+.tefekkur-page .tefekkur-ilahi-menu-open:focus-visible,
+.tefekkur-page .tefekkur-ilahi-row:focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 2px;
+}
+
+/* Liste sekmeleri: Sıradaki / Beğendiklerim / Beğenmediklerim. */
+.tefekkur-page .tefekkur-ilahi-tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.tefekkur-page .tefekkur-ilahi-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tefekkur-page .tefekkur-ilahi-tabs button {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 20px;
+    color: #111;
+    background: #ececec;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.tefekkur-page .tefekkur-ilahi-tabs button:hover {
+    background: #e0e0e0;
+}
+
+.tefekkur-page .tefekkur-ilahi-tabs button.is-active {
+    color: #fff;
+    background: var(--section-color, var(--tf-accent));
+}
+
+.tefekkur-page .tefekkur-ilahi-tabs [data-count] {
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.75;
+}
+
+.tefekkur-page .tefekkur-ilahi-tabs button:focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 2px;
+}
+
+/* Sıradaki ilahiler: küçük resim solda, başlık sağda. */
+.tefekkur-page .tefekkur-ilahi-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.tefekkur-page .tefekkur-ilahi-item .tefekkur-ilahi-row {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.tefekkur-page .tefekkur-ilahi-row-remove {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-top: 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #6b7280;
+    background: transparent;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.tefekkur-page .tefekkur-ilahi-row-remove:hover {
+    color: #111;
+    background: #ececec;
+}
+
+.tefekkur-page .tefekkur-ilahi-row-remove:focus-visible {
+    outline: 3px solid #4b87e4;
+    outline-offset: 2px;
+}
+
+.tefekkur-page .tefekkur-ilahi-empty {
+    padding: 28px 8px;
+    color: #6b7280;
+    font-size: 17px;
+    text-align: center;
+}
+
+.tefekkur-page .tefekkur-ilahi-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tefekkur-page .tefekkur-ilahi-row {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 12px;
+    width: 100%;
+    padding: 6px;
+    border: 0;
+    border-radius: 12px;
+    color: #111;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tefekkur-page .tefekkur-ilahi-row:hover {
+    background: #f6f7f9;
+}
+
+.tefekkur-page .tefekkur-ilahi-row.is-current {
+    background: var(--section-tint, var(--tf-accent-tint));
+}
+
+.tefekkur-page .tefekkur-ilahi-thumb {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #e3e5ea;
+}
+
+.tefekkur-page .tefekkur-ilahi-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tefekkur-page .tefekkur-ilahi-thumb em {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.8);
+    font-size: 12px;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+}
+
+/* Çalan ilahinin küçük resmi koyulaşır ve ortasında oynat simgesi görünür. */
+.tefekkur-page .tefekkur-ilahi-thumb i {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    font-size: 20px;
+}
+
+.tefekkur-page .tefekkur-ilahi-row.is-current .tefekkur-ilahi-thumb i {
+    display: flex;
+}
+
+.tefekkur-page .tefekkur-ilahi-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    padding-top: 2px;
+}
+
+.tefekkur-page .tefekkur-ilahi-row-text strong {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 20px;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.tefekkur-page .tefekkur-ilahi-row-text small {
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- Menü, öneri ve bildirim pencereleri --------------------------------------------------- */
+.tefekkur-ilahi-suggest {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tefekkur-ilahi-suggest input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 50px;
+    padding: 0 14px;
+    border: 1.5px solid #d4d8df;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 17px;
+}
+
+.tefekkur-ilahi-suggest input:focus {
+    border-color: #a63d9c;
+    outline: none;
+}
+
+.tefekkur-ilahi-suggest button,
+.tefekkur-ilahi-result button {
+    min-height: 50px;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    background: #a63d9c;
+    font: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tefekkur-ilahi-suggest button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.tefekkur-ilahi-report-target {
+    margin: 0 0 12px;
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tefekkur-sheet .tefekkur-share-options button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.tefekkur-ilahi-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0 2px;
+    text-align: center;
+}
+
+.tefekkur-ilahi-result-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 6px;
+    border-radius: 50%;
+    color: #a63d9c;
+    background: #f6e8f4;
+    font-size: 28px;
+}
+
+.tefekkur-ilahi-result h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.tefekkur-ilahi-result p {
+    margin: 0 0 12px;
+    color: #475569;
+    font-size: 17px;
+    line-height: 1.55;
+}
+
+.tefekkur-ilahi-result button {
+    width: 100%;
+}
+
+/* Mobil ölçüler kaydırmalı okuyucudakilerle aynı kademeleri izler (768 / 480). */
+@media (max-width: 768px) {
+    .tefekkur-page .tefekkur-ilahi-menu-open {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+    }
+
+    .tefekkur-ilahi-stage.is-mini {
+        width: 240px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-info {
+        margin-top: 12px;
+        min-height: 54px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-info h5 {
+        font-size: 21px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-info p {
+        font-size: 16px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-reactions button {
+        width: 42px;
+        height: 42px;
+        font-size: 22px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-transport button {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        font-size: 20px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-row {
+        grid-template-columns: 136px minmax(0, 1fr);
+    }
+
+    .tefekkur-page .tefekkur-ilahi-row-text strong {
+        font-size: 18px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-row-text small {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 640px) {
+    .tefekkur-ilahi-stage.is-mini {
+        width: 208px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tefekkur-page .tefekkur-ilahi-menu-open {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-info h5 {
+        font-size: 19px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-info p {
+        font-size: 15px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-actions {
+        gap: 8px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-reactions {
+        gap: 3px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-transport {
+        gap: 7px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-transport button {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-row {
+        grid-template-columns: 116px minmax(0, 1fr);
+        column-gap: 10px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-row-text strong {
+        font-size: 17px;
+    }
+
+    .tefekkur-page .tefekkur-ilahi-row-text small {
+        font-size: 14px;
+    }
+}
