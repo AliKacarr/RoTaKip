@@ -514,6 +514,28 @@
         );
     }
 
+    // Hesabım liste satırı menüsü (dikey ⋮): listeden kaldır, oynatma listesine (Kaydedilenler) kaydet, paylaş.
+    const LIBRARY_REMOVE_LABELS = {
+        history: 'İzleme geçmişinden kaldır',
+        liked: 'Beğenilenlerden kaldır',
+        saved: 'Kaydedilenlerden kaldır'
+    };
+
+    function openLibraryItemMenu(button) {
+        const { store, videoId } = button.dataset;
+        const id = ns.escape(videoId);
+        const saveItem = store === 'saved'
+            ? ''
+            : `<button type="button" role="menuitem" data-action="save" data-video-id="${id}"><i class="${ns.store.isSaved(videoId) ? 'fa-solid' : 'fa-regular'} fa-bookmark" aria-hidden="true"></i> ${ns.store.isSaved(videoId) ? 'Oynatma listesinden çıkar' : 'Oynatma listesine kaydet'}</button>`;
+        openAnchoredMenu(
+            button,
+            'library-item',
+            `<button type="button" role="menuitem" data-action="library-remove" data-store="${ns.escape(store)}" data-video-id="${id}"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> ${LIBRARY_REMOVE_LABELS[store] || 'Listeden kaldır'}</button>
+            ${saveItem}
+            <button type="button" role="menuitem" data-action="share" data-video-id="${id}"><i class="fa-solid fa-share" aria-hidden="true"></i> Paylaş</button>`
+        );
+    }
+
     function clearCollection() {
         const { store, title } = menu?.dataset || {};
         closeMenu();
@@ -529,6 +551,7 @@
         return ns.videos.get(videoId)
             || ns.store.historyEntry(videoId)
             || ns.store.liked().find(item => item.id === videoId)
+            || ns.store.disliked().find(item => item.id === videoId)
             || ns.store.saved().find(item => item.id === videoId)
             || null;
     }
@@ -556,10 +579,11 @@
             ns.watch.playNext();
             return;
         }
-        if (action === 'like' || action === 'save') {
+        if (action === 'like' || action === 'dislike' || action === 'save') {
             const video = findVideo(videoId);
             if (!video) return;
             if (action === 'like') ns.store.toggleLike(video);
+            else if (action === 'dislike') ns.store.toggleDislike(video);
             else ns.store.toggleSave(video);
             closeMenu();
             return;
@@ -606,6 +630,15 @@
             openCollectionMenu(button);
             return;
         }
+        if (action === 'library-item-menu') {
+            openLibraryItemMenu(button);
+            return;
+        }
+        if (action === 'library-remove') {
+            closeMenu();
+            ns.store.removeFrom(button.dataset.store, videoId);
+            return;
+        }
         if (action === 'collection-clear') {
             clearCollection();
             return;
@@ -631,7 +664,7 @@
     }
 
     function onClick(event) {
-        if (menu && !event.target.closest('.videos-menu, [data-action="menu"], [data-action="shelf-menu"], [data-action="collection-menu"], [data-action="shorts-more"]')) closeMenu();
+        if (menu && !event.target.closest('.videos-menu, [data-action="menu"], [data-action="shelf-menu"], [data-action="collection-menu"], [data-action="library-item-menu"], [data-action="shorts-more"]')) closeMenu();
 
         const miniButton = event.target.closest('[data-mini]');
         if (miniButton) {
@@ -696,12 +729,6 @@
             return;
         }
 
-        const remove = event.target.closest('[data-remove-from]');
-        if (remove) {
-            ns.store.removeFrom(remove.dataset.removeFrom, remove.dataset.videoId);
-            return;
-        }
-
         if (event.target.closest('[data-clear-history]')) {
             if (window.confirm('İzleme geçmişin bu cihazdan silinsin mi?')) {
                 ns.store.clearHistory();
@@ -742,7 +769,7 @@
             ns.library.refresh();
             return;
         }
-        if (type === 'liked' || type === 'saved' || type === 'sync') {
+        if (type === 'liked' || type === 'disliked' || type === 'saved' || type === 'sync') {
             ns.syncActionButtons(page);
             ns.library.refresh();
             return;

@@ -354,7 +354,7 @@
 
         visibleVideos(videos) {
             return videos.filter(video => {
-                if (!video || this.ids.has(video.id)) return false;
+                if (!video || this.ids.has(video.id) || ns.store.isDisliked(video.id)) return false;
                 if (ns.store.isCompleted(video.id) !== (this.pass === 'watched')) return false;
                 if (this.channelId) return video.channelId === this.channelId;
                 return ns.store.isFollowing(video.channelId);
@@ -399,6 +399,7 @@
         shelfCandidates() {
             const all = [...(this.home?.shorts?.videos || []), ...this.extraShorts].filter(video => video.type === 'shorts'
                 && !this.shelfIds.has(video.id)
+                && !ns.store.isDisliked(video.id)
                 && ns.store.isFollowing(video.channelId));
             // İzlenmemişler en yeni hep başta kalmasın diye karıştırılır; izlenmişler sona eklenir.
             return [

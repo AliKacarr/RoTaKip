@@ -819,7 +819,7 @@ test('Videolar önizlemesinde sürüklenebilir ilerleme çubuğu ve kalan süre 
   assert.match(feed, /showProgress\(ratio\)\s*\{[\s\S]*?formatDuration\(Math\.max\(0, duration - clamped \* duration\)\)/);
   assert.match(readClient('features/videos/videos-player.js'), /seek: seconds => ready && player\.seekTo\(/);
   const css = readClient('features/videos/videos-feed.css');
-  assert.match(css, /\.videos \.videos-preview-button\s*\{[^}]*background:\s*rgba\(96,\s*96,\s*96,\s*0\.55\);[^}]*color:\s*#ffffff;/);
+  assert.match(css, /\.videos \.videos-preview-button\s*\{[^}]*background:\s*rgba\(50,\s*50,\s*50,\s*0\.85\);[^}]*color:\s*#ffffff;/);
   assert.doesNotMatch(css, /is-faded/);
   assert.match(css, /\.videos-preview-seek\s*\{[^}]*touch-action:\s*none;/);
 });

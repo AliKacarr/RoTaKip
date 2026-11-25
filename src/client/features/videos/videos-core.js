@@ -222,14 +222,16 @@
     };
 
     ns.LIKE_ICONS = { icon: 'fa-regular fa-thumbs-up', activeIcon: 'fa-solid fa-thumbs-up' };
-    ns.SAVE_ICONS = { icon: 'fa-regular fa-bookmark', activeIcon: 'fa-solid fa-bookmark' };
+    ns.DISLIKE_ICONS = { icon: 'fa-regular fa-thumbs-down', activeIcon: 'fa-solid fa-thumbs-down' };
+    ns.SAVE_ICONS ={ icon: 'fa-regular fa-bookmark', activeIcon: 'fa-solid fa-bookmark' };
 
     // Beğen / kaydet düğmelerinin görünümü tek yerden güncellenir (aynı video birden çok listede olabilir).
     ns.syncActionButtons = function syncActionButtons(root) {
         if (!root || !ns.store) return;
-        root.querySelectorAll('[data-action="like"], [data-action="save"]').forEach(button => {
+        const isActive = { like: ns.store.isLiked, dislike: ns.store.isDisliked, save: ns.store.isSaved };
+        root.querySelectorAll('[data-action="like"], [data-action="dislike"], [data-action="save"]').forEach(button => {
             const id = button.dataset.videoId;
-            const active = button.dataset.action === 'like' ? ns.store.isLiked(id) : ns.store.isSaved(id);
+            const active = isActive[button.dataset.action](id);
             button.classList.toggle('is-active', active);
             button.setAttribute('aria-pressed', active ? 'true' : 'false');
             const icon = button.querySelector('i');

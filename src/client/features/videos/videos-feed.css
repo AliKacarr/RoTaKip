@@ -201,15 +201,15 @@
 .videos .videos-preview-button {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border: 0;
   border-radius: 50%;
   /* Ses simgesi her zaman beyazdır; arka plan başta yarı saydam gridir, birkaç saniye sonra solar. */
-  background: rgba(96, 96, 96, 0.55);
+  background: rgba(50, 50, 50, 0.85);
   color: #ffffff;
-  font-size: 17px;
+  font-size: 16px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
   cursor: pointer;
   pointer-events: auto;

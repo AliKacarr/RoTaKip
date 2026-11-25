@@ -45,7 +45,7 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
    çubuğun üstünde akıştan bir çizgi görünmez. Taşan 1px üst iç boşlukla (`padding-top`) telafi edilir; sekmeler
    ve kenar boşlukları eski yerinde kalır. */
 .videos-sections {
-  transition: transform 0.3s ease, opacity 0.25s ease;
+  transition: transform 0.45s ease, opacity 0.4s ease;
   position: sticky;
   top: -1px;
   z-index: 30;
@@ -395,6 +395,8 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
 
 .videos-pill-quiet {
   background: var(--videos-soft);
+  /* Kenar box-shadow ile çizilir; düğme boyutu değişmez. */
+  box-shadow: inset 0 0 0 1.5px #a3a3a3;
   color: var(--videos-text) !important;
 }
 
@@ -485,12 +487,6 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
   color: var(--videos-text);
   font-size: 20px !important;
   font-weight: 700;
-}
-
-.videos-count {
-  color: var(--videos-muted);
-  font-size: 15px;
-  font-weight: 500;
 }
 
 .videos-muted {
@@ -741,7 +737,7 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
   }
 
   body.videos-chrome-active .app-navigation {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.45s ease, box-shadow 0.45s ease;
   }
 
   body.videos-chrome-hidden .app-navigation {

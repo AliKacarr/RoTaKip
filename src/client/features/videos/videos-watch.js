@@ -293,6 +293,7 @@
                 ${followButton}`;
             this.actions.innerHTML = [
                 ns.iconButtonHtml({ action: 'like', ...ns.LIKE_ICONS, label: 'Beğen', active: ns.store.isLiked(video.id), videoId: video.id }),
+                ns.iconButtonHtml({ action: 'dislike', ...ns.DISLIKE_ICONS, label: 'Beğenme', active: ns.store.isDisliked(video.id), videoId: video.id }),
                 ns.iconButtonHtml({ action: 'save', ...ns.SAVE_ICONS, label: 'Kaydet', active: ns.store.isSaved(video.id), videoId: video.id }),
                 ns.iconButtonHtml({ action: 'share', icon: 'fa-solid fa-share', label: 'Paylaş', videoId: video.id }),
                 ns.iconButtonHtml({ action: 'menu', icon: 'fa-solid fa-ellipsis', label: 'Diğer seçenekler', videoId: video.id })
@@ -315,6 +316,7 @@
             return (videos || []).filter(video => video
                 && video.id !== this.videoId
                 && !this.relatedIds.has(video.id)
+                && !ns.store.isDisliked(video.id)
                 && (ns.store.isFollowing(video.channelId) || video.channelId === this.video?.channelId));
         },
 

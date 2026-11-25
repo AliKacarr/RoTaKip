@@ -150,15 +150,15 @@
 .videos-watch-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
 }
 
 .videos-watch-actions .videos-icon-button {
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
   padding: 0;
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .videos-watch-next {
@@ -426,7 +426,7 @@
     position: sticky;
     top: var(--videos-sticky-top);
     z-index: 20;
-    transition: top 0.3s ease;
+    transition: top 0.45s ease;
     margin-top: -8px;
     border-radius: 0;
   }
@@ -485,7 +485,7 @@
   margin: 0;
   border-radius: 14px;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
-  transition: bottom 0.3s ease;
+  transition: bottom 0.45s ease;
 }
 
 /* Kullanıcı sürükleyip bıraktıysa konum satır içi verilir; alt menü geçişi onu etkilemez. */

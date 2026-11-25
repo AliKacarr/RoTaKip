@@ -40,13 +40,46 @@
     function listRowHtml(video, listKey) {
         return `<div class="videos-library-row">
             ${ns.relatedItemHtml(video)}
-            <button type="button" class="videos-icon-button videos-remove" data-remove-from="${listKey}" data-video-id="${ns.escape(video.id)}" aria-label="Listeden kaldır"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            <button type="button" class="videos-icon-button videos-library-more" data-action="library-item-menu" data-store="${listKey}" data-video-id="${ns.escape(video.id)}" aria-haspopup="menu" aria-label="Video seçenekleri"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>
         </div>`;
     }
 
-    function headingHtml(listKey, title, count) {
+    // Geçmiş gün başlığı: Bugün, Dün, son haftadaki günler için gün adı (Pazartesi), daha eskiler için "18 Haziran".
+    function dayStart(timestamp) {
+        const date = new Date(timestamp);
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function dayLabel(timestamp) {
+        const at = Number(timestamp);
+        if (!Number.isFinite(at) || at <= 0) return 'Daha önce';
+        const day = dayStart(at);
+        const today = dayStart(Date.now());
+        const diff = Math.round((today - day) / 86400000);
+        if (diff <= 0) return 'Bugün';
+        if (diff === 1) return 'Dün';
+        if (diff < 7) {
+            const weekday = day.toLocaleDateString('tr-TR', { weekday: 'long' });
+            return weekday.charAt(0).toLocaleUpperCase('tr-TR') + weekday.slice(1);
+        }
+        const sameYear = day.getFullYear() === today.getFullYear();
+        return day.toLocaleDateString('tr-TR', sameYear ? { day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    // Geçmiş en yeniden eskiye sıralıdır; art arda gelen aynı güne ait videolar tek başlık altında toplanır.
+    function historyRowsHtml(items, listKey) {
+        let currentLabel = null;
+        return items.map(video => {
+            const label = dayLabel(video.at);
+            const heading = label === currentLabel ? '' : `<h2 class="videos-history-day">${ns.escape(label)}</h2>`;
+            currentLabel = label;
+            return heading + listRowHtml(video, listKey);
+        }).join('');
+    }
+
+    function headingHtml(listKey, title) {
         return `<a class="videos-library-heading" href="${ns.TAB_PATH}?bolum=hesabim&amp;liste=${listKey}" data-library-list="${listKey}">
-            <h2 class="videos-block-title">${ns.escape(title)}${count !== undefined ? ` <span class="videos-count">${count}</span>` : ''}</h2>
+            <h2 class="videos-block-title">${ns.escape(title)}</h2>
             <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
         </a>`;
     }
@@ -126,7 +159,7 @@
                 </section>
 
                 <section class="videos-library-block">
-                    ${headingHtml('kanallar', 'Kanallarım', channels.length ? `${followed.length}/${channels.length}` : undefined)}
+                    ${headingHtml('kanallar', 'Kanallarım')}
                     ${followed.length
                         ? `<div class="videos-channel-row">${followed.map(channel => `<button type="button" class="videos-channel-chip" data-channel-filter="${ns.escape(channel.id)}">
                                 ${ns.avatarHtml(channel.id, channel.name, 'videos-avatar-lg')}
@@ -158,7 +191,9 @@
                 : '';
             this.container.innerHTML = `${this.listHeaderHtml(list.title, actions)}
                 ${items.length
-                    ? `<div class="videos-library-list">${items.map(video => listRowHtml(video, list.store)).join('')}</div>`
+                    ? `<div class="videos-library-list">${listKey === 'gecmis'
+                        ? historyRowsHtml(items, list.store)
+                        : items.map(video => listRowHtml(video, list.store)).join('')}</div>`
                     : `<div class="videos-empty"><i class="${list.icon}" aria-hidden="true"></i><p>${ns.escape(list.empty)}</p></div>`}`;
         },
 

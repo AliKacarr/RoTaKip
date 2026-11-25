@@ -29,9 +29,17 @@
   gap: 10px;
 }
 
+/* Başlık yazısının görsel merkezi satır kutusunun ortasından aşağıdadır; ok simgesi satır yüksekliği 1 ile
+   ortalanıp 2 px aşağı alınarak yazının hizasına oturtulur. */
+.videos-library-heading .videos-block-title {
+  line-height: 1.2;
+}
+
 .videos-library-heading > i {
   color: var(--videos-muted);
   font-size: 14px;
+  line-height: 1;
+  transform: translateY(2px);
 }
 
 .videos-library-empty {
@@ -180,7 +188,7 @@
 
 .videos-collection {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
   padding: 4px 0;
 }
@@ -189,14 +197,17 @@
   flex: 1 1 auto;
   display: grid;
   grid-template-columns: 168px minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 16px;
   min-width: 0;
 }
 
+/* Başlık ve ⋯ düğmesi aynı satırda (40 px yükseklikte, dikey ortalı) kapağın üst kenarıyla hizalanır;
+   `padding-top`/`margin-top` 7 px, kapağın arkasındaki şeridin (`.videos-collection-art`) yüksekliğidir. */
 .videos-collection-more {
   flex: 0 0 auto;
-  align-self: center;
+  align-self: flex-start;
+  margin-top: 7px;
   color: var(--videos-text);
   font-size: 18px;
 }
@@ -313,11 +324,15 @@
 .videos-collection-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
   min-width: 0;
+  padding-top: 7px;
 }
 
 .videos-collection-title {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
   font-size: 18px;
   font-weight: 700;
 }
@@ -345,8 +360,8 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   box-sizing: border-box;
   border: 1.5px solid #a3a3a3;
   border-radius: 50%;
@@ -364,6 +379,17 @@
   gap: 4px;
 }
 
+.videos-history-day {
+  margin: 14px 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.videos-history-day:first-child {
+  margin-top: 4px;
+}
+
 .videos-library-row {
   display: flex;
   align-items: flex-start;
@@ -375,7 +401,8 @@
   min-width: 0;
 }
 
-.videos-remove {
+.videos-library-more {
+  flex: 0 0 auto;
   margin-top: 6px;
   color: var(--videos-muted) !important;
   font-size: 16px;

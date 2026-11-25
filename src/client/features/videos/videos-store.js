@@ -35,7 +35,7 @@
     }
 
     function emptyState() {
-        return { v: 1, unfollowed: [], liked: [], saved: [], history: [], completed: [], shelfHiddenUntil: 0, selectedChannel: '', autoplay: true };
+        return { v: 1, unfollowed: [], liked: [], disliked: [], saved: [], history: [], completed: [], shelfHiddenUntil: 0, selectedChannel: '', autoplay: true };
     }
 
     function isSnapshot(item) {
@@ -47,6 +47,7 @@
         if (!raw || raw.v !== 1) return state;
         state.unfollowed = Array.isArray(raw.unfollowed) ? raw.unfollowed.filter(id => typeof id === 'string').slice(0, 200) : [];
         state.liked = Array.isArray(raw.liked) ? raw.liked.filter(isSnapshot).slice(0, LIST_LIMIT) : [];
+        state.disliked = Array.isArray(raw.disliked) ? raw.disliked.filter(isSnapshot).slice(0, LIST_LIMIT) : [];
         state.saved = Array.isArray(raw.saved) ? raw.saved.filter(isSnapshot).slice(0, LIST_LIMIT) : [];
         state.history = Array.isArray(raw.history) ? raw.history.filter(isSnapshot).slice(0, HISTORY_LIMIT) : [];
         state.shelfHiddenUntil = Number.isFinite(raw.shelfHiddenUntil) ? raw.shelfHiddenUntil : 0;
@@ -63,6 +64,7 @@
     function buildIndexes() {
         indexes = {
             liked: new Set(state.liked.map(item => item.id)),
+            disliked: new Set(state.disliked.map(item => item.id)),
             saved: new Set(state.saved.map(item => item.id)),
             unfollowed: new Set(state.unfollowed),
             completed: new Set(state.completed),
@@ -180,12 +182,24 @@
         // ---------- Beğeni / kayıt ----------
         isLiked: id => indexes.liked.has(id),
         isSaved: id => indexes.saved.has(id),
-        toggleLike: video => toggleList('liked', video),
+        isDisliked: id => indexes.disliked.has(id),
+        // Beğen ve beğenme birbirini dışlar: biri açılırsa diğeri kapanır.
+        toggleLike(video) {
+            const active = toggleList('liked', video);
+            if (active && indexes.disliked.has(video.id)) store.removeFrom('disliked', video.id);
+            return active;
+        },
+        toggleDislike(video) {
+            const active = toggleList('disliked', video);
+            if (active && indexes.liked.has(video.id)) store.removeFrom('liked', video.id);
+            return active;
+        },
         toggleSave: video => toggleList('saved', video),
         liked: () => state.liked.slice(),
+        disliked: () => state.disliked.slice(),
         saved: () => state.saved.slice(),
         removeFrom(listName, id) {
-            if (!['liked', 'saved', 'history'].includes(listName)) return;
+            if (!['liked', 'disliked', 'saved', 'history'].includes(listName)) return;
             state[listName] = state[listName].filter(item => item.id !== id);
             buildIndexes();
             persist({ immediate: true });

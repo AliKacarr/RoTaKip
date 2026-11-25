@@ -137,6 +137,7 @@
             return (videos || []).filter(video => video
                 && video.type === 'shorts'
                 && !this.ids.has(video.id)
+                && !ns.store.isDisliked(video.id)
                 && ns.store.isFollowing(video.channelId)
                 && ns.store.isCompleted(video.id) === (this.pass === 'watched'));
         },
