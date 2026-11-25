@@ -349,9 +349,9 @@
 .tefekkur-share-options [data-share="whatsapp"] i { color: #25d366; }
 
 .tefekkur-index-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -359,16 +359,15 @@
 
 .tefekkur-index-item {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas: "number name" "number arabic";
+    grid-template-columns: 32px minmax(0, 1fr) auto auto;
     align-items: center;
-    column-gap: 10px;
+    column-gap: 14px;
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #e2e5ea;
-    border-radius: 14px;
+    padding: 12px 14px 12px 12px;
+    border: 0;
+    border-radius: 16px;
     color: #111;
-    background: #fff;
+    background: transparent;
     text-align: left;
     cursor: pointer;
 }
@@ -378,49 +377,94 @@
 }
 
 .tefekkur-index-item.is-current {
-    border-color: #111;
-    background: #f1f1f1;
+    background: #e9e9eb;
 }
 
 .tefekkur-index-number {
-    grid-area: number;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    color: #555;
-    background: #f0f1f3;
-    font-size: 13px;
+    color: #111;
+    font-size: 17px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    text-align: center;
 }
 
-.tefekkur-index-item.is-current .tefekkur-index-number {
-    color: #fff;
-    background: #111;
+.tefekkur-index-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
 }
 
 .tefekkur-index-name {
-    grid-area: name;
     overflow: hidden;
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 700;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tefekkur-index-desc {
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 16px;
+    line-height: 1.35;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .tefekkur-index-arabic {
-    grid-area: arabic;
+    max-width: 120px;
     overflow: hidden;
-    color: #555;
+    color: #222;
     font-family: "KFGQPC Uthman Taha Naskh", "Amiri", "Noto Naskh Arabic", serif;
-    font-size: 18px;
-    line-height: 1.5;
-    text-align: left;
+    font-size: 26px;
+    line-height: 1.6;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.tefekkur-index-check {
+    width: 18px;
+    font-size: 18px;
+    text-align: center;
+    visibility: hidden;
+}
+
+.tefekkur-index-item.is-current .tefekkur-index-check {
+    visibility: visible;
+}
+
+.tefekkur-sheet-handle {
+    display: none;
+    flex: 0 0 auto;
+    width: 48px;
+    height: 5px;
+    margin: 10px auto 0;
+    border-radius: 3px;
+    background: #d1d5db;
+}
+
+.tefekkur-sheet.is-index .tefekkur-sheet-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tefekkur-sheet.is-index .tefekkur-sheet-header h2 i {
+    font-size: 24px;
+}
+
+.tefekkur-sheet.is-index .tefekkur-sheet-close {
+    width: 44px;
+    height: 44px;
+    color: #111;
+    background: transparent;
+    font-size: 26px;
+}
+
+.tefekkur-sheet.is-index .tefekkur-sheet-body {
+    padding: 4px 14px 22px;
 }
 
 @keyframes tefekkur-sheet-fade {
@@ -507,20 +551,33 @@
     .tefekkur-sheet.is-confirm {
         margin: 0;
     }
+
+    .tefekkur-sheet.is-index {
+        min-height: 70dvh;
+    }
+
+    .tefekkur-sheet.is-index .tefekkur-sheet-handle {
+        display: block;
+    }
 }
 
 @media (max-width: 480px) {
-    .tefekkur-index-list {
-        gap: 6px;
-    }
-
     .tefekkur-index-item {
-        column-gap: 8px;
-        padding: 8px 10px;
+        grid-template-columns: 26px minmax(0, 1fr) auto auto;
+        column-gap: 10px;
     }
 
     .tefekkur-index-name {
-        font-size: 14px;
+        font-size: 18px;
+    }
+
+    .tefekkur-index-desc {
+        font-size: 15px;
+    }
+
+    .tefekkur-index-arabic {
+        max-width: 96px;
+        font-size: 24px;
     }
 }
 

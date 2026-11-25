@@ -212,7 +212,7 @@
             counter.removeAttribute('aria-label');
         }
         if (state.chip === 'index') {
-            chip.querySelector('span').textContent = total > 0 ? `${total} İsim` : 'Liste';
+            chip.querySelector('span').textContent = total > 0 ? `${total} İsim` : '99 İsim';
         }
     }
 
@@ -366,7 +366,8 @@
 
     function openIndexSheet() {
         ns.openSheet({
-            title: state.label,
+            title: state.items.some(item => item.title) ? 'İsim Seç' : state.label,
+            titleIcon: 'fa-solid fa-list-ol',
             className: 'is-index',
             labelId: 'tefekkurIndexTitle',
             render(body, close) {
@@ -381,16 +382,19 @@
                         button.setAttribute('aria-current', 'true');
                         button.dataset.autofocus = '';
                     }
-                    button.append(
-                        createElement('span', 'tefekkur-index-number', String(index + 1)),
-                        createElement('span', 'tefekkur-index-name', item.title || `${index + 1}`)
-                    );
+                    const text = createElement('span', 'tefekkur-index-text');
+                    text.appendChild(createElement('span', 'tefekkur-index-name', item.title || `${index + 1}`));
+                    if (item.title && item.text) text.appendChild(createElement('span', 'tefekkur-index-desc', item.text));
+                    button.append(createElement('span', 'tefekkur-index-number', String(index + 1)), text);
                     if (item.arabic) {
                         const arabic = createElement('span', 'tefekkur-index-arabic', item.arabic);
                         arabic.lang = 'ar';
                         arabic.dir = 'rtl';
                         button.appendChild(arabic);
                     }
+                    const check = createElement('i', 'fa-solid fa-check tefekkur-index-check');
+                    check.setAttribute('aria-hidden', 'true');
+                    button.appendChild(check);
                     entry.appendChild(button);
                     list.appendChild(entry);
                 });

@@ -145,14 +145,15 @@
 
     // Pencereler sekme görünümünün dışında (body) açılır: sekme geçiş animasyonu
     // `position: fixed` öğelerin konumunu bozar. Odak pencere içinde tutulur, Esc kapatır.
-    ns.openSheet = function openSheet({ title, className = '', render, onClose, labelId = 'tefekkurSheetTitle' }) {
+    ns.openSheet = function openSheet({ title, titleIcon = '', className = '', render, onClose, labelId = 'tefekkurSheetTitle' }) {
         const previousFocus = document.activeElement;
         const backdrop = document.createElement('div');
         backdrop.className = 'tefekkur-sheet-backdrop';
         backdrop.innerHTML = `
             <div class="tefekkur-sheet ${className}" role="dialog" aria-modal="true" aria-labelledby="${labelId}">
+                <span class="tefekkur-sheet-handle" aria-hidden="true"></span>
                 <div class="tefekkur-sheet-header">
-                    <h2 id="${labelId}">${window.escapeHtml(title)}</h2>
+                    <h2 id="${labelId}">${titleIcon ? `<i class="${window.escapeHtml(titleIcon)}" aria-hidden="true"></i>` : ''}${window.escapeHtml(title)}</h2>
                     <button type="button" class="tefekkur-sheet-close" data-sheet-close aria-label="Kapat"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                 </div>
                 <div class="tefekkur-sheet-body"></div>
