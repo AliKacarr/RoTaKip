@@ -296,14 +296,18 @@
         if (paused) syncShortsSound();
     }
 
-    // Duraklatılmış Shorts'taki ses düğmesinin simgesi ve etiketi videonun ses durumunu yansıtır.
+    // Ses düğmelerinin (telefonda duraklatınca çıkan, masaüstünde videonun sol üstündeki) simgesi ve etiketi
+    // videonun ses durumunu yansıtır. Masaüstü düğmeleri iki simge taşır; hangisinin görüneceğini
+    // `.is-shorts-muted` sınıfı belirler.
     function syncShortsSound() {
-        const button = page?.querySelector('.videos-shorts-sound');
-        if (!button) return;
+        if (!page) return;
         const muted = Boolean(ns.shorts.muted);
-        button.setAttribute('aria-label', muted ? 'Sesi aç' : 'Sesi kapat');
-        button.setAttribute('aria-pressed', muted ? 'true' : 'false');
-        const icon = button.querySelector('i');
+        page.classList.toggle('is-shorts-muted', muted);
+        page.querySelectorAll('[data-action="shorts-sound"]').forEach(button => {
+            button.setAttribute('aria-label', muted ? 'Sesi aç' : 'Sesi kapat');
+            button.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        });
+        const icon = page.querySelector('.videos-shorts-sound i');
         if (icon) icon.className = muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
     }
 
@@ -509,12 +513,15 @@
         openAnchoredMenu(button, 'shelf', '<button type="button" role="menuitem" data-action="shelf-less"><i class="fa-regular fa-circle-xmark" aria-hidden="true"></i> Daha az Shorts videosu göster</button>');
     }
 
-    // Shorts sağ üst menüsü (yatay ⋯, yalnız telefon/tablet): "Tam ekran" ve "Bu kanalı önerme".
+    // Shorts sağ üst menüsü (telefon/tablette yatay ⋯, masaüstünde videonun sağ üstündeki dikey ⋮):
+    // "Tam ekran" ve "Bu kanalı önerme".
     // Tam ekran desteklenmiyorsa (iPhone Safari) yalnız kanal seçeneği gösterilir.
     function openShortsMoreMenu(button) {
         const video = ns.shorts.currentVideo();
         const items = [];
-        if (document.fullscreenEnabled) {
+        // Masaüstünde (>1023px) tam ekranın videonun sağ üstünde kendi düğmesi vardır; menüde tekrarlanmaz.
+        const hasFullscreenButton = !window.matchMedia('(max-width: 1023px)').matches;
+        if (document.fullscreenEnabled && !hasFullscreenButton) {
             const on = isFullscreen();
             items.push(`<button type="button" role="menuitem" data-action="shorts-fullscreen"><i class="fa-solid ${on ? 'fa-compress' : 'fa-expand'}" aria-hidden="true"></i> ${on ? 'Tam ekrandan çık' : 'Tam ekran'}</button>`);
         }
@@ -629,10 +636,19 @@
         }
         if (action === 'shorts-sound') {
             ns.shorts.toggleMute();
+            if (!button.classList.contains('videos-shorts-sound')) return;
             // Dokunuş efekti: sınıf kaldırılıp yeniden eklenerek animasyon her tıklamada baştan oynar.
             button.classList.remove('is-pressed');
             void button.offsetWidth;
             button.classList.add('is-pressed');
+            return;
+        }
+        if (action === 'short-play') {
+            ns.shorts.togglePlay();
+            return;
+        }
+        if (action === 'shorts-prev' || action === 'shorts-next') {
+            ns.shorts.step(action === 'shorts-next' ? 1 : -1);
             return;
         }
         if (action === 'shorts-more') {
@@ -881,8 +897,13 @@
     }
 
     // Tam ekran durumu değişince (ör. Esc ile çıkış) ya da Shorts'tan ayrılınca açık ⋯ menüsü eskimesin diye kapanır.
+    // Masaüstündeki büyüt düğmelerinin etiketi de güncellenir (simgeyi CSS `:root:fullscreen` değiştirir).
     function syncFullscreenMenu() {
         if (menu?.dataset.menu === 'shorts-more') closeMenu();
+        const label = isFullscreen() ? 'Tam ekrandan çık' : 'Tam ekran';
+        page?.querySelectorAll('.videos-short-control[data-action="shorts-fullscreen"]').forEach(button => {
+            button.setAttribute('aria-label', label);
+        });
     }
 
     // Görünüm değişimi ve kaydırma konumu geri yüklemesi programatik kaydırmadır; gizleme tetiklememeli.

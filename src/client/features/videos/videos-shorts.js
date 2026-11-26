@@ -17,28 +17,40 @@
         const liked = ns.store.isLiked(video.id);
         const saved = ns.store.isSaved(video.id);
         const action = (name, icons, label, active, text) => `<button type="button" class="videos-short-action${active ? ' is-active' : ''}" data-action="${name}" data-video-id="${id}" aria-label="${label}" aria-pressed="${active ? 'true' : 'false'}" data-icon="${icons.icon}" data-active-icon="${icons.activeIcon}"><i class="${active ? icons.activeIcon : icons.icon}" aria-hidden="true"></i><span>${text}</span></button>`;
+        const muted = Boolean(shorts.muted);
+        const fullscreen = document.fullscreenElement === document.documentElement;
+        // Kanal/başlık ve eylem düğmeleri çerçevenin dışındadır: masaüstünde kanal/başlık ekranın sol altında,
+        // eylemler videonun sağında ayrı bir sütundur; telefon/tablette (≤1023px) ikisi de çerçevenin üstüne biner.
         return `<article class="videos-short" data-video-id="${id}" data-index="${index}" aria-label="${ns.escape(video.title)}">
             <div class="videos-short-frame">
                 <img class="videos-short-poster" src="${ns.escape(ns.thumbnailUrl(video.id))}" alt="" loading="${index < 2 ? 'eager' : 'lazy'}" decoding="async" referrerpolicy="no-referrer">
                 <button type="button" class="videos-short-toggle" data-action="short-toggle" aria-label="Oynat veya duraklat"></button>
                 <span class="videos-short-state" aria-hidden="true"><i class="fa-solid fa-play"></i></span>
-                <div class="videos-short-info">
-                    <button type="button" class="videos-short-channel" data-channel-filter="${ns.escape(video.channelId)}">
-                        ${ns.avatarHtml(video.channelId, video.channelName, 'videos-avatar-sm')}
-                        <span>${ns.escape(ns.channelHandleLabel(video.channelId, video.channelName))}</span>
-                    </button>
-                    <p class="videos-short-title">${ns.escape(video.title)}</p>
-                </div>
-                <div class="videos-short-actions">
-                    ${action('like', ns.LIKE_ICONS, 'Beğen', liked, 'Beğen')}
-                    ${action('save', ns.SAVE_ICONS, 'Kaydet', saved, 'Kaydet')}
-                    <button type="button" class="videos-short-action" data-action="share" data-video-id="${id}" aria-label="Paylaş"><i class="fa-solid fa-share" aria-hidden="true"></i><span>Paylaş</span></button>
-                    <a class="videos-short-action" href="${ns.escape(ns.youtubeUrl(video))}" target="_blank" rel="noopener noreferrer" aria-label="YouTube'da aç"><i class="fa-brands fa-youtube" aria-hidden="true"></i><span>YouTube</span></a>
+                <div class="videos-short-controls">
+                    <button type="button" class="videos-short-control" data-action="short-play" aria-label="Oynat veya duraklat"><i class="fa-solid fa-pause videos-short-icon-pause" aria-hidden="true"></i><i class="fa-solid fa-play videos-short-icon-play" aria-hidden="true"></i></button>
+                    <button type="button" class="videos-short-control" data-action="shorts-sound" aria-label="${muted ? 'Sesi aç' : 'Sesi kapat'}" aria-pressed="${muted ? 'true' : 'false'}"><i class="fa-solid fa-volume-high videos-short-icon-unmuted" aria-hidden="true"></i><i class="fa-solid fa-volume-xmark videos-short-icon-muted" aria-hidden="true"></i></button>
+                    <div class="videos-short-control-group">
+                        <button type="button" class="videos-short-control" data-action="shorts-more" aria-label="Diğer seçenekler" aria-haspopup="menu"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>
+                        ${document.fullscreenEnabled ? `<button type="button" class="videos-short-control" data-action="shorts-fullscreen" aria-label="${fullscreen ? 'Tam ekrandan çık' : 'Tam ekran'}"><i class="fa-solid fa-expand videos-short-icon-expand" aria-hidden="true"></i><i class="fa-solid fa-compress videos-short-icon-compress" aria-hidden="true"></i></button>` : ''}
+                    </div>
                 </div>
                 <div class="videos-short-seek" role="slider" tabindex="-1" aria-label="Short konumu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span class="videos-short-progress" aria-hidden="true"><span></span></span>
                     <span class="videos-short-seek-thumb" aria-hidden="true"></span>
                 </div>
+            </div>
+            <div class="videos-short-info">
+                <button type="button" class="videos-short-channel" data-channel-filter="${ns.escape(video.channelId)}">
+                    ${ns.avatarHtml(video.channelId, video.channelName, 'videos-avatar-sm')}
+                    <span>${ns.escape(ns.channelHandleLabel(video.channelId, video.channelName))}</span>
+                </button>
+                <p class="videos-short-title">${ns.escape(video.title)}</p>
+            </div>
+            <div class="videos-short-actions">
+                ${action('like', ns.LIKE_ICONS, 'Beğen', liked, 'Beğen')}
+                ${action('save', ns.SAVE_ICONS, 'Kaydet', saved, 'Kaydet')}
+                <button type="button" class="videos-short-action" data-action="share" data-video-id="${id}" aria-label="Paylaş"><i class="fa-solid fa-share" aria-hidden="true"></i><span>Paylaş</span></button>
+                <a class="videos-short-action" href="${ns.escape(ns.youtubeUrl(video))}" target="_blank" rel="noopener noreferrer" aria-label="YouTube'da aç"><i class="fa-brands fa-youtube" aria-hidden="true"></i><span>YouTube</span></a>
             </div>
         </article>`;
     }
@@ -46,6 +58,8 @@
     const shorts = {
         root: null,
         scroller: null,
+        navPrev: null,
+        navNext: null,
         layer: null,
         host: null,
         home: null,
@@ -79,6 +93,8 @@
         init(page) {
             this.root = page.querySelector('[data-view="shorts"]');
             this.scroller = page.querySelector('#videosShorts');
+            this.navPrev = page.querySelector('[data-action="shorts-prev"]');
+            this.navNext = page.querySelector('[data-action="shorts-next"]');
             this.layer = document.createElement('div');
             this.layer.className = 'videos-short-player';
             this.layer.setAttribute('aria-hidden', 'true');
@@ -175,6 +191,7 @@
                 this.observer?.observe(slide);
             });
             this.scroller.appendChild(fragment);
+            this.syncNav();
             return fresh.length;
         },
 
@@ -190,6 +207,7 @@
             });
             this.observer?.observe(slide);
             if (this.activeIndex >= 0) this.activeIndex += 1;
+            this.syncNav();
         },
 
         async loadMore() {
@@ -255,6 +273,7 @@
             this.items = [];
             this.ids.clear();
             this.clearSlides();
+            this.syncNav();
         },
 
         async enter(route) {
@@ -337,10 +356,17 @@
             slide.classList.add('is-active');
             this.userPaused = false;
             ns.tab.setShortsPaused(false);
+            this.syncNav();
             this.updateUrl(video.id);
             this.preloadAround(index);
             if (index >= this.items.length - LOAD_AHEAD) this.loadMore();
             if (ns.tab.isActive()) this.playActive();
+        },
+
+        // Masaüstündeki önceki/sonraki okları: ilk short'ta yukarı, sonuncusunda aşağı oku pasifleşir.
+        syncNav() {
+            if (this.navPrev) this.navPrev.disabled = !this.slideAt(this.activeIndex - 1);
+            if (this.navNext) this.navNext.disabled = !this.slideAt(this.activeIndex + 1);
         },
 
         updateUrl(videoId) {
@@ -454,6 +480,7 @@
                 slide?.classList.remove('is-paused', 'has-error');
                 // Tarayıcı sesli oynatmaya izin vermediyse oynatıcı sessize alınmış olabilir.
                 this.muted = this.player.isMuted();
+                ns.tab.syncShortsSound();
                 this.recordStart(video);
                 this.startProgressTimer();
             } else if (state === STATES.PAUSED) {

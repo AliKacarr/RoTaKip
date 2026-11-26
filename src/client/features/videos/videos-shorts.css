@@ -1,62 +1,17 @@
 /* ==================== Videolar: Shorts ==================== */
 
 .videos {
-  /* Kabuk kapsayıcısının üst kenar boşluğu + iç boşluğu + bölüm sekmeleri. */
-  /* Shorts tam ekrandır: bölüm sekmeleri üstte yüzer ve yer kaplamaz. */
-  --videos-shorts-height: calc(100dvh - 84px);
-}
-
-/* Shorts'ta bölüm sekmeleri akışın üstünde yüzer ve gizlidir; kullanıcı duraklatınca görünür. */
-.videos[data-view="shorts"] .videos-sections {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  margin: 0;
-}
-
-.videos[data-view="shorts"]:not(.is-shorts-paused) .videos-sections {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-110%);
-}
-
-/* Shorts'a geçerken sekme çubuğu hemen kaybolmaz: kırmızı çizgi "Shorts" yazısının altına kayıp ışıma
-   efektini oynarken görünür kalır (videos-tab.js `holdSectionsForShorts`), sonra her zamanki gibi gizlenir. */
-.videos[data-view="shorts"].is-shorts-entering .videos-sections {
-  opacity: 1;
-  pointer-events: none;
-  transform: none;
-}
-
-/* Shorts'ta bölüm sekmeleri ve kanal seçimi koyu temadadır (siyah arka plan üstünde yüzer). */
-.videos[data-view="shorts"] .videos-sections {
-  --videos-text: #ffffff;
-  --videos-soft: rgba(255, 255, 255, 0.14);
-  background: rgba(15, 15, 15, 0.96);
-  color: #ffffff;
-}
-
-.videos[data-view="shorts"] .videos-channel-select {
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-.videos[data-view="shorts"] .videos-channel-select.is-filtered {
-  border-color: #ffffff;
-  background: #ffffff;
-  color: #0f0f0f;
-}
-
-.videos[data-view="shorts"] .videos-channel-menu {
-  --videos-text: #ffffff;
-  --videos-soft: rgba(255, 255, 255, 0.14);
-  --videos-surface: #212121;
-  --videos-muted: #aaaaaa;
-  color: #ffffff;
+  /* Masaüstünde bölüm sekmeleri hep görünür ve yer kaplar (YouTube'daki gibi video sekmelerin altında durur):
+     kabuk kapsayıcısının üst/alt boşlukları (84px) + sekme çubuğu (yüksekliği, 1px taşması, -7px üst ve 14px
+     alt kenar boşluğu). Telefon/tablette (≤1023px) Shorts tam ekrandır; sekmeler üstte yüzer, yer kaplamaz. */
+  --videos-shorts-height: calc(100dvh - 84px - var(--videos-sections-height) - 8px);
+  /* Masaüstünde videonun sağındaki eylem sütunu. Video ortada kalsın diye solda da aynı genişlikte boşluk bırakılır. */
+  --videos-short-rail: 64px;
+  --videos-short-rail-gap: 14px;
 }
 
 /* Sağ üstteki yatay üç nokta düğmesi (yalnız telefon/tablet): "Tam ekran" (tarayıcı adres çubuğunu gizlemek için)
-   ve "Bu kanalı önerme" seçeneklerini açar. */
+   ve "Bu kanalı önerme" seçeneklerini açar. Masaüstünde aynı menü videonun sağ üstündeki dikey ⋮ ile açılır. */
 .videos-view[data-view="shorts"] {
   position: relative;
 }
@@ -107,14 +62,6 @@
   }
 }
 
-.videos[data-view="shorts"] .videos-menu {
-  --videos-text: #ffffff;
-  --videos-soft: rgba(255, 255, 255, 0.14);
-  --videos-surface: #212121;
-  --videos-muted: #aaaaaa;
-  color: #ffffff;
-}
-
 .videos.is-shorts-paused .videos-shorts-more,
 .videos.is-shorts-paused .videos-shorts-sound {
   top: calc(var(--videos-sections-height) + 12px);
@@ -137,14 +84,20 @@
 }
 
 .videos-short {
+  /* Slaydın dikey iç boşluğu ve buna göre çerçevenin genişliği (yükseklik × 9/16; kaydırıcı en az 420px).
+     Çerçeve dışındaki kanal/başlık bloğu bu genişliğe göre konumlanır. */
+  --videos-short-pad-y: 16px;
+  --videos-short-frame-width: calc((max(var(--videos-shorts-height), 420px) - 2 * var(--videos-short-pad-y)) * 9 / 16);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: var(--videos-short-rail-gap);
   height: 100%;
   /* Çerçeve (.videos-short-frame) slaydın iç yüksekliğini doldurur; dikey boşluk büyüdükçe çerçeve ve
-     (9:16 olduğundan) genişliği de orantılı küçülür. Mobilde (≤768px) çerçeve kenardan kenara kalır. */
-  padding: 20px 0;
+     (9:16 olduğundan) genişliği de orantılı küçülür. Mobilde (≤768px) çerçeve kenardan kenara kalır.
+     Soldaki boşluk sağdaki eylem sütununu dengeler: çerçeve tam ortada durur. */
+  padding: var(--videos-short-pad-y) 0 var(--videos-short-pad-y) calc(var(--videos-short-rail) + var(--videos-short-rail-gap));
   box-sizing: border-box;
   scroll-snap-align: start;
   scroll-snap-stop: always;
@@ -152,9 +105,10 @@
 
 .videos-short-frame {
   position: relative;
+  flex: 0 0 auto;
   height: 100%;
   aspect-ratio: 9 / 16;
-  max-width: 100%;
+  max-width: calc(100% - var(--videos-short-rail) - var(--videos-short-rail-gap));
   overflow: hidden;
   border-radius: 18px;
   background: #000000;
@@ -229,7 +183,6 @@
   top: 50%;
   left: 50%;
   z-index: 3;
-  display: grid;
   place-items: center;
   width: 56px;
   height: 56px;
@@ -246,11 +199,17 @@
   margin-left: 3px;
 }
 
-/* Dokunmatik cihazlarda YouTube duraklatılmış videonun ortasına kendi oynat düğmesini çizer (iframe içinde,
-   dışarıdan gizlenemez); iki ikon üst üste binmesin diye yalnızca bizim ikonumuz gizlenir. */
-@media (pointer: coarse) {
+/* Ortadaki oynat simgesi yalnız fareli tablet genişliğinde (≤1023px) görünür. Masaüstünde (>1023px) duraklatma
+   durumunu sol üstteki oynat/duraklat düğmesi gösterir; ortada ikinci bir simge olmaz. Dokunmatik cihazlarda
+   YouTube duraklatılmış videonun ortasına kendi oynat düğmesini çizer (iframe içinde, dışarıdan gizlenemez);
+   iki ikon üst üste binmesin diye orada da bizim ikonumuz gösterilmez. */
+.videos-short-state {
+  display: none;
+}
+
+@media (max-width: 1023px) and (pointer: fine) {
   .videos-short-state {
-    display: none;
+    display: grid;
   }
 }
 
@@ -261,15 +220,100 @@
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
+/* Masaüstünde videonun sol üstünde oynat/duraklat ve ses, sağ üstünde ⋮ menü düğmesi (YouTube'daki gibi).
+   Telefon/tablette gizlidir: orada videoya dokunmak oynatır/duraklatır, ses ve ⋯ görünüm düzeyindedir. */
+/* Short oynarken kontroller görünmez; video duraklatılınca ya da fare videonun üstüne gelince belirir
+   (klavyeyle odaklanınca da). */
+.videos-short-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  left: 12px;
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.videos-short.is-paused .videos-short-controls,
+.videos-short-frame:hover .videos-short-controls,
+.videos-short-controls:focus-within {
+  opacity: 1;
+}
+
+.videos-short-control {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.42);
+  color: #ffffff !important;
+  font-size: 17px !important;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color 0.15s ease;
+}
+
+.videos-short-control:hover,
+.videos-short-control:focus-visible {
+  background: rgba(0, 0, 0, 0.66);
+}
+
+/* Sağ üstte ⋮ ve büyüt (tam ekran) tek bir yarı saydam hap içinde yan yanadır. */
+.videos-short-control-group {
+  display: flex;
+  margin-left: auto;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.videos-short-control-group .videos-short-control {
+  background: transparent;
+}
+
+.videos-short-control-group .videos-short-control:hover,
+.videos-short-control-group .videos-short-control:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Simgeler durumla değişir: duraklatılmış slayt `.is-paused`, sessizlik `.is-shorts-muted`,
+   tam ekran `:root:fullscreen`. */
+.videos-short-icon-play,
+.videos-short-icon-muted,
+.videos-short-icon-compress,
+.videos-short.is-paused .videos-short-icon-pause,
+.videos.is-shorts-muted .videos-short-icon-unmuted,
+:root:fullscreen .videos-short-icon-expand {
+  display: none;
+}
+
+.videos-short.is-paused .videos-short-icon-play,
+.videos.is-shorts-muted .videos-short-icon-muted,
+:root:fullscreen .videos-short-icon-compress {
+  display: inline;
+}
+
+.videos-short-icon-play {
+  margin-left: 2px;
+}
+
+/* Masaüstünde kanal ve başlık videonun üstünde değil, ekranın sol altındadır (YouTube Shorts masaüstü düzeni):
+   slaydın sol kenarından videonun 32px soluna kadar uzanır, alt kenarı videonun alt kenarıyla hizalıdır. */
 .videos-short-info {
   position: absolute;
-  left: 14px;
-  right: 84px;
-  bottom: 20px;
+  left: 0;
+  bottom: var(--videos-short-pad-y);
   z-index: 4;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
+  width: min(420px, calc((100% - var(--videos-short-frame-width)) / 2 - 32px));
+  color: var(--videos-text);
   pointer-events: none;
 }
 
@@ -282,9 +326,9 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #ffffff !important;
+  color: var(--videos-text) !important;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   pointer-events: auto;
 }
@@ -295,41 +339,47 @@
   text-overflow: ellipsis;
 }
 
+.videos-short-channel:hover > span:last-child {
+  text-decoration: underline;
+}
+
 .videos-short-title {
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font-size: 15px;
-  line-height: 1.35;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  -webkit-line-clamp: 3;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
+/* Masaüstünde eylemler videonun sağında, alta hizalı ayrı bir sütundur: gri daire içinde simge, altında etiket
+   (YouTube Shorts masaüstü düzeni). Telefon/tablette (≤1023px) çerçevenin sağ altına biner. */
 .videos-short-actions {
-  position: absolute;
-  right: 6px;
-  bottom: 23px;
+  position: relative;
   z-index: 4;
+  flex: 0 0 var(--videos-short-rail);
+  align-self: flex-end;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 .videos-short-action {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
-  width: 58px;
+  gap: 6px;
+  width: var(--videos-short-rail);
   padding: 0;
   border: 0;
+  outline: none;
   background: transparent;
-  color: #ffffff !important;
+  color: var(--videos-text) !important;
   font-size: 13px !important;
-  font-weight: 600 !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  font-weight: 500 !important;
   cursor: pointer;
 }
 
@@ -340,17 +390,92 @@
 .videos-short-action i {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 30px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: transparent;
-  font-size: 22px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
-  transition: transform 0.15s ease;
+  background: var(--videos-soft);
+  font-size: 20px;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.videos-short-action:hover i {
+  background: #e5e5e5;
+}
+
+.videos-short-action.is-active i {
+  background: var(--videos-text);
+  color: #ffffff;
+}
+
+.videos-short-action:focus-visible i {
+  outline: 2px solid var(--videos-text);
+  outline-offset: 2px;
 }
 
 .videos-short-action:active i {
   transform: scale(0.88);
+}
+
+/* Masaüstünde sağ kenarda önceki/sonraki short okları; üstüne gelince solunda etiket çıkar. İlk short'ta yukarı,
+   sonuncusunda aşağı ok gizlenir (videos-shorts.js `syncNav`). Telefon/tablette kaydırma yeterlidir. */
+.videos-shorts-nav {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: translateY(-50%);
+}
+
+.videos-shorts-nav-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--videos-soft);
+  color: var(--videos-text) !important;
+  font-size: 20px !important;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.2s ease;
+}
+
+.videos-shorts-nav-button:hover {
+  background: #e5e5e5;
+}
+
+.videos-shorts-nav-button:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.videos-shorts-nav-button::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 10px);
+  padding: 7px 9px;
+  border-radius: 4px;
+  background: rgba(97, 97, 97, 0.92);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity 0.15s ease;
+}
+
+.videos-shorts-nav-button:hover::before,
+.videos-shorts-nav-button:focus-visible::before {
+  opacity: 1;
 }
 
 /* Sarma çubuğu: ince ilerleme çizgisi; durdurulunca ya da dokunulup sürüklenince kırmızı daire çıkar. */
@@ -474,8 +599,129 @@
 }
 
 @media (max-width: 1023px) {
+  /* Telefon/tablette Shorts tam ekrandır: bölüm sekmeleri üstte yüzer ve yer kaplamaz. */
   .videos {
     --videos-shorts-height: calc(100dvh - 81px - env(safe-area-inset-bottom, 0px) - 84px);
+  }
+
+  /* Bölüm sekmeleri akışın üstünde yüzer ve gizlidir; kullanıcı duraklatınca görünür. */
+  .videos[data-view="shorts"] .videos-sections {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    margin: 0;
+  }
+
+  .videos[data-view="shorts"]:not(.is-shorts-paused) .videos-sections {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-110%);
+  }
+
+  /* Shorts'a geçerken sekme çubuğu hemen kaybolmaz: kırmızı çizgi "Shorts" yazısının altına kayıp ışıma
+     efektini oynarken görünür kalır (videos-tab.js `holdSectionsForShorts`), sonra her zamanki gibi gizlenir. */
+  .videos[data-view="shorts"].is-shorts-entering .videos-sections {
+    opacity: 1;
+    pointer-events: none;
+    transform: none;
+  }
+
+  /* Bölüm sekmeleri, kanal seçimi ve menüler koyu temadadır (siyah arka plan üstünde yüzer). */
+  .videos[data-view="shorts"] .videos-sections {
+    --videos-text: #ffffff;
+    --videos-soft: rgba(255, 255, 255, 0.14);
+    background: rgba(15, 15, 15, 0.96);
+    color: #ffffff;
+  }
+
+  .videos[data-view="shorts"] .videos-channel-select {
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+
+  .videos[data-view="shorts"] .videos-channel-select.is-filtered {
+    border-color: #ffffff;
+    background: #ffffff;
+    color: #0f0f0f;
+  }
+
+  .videos[data-view="shorts"] .videos-channel-menu,
+  .videos[data-view="shorts"] .videos-menu {
+    --videos-text: #ffffff;
+    --videos-soft: rgba(255, 255, 255, 0.14);
+    --videos-surface: #212121;
+    --videos-muted: #aaaaaa;
+    color: #ffffff;
+  }
+
+  .videos-short {
+    --videos-short-pad-y: 20px;
+    gap: 0;
+    padding: var(--videos-short-pad-y) 0;
+  }
+
+  .videos-short-frame {
+    max-width: 100%;
+  }
+
+  .videos-short-controls,
+  .videos-shorts-nav {
+    display: none;
+  }
+
+  /* Kanal ve başlık çerçevenin sol altına biner (sağda eylem sütununa yer kalır). Çerçeve slaytta ortalı
+     olduğundan sol/sağ kenarlar çerçevenin genişliğinden hesaplanır. */
+  .videos-short-info {
+    right: calc((100% - var(--videos-short-frame-width)) / 2 + 84px);
+    bottom: calc(var(--videos-short-pad-y) + 20px);
+    left: calc((100% - var(--videos-short-frame-width)) / 2 + 14px);
+    gap: 6px;
+    width: auto;
+    color: #ffffff;
+  }
+
+  .videos-short-channel {
+    color: #ffffff !important;
+    font-weight: 700;
+  }
+
+  .videos-short-channel:hover > span:last-child {
+    text-decoration: none;
+  }
+
+  .videos-short-title {
+    -webkit-line-clamp: 2;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.35;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Eylemler çerçevenin sağ altına biner: negatif sol boşluk sütunu çerçevenin içine çeker; net genişliği
+     sıfır olduğundan çerçeve ortada kalır (sütun çerçevenin sağ kenarından 6px içeride biter). */
+  .videos-short-actions {
+    flex: 0 0 58px;
+    gap: 20px;
+    margin: 0 6px 23px -64px;
+  }
+
+  .videos-short-action {
+    gap: 0;
+    width: 58px;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  }
+
+  .videos-short-action i,
+  .videos-short-action:hover i,
+  .videos-short-action.is-active i {
+    width: 34px;
+    height: 30px;
+    background: transparent;
+    color: inherit;
+    font-size: 22px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -507,14 +753,14 @@
     z-index: 6;
     display: grid;
     place-items: center;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border: 0;
     border-radius: 50%;
     background: transparent;
     color: #ffffff !important;
-    font-size: 15px;
+    font-size: 21px !important;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
@@ -534,7 +780,10 @@
     display: grid;
   }
 
+  /* Çerçeve kenardan kenaradır: kanal/başlık bloğunun konum hesabı da tam genişliğe göre yapılır. */
   .videos-short {
+    --videos-short-pad-y: 0px;
+    --videos-short-frame-width: 100%;
     padding: 0;
   }
 
