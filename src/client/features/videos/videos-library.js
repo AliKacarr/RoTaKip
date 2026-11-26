@@ -9,7 +9,7 @@
     // `type`: listede yalnızca o türdeki videolar gösterilir (beğenilenler videolar ve Shorts diye ayrılır);
     // verilmezse tümü listelenir ve üstte Tümü/Videolar/Shorts filtresi bulunur.
     const LISTS = {
-        gecmis: { title: 'Geçmiş', store: 'history', empty: 'Henüz video izlemedin.', icon: 'fa-solid fa-clock-rotate-left' },
+        gecmis: { title: 'Geçmiş', search: 'İzleme geçmişinde ara', store: 'history', empty: 'Henüz video izlemedin.', icon: 'fa-solid fa-clock-rotate-left' },
         begenilenler: { title: 'Beğendiğim videolar', store: 'liked', type: 'video', empty: 'Beğendiğin videolar burada görünür.', icon: 'fa-solid fa-thumbs-up' },
         'begenilen-shorts': { title: "Beğendiğim Shorts'lar", store: 'liked', type: 'shorts', empty: "Beğendiğin Shorts'lar burada görünür.", icon: 'fa-solid fa-bolt' },
         kaydedilenler: { title: 'Kaydedilen videolar', store: 'saved', type: 'video', empty: 'Daha sonra izlemek için kaydettiğin videolar burada görünür.', icon: 'fa-solid fa-bookmark' },
@@ -255,7 +255,7 @@
                     ${headingHtml('gecmis', 'Geçmiş')}
                     ${history.length
                         ? `<div class="videos-shelf-row">${history.map(shelfItemHtml).join('')}</div>`
-                        : '<p class="videos-muted videos-library-empty">İzlediğin videolar burada görünür.</p>'}
+                        : `<p class="videos-muted videos-library-empty">${ns.store.isHistoryPaused() ? 'İzleme geçmişin duraklatıldı.' : 'İzlediğin videolar burada görünür.'}</p>`}
                 </section>
 
                 <section class="videos-library-block">
@@ -277,36 +277,39 @@
                 </section>`;
         },
 
-        listHeaderHtml(title, actions = '') {
+        listHeaderHtml(title) {
             return `<header class="videos-list-header">
                 <button type="button" class="videos-back" data-library-back aria-label="Kitaplığa dön"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
                 <h1 class="videos-library-title">${ns.escape(title)}</h1>
-                ${actions}
             </header>`;
         },
 
         renderList(listKey) {
             const list = LISTS[listKey];
             const items = itemsOf(listKey);
-            const actions = listKey === 'gecmis' && items.length
-                ? '<button type="button" class="videos-pill videos-pill-quiet" data-clear-history><i class="fa-solid fa-trash-can" aria-hidden="true"></i>Tüm Geçmişi temizle</button>'
-                : '';
             this.listKey = listKey;
-            // Türü sabit listelerde (Beğendiğim videolar / Beğendiğim Shorts'lar) yalnızca arama kutusu vardır.
-            const filters = !list.type
-                ? `<div class="videos-library-filters" role="group" aria-label="Video türü">
-                        ${FILTERS.map(filter => `<button type="button" class="videos-library-chip${filter.key === this.filter ? ' is-selected' : ''}" data-library-filter="${filter.key}" aria-pressed="${filter.key === this.filter}">${filter.label}</button>`).join('')}
-                    </div>`
+            // Geçmiş'te filtrelerin sağında ⋮ (duraklat / temizle) bulunur; geçmiş boşken de görünür ki
+            // duraklatılmış geçmiş yeniden açılabilsin.
+            const moreButton = listKey === 'gecmis'
+                ? '<button type="button" class="videos-icon-button videos-library-filters-more" data-action="history-menu" aria-haspopup="menu" aria-label="Geçmiş seçenekleri"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>'
                 : '';
-            const controls = items.length
+            const chips = items.length
+                ? FILTERS.map(filter => `<button type="button" class="videos-library-chip${filter.key === this.filter ? ' is-selected' : ''}" data-library-filter="${filter.key}" aria-pressed="${filter.key === this.filter}">${filter.label}</button>`).join('')
+                : '';
+            // Türü sabit listelerde (Beğendiğim videolar / Beğendiğim Shorts'lar) yalnızca arama kutusu vardır.
+            const filters = !list.type && (chips || moreButton)
+                ? `<div class="videos-library-filters" role="group" aria-label="Video türü">${chips}${moreButton}</div>`
+                : '';
+            const searchLabel = ns.escape(list.search || `${list.title} içinde ara`);
+            const search = items.length
                 ? `<div class="videos-library-search">
                         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                        <input type="search" data-library-search placeholder="${ns.escape(list.title)} içinde ara" aria-label="${ns.escape(list.title)} içinde ara" autocomplete="off" enterkeyhint="search" value="${ns.escape(this.rawQuery)}">
+                        <input type="search" data-library-search placeholder="${searchLabel}" aria-label="${searchLabel}" autocomplete="off" enterkeyhint="search" value="${ns.escape(this.rawQuery)}">
                         <button type="button" class="videos-library-search-clear" data-library-search-clear aria-label="Aramayı temizle"${this.query ? '' : ' hidden'}><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-                    </div>${filters}`
+                    </div>`
                 : '';
-            this.container.innerHTML = `${this.listHeaderHtml(list.title, actions)}
-                ${controls}
+            this.container.innerHTML = `${this.listHeaderHtml(list.title)}
+                ${search}${filters}
                 <div class="videos-library-results" data-library-results></div>`;
             this.renderResults();
         },
@@ -325,7 +328,10 @@
             const clear = this.container.querySelector('[data-library-search-clear]');
             if (clear) clear.hidden = !this.query;
             if (!all.length) {
-                results.innerHTML = `<div class="videos-empty"><i class="${list.icon}" aria-hidden="true"></i><p>${ns.escape(list.empty)}</p></div>`;
+                const paused = listKey === 'gecmis' && ns.store.isHistoryPaused();
+                const icon = paused ? 'fa-solid fa-pause' : list.icon;
+                const message = paused ? 'İzleme geçmişin duraklatıldı. İzlediğin videolar kaydedilmiyor.' : list.empty;
+                results.innerHTML = `<div class="videos-empty"><i class="${icon}" aria-hidden="true"></i><p>${ns.escape(message)}</p></div>`;
                 return;
             }
             if (!items.length) {

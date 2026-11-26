@@ -611,6 +611,30 @@
         );
     }
 
+    // Geçmiş listesindeki ⋮ menüsü: geçmişi duraklat / devam ettir ve (geçmiş boş değilse) tümünü temizle.
+    function openHistoryMenu(button) {
+        const paused = ns.store.isHistoryPaused();
+        const pauseItem = `<button type="button" role="menuitem" data-action="history-pause-toggle"><i class="fa-solid ${paused ? 'fa-play' : 'fa-pause'}" aria-hidden="true"></i> ${paused ? 'İzleme geçmişini devam ettir' : 'İzleme geçmişini duraklat'}</button>`;
+        const clearItem = ns.store.history().length
+            ? '<button type="button" role="menuitem" data-action="history-clear"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Tüm izleme geçmişini temizle</button>'
+            : '';
+        openAnchoredMenu(button, 'history', pauseItem + clearItem);
+    }
+
+    function toggleHistoryPause() {
+        closeMenu();
+        const paused = !ns.store.isHistoryPaused();
+        ns.store.setHistoryPaused(paused);
+        ns.toast(paused ? 'İzleme geçmişi duraklatıldı' : 'İzleme geçmişi yeniden kaydediliyor');
+    }
+
+    function clearAllHistory() {
+        closeMenu();
+        if (!window.confirm('İzleme geçmişin bu cihazdan silinsin mi?')) return;
+        ns.store.clearHistory();
+        ns.toast('İzleme geçmişi temizlendi');
+    }
+
     function clearCollection() {
         const { store, title, type } = menu?.dataset || {};
         closeMenu();
@@ -794,6 +818,18 @@
             clearCollection();
             return;
         }
+        if (action === 'history-menu') {
+            openHistoryMenu(button);
+            return;
+        }
+        if (action === 'history-pause-toggle') {
+            toggleHistoryPause();
+            return;
+        }
+        if (action === 'history-clear') {
+            clearAllHistory();
+            return;
+        }
         if (action === 'shelf-less') {
             closeMenu();
             ns.store.hideShortsShelf();
@@ -827,7 +863,7 @@
     }
 
     function onClick(event) {
-        if (menu && !event.target.closest('.videos-menu, [data-action="menu"], [data-action="shelf-menu"], [data-action="collection-menu"], [data-action="library-item-menu"], [data-action="shorts-more"]')) closeMenu();
+        if (menu && !event.target.closest('.videos-menu, [data-action="menu"], [data-action="shelf-menu"], [data-action="collection-menu"], [data-action="library-item-menu"], [data-action="history-menu"], [data-action="shorts-more"]')) closeMenu();
 
         const miniButton = event.target.closest('[data-mini]');
         if (miniButton) {
@@ -889,14 +925,6 @@
 
         if (event.target.closest('[data-library-back]')) {
             backToLibrary();
-            return;
-        }
-
-        if (event.target.closest('[data-clear-history]')) {
-            if (window.confirm('İzleme geçmişin bu cihazdan silinsin mi?')) {
-                ns.store.clearHistory();
-                ns.toast('Geçmiş temizlendi');
-            }
             return;
         }
 
@@ -1144,7 +1172,11 @@
     async function resume() {
         await init();
         if (!page) return;
-        if (!active) entryGlowPending = true;
+        // Sekme içi geri/ileri (ör. Hesabım listesinde ←) de destroy() → resume() yolundan geçer, ancak görünüm
+        // gizlenmediği (`keepVisibleInTab`) için sekme girişi sayılmaz: giriş ışıması yalnız sekmeye dışarıdan
+        // dönüşte (görünüm henüz açılmamışken) oynar.
+        const viewStillVisible = Boolean(page.closest('.tab-view-videos')?.classList.contains('visible'));
+        if (!active && !viewStillVisible) entryGlowPending = true;
         active = true;
         setChromeEnabled(true);
         placeIndicator();

@@ -39,7 +39,7 @@
     }
 
     function emptyState() {
-        return { v: STATE_VERSION, subscribed: [], hidden: [], liked: [], disliked: [], saved: [], history: [], completed: [], shelfHiddenUntil: 0, selectedChannel: '', autoplay: true };
+        return { v: STATE_VERSION, subscribed: [], hidden: [], liked: [], disliked: [], saved: [], history: [], completed: [], shelfHiddenUntil: 0, selectedChannel: '', autoplay: true, historyPaused: false };
     }
 
     function isSnapshot(item) {
@@ -67,6 +67,7 @@
         state.completed = Array.isArray(raw.completed) ? raw.completed.filter(ns.isVideoId).slice(0, COMPLETED_LIMIT) : [];
         state.selectedChannel = typeof raw.selectedChannel === 'string' ? raw.selectedChannel.slice(0, 120) : '';
         state.autoplay = raw.autoplay !== false;
+        state.historyPaused = raw.historyPaused === true;
         return state;
     }
 
@@ -265,8 +266,9 @@
             const position = entry.position || 0;
             return position > 10 && position < entry.duration - 15 ? Math.floor(position) : 0;
         },
+        // Geçmiş duraklatıldıysa hiçbir şey yazılmaz: geçmiş, kaldığı yer ve "izlendi" işareti olduğu gibi kalır.
         recordProgress(video, position = 0, duration = 0) {
-            if (!video || !ns.isVideoId(video.id)) return;
+            if (state.historyPaused || !video || !ns.isVideoId(video.id)) return;
             const knownDuration = Number(duration) || Number(video.duration) || 0;
             const safePosition = Math.max(0, Number(position) || 0);
             const previous = indexes.history.get(video.id);
@@ -300,7 +302,7 @@
             store.recordProgress(video, Math.max(Number(position) || 0, WATCHED_SECONDS), duration);
         },
         markCompleted(video) {
-            if (!video || indexes.completed.has(video.id)) return;
+            if (state.historyPaused || !video || indexes.completed.has(video.id)) return;
             store.recordProgress(video, video.duration || 0, video.duration || 0);
             if (!indexes.completed.has(video.id)) {
                 state.completed = [video.id, ...state.completed].slice(0, COMPLETED_LIMIT);
@@ -308,6 +310,15 @@
                 persist({ immediate: true });
                 emit('history', { id: video.id, completed: true });
             }
+        },
+        // "İzleme geçmişini duraklat": açıkken izlenen videolar geçmişe eklenmez ve ilerlemeleri kaydedilmez.
+        isHistoryPaused: () => state.historyPaused,
+        setHistoryPaused(paused) {
+            const next = Boolean(paused);
+            if (next === state.historyPaused) return;
+            state.historyPaused = next;
+            persist({ immediate: true });
+            emit('history', { paused: next });
         },
         clearHistory() {
             state.history = [];

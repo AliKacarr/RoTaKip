@@ -452,13 +452,14 @@
   min-height: 46px;
   box-sizing: border-box;
   padding: 0 46px 0 44px;
-  border: 1.5px solid transparent;
+  border: 1.5px solid #bdbdbd;
   border-radius: 999px;
-  background: #e6e6e6;
+  background: #f1f1f1;
   color: var(--videos-text);
   font: inherit;
   font-size: 16px;
   outline: 0;
+  transition: border-color 0.15s ease;
   -webkit-appearance: none;
   appearance: none;
 }
@@ -468,8 +469,7 @@
 }
 
 .videos-library-search input:focus-visible {
-  border-color: var(--videos-text);
-  background: var(--videos-surface);
+  border-color: #9a9a9a;
 }
 
 .videos-library-search-clear {
@@ -502,6 +502,16 @@
 
 .videos-library-filters::-webkit-scrollbar {
   display: none;
+}
+
+/* Geçmiş seçenekleri (⋮): filtre düğmelerinin sağ ucunda. */
+.videos-library-filters-more {
+  flex: 0 0 auto;
+  min-width: 36px;
+  height: 36px;
+  margin-left: auto;
+  padding: 0;
+  font-size: 16px;
 }
 
 .videos-library-chip {
@@ -556,7 +566,7 @@
 
 .videos-library-shorts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin: 4px 0 10px;
 }
@@ -632,10 +642,6 @@
   .videos-library-shorts-shelf .videos-short-tile {
     width: 34vw;
     max-width: 148px;
-  }
-
-  .videos-library-shorts-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .videos-library .videos-shelf-row,

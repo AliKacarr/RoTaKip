@@ -402,13 +402,6 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
   cursor: pointer;
 }
 
-.videos-pill-quiet {
-  background: var(--videos-soft);
-  /* Kenar box-shadow ile çizilir; düğme boyutu değişmez. */
-  border: 1.5px solid #bdbdbd;
-  color: var(--videos-text) !important;
-}
-
 /* "Abone ol" düğmesi (izleme sayfası, Shorts, Kanallar listesi). */
 .videos-subscribe {
   flex: 0 0 auto;
