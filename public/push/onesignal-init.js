@@ -31,7 +31,22 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
           document.querySelectorAll(`${customLinkSelector} ${notificationButtonSelector}`)
         );
 
+        // Bildirim durumunu sayfanın geri kalanına duyurur (Tesbihat'taki zil simgesi bunu dinler) ve
+        // sonraki açılışta SDK yüklenmeden simge doğru görünsün diye cihazda saklar.
+        // Çerçeve beklemeden (arka plan sekmesinde de) çalışsın diye `requestAnimationFrame` dışındadır.
+        const publishNotificationState = () => {
+          const enabled = isNotificationEnabled();
+          window.rotakipPushEnabled = enabled;
+          try {
+            window.localStorage.setItem('rotakip:push-enabled', enabled ? '1' : '0');
+          } catch (_error) {
+            // Depolama kapalı olabilir; olay yine de yayınlanır.
+          }
+          window.dispatchEvent(new CustomEvent('rotakip:push-state', { detail: { enabled } }));
+        };
+
         const updateNotificationButtonState = () => {
+          publishNotificationState();
           if (notificationStateUpdateFrame !== null) {
             cancelAnimationFrame(notificationStateUpdateFrame);
           }

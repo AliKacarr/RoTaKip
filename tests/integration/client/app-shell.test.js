@@ -378,6 +378,10 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat namaz v
   const tesbihatHome = readClient('features/tesbihat/tesbihat-home.js');
   assert.match(tesbihatHome, /id = 'tesbihatNotificationPanel'[\s\S]*?onesignal-customlink-container[\s\S]*?document\.body\.appendChild\(notificationPanel\)/);
   assert.match(tesbihatHome, /window\.scheduleOneSignalLoad/);
+  // Bildirim düğmesinin simgesi OneSignal durumunu yansıtır: açıkken fa-bell, kapalıyken fa-bell-slash.
+  assert.match(tesbihatHome, /enabled \? 'fa-solid fa-bell' : 'fa-solid fa-bell-slash'/);
+  assert.match(tesbihatHome, /window\.addEventListener\('rotakip:push-state'/);
+  assert.match(readPublic('push/onesignal-init.js'), /new CustomEvent\('rotakip:push-state', \{ detail: \{ enabled \} \}\)/);
   assert.doesNotMatch(readClient('features/tesbihat/tesbihat-home.css'), /tesbihat-list-heading::after|tesbihat-list-heading > i/);
   assert.equal((tesbihat.match(/data-open-location/g) || []).length, 1);
   assert.match(tesbihat, /data-view="location"[^>]*hidden[\s\S]*?id="tesbihatLocationSearch"[\s\S]*?id="tesbihatUseMyLocation"[\s\S]*?id="tesbihatLocationList"/);

@@ -21,6 +21,36 @@
 
     let elements = null;
     let notificationPanel = null;
+    let pushStateBound = false;
+
+    const PUSH_CACHE_KEY = 'rotakip:push-enabled';
+
+    // Bildirimlerin açık olup olmadığı: true / false, bilinmiyorsa null.
+    // Kesin kaynak OneSignal'dır (public/push/onesignal-init.js `rotakipPushEnabled`); SDK boşta geç yüklendiği
+    // için ondan önce tarayıcı izni (verilmediyse bildirim zaten kapalıdır) ve son bilinen durum kullanılır.
+    function readPushState() {
+        if (typeof window.rotakipPushEnabled === 'boolean') return window.rotakipPushEnabled;
+        if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') return false;
+        try {
+            const cached = window.localStorage.getItem(PUSH_CACHE_KEY);
+            if (cached === '1') return true;
+            if (cached === '0') return false;
+        } catch (_error) {
+            // Depolama kapalı: durum bilinmiyor sayılır.
+        }
+        return null;
+    }
+
+    // Açıkken dolu zil, kapalıyken üstü çizili zil; durum bilinmiyorsa varsayılan zil kalır.
+    function renderNotificationIcon(enabled) {
+        const button = elements?.notificationButton;
+        if (!button || typeof enabled !== 'boolean') return;
+        const icon = button.querySelector('i');
+        if (icon) icon.className = enabled ? 'fa-solid fa-bell' : 'fa-solid fa-bell-slash';
+        const label = enabled ? 'Bildirimler (açık)' : 'Bildirimler (kapalı)';
+        button.setAttribute('aria-label', label);
+        button.title = label;
+    }
 
     function queryElements() {
         return {
@@ -223,6 +253,12 @@
             elements = queryElements();
             bindEvents();
             ensureNotificationPanel();
+            renderNotificationIcon(readPushState());
+            // Olay dinleyicisi sayfa ömrü boyunca tek kez bağlanır; güncel düğmeye `elements` üzerinden ulaşır.
+            if (!pushStateBound) {
+                pushStateBound = true;
+                window.addEventListener('rotakip:push-state', event => renderNotificationIcon(event.detail?.enabled));
+            }
             if (typeof window.scheduleOneSignalLoad === 'function') window.scheduleOneSignalLoad();
         },
         render
