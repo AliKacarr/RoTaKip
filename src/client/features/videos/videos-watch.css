@@ -104,8 +104,8 @@
   margin-top: 4px;
 }
 
-/* Kanal tarafı (avatar + takip düğmesi) sağdaki şeffaf eylem düğmelerinden (44 px) daha baskın
-   görünmesin diye bilerek biraz küçüktür: avatar 38 px, takip düğmesi 36 px yüksekliğindedir. */
+/* Kanal tarafı (avatar + abone düğmesi) sağdaki şeffaf eylem düğmelerinden (44 px) daha baskın
+   görünmesin diye bilerek biraz küçüktür: avatar 38 px, abone düğmesi 36 px yüksekliğindedir. */
 .videos-watch-channel {
   display: flex;
   align-items: center;
@@ -126,25 +126,12 @@
   --avatar-size: 38px;
 }
 
-.videos-watch-channel .videos-follow {
+.videos-watch-channel .videos-subscribe {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   min-height: 36px;
   padding: 0 14px;
   font-size: 14px;
-}
-
-.videos-watch-channel .videos-follow.is-following {
-  background: var(--videos-soft);
-}
-
-.videos-watch-channel .videos-follow.is-following .fa-bell {
-  font-size: 16px;
-}
-
-.videos-watch-channel .videos-follow.is-following .fa-chevron-down {
-  font-size: 11px;
 }
 
 .videos-watch-actions {

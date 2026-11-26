@@ -273,28 +273,41 @@
     const homeRequests = new Map();
     const detailRequests = new Map();
 
+    // Akış istekleri önerilmeyen kanalları (`exclude`) dışarıda bırakır; abone olunan kanallar
+    // (`include`) varsa sunucu sayfanın çoğunu onlardan doldurur. Kanal seçiliyse ikisi de gönderilmez.
+    function currentFilter() {
+        return ns.store?.feedFilter() || { exclude: '', include: '', key: '|' };
+    }
+
+    function setFilterParams(params, filter) {
+        if (filter.exclude) params.set('exclude', filter.exclude);
+        if (filter.include) params.set('include', filter.include);
+    }
+
     ns.api = {
-        home(excludeKey = '') {
-            if (homeRequests.has(excludeKey)) return homeRequests.get(excludeKey);
-            const query = excludeKey ? `?exclude=${encodeURIComponent(excludeKey)}` : '';
-            const request = getJson(`/api/videos/home${query}`).then(body => {
+        home(filter = currentFilter()) {
+            if (homeRequests.has(filter.key)) return homeRequests.get(filter.key);
+            const params = new URLSearchParams();
+            setFilterParams(params, filter);
+            const query = params.toString();
+            const request = getJson(`/api/videos/home${query ? `?${query}` : ''}`).then(body => {
                 ns.rememberChannels(body.channels);
                 ns.rememberVideos(body.videos?.videos);
                 ns.rememberVideos(body.shorts?.videos);
                 return body;
             });
-            homeRequests.set(excludeKey, request);
-            request.catch(() => homeRequests.delete(excludeKey));
+            homeRequests.set(filter.key, request);
+            request.catch(() => homeRequests.delete(filter.key));
             return request;
         },
         forgetHome() {
             homeRequests.clear();
         },
-        async feed({ type, before, excludeKey = '', channelId = '', limit = 12 }) {
+        async feed({ type, before, channelId = '', limit = 12 }) {
             const params = new URLSearchParams({ type, limit: String(limit) });
             if (before) params.set('before', before);
             if (channelId) params.set('channel', channelId);
-            else if (excludeKey) params.set('exclude', excludeKey);
+            else setFilterParams(params, currentFilter());
             const body = await getJson(`/api/videos/feed?${params.toString()}`);
             ns.rememberVideos(body.videos);
             return body;
@@ -358,19 +371,91 @@
     // ---------- Bildirim ve paylaşım ----------
 
     let toastTimer = null;
-    ns.toast = function toast(message) {
+    let toastAction = null;
+    // `action` verilirse ("Geri al" gibi) bildirimde bir düğme çıkar ve bildirim biraz daha uzun kalır.
+    ns.toast = function toast(message, action = null) {
         let element = document.querySelector('.videos-toast');
         if (!element) {
             element = document.createElement('div');
             element.className = 'videos-toast';
             element.setAttribute('role', 'status');
             element.setAttribute('aria-live', 'polite');
+            element.addEventListener('click', event => {
+                if (!event.target.closest('.videos-toast-action')) return;
+                const run = toastAction;
+                toastAction = null;
+                element.classList.remove('is-visible', 'has-action');
+                window.clearTimeout(toastTimer);
+                run?.();
+            });
             document.body.appendChild(element);
         }
-        element.textContent = message;
+        toastAction = action?.onClick || null;
+        element.replaceChildren(document.createTextNode(message));
+        if (toastAction) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'videos-toast-action';
+            button.textContent = action.label || 'Geri al';
+            element.appendChild(button);
+        }
+        element.classList.toggle('has-action', Boolean(toastAction));
         element.classList.add('is-visible');
         window.clearTimeout(toastTimer);
-        toastTimer = window.setTimeout(() => element.classList.remove('is-visible'), 2200);
+        toastTimer = window.setTimeout(() => {
+            element.classList.remove('is-visible', 'has-action');
+            toastAction = null;
+        }, toastAction ? 4500 : 2200);
+    };
+
+    // ---------- Abonelik düğmesi ----------
+
+    // İzleme sayfası, Shorts ve Kanallar listesindeki abonelik düğmesi: abone değilken "Abone ol",
+    // aboneyken soluk zil düğmesi; zile basmak abonelikten çıkma onayı açar (videos-tab.js).
+    // Shorts'ta abone olunan kanalda düğme gösterilmez; yalnız "Abone ol"a basılan slaytta "Abone olundu"
+    // yazısıyla kalır (abonelikten çıkmak için Shorts ⋯ menüsü de kullanılabilir).
+    ns.channelLabel = function channelLabel(channelId, fallback = '') {
+        const channel = ns.channels.get(channelId);
+        return String(channel?.handle || channel?.name || fallback || 'Bu kanal').trim();
+    };
+
+    const SUBSCRIBED_ICONS = '<i class="fa-regular fa-bell" aria-hidden="true"></i><i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
+
+    // Shorts'ta abone olununca zil değil "Abone olundu" yazısı görünür; diğer yerlerde zil + ok.
+    function subscribedContent(short) {
+        return short ? 'Abone olundu' : SUBSCRIBED_ICONS;
+    }
+
+    function applySubscribeState(button, subscribed) {
+        const label = ns.channelLabel(button.dataset.channelId);
+        const short = button.classList.contains('videos-subscribe-short');
+        button.classList.toggle('is-subscribed', subscribed);
+        button.setAttribute('aria-pressed', subscribed ? 'true' : 'false');
+        button.setAttribute('aria-label', subscribed ? `${label} kanalına abonesin; abonelikten çıkmak için dokun` : `${label} kanalına abone ol`);
+        button.innerHTML = subscribed ? subscribedContent(short) : 'Abone ol';
+    }
+
+    ns.subscribeButtonHtml = function subscribeButtonHtml(channelId, className = '') {
+        if (!channelId) return '';
+        const subscribed = Boolean(ns.store?.isSubscribed(channelId));
+        const short = className.includes('videos-subscribe-short');
+        const classes = `videos-subscribe${className ? ` ${className}` : ''}${subscribed ? ' is-subscribed' : ''}`;
+        const label = ns.escape(ns.channelLabel(channelId));
+        const ariaLabel = subscribed ? `${label} kanalına abonesin; abonelikten çıkmak için dokun` : `${label} kanalına abone ol`;
+        return `<button type="button" class="${classes}" data-action="subscribe-toggle" data-channel-id="${ns.escape(channelId)}" aria-pressed="${subscribed ? 'true' : 'false'}" aria-label="${ariaLabel}"${short && subscribed ? ' hidden' : ''}>${subscribed ? subscribedContent(short) : 'Abone ol'}</button>`;
+    };
+
+    // `pressed`: az önce basılan düğme; Shorts'ta yalnız o düğme abone olunca zil olarak görünür kalır.
+    ns.syncSubscribeButtons = function syncSubscribeButtons(root = document, pressed = null) {
+        if (!ns.store) return;
+        root.querySelectorAll('[data-action="subscribe-toggle"]').forEach(button => {
+            const subscribed = ns.store.isSubscribed(button.dataset.channelId);
+            applySubscribeState(button, subscribed);
+            if (!button.classList.contains('videos-subscribe-short')) return;
+            if (button === pressed) button.dataset.justSubscribed = 'true';
+            if (!subscribed) delete button.dataset.justSubscribed;
+            button.hidden = subscribed && button.dataset.justSubscribed !== 'true';
+        });
     };
 
     ns.share = async function share(video) {

@@ -207,6 +207,16 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
   display: none;
 }
 
+/* Kanal listesinde abonelik varsa "Abonelikler" ve "Diğer kanallar" grup başlıkları. */
+.videos-channel-group {
+  padding: 10px 12px 4px;
+  color: var(--videos-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 @keyframes videos-menu-enter {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: none; }
@@ -267,7 +277,7 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
 .videos-pill:focus-visible,
 .videos .videos-channel-select:focus-visible,
 .videos .videos-channel-option:focus-visible,
-.videos-follow:focus-visible {
+.videos-subscribe:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--videos-accent) 45%, transparent);
   outline-offset: 2px;
 }
@@ -384,7 +394,6 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
   gap: 8px;
   min-height: 40px;
   padding: 0 18px;
-  border: 0;
   border-radius: 999px;
   background: var(--videos-text);
   color: #ffffff !important;
@@ -396,11 +405,12 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
 .videos-pill-quiet {
   background: var(--videos-soft);
   /* Kenar box-shadow ile çizilir; düğme boyutu değişmez. */
-  box-shadow: inset 0 0 0 1.5px #a3a3a3;
+  border: 1.5px solid #bdbdbd;
   color: var(--videos-text) !important;
 }
 
-.videos-follow {
+/* "Abone ol" düğmesi (izleme sayfası, Shorts, Kanallar listesi). */
+.videos-subscribe {
   flex: 0 0 auto;
   min-height: 36px;
   padding: 0 16px;
@@ -409,16 +419,33 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
   background: var(--videos-text);
   color: #ffffff !important;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 600 !important;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-/* Takipteki kanal: soluk dolgu + belirgin ince kenar (box-shadow olduğundan düğme boyutu değişmez). */
-.videos-follow.is-following {
+/* Abone olunan kanal: soluk dolgulu zil + aşağı ok düğmesi (box-shadow olduğundan düğme boyutu değişmez). */
+.videos-subscribe.is-subscribed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
   background: var(--videos-soft);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--videos-text) 38%, transparent);
   color: var(--videos-text) !important;
+}
+
+.videos-subscribe.is-subscribed .fa-bell {
+  font-size: 16px;
+}
+
+.videos-subscribe.is-subscribed .fa-chevron-down {
+  font-size: 11px;
+}
+
+.videos-subscribe[hidden] {
+  display: none;
 }
 
 /* ---------- Ortak liste satırı (Sıradaki / Kitaplık listeleri) ---------- */
@@ -713,6 +740,114 @@ body:has(#tabContent > .tab-view-videos) #footerRoot {
 .videos-toast.is-visible {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+/* "Geri al" düğmeli bildirim: düğmeye basılabilsin diye bildirim tıklamaları alır. */
+.videos-toast.has-action {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 8px 8px 20px;
+}
+
+.videos-toast.has-action.is-visible {
+  pointer-events: auto;
+}
+
+.videos-toast-action {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #3ea6ff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.videos-toast-action:hover,
+.videos-toast-action:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+/* Abonelikten çıkma onayı: sayfanın ortasında küçük, beyaz, yuvarlak köşeli kutu (YouTube'daki gibi). */
+.videos-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  animation: videos-confirm-fade 0.16s ease-out;
+}
+
+.videos-confirm {
+  width: min(300px, 100%);
+  padding: 18px 16px 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #0f0f0f;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+}
+
+.videos-confirm-title {
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.videos-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.videos-confirm-cancel,
+.videos-confirm-ok {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.videos-confirm-cancel {
+  flex: 0 1 40%;
+  background: #f2f2f2;
+  color: #0f0f0f;
+}
+
+.videos-confirm-ok {
+  flex: 1 1 60%;
+  background: #0f0f0f;
+  color: #ffffff;
+}
+
+.videos-confirm-cancel:hover {
+  background: #e5e5e5;
+}
+
+.videos-confirm-ok:hover {
+  background: #272727;
+}
+
+.videos-confirm-cancel:focus-visible,
+.videos-confirm-ok:focus-visible {
+  outline: 3px solid color-mix(in srgb, #3ea6ff 60%, transparent);
+  outline-offset: 2px;
+}
+
+@keyframes videos-confirm-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .videos-watch-title.is-skeleton {

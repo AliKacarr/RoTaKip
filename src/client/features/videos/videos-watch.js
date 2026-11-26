@@ -274,7 +274,7 @@
         },
 
         // YouTube mobil izleme sayfasına benzer (açık tema): başlık; "Kanal  49 Mn görüntüleme  3 gün önce"
-        // satırı; solda kanal avatarı + takip düğmesi, sağda yalnız simgeli eylemler.
+        // satırı; solda kanal avatarı + "Abone ol" düğmesi, sağda yalnız simgeli eylemler.
         renderInfo(video) {
             if (!video) return;
             this.title.classList.remove('is-skeleton');
@@ -283,14 +283,10 @@
             this.meta.innerHTML = `<button type="button" class="videos-watch-meta-channel" data-channel-filter="${ns.escape(video.channelId)}">${ns.escape(ns.channelHandleLabel(video.channelId, video.channelName))}</button>
                 <span>${ns.escape(ns.formatViews(video.views))}</span>
                 ${date ? `<span>${ns.escape(date)}</span>` : ''}`;
-            const following = ns.store.isFollowing(video.channelId);
-            const followButton = following
-                ? `<button type="button" class="videos-follow is-following" data-action="follow" data-channel-id="${ns.escape(video.channelId)}" aria-pressed="true" aria-label="${ns.escape(video.channelName)} takip ediliyor; takipten çıkmak için dokunun"><i class="fa-regular fa-bell" aria-hidden="true"></i><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>`
-                : `<button type="button" class="videos-follow" data-action="follow" data-channel-id="${ns.escape(video.channelId)}" aria-pressed="false">Takip et</button>`;
             this.channel.innerHTML = `<button type="button" class="videos-watch-avatar" data-channel-filter="${ns.escape(video.channelId)}" aria-label="${ns.escape(video.channelName)} kanalının videoları">
                     ${ns.avatarHtml(video.channelId, video.channelName, 'videos-avatar-md')}
                 </button>
-                ${followButton}`;
+                ${ns.subscribeButtonHtml(video.channelId)}`;
             this.actions.innerHTML = [
                 ns.iconButtonHtml({ action: 'like', ...ns.LIKE_ICONS, label: 'Beğen', active: ns.store.isLiked(video.id), videoId: video.id }),
                 ns.iconButtonHtml({ action: 'dislike', ...ns.DISLIKE_ICONS, label: 'Beğenme', active: ns.store.isDisliked(video.id), videoId: video.id }),
@@ -317,7 +313,7 @@
                 && video.id !== this.videoId
                 && !this.relatedIds.has(video.id)
                 && !ns.store.isDisliked(video.id)
-                && (ns.store.isFollowing(video.channelId) || video.channelId === this.video?.channelId));
+                && (!ns.store.isHidden(video.channelId) || video.channelId === this.video?.channelId));
         },
 
         resetRelated() {
@@ -360,7 +356,6 @@
                     const page = await ns.api.feed({
                         type: this.video.type === 'shorts' ? 'shorts' : 'video',
                         before: this.moreCursor,
-                        excludeKey: ns.store.excludeKey(),
                         limit: MORE_PAGE_SIZE
                     });
                     if (sequence !== this.sequence) return;
@@ -396,6 +391,16 @@
 
         refreshState() {
             if (this.video) this.renderInfo(this.video);
+        },
+
+        // "Bu kanalı önerme": kanalın "Sıradaki" listesindeki videoları kaldırılır (açık videonun kanalı hariç).
+        dropChannel(channelId) {
+            if (!channelId || !this.related || channelId === this.video?.channelId) return;
+            this.relatedVideos = (this.relatedVideos || []).filter(video => video.channelId !== channelId);
+            this.related.querySelectorAll('.videos-row').forEach(row => {
+                const id = row.dataset.openVideo || row.dataset.openShort;
+                if (ns.videos.get(id)?.channelId === channelId) row.remove();
+            });
         },
 
         showNotFound() {

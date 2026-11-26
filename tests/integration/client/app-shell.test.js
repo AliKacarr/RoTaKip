@@ -740,7 +740,7 @@ test('Videolar Hesabım görünümü: başlıksız, gizli kaydırma çubuklu, �
   const tab = readClient('features/videos/videos-tab.js');
   assert.match(tab, /function onChromeScroll\(\)[\s\S]*?currentRoute\?\.view === 'library'[\s\S]*?setChromeHidden\(false\)/);
   assert.match(tab, /action === 'collection-clear'/);
-  assert.match(readClient('features/videos/videos-store.js'), /clearList\(listName\)/);
+  assert.match(readClient('features/videos/videos-store.js'), /clearList\(listName, type = ''\)/);
 });
 
 test('Video ve Shorts 5 saniye oynatılınca izlendi sayılır; ilerleme ve devam konumu bundan bağımsızdır', () => {
@@ -780,10 +780,42 @@ test('Videolar Shorts sağ üstteki yatay ⋯ menüsünden tam ekrana alınır y
   assert.match(tab, /classList\.add\('is-pressed'\)/);
   assert.match(tab, /action === 'shorts-more'/);
   assert.match(tab, /action === 'shorts-fullscreen'/);
-  assert.match(tab, /action === 'shorts-hide-channel'[\s\S]*?ns\.store\.setFollow\(channelId, false\)/);
+  assert.match(tab, /action === 'shorts-hide-channel'[\s\S]*?hideChannel\(channelId\)/);
+  assert.match(tab, /function hideChannel\(channelId\)[\s\S]*?ns\.store\.setHidden\(channelId, true\)[\s\S]*?label: 'Geri al'/);
   assert.match(tab, /addEventListener\('fullscreenchange', syncFullscreenMenu\)/);
   assert.doesNotMatch(tab, /enterImmersive/);
   assert.match(readClient('features/videos/videos-shorts.css'), /\.videos-shorts-more,\s*\.videos-shorts-sound\s*\{[^}]*position:\s*absolute;[^}]*right:\s*12px;/);
+});
+
+test('Videolar hiçbir kanala abone olmadan açılır; abone olma Shorts, izleme ve kart menüsünden yapılır', () => {
+  const store = readClient('features/videos/videos-store.js');
+  const core = readClient('features/videos/videos-core.js');
+  const tab = readClient('features/videos/videos-tab.js');
+  // Varsayılan durumda abonelik ve önerilmeyen kanal yoktur; eski "takipten çıkarılanlar" listesi okunmaz.
+  assert.match(store, /function emptyState\(\)[\s\S]*?subscribed: \[\], hidden: \[\]/);
+  assert.doesNotMatch(store, /(state|raw)\.unfollowed/);
+  assert.match(store, /setHidden\(channelId, hidden\)[\s\S]*?next && store\.isSubscribed\(channelId\)/);
+  // İstekler önerilmeyenleri `exclude`, abonelikleri `include` olarak gönderir.
+  assert.match(core, /params\.set\('exclude', filter\.exclude\)[\s\S]*?params\.set\('include', filter\.include\)/);
+  // Shorts kanal satırında ve izleme sayfasında "Abone ol" düğmesi.
+  assert.match(readClient('features/videos/videos-shorts.js'), /videos-short-channel-row[\s\S]*?ns\.subscribeButtonHtml\(video\.channelId, 'videos-subscribe-short'\)/);
+  assert.match(readClient('features/videos/videos-watch.js'), /ns\.subscribeButtonHtml\(video\.channelId\)/);
+  // Abone olunca düğme zil + aşağı ok olur; Shorts'ta abone olunan kanalda düğme gizlidir (yalnız basılan slaytta kalır).
+  assert.match(core, /SUBSCRIBED_ICONS = '<i class="fa-regular fa-bell"/);
+  // Shorts'ta abone olunca zil değil "Abone olundu" yazısı görünür.
+  assert.match(core, /function subscribedContent\(short\)[\s\S]*?short \? 'Abone olundu' : SUBSCRIBED_ICONS/);
+  // Önerilmeyen kanalın videosu (beğenilenlerden ya da bağlantıyla) açılınca menüde "Bu kanalı öner" çıkar.
+  assert.match(tab, /ns\.store\.isHidden\(video\.channelId\)\s*\?[^\n]*data-action="unhide-channel"[^\n]*Bu kanalı öner</);
+  assert.match(tab, /video\?\.channelId && ns\.store\.isHidden\(video\.channelId\)[\s\S]*?data-action="unhide-channel"[^\n]*Bu kanalı öner</);
+  assert.match(core, /\$\{short && subscribed \? ' hidden' : ''\}/);
+  assert.match(core, /button\.hidden = subscribed && button\.dataset\.justSubscribed !== 'true'/);
+  // Zile basınca onay kutusu açılır; kart menüsünde abone olunmayan kanal için "Bu kanalı önerme",
+  // Shorts ⋯ menüsünde abone olunan kanal için "Abonelikten çık".
+  assert.match(tab, /action === 'subscribe-toggle' && ns\.store\.isSubscribed\(channelId\)[\s\S]*?confirmUnsubscribe\(channelId\)/);
+  assert.match(tab, /aboneliğinden çıkılsın mı\?[\s\S]*?data-confirm="cancel">İptal[\s\S]*?data-confirm="ok">Abonelikten çık/);
+  assert.match(tab, /data-action="hide-channel"[^\n]*Bu kanalı önerme/);
+  assert.match(tab, /video\?\.channelId && !ns\.store\.isSubscribed\(video\.channelId\)[\s\S]*?shorts-hide-channel[\s\S]*?else if \(video\?\.channelId\)[\s\S]*?data-action="unsubscribe"[^\n]*Abonelikten çık/);
+  assert.match(readClient('features/videos/videos-base.css'), /\.videos-confirm-backdrop\s*\{[^}]*position:\s*fixed;[^}]*z-index:\s*9600;/);
 });
 
 test('Videolar bölüm sekmeleri YouTube gibi düz metin ve kırmızı alt çizgilidir', () => {
@@ -923,7 +955,8 @@ test('Videolar sekmesi başka sekmedeyken ana akışı ve ilk küçük resimleri
   const tab = readClient('features/videos/videos-tab.js');
   const store = readClient('features/videos/videos-store.js');
   // Önce cihazdaki son yanıt çizilir, ardından sunucudan tazelenir.
-  assert.match(tab, /function loadHome\([\s\S]*?ns\.store\.readHomeCache\(excludeKey\)[\s\S]*?ns\.api\.home\(excludeKey\)[\s\S]*?ns\.store\.writeHomeCache/);
+  // Önbellek ve istek, abonelik + önerilmeyen kanal listelerine (feedFilter) göre ayrılır.
+  assert.match(tab, /function loadHome\([\s\S]*?ns\.store\.feedFilter\(\)[\s\S]*?ns\.store\.readHomeCache\(filter\.key\)[\s\S]*?ns\.api\.home\(filter\)[\s\S]*?ns\.store\.writeHomeCache/);
   assert.match(tab, /function schedulePreparation\(\)[\s\S]*?connectionAllowsPreparation\(\)[\s\S]*?firstThumbnails[\s\S]*?firstPosters[\s\S]*?preloadImage/);
   // Isınmış sekmenin ilk gösterimi için kabuğun gezinme olayı dinlenir.
   assert.match(tab, /rotakip:primary-content-ready/);

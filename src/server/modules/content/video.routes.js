@@ -26,7 +26,7 @@ function registerVideoRoutes(app, { videoService = createVideoService({ getColle
   // Sekme açılırken (veya başka sekmede ısınırken) kanallar + ilk videolar + ilk shorts'lar.
   app.get('/api/videos/home', async (req, res) => {
     try {
-      const home = await videoService.getHome({ exclude: req.query.exclude });
+      const home = await videoService.getHome({ exclude: req.query.exclude, include: req.query.include });
       res.setHeader('Cache-Control', FEED_CACHE_CONTROL);
       return res.json({ success: true, ...home });
     } catch (error) {
@@ -35,13 +35,15 @@ function registerVideoRoutes(app, { videoService = createVideoService({ getColle
   });
 
   // Kaydırdıkça sonraki sayfalar: `before` bir önceki yanıtın `nextCursor` değeridir;
-  // `channel` tek kanala süzer (kanal çipi), `exclude` takipten çıkarılan kanalları dışarıda bırakır.
+  // `channel` tek kanala süzer (kanal seçimi), `exclude` önerilmeyen kanalları dışarıda bırakır,
+  // `include` abone olunan kanallardır (sayfanın çoğu onlardan gelir).
   app.get('/api/videos/feed', async (req, res) => {
     try {
       const page = await videoService.listFeed({
         type: req.query.type,
         channel: req.query.channel,
         exclude: req.query.exclude,
+        include: req.query.include,
         before: req.query.before,
         limit: req.query.limit
       });

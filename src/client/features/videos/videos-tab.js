@@ -42,6 +42,8 @@
     let homeData = null;
     let homeLoadedAt = 0;
     let menu = null;
+    let confirmDialog = null;
+    let pressedSubscribeButton = null;
     let miniActive = false;
     let chromeHidden = false;
     let chromeFrame = null;
@@ -356,16 +358,16 @@
 
     // Önce cihazdaki son yanıt anında çizilir, ardından sunucudan taze veri istenir.
     function loadHome({ force = false } = {}) {
-        const excludeKey = ns.store.excludeKey();
+        const filter = ns.store.feedFilter();
         if (force) ns.api.forgetHome();
         if (!homeData) {
-            const cached = ns.store.readHomeCache(excludeKey);
+            const cached = ns.store.readHomeCache(filter.key);
             if (cached) applyHome(cached, { fromCache: true });
         }
-        const request = ns.api.home(excludeKey).then(body => {
-            if (excludeKey !== ns.store.excludeKey()) return homeData;
+        const request = ns.api.home(filter).then(body => {
+            if (filter.key !== ns.store.feedFilter().key) return homeData;
             const data = { channels: body.channels, videos: body.videos, shorts: body.shorts };
-            ns.store.writeHomeCache(excludeKey, data);
+            ns.store.writeHomeCache(filter.key, data);
             applyHome(data);
             return data;
         }).catch(error => {
@@ -387,8 +389,9 @@
         loadHome({ force: true });
     }
 
-    // Takip listesi değişti: akış ve Shorts yeni listeyle baştan hazırlanır.
-    function onFollowChanged() {
+    // Kanal listeleri başka sekmede değişti (ya da seçili kanal önerilmeyenlere alındı): akış ve Shorts
+    // yeni listelerle baştan hazırlanır.
+    function resetForChannelLists() {
         homeData = null;
         resetHomePromise();
         ns.api.forgetHome();
@@ -398,6 +401,36 @@
             if (currentRoute?.view === 'shorts' && isActive()) ns.shorts.enter(currentRoute);
         });
         ns.feed.renderChannelTabs();
+    }
+
+    // Abonelik ya da önerilmeyenler değişti: ekrandaki liste baştan kurulmaz (izlenen short kesilmesin);
+    // ana akış arka planda yeni listelerle istenir, sonraki sayfalar zaten yeni listelerle gelir.
+    function refreshHomeForChannelLists() {
+        ns.api.forgetHome();
+        loadHome({ force: true });
+        ns.feed.renderChannelTabs();
+        ns.library.refresh();
+    }
+
+    function onSubscriptionChanged() {
+        ns.syncSubscribeButtons(page, pressedSubscribeButton);
+        pressedSubscribeButton = null;
+        refreshHomeForChannelLists();
+    }
+
+    // "Bu kanalı önerme": kanalın kartları, raf kutuları, sıradaki short'ları ve önerileri hemen kalkar.
+    function onHiddenChanged({ channelId, hidden }) {
+        if (hidden && channelId && ns.feed.channelId === channelId) {
+            resetForChannelLists();
+            ns.library.refresh();
+            return;
+        }
+        if (hidden && channelId) {
+            ns.feed.dropChannel(channelId);
+            ns.shorts.dropChannel(channelId);
+            ns.watch.dropChannel(channelId);
+        }
+        refreshHomeForChannelLists();
     }
 
     // Okumalar sekmesindeki "Günün Videosu" (daily-gift.js) akıştaki ilk videoyu kullanır.
@@ -420,7 +453,7 @@
                 ...ns.feed.firstThumbnails(PREPARE_FEED_THUMBNAILS),
                 ...ns.shorts.firstPosters(PREPARE_SHORT_POSTERS),
                 ...[...ns.channels.values()]
-                    .filter(channel => ns.store.isFollowing(channel.id))
+                    .filter(channel => !ns.store.isHidden(channel.id))
                     .map(channel => ns.safeLogoUrl(channel.logo))
             ];
             for (const source of sources) {
@@ -448,18 +481,25 @@
         }
         closeMenu();
         const saved = ns.store.isSaved(videoId);
-        // Kanal zaten takip edilmiyorsa (ör. izleme sayfasından ya da bağlantıyla gelinen kanal) "takip et" önerilir.
-        const following = ns.store.isFollowing(video.channelId);
-        const followItem = following
-            ? `<button type="button" role="menuitem" data-action="unfollow" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-ban" aria-hidden="true"></i> Bu kanalı takipten çıkar</button>`
-            : `<button type="button" role="menuitem" data-action="follow" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-plus" aria-hidden="true"></i> Bu kanalı takip et</button>`;
+        // Abone olunan kanalda "Abonelikten çık" (onaylı); olunmayanda "Abone ol" ve "Bu kanalı önerme".
+        // Kanal önerilmeyenlerdeyse (ör. beğenilenlerden ya da bağlantıyla açılan video) "Bu kanalı öner".
+        const channelId = ns.escape(video.channelId);
+        const hideItem = ns.store.isHidden(video.channelId)
+            ? `<button type="button" role="menuitem" data-action="unhide-channel" data-channel-id="${channelId}"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Bu kanalı öner</button>`
+            : `<button type="button" role="menuitem" data-action="hide-channel" data-channel-id="${channelId}"><i class="fa-solid fa-ban" aria-hidden="true"></i> Bu kanalı önerme</button>`;
+        const followItem = !video.channelId
+            ? ''
+            : ns.store.isSubscribed(video.channelId)
+                ? `<button type="button" role="menuitem" data-action="unsubscribe" data-channel-id="${channelId}"><i class="fa-solid fa-user-minus" aria-hidden="true"></i> Abonelikten çık</button>`
+                : `<button type="button" role="menuitem" data-action="subscribe" data-channel-id="${channelId}"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Kanala abone ol</button>
+                    ${hideItem}`;
         menu = document.createElement('div');
         menu.className = 'videos-menu';
         menu.dataset.videoId = videoId;
         menu.setAttribute('role', 'menu');
         menu.innerHTML = `
             <button type="button" role="menuitem" data-action="share" data-video-id="${ns.escape(videoId)}"><i class="fa-solid fa-share" aria-hidden="true"></i> Paylaş</button>
-            <button type="button" role="menuitem" data-action="save" data-video-id="${ns.escape(videoId)}"><i class="${saved ? 'fa-solid' : 'fa-regular'} fa-bookmark" aria-hidden="true"></i> ${saved ? 'Kaydedilenlerden çıkar' : 'Daha sonra izle'}</button>
+            <button type="button" role="menuitem" data-action="save" data-video-id="${ns.escape(videoId)}"><i class="${saved ? 'fa-solid' : 'fa-regular'} fa-bookmark" aria-hidden="true"></i> ${saved ? 'Kaydedilenlerden çıkar' : 'Kaydedilenlere ekle'}</button>
             <a role="menuitem" href="${ns.escape(ns.youtubeUrl(video))}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube" aria-hidden="true"></i> YouTube'da aç</a>
             ${followItem}`;
         page.appendChild(menu);
@@ -496,9 +536,9 @@
         page.appendChild(menu);
         const pageRect = page.getBoundingClientRect();
         const rect = button.getBoundingClientRect();
-        const width = Math.min(320, pageRect.width - 16);
+        // Genişlik içeriğe göre belirlenir (`.videos-shelf-menu`: max-content); konum ölçülen genişliğe göre hesaplanır.
+        const width = menu.offsetWidth;
         const left = Math.max(8, Math.min(rect.right - pageRect.left - width, pageRect.width - width - 8));
-        menu.style.width = `${width}px`;
         menu.style.left = `${left}px`;
         menu.style.top = `${rect.bottom - pageRect.top + 6}px`;
         const menuRect = menu.getBoundingClientRect();
@@ -514,7 +554,7 @@
     }
 
     // Shorts sağ üst menüsü (telefon/tablette yatay ⋯, masaüstünde videonun sağ üstündeki dikey ⋮):
-    // "Tam ekran" ve "Bu kanalı önerme".
+    // "Tam ekran" ve (abone olunmayan kanalda) "Bu kanalı önerme".
     // Tam ekran desteklenmiyorsa (iPhone Safari) yalnız kanal seçeneği gösterilir.
     function openShortsMoreMenu(button) {
         const video = ns.shorts.currentVideo();
@@ -525,8 +565,14 @@
             const on = isFullscreen();
             items.push(`<button type="button" role="menuitem" data-action="shorts-fullscreen"><i class="fa-solid ${on ? 'fa-compress' : 'fa-expand'}" aria-hidden="true"></i> ${on ? 'Tam ekrandan çık' : 'Tam ekran'}</button>`);
         }
-        if (video?.channelId && ns.store.isFollowing(video.channelId)) {
+        // Abone olunan kanalda Shorts'ta abonelik düğmesi gösterilmez; abonelikten çıkma buradan yapılır.
+        if (video?.channelId && ns.store.isHidden(video.channelId)) {
+            // Önerilmeyen kanalın short'ı bağlantıyla ya da beğenilenlerden açıldıysa geri açma seçeneği çıkar.
+            items.push(`<button type="button" role="menuitem" data-action="unhide-channel" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Bu kanalı öner</button>`);
+        } else if (video?.channelId && !ns.store.isSubscribed(video.channelId)) {
             items.push(`<button type="button" role="menuitem" data-action="shorts-hide-channel" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-ban" aria-hidden="true"></i> Bu kanalı önerme</button>`);
+        } else if (video?.channelId) {
+            items.push(`<button type="button" role="menuitem" data-action="unsubscribe" data-channel-id="${ns.escape(video.channelId)}"><i class="fa-solid fa-user-minus" aria-hidden="true"></i> Abonelikten çık</button>`);
         }
         if (!items.length) return;
         openAnchoredMenu(button, 'shorts-more', items.join(''));
@@ -534,12 +580,12 @@
 
     // Hesabım koleksiyon menüsü (⋯): koleksiyondaki tüm videoları kaldırır.
     function openCollectionMenu(button) {
-        const { store, title } = button.dataset;
+        const { store, title, type = '' } = button.dataset;
         openAnchoredMenu(
             button,
             'collection',
             '<button type="button" role="menuitem" data-action="collection-clear"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Koleksiyonu temizle</button>',
-            { store, title }
+            { store, title, type }
         );
     }
 
@@ -555,7 +601,7 @@
         const id = ns.escape(videoId);
         const saveItem = store === 'saved'
             ? ''
-            : `<button type="button" role="menuitem" data-action="save" data-video-id="${id}"><i class="${ns.store.isSaved(videoId) ? 'fa-solid' : 'fa-regular'} fa-bookmark" aria-hidden="true"></i> ${ns.store.isSaved(videoId) ? 'Oynatma listesinden çıkar' : 'Oynatma listesine kaydet'}</button>`;
+            : `<button type="button" role="menuitem" data-action="save" data-video-id="${id}"><i class="${ns.store.isSaved(videoId) ? 'fa-solid' : 'fa-regular'} fa-bookmark" aria-hidden="true"></i> ${ns.store.isSaved(videoId) ? 'Kaydedilenlerden çıkar' : 'Kaydedilenlere ekle'}</button>`;
         openAnchoredMenu(
             button,
             'library-item',
@@ -566,12 +612,77 @@
     }
 
     function clearCollection() {
-        const { store, title } = menu?.dataset || {};
+        const { store, title, type } = menu?.dataset || {};
         closeMenu();
         if (!store) return;
         if (!window.confirm(`"${title}" koleksiyonundaki tüm videolar kaldırılsın mı?`)) return;
-        ns.store.clearList(store);
+        ns.store.clearList(store, type);
         ns.toast('Koleksiyon temizlendi');
+    }
+
+    // ---------- Abonelik ----------
+
+    function subscribeChannel(channelId) {
+        if (!channelId || !ns.store.setSubscribed(channelId, true)) return;
+        ns.toast(`${ns.channelLabel(channelId)} kanalına abone olundu`);
+    }
+
+    // "Bu kanalı önerme" yalnız abone olunmayan kanallarda çıkar; bildirimdeki "Geri al" kararı geri alır.
+    function hideChannel(channelId) {
+        if (!channelId || !ns.store.setHidden(channelId, true)) return;
+        ns.toast(`${ns.channelLabel(channelId)} artık önerilmeyecek`, {
+            label: 'Geri al',
+            onClick: () => ns.store.setHidden(channelId, false)
+        });
+    }
+
+    function closeConfirm({ restoreFocus = null } = {}) {
+        if (!confirmDialog) return;
+        confirmDialog.remove();
+        confirmDialog = null;
+        restoreFocus?.focus?.({ preventScroll: true });
+    }
+
+    // Abonelikten çıkmadan önce sayfanın ortasında küçük bir onay kutusu açılır (YouTube'daki gibi).
+    // Tam ekran Shorts'ta da görünsün diye gövdeye eklenir.
+    function confirmUnsubscribe(channelId) {
+        closeMenu();
+        closeConfirm();
+        if (!channelId || !ns.store.isSubscribed(channelId)) return;
+        const returnFocus = document.activeElement;
+        const backdrop = document.createElement('div');
+        backdrop.className = 'videos-confirm-backdrop';
+        backdrop.innerHTML = `<div class="videos-confirm" role="alertdialog" aria-modal="true" aria-labelledby="videosConfirmTitle">
+            <h2 class="videos-confirm-title" id="videosConfirmTitle">${ns.escape(ns.channelLabel(channelId))} aboneliğinden çıkılsın mı?</h2>
+            <div class="videos-confirm-actions">
+                <button type="button" class="videos-confirm-cancel" data-confirm="cancel">İptal</button>
+                <button type="button" class="videos-confirm-ok" data-confirm="ok">Abonelikten çık</button>
+            </div>
+        </div>`;
+        backdrop.addEventListener('click', event => {
+            const choice = event.target.closest('[data-confirm]')?.dataset.confirm;
+            if (!choice && event.target.closest('.videos-confirm')) return;
+            closeConfirm({ restoreFocus: returnFocus });
+            if (choice === 'ok' && ns.store.setSubscribed(channelId, false)) ns.toast('Abonelikten çıkıldı');
+        });
+        backdrop.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                closeConfirm({ restoreFocus: returnFocus });
+                return;
+            }
+            // Odak iki düğme arasında kalır (Shorts klavye kısayolları da tetiklenmez).
+            event.stopPropagation();
+            if (event.key !== 'Tab') return;
+            const buttons = [...backdrop.querySelectorAll('[data-confirm]')];
+            const index = buttons.indexOf(document.activeElement);
+            event.preventDefault();
+            buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+        });
+        document.body.appendChild(backdrop);
+        confirmDialog = backdrop;
+        backdrop.querySelector('[data-confirm="ok"]').focus({ preventScroll: true });
     }
 
     // ---------- Etkileşimler ----------
@@ -660,12 +771,10 @@
             toggleFullscreen();
             return;
         }
-        if (action === 'shorts-hide-channel') {
+        if (action === 'shorts-hide-channel' || action === 'hide-channel') {
             const channelId = button.dataset.channelId;
             closeMenu();
-            if (!channelId) return;
-            ns.store.setFollow(channelId, false);
-            ns.toast(`${ns.channels.get(channelId)?.name || 'Bu kanal'} artık önerilmeyecek`);
+            hideChannel(channelId);
             return;
         }
         if (action === 'collection-menu') {
@@ -693,13 +802,25 @@
             ns.toast('Ana sayfada daha az Shorts videosu gösterilecek');
             return;
         }
-        if (action === 'follow' || action === 'unfollow') {
+        // "Abone ol" / zil düğmesi (izleme, Shorts, Kanallar), kart menüsü ve Shorts ⋯ menüsündeki seçenekler.
+        if (action === 'subscribe-toggle' || action === 'subscribe' || action === 'unsubscribe') {
             const channelId = button.dataset.channelId;
-            const following = action === 'follow' ? !ns.store.isFollowing(channelId) : false;
-            ns.store.setFollow(channelId, following);
-            const name = ns.channels.get(channelId)?.name || 'Kanal';
-            ns.toast(following ? `${name} takip ediliyor` : `${name} takipten çıkarıldı`);
             closeMenu();
+            const unsubscribe = action === 'unsubscribe'
+                || (action === 'subscribe-toggle' && ns.store.isSubscribed(channelId));
+            if (unsubscribe) {
+                confirmUnsubscribe(channelId);
+                return;
+            }
+            pressedSubscribeButton = button;
+            subscribeChannel(channelId);
+            pressedSubscribeButton = null;
+            return;
+        }
+        if (action === 'unhide-channel') {
+            const channelId = button.dataset.channelId;
+            closeMenu();
+            if (ns.store.setHidden(channelId, false)) ns.toast(`${ns.channelLabel(channelId)} yeniden önerilecek`);
             return;
         }
         if (action === 'short-toggle') ns.shorts.tap();
@@ -779,12 +900,6 @@
             return;
         }
 
-        if (event.target.closest('[data-follow-all]')) {
-            ns.store.followAll();
-            ns.toast('Tüm kanallar takip ediliyor');
-            return;
-        }
-
         // Diğer sekmelere (Tefekkür, Makaleler) kabuk üzerinden, sayfa yenilenmeden geçilir.
         const appLink = event.target.closest('[data-app-path]');
         if (appLink) {
@@ -805,8 +920,19 @@
     }
 
     function onStoreChange(type, detail) {
-        if (type === 'follow' || (type === 'sync' && detail.followChanged)) {
-            onFollowChanged();
+        if (type === 'subscription') {
+            onSubscriptionChanged();
+            // Abone olunan kanal önerilmeyenlerdeyse oradan da çıktı.
+            if (detail.hiddenChanged) ns.library.refresh();
+            return;
+        }
+        if (type === 'hidden') {
+            onHiddenChanged(detail);
+            return;
+        }
+        if (type === 'sync' && (detail.subscriptionChanged || detail.hiddenChanged)) {
+            resetForChannelLists();
+            ns.syncSubscribeButtons(page);
             ns.watch.refreshState();
             ns.library.refresh();
             return;
@@ -1035,6 +1161,7 @@
 
     function destroy() {
         closeMenu();
+        closeConfirm();
         if (currentRoute?.view === 'feed' && active) feedScrollY = window.scrollY;
         active = false;
         entryGlowPending = false;

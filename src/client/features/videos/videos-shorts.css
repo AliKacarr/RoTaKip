@@ -317,18 +317,29 @@
   pointer-events: none;
 }
 
+/* Kanal satırı: avatar + @kanal ve yanında "Abone ol" düğmesi (YouTube Shorts gibi). */
+.videos-short-channel-row {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .videos-short-channel {
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
   gap: 10px;
+  min-width: 0;
   max-width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--videos-text) !important;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px !important;
+  font-weight: 600 !important;
   cursor: pointer;
   pointer-events: auto;
 }
@@ -341,6 +352,14 @@
 
 .videos-short-channel:hover > span:last-child {
   text-decoration: underline;
+}
+
+.videos-subscribe-short {
+  align-self: center;
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 14px !important;
+  pointer-events: auto;
 }
 
 .videos-short-title {
@@ -673,7 +692,7 @@
      olduğundan sol/sağ kenarlar çerçevenin genişliğinden hesaplanır. */
   .videos-short-info {
     right: calc((100% - var(--videos-short-frame-width)) / 2 + 84px);
-    bottom: calc(var(--videos-short-pad-y) + 20px);
+    bottom: calc(var(--videos-short-pad-y) + 22px);
     left: calc((100% - var(--videos-short-frame-width)) / 2 + 14px);
     gap: 6px;
     width: auto;
@@ -682,17 +701,28 @@
 
   .videos-short-channel {
     color: #ffffff !important;
-    font-weight: 700;
   }
 
   .videos-short-channel:hover > span:last-child {
     text-decoration: none;
   }
 
+  /* Video üstünde: "Abone ol" beyaz, abone olununca çıkan zil yarı saydam koyu (YouTube Shorts düzeni). */
+  .videos-subscribe-short {
+    background: #ffffff;
+    color: #0f0f0f !important;
+  }
+
+  .videos-subscribe-short.is-subscribed {
+    background: rgba(40, 40, 40, 0.72);
+    box-shadow: none;
+    color: rgba(255, 255, 255, 0.72) !important;
+  }
+
   .videos-short-title {
     -webkit-line-clamp: 2;
     font-size: 15px;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.35;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   }
@@ -702,7 +732,7 @@
   .videos-short-actions {
     flex: 0 0 58px;
     gap: 20px;
-    margin: 0 6px 23px -64px;
+    margin: 0 6px 25px -64px;
   }
 
   .videos-short-action {

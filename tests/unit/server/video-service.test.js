@@ -5,9 +5,12 @@ const assert = require('node:assert/strict');
 
 const {
   FEED_DEFAULT_LIMIT,
+  SUBSCRIBED_SHARE,
   createVideoService,
+  parseChannelList,
   parseCursor,
   parseExcludedChannels,
+  parseFeedCursor,
   resizeChannelLogo,
   toPublicVideo
 } = require('../../../src/server/modules/content/video.service');
@@ -15,8 +18,9 @@ const { registerVideoRoutes } = require('../../../src/server/modules/content/vid
 
 const CHANNEL_A = 'UCaaaaaaaaaaaaaaaaaaaaaa';
 const CHANNEL_B = 'UCbbbbbbbbbbbbbbbbbbbbbb';
+const CHANNEL_C = 'UCcccccccccccccccccccccc';
 
-// Servisin kullandığı sorgu işleçlerinin küçük bir taklidi ($and, $or, $type, $ne, $nin, $lt, $gt).
+// Servisin kullandığı sorgu işleçlerinin küçük bir taklidi ($and, $or, $type, $ne, $in, $nin, $lt, $gt).
 function matchesCondition(value, condition) {
   if (condition && typeof condition === 'object' && !(condition instanceof Date)) {
     return Object.entries(condition).every(([operator, expected]) => {
@@ -25,6 +29,8 @@ function matchesCondition(value, condition) {
           return expected === 'date' ? value instanceof Date : typeof value === expected;
         case '$ne':
           return value !== expected;
+        case '$in':
+          return expected.includes(value);
         case '$nin':
           return !expected.includes(value);
         case '$lt':
@@ -127,10 +133,27 @@ test('kanal logosu avatar boyutuna küçültülür, https olmayan adres atılır
   assert.equal(resizeChannelLogo(undefined), '');
 });
 
-test('takipten çıkarılan kanal listesi yalnız geçerli kimlikleri sıralı ve tekil tutar', () => {
+test('önerilmeyen / abone olunan kanal listesi yalnız geçerli kimlikleri sıralı ve tekil tutar', () => {
   assert.deepEqual(parseExcludedChannels(`${CHANNEL_B}, ${CHANNEL_A},${CHANNEL_B},kotu,`), [CHANNEL_A, CHANNEL_B]);
   assert.deepEqual(parseExcludedChannels(['dizi']), []);
   assert.deepEqual(parseExcludedChannels({ $ne: 'x' }), []);
+  assert.equal(parseChannelList, parseExcludedChannels);
+  const many = Array.from({ length: 250 }, (_, index) => `UC${String(index).padStart(22, '0')}`).join(',');
+  assert.equal(parseChannelList(many).length, 200);
+});
+
+test('karışık akış imleci iki parçalıdır; düz cursor iki akışın ortak başlangıcı olur', () => {
+  const start = parseFeedCursor(undefined);
+  assert.equal(start.subscribed.cursor, null);
+  assert.equal(start.others.done, false);
+  const plain = parseFeedCursor('1700000000000_vid00000001');
+  assert.deepEqual(plain.subscribed.cursor, plain.others.cursor);
+  const mixed = parseFeedCursor('end~1700000000000_vid00000001');
+  assert.equal(mixed.subscribed.done, true);
+  assert.equal(mixed.others.cursor.videoId, 'vid00000001');
+  assert.equal(parseFeedCursor('~').subscribed.done, false);
+  assert.equal(parseFeedCursor('bozuk~'), false);
+  assert.equal(parseFeedCursor(['~']), false);
 });
 
 test('cursor biçimi doğrulanır', () => {
@@ -198,6 +221,57 @@ test('akış türü, kanal hariç tutma ve geçersiz kayıtları uygular', async
   assert.equal(await service.listFeed({ type: 'video', channel: 'UCkisa' }), null);
   assert.equal(await service.listFeed({ type: 'canli' }), null);
   assert.equal(await service.listFeed({ type: 'video', before: 'bozuk' }), null);
+});
+
+test('abone olunan kanallar sayfanın çoğunu doldurur, biri bitince diğeri tamamlar ve hiçbir video atlanmaz', async () => {
+  // 30 video: tekler Kanal A, çiftler Kanal B. Yalnız A'ya abone olunur.
+  const videos = Array.from({ length: 30 }, (_, index) => makeVideo(index + 1));
+  const service = createVideoService({ getCollection: createFakeDb(videos, CHANNELS).getCollection });
+
+  const first = await service.listFeed({ type: 'video', include: CHANNEL_A, limit: 10 });
+  const fromA = first.videos.filter(video => video.channelId === CHANNEL_A).length;
+  assert.equal(fromA, Math.round(10 * SUBSCRIBED_SHARE), 'sayfanın SUBSCRIBED_SHARE kadarı abone olunan kanaldan gelmeli');
+  assert.equal(first.videos.length, 10);
+  assert.match(first.nextCursor, /^\d+_vid\d{8}~\d+_vid\d{8}$/);
+  const times = first.videos.map(video => Date.parse(video.publishedAt));
+  assert.deepEqual(times, [...times].sort((left, right) => right - left), 'sayfa en yeniden eskiye sıralı');
+
+  const seen = [...first.videos.map(video => video.id)];
+  let before = first.nextCursor;
+  while (before) {
+    const page = await service.listFeed({ type: 'video', include: CHANNEL_A, before, limit: 10 });
+    seen.push(...page.videos.map(video => video.id));
+    before = page.nextCursor;
+  }
+  assert.equal(seen.length, 30);
+  assert.equal(new Set(seen).size, 30);
+});
+
+test('önerilmeyen kanal abonelikte olsa da gösterilmez; abonelik kaydırırken değişirse eski cursor kabul edilir', async () => {
+  const videos = [
+    ...Array.from({ length: 6 }, (_, index) => makeVideo(index + 1)),
+    makeVideo(7, { kanalId: CHANNEL_C, kanalAdi: 'Kanal C' }),
+    makeVideo(8, { kanalId: CHANNEL_C, kanalAdi: 'Kanal C' })
+  ];
+  const service = createVideoService({ getCollection: createFakeDb(videos, CHANNELS).getCollection });
+
+  const page = await service.listFeed({ type: 'video', include: `${CHANNEL_A},${CHANNEL_C}`, exclude: CHANNEL_C, limit: 24 });
+  assert.equal(page.videos.some(video => video.channelId === CHANNEL_C), false);
+  assert.equal(page.videos.length, 6);
+
+  // Düz cursor + abonelik: iki akış aynı noktadan devam eder.
+  const plainFirst = await service.listFeed({ type: 'video', limit: 3 });
+  const afterSubscribe = await service.listFeed({ type: 'video', include: CHANNEL_A, before: plainFirst.nextCursor, limit: 24 });
+  const plainIds = new Set(plainFirst.videos.map(video => video.id));
+  assert.equal(afterSubscribe.videos.some(video => plainIds.has(video.id)), false);
+  assert.equal(afterSubscribe.videos.length, 5);
+
+  // Karışık cursor + abonelik yok: bitmemiş parçaların en yenisinden tek akış sürer.
+  const mixedFirst = await service.listFeed({ type: 'video', include: CHANNEL_A, limit: 3 });
+  const afterUnsubscribe = await service.listFeed({ type: 'video', before: mixedFirst.nextCursor, limit: 24 });
+  const allIds = new Set([...mixedFirst.videos, ...afterUnsubscribe.videos].map(video => video.id));
+  assert.equal(allIds.size, 8, 'tekrar olabilir ama video kaybolmamalı');
+  assert.deepEqual(await service.listFeed({ type: 'video', before: 'end~end' }), { videos: [], hasMore: false, nextCursor: null });
 });
 
 test('süresi olmayan canlı yayın kayıtları akışta ve ayrıntıda gösterilmez', async () => {

@@ -1,6 +1,6 @@
 // ==================== Videolar: önizlemeli akış ====================
-// Takip edilen kanalların en yeni videoları listelenir. 5 saniye izlenmiş videolar en üstte önerilmez:
-// önce izlenmemişler gelir, onlar bitince (liste hemen sona ermesin diye) izlenmişler en yeniden
+// Tüm kanalların (önerilmeyenler hariç) en yeni videoları listelenir; abone olunan kanal varsa sunucu
+// her sayfanın çoğunu onlardan doldurur. 5 saniye izlenmiş videolar en üstte önerilmez: önce izlenmemişler gelir, onlar bitince (liste hemen sona ermesin diye) izlenmişler en yeniden
 // başlayarak eklenir; izlenen kısım kırmızı ilerleme çubuğuyla görünür. Shorts rafı 3. karttan sonra
 // ve ardından her 12 kartta bir tekrar eder (raflar arasında aynı short gösterilmez).
 // Üstteki çiplerle tek bir kanala süzülebilir. Görünürdeki kart sessiz olarak önizlenir; önizlemede
@@ -144,7 +144,6 @@
         sentinel: null,
         home: null,
         channelId: '',
-        excludeKey: '',
         cursor: null,
         hasMore: false,
         loading: false,
@@ -194,7 +193,7 @@
         },
 
         // Sekme açıldığında en son seçilen kanal geri yüklenir (kullanıcı her seferinde yeniden seçmesin).
-        // Kanal artık listede yoksa ya da takipten çıkarılmışsa "Tümü"ne dönülür. Yalnız ilk akışta çalışır.
+        // Kanal artık listede yoksa ya da önerilmeyenlere alınmışsa "Tümü"ne dönülür. Yalnız ilk akışta çalışır.
         restoreSavedChannel() {
             if (this.channelRestored) return false;
             // Kanal listesi henüz gelmediyse (boş yanıt) karar bir sonraki akışa bırakılır.
@@ -202,7 +201,7 @@
             this.channelRestored = true;
             const saved = ns.store.selectedChannel();
             if (!saved || this.channelId) return false;
-            if (!ns.channels.has(saved) || !ns.store.isFollowing(saved)) {
+            if (!ns.channels.has(saved) || ns.store.isHidden(saved)) {
                 ns.store.setSelectedChannel('');
                 return false;
             }
@@ -211,17 +210,21 @@
         },
 
         // Kanal seçimi bölüm sekmelerinin sonundaki açılır liste (combobox) ile yapılır. Varsayılan "Tümü";
-        // liste yalnız takip edilen kanalları içerir.
-        followedChannels() {
-            return [...ns.channels.values()].filter(channel => ns.store.isFollowing(channel.id));
+        // listede önce abone olunan kanallar, sonra diğerleri yer alır (önerilmeyenler hariç).
+        menuChannels() {
+            const channels = [...ns.channels.values()].filter(channel => !ns.store.isHidden(channel.id));
+            return {
+                subscribed: channels.filter(channel => ns.store.isSubscribed(channel.id)),
+                others: channels.filter(channel => !ns.store.isSubscribed(channel.id))
+            };
         },
 
         renderChannelTabs() {
             const nav = this.sectionsNav;
             if (!nav) return;
             let select = nav.querySelector('.videos-channel-select');
-            const channels = this.followedChannels();
-            if (!channels.length) {
+            const { subscribed, others } = this.menuChannels();
+            if (!subscribed.length && !others.length) {
                 select?.remove();
                 this.closeChannelMenu();
                 return;
@@ -262,8 +265,17 @@
                 const selected = id === this.channelId;
                 return `<button type="button" role="option" class="videos-channel-option${selected ? ' is-selected' : ''}" data-channel-filter="${ns.escape(id)}" aria-selected="${selected ? 'true' : 'false'}">${avatar}<span class="videos-channel-option-name">${ns.escape(name)}</span><i class="fa-solid fa-check" aria-hidden="true"></i></button>`;
             };
+            const channelOptions = channels => channels
+                .map(channel => option(channel.id, ns.channelHandleLabel(channel.id, channel.name), ns.avatarHtml(channel.id, channel.name, 'videos-avatar-sm')))
+                .join('');
+            const group = title => `<div class="videos-channel-group" role="presentation">${title}</div>`;
+            const { subscribed, others } = this.menuChannels();
+            // Abonelik yoksa başlıksız tek liste; varsa "Abonelikler" ve "Diğer kanallar" grupları.
+            const body = subscribed.length
+                ? `${group('Abonelikler')}${channelOptions(subscribed)}${others.length ? `${group('Diğer kanallar')}${channelOptions(others)}` : ''}`
+                : channelOptions(others);
             this.channelMenu.innerHTML = option('', 'Tümü', '<span class="videos-avatar videos-avatar-sm videos-avatar-all" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>')
-                + this.followedChannels().map(channel => option(channel.id, ns.channelHandleLabel(channel.id, channel.name), ns.avatarHtml(channel.id, channel.name, 'videos-avatar-sm'))).join('');
+                + body;
         },
 
         toggleChannelMenu() {
@@ -421,8 +433,25 @@
                 if (!video || this.ids.has(video.id) || ns.store.isDisliked(video.id)) return false;
                 if (ns.store.isCompleted(video.id) !== (this.pass === 'watched')) return false;
                 if (this.channelId) return video.channelId === this.channelId;
-                return ns.store.isFollowing(video.channelId);
+                return !ns.store.isHidden(video.channelId);
             });
+        },
+
+        // "Bu kanalı önerme": kanalın akıştaki kartları ve raftaki shorts kutuları hemen kaldırılır.
+        // Sonraki sayfalar zaten süzülür (visibleVideos / shelfCandidates); akış baştan kurulmaz.
+        dropChannel(channelId) {
+            if (!channelId || !this.list || this.channelId === channelId) return;
+            const ofChannel = id => ns.videos.get(id)?.channelId === channelId;
+            let removed = false;
+            this.list.querySelectorAll('.videos-card[data-video-id], .videos-short-tile[data-video-id]').forEach(element => {
+                if (!ofChannel(element.dataset.videoId)) return;
+                element.remove();
+                removed = true;
+            });
+            this.extraShorts = this.extraShorts.filter(video => video.channelId !== channelId);
+            if (!removed) return;
+            this.preview.stop();
+            this.preview.scheduleCenterPick();
         },
 
         appendVideos(videos) {
@@ -477,7 +506,7 @@
             const all = [...(this.home?.shorts?.videos || []), ...this.extraShorts].filter(video => video.type === 'shorts'
                 && !this.shelfIds.has(video.id)
                 && !ns.store.isDisliked(video.id)
-                && ns.store.isFollowing(video.channelId));
+                && !ns.store.isHidden(video.channelId));
             // İzlenmemişler en yeni hep başta kalmasın diye karıştırılır; izlenmişler sona eklenir.
             return [
                 ...ns.mixFresh(all.filter(video => !ns.store.isCompleted(video.id))),
@@ -509,7 +538,6 @@
                 const page = await ns.api.feed({
                     type: 'shorts',
                     before: this.shortsCursor,
-                    excludeKey: ns.store.excludeKey(),
                     limit: PAGE_SIZE
                 });
                 if (sequence !== this.sequence) return;
@@ -546,7 +574,7 @@
             const channel = this.channelId ? ns.channels.get(this.channelId) : null;
             const subject = channel
                 ? `${ns.escape(channel.name || 'Bu kanal')} kanalındaki ${total} videonun`
-                : `Takip ettiğin kanallardaki ${total} videonun`;
+                : `Akıştaki ${total} videonun`;
             const title = this.channelId ? 'Bu kanalda hepsi bu kadar!' : 'Hepsini gördün!';
             const allChannels = this.channelId
                 ? '<button type="button" class="videos-end-link" data-channel-filter=""><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Tüm kanallar</button>'
@@ -556,7 +584,7 @@
                 <p class="videos-end-text">${subject} sonuna geldin. Ekrana ara verip bir kitap aç ya da biraz tefekküre dal; yeni videolar yüklendikçe burada olacak.</p>
                 <div class="videos-end-actions">
                     <a class="videos-pill" href="/tefekkur" data-app-path="/tefekkur"><i class="fa-solid fa-star" aria-hidden="true"></i> Tefekküre dal</a>
-                    <a class="videos-pill" href="/makaleler" data-app-path="/makaleler"><i class="fa-solid fa-compass" aria-hidden="true"></i> Okumaya geç</a>
+                    <a class="videos-pill" href="/makaleler" data-app-path="/makaleler"><i class="fa-solid fa-newspaper" aria-hidden="true"></i> Okumaya geç</a>
                 </div>
                 <div class="videos-end-links">
                     <button type="button" class="videos-end-link" data-scroll-top><i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Başa dön</button>
@@ -579,7 +607,6 @@
                         type: 'video',
                         before: this.cursor,
                         channelId: this.channelId,
-                        excludeKey: this.channelId ? '' : ns.store.excludeKey(),
                         limit: PAGE_SIZE
                     });
                     if (sequence !== this.sequence) return;
@@ -622,7 +649,7 @@
         showEmpty() {
             const message = this.channelId
                 ? 'Bu kanalda henüz video yok.'
-                : 'Takip ettiğin kanallarda henüz video yok.';
+                : 'Burada henüz video yok.';
             this.setStatus(`<div class="videos-empty"><i class="fa-regular fa-circle-play" aria-hidden="true"></i><p>${message}</p><a class="videos-pill" href="${ns.TAB_PATH}?bolum=hesabim&amp;liste=kanallar" data-library-list="kanallar">Kanalları yönet</a></div>`);
         },
 
@@ -642,13 +669,13 @@
             this.observer.observe(this.sentinel);
         },
 
-        // Takip edilen kanallar değişti: ilk sayfa yeniden hazırlanır.
+        // Kanal listesi başka sekmede değişti: ilk sayfa yeniden hazırlanır.
         reset() {
             this.sequence += 1;
             this.home = null;
             this.rendered = false;
             this.channelId = '';
-            // Takip listesi değişince akış "Tümü"yle baştan başlar; kayıtlı kanal da sıfırlanır.
+            // Akış "Tümü"yle baştan başlar; kayıtlı kanal da sıfırlanır.
             this.channelRestored = true;
             ns.store.setSelectedChannel('');
             this.clearList();

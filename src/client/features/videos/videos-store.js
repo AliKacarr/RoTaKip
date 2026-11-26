@@ -1,11 +1,15 @@
 // ==================== Videolar: cihazda saklanan kullanıcı verisi ====================
-// Beğenilenler, kaydedilenler, izleme geçmişi ve takipten çıkarılan kanallar yalnızca bu
-// tarayıcıda (localStorage) tutulur. Takip "çıkarılanlar" listesiyle saklanır; böylece
-// sonradan eklenen kanallar herkes için otomatik olarak takipli gelir.
+// Beğenilenler, kaydedilenler, izleme geçmişi, abone olunan ve önerilmeyen kanallar yalnızca bu
+// tarayıcıda (localStorage) tutulur. Sekme hiçbir aboneliği olmadan açılır: akışta tüm kanallar
+// görünür, abone olunanların videoları daha sık çıkar. "Bu kanalı önerme" denen kanallar
+// (yalnız abone olunmayanlar) akışta, Shorts'ta ve önerilerde gösterilmez.
 
 (function () {
     const ns = window.RoTaKipVideos;
     const STATE_KEY = 'rotakip:videos:v1';
+    // Sürüm 1'deki "takipten çıkarılanlar" (unfollowed) listesi yok sayılır; diğer veriler korunur.
+    const STATE_VERSION = 2;
+    const CHANNEL_LIST_LIMIT = 200;
     const HOME_CACHE_KEY = 'rotakip:videos:home-cache';
     const SHELF_HIDE_DAYS = 7;
     const HOME_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
@@ -35,17 +39,26 @@
     }
 
     function emptyState() {
-        return { v: 1, unfollowed: [], liked: [], disliked: [], saved: [], history: [], completed: [], shelfHiddenUntil: 0, selectedChannel: '', autoplay: true };
+        return { v: STATE_VERSION, subscribed: [], hidden: [], liked: [], disliked: [], saved: [], history: [], completed: [], shelfHiddenUntil: 0, selectedChannel: '', autoplay: true };
     }
 
     function isSnapshot(item) {
         return item && ns.isVideoId(item.id);
     }
 
+    function channelList(value) {
+        return Array.isArray(value)
+            ? [...new Set(value.filter(id => typeof id === 'string' && id))].slice(0, CHANNEL_LIST_LIMIT)
+            : [];
+    }
+
     function normalizeState(raw) {
         const state = emptyState();
-        if (!raw || raw.v !== 1) return state;
-        state.unfollowed = Array.isArray(raw.unfollowed) ? raw.unfollowed.filter(id => typeof id === 'string').slice(0, 200) : [];
+        if (!raw || (raw.v !== 1 && raw.v !== STATE_VERSION)) return state;
+        state.subscribed = channelList(raw.subscribed);
+        // Abone olunan kanal önerilmeyenlerde olamaz.
+        const subscribed = new Set(state.subscribed);
+        state.hidden = channelList(raw.hidden).filter(id => !subscribed.has(id));
         state.liked = Array.isArray(raw.liked) ? raw.liked.filter(isSnapshot).slice(0, LIST_LIMIT) : [];
         state.disliked = Array.isArray(raw.disliked) ? raw.disliked.filter(isSnapshot).slice(0, LIST_LIMIT) : [];
         state.saved = Array.isArray(raw.saved) ? raw.saved.filter(isSnapshot).slice(0, LIST_LIMIT) : [];
@@ -66,7 +79,8 @@
             liked: new Set(state.liked.map(item => item.id)),
             disliked: new Set(state.disliked.map(item => item.id)),
             saved: new Set(state.saved.map(item => item.id)),
-            unfollowed: new Set(state.unfollowed),
+            subscribed: new Set(state.subscribed),
+            hidden: new Set(state.hidden),
             completed: new Set(state.completed),
             history: new Map(state.history.map(item => [item.id, item]))
         };
@@ -119,33 +133,50 @@
 
     const store = {
         WATCHED_SECONDS,
-        // ---------- Takip ----------
-        isFollowing(channelId) {
-            return !indexes.unfollowed.has(channelId);
-        },
-        setFollow(channelId, following) {
-            if (typeof channelId !== 'string' || !channelId) return;
-            if (following === store.isFollowing(channelId)) return;
-            state.unfollowed = following
-                ? state.unfollowed.filter(id => id !== channelId)
-                : [...state.unfollowed, channelId];
+        // ---------- Abonelik ve önerilmeyen kanallar ----------
+        // İkisi birbirini dışlar: abone olununca kanal önerilmeyenlerden çıkar; abone olunan kanal gizlenemez.
+        isSubscribed: channelId => indexes.subscribed.has(channelId),
+        isHidden: channelId => indexes.hidden.has(channelId),
+        setSubscribed(channelId, subscribed) {
+            if (typeof channelId !== 'string' || !channelId) return false;
+            const next = Boolean(subscribed);
+            if (next === store.isSubscribed(channelId)) return false;
+            const wasHidden = indexes.hidden.has(channelId);
+            state.subscribed = next
+                ? [channelId, ...state.subscribed].slice(0, CHANNEL_LIST_LIMIT)
+                : state.subscribed.filter(id => id !== channelId);
+            if (next) state.hidden = state.hidden.filter(id => id !== channelId);
             buildIndexes();
             persist({ immediate: true });
-            emit('follow', { channelId, following });
+            emit('subscription', { channelId, subscribed: next, hiddenChanged: wasHidden });
+            return true;
         },
-        followAll() {
-            if (!state.unfollowed.length) return;
-            state.unfollowed = [];
+        setHidden(channelId, hidden) {
+            if (typeof channelId !== 'string' || !channelId) return false;
+            const next = Boolean(hidden);
+            if (next === store.isHidden(channelId) || (next && store.isSubscribed(channelId))) return false;
+            state.hidden = next
+                ? [channelId, ...state.hidden].slice(0, CHANNEL_LIST_LIMIT)
+                : state.hidden.filter(id => id !== channelId);
             buildIndexes();
             persist({ immediate: true });
-            emit('follow', { all: true });
+            emit('hidden', { channelId, hidden: next });
+            return true;
         },
-        // Sunucuya gönderilen anahtar: sıralı, virgülle ayrılmış takipten çıkarılan kanallar.
+        subscribedIds: () => state.subscribed.slice(),
+        hiddenIds: () => state.hidden.slice(),
+        // Sunucuya gönderilen anahtarlar: sıralı, virgülle ayrılmış kanal kimlikleri.
         excludeKey() {
-            return [...state.unfollowed].sort().join(',');
+            return [...state.hidden].sort().join(',');
         },
-        unfollowedCount() {
-            return state.unfollowed.length;
+        includeKey() {
+            return [...state.subscribed].sort().join(',');
+        },
+        // Ana akış isteği ve önbelleği bu iki listeye göre ayrılır.
+        feedFilter() {
+            const exclude = store.excludeKey();
+            const include = store.includeKey();
+            return { exclude, include, key: `${exclude}|${include}` };
         },
 
         // ---------- Akışta seçili kanal ----------
@@ -206,10 +237,13 @@
             emit(listName, { id, active: false });
         },
 
-        // Koleksiyonun (beğenilenler / kaydedilenler) tüm videolarını kaldırır.
-        clearList(listName) {
+        // Koleksiyonun (beğenilenler / kaydedilenler) videolarını kaldırır. `type` ('shorts' | 'video') verilirse
+        // yalnızca o türdekiler silinir (Beğendiğim videolar ile Beğendiğim Shorts'lar ayrı koleksiyonlardır).
+        clearList(listName, type = '') {
             if (!['liked', 'saved'].includes(listName) || !state[listName].length) return;
-            state[listName] = [];
+            state[listName] = type
+                ? state[listName].filter(video => (video.type === 'shorts') !== (type === 'shorts'))
+                : [];
             buildIndexes();
             persist({ immediate: true });
             emit(listName, { cleared: true });
@@ -288,14 +322,14 @@
 
         // ---------- Ana akış önbelleği ----------
         // Son ana akış yanıtı saklanır; sekme bir sonraki açılışta beklemeden çizilir, arka planda tazelenir.
-        readHomeCache(excludeKey) {
+        readHomeCache(filterKey) {
             const cached = readJson(HOME_CACHE_KEY);
-            if (!cached || cached.excludeKey !== excludeKey || !cached.data) return null;
+            if (!cached || cached.filterKey !== filterKey || !cached.data) return null;
             if (Date.now() - Number(cached.at || 0) > HOME_CACHE_MAX_AGE_MS) return null;
             return cached.data;
         },
-        writeHomeCache(excludeKey, data) {
-            writeJson(HOME_CACHE_KEY, { at: Date.now(), excludeKey, data });
+        writeHomeCache(filterKey, data) {
+            writeJson(HOME_CACHE_KEY, { at: Date.now(), filterKey, data });
         },
 
         subscribe(listener) {
@@ -307,10 +341,14 @@
     // Başka bir tarayıcı sekmesinde yapılan değişiklikler bu sekmeye de yansır.
     window.addEventListener('storage', event => {
         if (event.key !== STATE_KEY) return;
-        const previousExclude = store.excludeKey();
+        const previous = store.feedFilter();
         state = normalizeState(readJson(STATE_KEY));
         buildIndexes();
-        emit('sync', { followChanged: previousExclude !== store.excludeKey() });
+        const next = store.feedFilter();
+        emit('sync', {
+            subscriptionChanged: previous.include !== next.include,
+            hiddenChanged: previous.exclude !== next.exclude
+        });
     });
 
     window.addEventListener('pagehide', () => store.flush());

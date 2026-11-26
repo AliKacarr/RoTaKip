@@ -46,6 +46,29 @@
   padding: 4px 0;
 }
 
+/* Abonelik yokken: tek satır açıklama + eylem düğmesi. */
+.videos-subscriptions-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.videos-subscriptions-empty p {
+  margin: 0;
+}
+
+.videos-channel-section-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.videos-channel-section-title .videos-muted {
+  margin-left: 4px;
+  font-weight: 500;
+}
+
 /* ---------- Geçmiş rafı ---------- */
 
 .videos-shelf-item {
@@ -363,14 +386,13 @@
   width: 36px;
   height: 36px;
   box-sizing: border-box;
-  border: 1.5px solid #a3a3a3;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
-  background: var(--videos-soft);
+  background: transparent;
+  color: var(--videos-text);
+  font-size: 20px;
   cursor: pointer;
-}
-
-.videos-list-note {
-  margin-top: -14px;
 }
 
 .videos-library-list {
@@ -408,9 +430,212 @@
   font-size: 16px;
 }
 
+/* ---------- Arama kutusu ve filtre düğmeleri (Geçmiş, Beğenilenler, Kaydedilenler) ---------- */
+
+.videos-library-search {
+  margin-top: -10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.videos-library-search > i {
+  position: absolute;
+  left: 16px;
+  color: var(--videos-muted);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.videos-library-search input {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 0 46px 0 44px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: #e6e6e6;
+  color: var(--videos-text);
+  font: inherit;
+  font-size: 16px;
+  outline: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.videos-library-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.videos-library-search input:focus-visible {
+  border-color: var(--videos-text);
+  background: var(--videos-surface);
+}
+
+.videos-library-search-clear {
+  position: absolute;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--videos-muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.videos-library-search-clear[hidden] {
+  display: none;
+}
+
+.videos-library-filters {
+  display: flex;
+  gap: 8px;
+  margin: -14px 0 -8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.videos-library-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.videos-library-chip {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--videos-soft);
+  color: var(--videos-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.videos-library-chip.is-selected {
+  background: var(--videos-text);
+  color: #ffffff;
+}
+
+.videos-library-chip:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--videos-accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.videos-library-results {
+  min-width: 0;
+}
+
+/* ---------- Liste içi Shorts: yan yana kayan raf ve ızgara ---------- */
+
+.videos-library-shorts-shelf {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.videos-library-shorts-shelf .videos-short-tile {
+  flex: 0 0 auto;
+  width: 148px;
+  scroll-snap-align: start;
+}
+
+/* Ana akıştaki dar ekran kuralı (feed.css) Shorts kutularının köşelerini sıfırlar; Hesabım'da yuvarlak kalır. */
+.videos-library .videos-short-tile {
+  border-radius: 12px;
+}
+
+.videos-library-shorts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+
+/* Kutunun altında başlık + görüntülenme sayısı; ana sayfa rafındaki mutlak konumlu başlık burada akışa alınır.
+   Gradyan (feed.css `::after`) altta daha koyudur ki kapaktaki yazılar başlığı bozmasın. */
+.videos-short-tile.is-library .videos-short-tile-link::after {
+  inset: 35% 0 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.45) 55%, transparent);
+}
+
+.videos-short-tile-caption {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.videos .videos-short-tile.is-library .videos-short-tile-title {
+  position: static;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.videos-short-tile-meta {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.videos .videos-short-tile.is-library .videos-short-tile-more {
+  top: 4px;
+  right: 2px;
+  font-size: 18px;
+}
+
+/* Menü içeriği kadar geniştir (JS yalnızca konumlar); çok uzun metinde satır kırılır. */
+.videos-shelf-menu {
+  width: max-content;
+  min-width: 190px;
+  max-width: min(280px, calc(100vw - 16px));
+}
+
+.videos-shelf-menu > button {
+  white-space: normal;
+}
+
 @media (max-width: 768px) {
   .videos-library {
     padding: 4px 14px 12px;
+  }
+
+  .videos-library-shorts-shelf {
+    margin-inline: -14px;
+    padding-inline: 14px;
+    scroll-padding-inline: 14px;
+    scrollbar-width: none;
+  }
+
+  .videos-library-shorts-shelf::-webkit-scrollbar {
+    display: none;
+  }
+
+  .videos-library-shorts-shelf .videos-short-tile {
+    width: 34vw;
+    max-width: 148px;
+  }
+
+  .videos-library-shorts-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .videos-library .videos-shelf-row,
@@ -424,6 +649,7 @@
     width: 46vw;
     max-width: 210px;
   }
+
 
   .videos-collection-link {
     grid-template-columns: 136px minmax(0, 1fr);

@@ -40,10 +40,13 @@
                 </div>
             </div>
             <div class="videos-short-info">
-                <button type="button" class="videos-short-channel" data-channel-filter="${ns.escape(video.channelId)}">
-                    ${ns.avatarHtml(video.channelId, video.channelName, 'videos-avatar-sm')}
-                    <span>${ns.escape(ns.channelHandleLabel(video.channelId, video.channelName))}</span>
-                </button>
+                <div class="videos-short-channel-row">
+                    <button type="button" class="videos-short-channel" data-channel-filter="${ns.escape(video.channelId)}">
+                        ${ns.avatarHtml(video.channelId, video.channelName, 'videos-avatar-sm')}
+                        <span>${ns.escape(ns.channelHandleLabel(video.channelId, video.channelName))}</span>
+                    </button>
+                    ${ns.subscribeButtonHtml(video.channelId, 'videos-subscribe-short')}
+                </div>
                 <p class="videos-short-title">${ns.escape(video.title)}</p>
             </div>
             <div class="videos-short-actions">
@@ -161,7 +164,7 @@
                 && video.type === 'shorts'
                 && !this.ids.has(video.id)
                 && !ns.store.isDisliked(video.id)
-                && (this.channelId ? video.channelId === this.channelId : ns.store.isFollowing(video.channelId))
+                && (this.channelId ? video.channelId === this.channelId : !ns.store.isHidden(video.channelId))
                 && ns.store.isCompleted(video.id) === (this.pass === 'watched'));
         },
 
@@ -222,7 +225,6 @@
                         type: 'shorts',
                         before: this.cursor,
                         channelId: this.channelId,
-                        excludeKey: this.channelId ? '' : ns.store.excludeKey(),
                         limit: PAGE_SIZE
                     });
                     if (sequence !== this.sequence) return;
@@ -244,7 +246,7 @@
             if (this.scroller.querySelector('.videos-short-end')) return;
             const message = this.channelId
                 ? (this.items.length ? 'Bu kanaldaki shorts\'ların sonuna geldin.' : 'Bu kanalda henüz short yok.')
-                : (this.items.length ? 'Takip ettiğin kanallardaki shorts\'ların sonuna geldin.' : 'Takip ettiğin kanallarda henüz short yok.');
+                : (this.items.length ? 'Tüm shorts\'ların sonuna geldin.' : 'Henüz short yok.');
             this.scroller.insertAdjacentHTML('beforeend', `<div class="videos-short-end">
                 <i class="fa-solid fa-bolt" aria-hidden="true"></i>
                 <p>${message}</p>
@@ -262,7 +264,7 @@
             Object.assign(this.layer.style, { top: '0px', left: '0px', width: '0px', height: '0px' });
         },
 
-        // Takip listesi değişti: liste bir sonraki açılışta baştan hazırlanır.
+        // Kanal listesi başka sekmede değişti: liste bir sonraki açılışta baştan hazırlanır.
         reset() {
             this.sequence += 1;
             this.prepared = false;
@@ -694,6 +696,34 @@
                 else this.player.unMute();
             }
             ns.tab.syncShortsSound();
+        },
+
+        // "Bu kanalı önerme": kanalın sıradaki short'ları listeden çıkarılır; ekrandaki short o kanaldansa
+        // bir sonrakine geçilir. Geride kalan slaytlara dokunulmaz (üstteki slaytı silmek kaydırmayı oynatır).
+        dropChannel(channelId) {
+            if (!channelId || !this.items.length || this.channelId) return;
+            const current = Math.max(0, this.activeIndex);
+            const slides = [...this.scroller.querySelectorAll('.videos-short')];
+            const dropped = slides.filter((slide, index) => index > current && this.items[index]?.channelId === channelId);
+            if (dropped.length) {
+                dropped.forEach(slide => {
+                    this.observer?.unobserve(slide);
+                    slide.remove();
+                });
+                this.items = this.items.filter((video, index) => index <= current || video.channelId !== channelId);
+                this.scroller.querySelectorAll('.videos-short').forEach((slide, index) => {
+                    slide.dataset.index = String(index);
+                });
+                this.syncNav();
+            }
+            if (this.items[current]?.channelId !== channelId) return;
+            if (this.slideAt(current + 1)) {
+                this.step(1);
+                return;
+            }
+            this.loadMore().then(() => {
+                if (this.items[this.activeIndex]?.channelId === channelId) this.step(1);
+            });
         },
 
         step(direction) {
