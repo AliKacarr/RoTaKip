@@ -363,7 +363,7 @@ to {
 
 .private-group-logout-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -729,7 +729,7 @@ to {
 .profile-settings-modal-header h3 {
   color: white;
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 600;
   display: flex;
   align-items: center;

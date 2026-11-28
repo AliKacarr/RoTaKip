@@ -40,6 +40,18 @@
     </div>
     <button type="button" class="ok-link" data-action="ladder">Tüm ligler <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
   </div>
+  <!-- Misafir: bu ayın özeti + Gruba Katıl / Giriş Yap (user-cards.js doldurur) -->
+  <article class="ok-card ok-guest-cta" id="okumalarGuestCta" hidden>
+    <dl class="ok-guest-cta-stats">
+      <div><dt>Katılımcı</dt><dd id="okumalarGuestReaders">0</dd></div>
+      <div><dt>Toplam</dt><dd id="okumalarGuestTotal">0</dd></div>
+      <div><dt>Günlük ort.</dt><dd id="okumalarGuestAverage">0</dd></div>
+    </dl>
+    <div class="ok-guest-cta-actions">
+      <button type="button" class="ok-btn ok-btn-primary" onclick="window.openGroupJoin?.()">Gruba Katıl</button>
+      <button type="button" class="ok-btn ok-guest-cta-login" onclick="window.openGroupLogin?.()">Giriş Yap</button>
+    </div>
+  </article>
   <article class="ok-card ok-ranking-card">
     <div class="ok-ranking-caption-row">
       <p class="ok-ranking-caption" id="okumalarRankingCaption"></p>

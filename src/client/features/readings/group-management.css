@@ -1001,7 +1001,7 @@
     transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.15s ease;
 }
 
-.hero-theme-option:hover:not(:disabled):not(.is-selected) {
+.hero-theme-option:hover:not(:disabled):not(.is-chosen) {
     background: #f4f5f9;
 }
 
@@ -1009,7 +1009,7 @@
     transform: scale(0.96);
 }
 
-.hero-theme-option.is-selected {
+.hero-theme-option.is-chosen {
     border-color: #4e54c8;
     color: #1d2433;
 }
@@ -1037,7 +1037,7 @@
     transition: transform 0.2s ease;
 }
 
-.hero-theme-option.is-selected .hero-theme-swatch {
+.hero-theme-option.is-chosen .hero-theme-swatch {
     transform: scale(1.04);
 }
 

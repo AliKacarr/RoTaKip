@@ -91,11 +91,10 @@
 .tefekkur-page .tefekkur-slider-save i {
     position: absolute;
     inset: 0;
-    margin: auto;
-    width: 1em;
-    height: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
-    text-align: center;
 }
 
 .tefekkur-page .tefekkur-slider-save .is-base {

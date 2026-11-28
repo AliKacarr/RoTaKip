@@ -134,7 +134,6 @@ class LocalStorageManager {
 
   static loginUser(groupId, userId, userAuthority, userName, groupName, name) {
     this.currentUser = { groupId, userId: String(userId), userAuthority, userName, groupName, name: name || '' };
-    if (typeof window.updateProfileButton === 'function') window.updateProfileButton();
     window.dispatchEvent(new Event('rotakip:auth-changed'));
   }
 
@@ -260,7 +259,6 @@ window.applyResolvedGroupContext = function applyResolvedGroupContext(context) {
     LocalStorageManager.logoutUser();
   }
 
-  window.updateProfileButton?.();
   window.syncGroupManagementVisibility?.();
 };
 
@@ -403,10 +401,6 @@ async function initializeAuthSystem() {
     
   
     // UI güncellemelerini tetikle
-    if (typeof window.updateProfileButton === 'function') {
-      window.updateProfileButton();
-    }
-
     if (typeof window.syncGroupManagementVisibility === 'function') {
       window.syncGroupManagementVisibility();
     }
@@ -522,59 +516,6 @@ async function validateGroup() {
     window.location.href = '/gruplar';
     return false;
   }
-}
-
-// Profil butonunu dinamik hale getirme fonksiyonu
-function initializeProfileButton() {
-  const profileButton = document.getElementById('profileButton');
-  const profileButtonText = document.getElementById('profileButtonText');
-  const profileButtonIcon = document.getElementById('profileButtonIcon');
-  const adminLoginModal = document.getElementById('adminLoginModal');
-  
-  if (!profileButton || !profileButtonText || !profileButtonIcon) return;
-  
-  function checkAuthStatus() {
-    const userInfo = LocalStorageManager.getCurrentUserInfo();
-    
-    if (userInfo) {
-      const username = userInfo.userName || 'Kullanıcı';
-      const userAuthority = userInfo.userAuthority;
-      
-      // Giriş yapmış kullanıcı profilini Sayfam'daki profil başlığından açar; düğme yalnız misafire görünür.
-      profileButton.hidden = true;
-      profileButtonText.textContent = 'Profilim';
-      
-      if (userAuthority === 'admin') {
-        profileButton.title = 'Yönetici Profili: ' + username;
-        profileButtonIcon.className = 'fa-solid fa-user-shield';
-      } else {
-        profileButton.title = 'Üye Profili: ' + username;
-        profileButtonIcon.className = 'fa-solid fa-user';
-      }
-      
-      profileButton.onclick = function() {
-        if (typeof showAdminInfoPanel === 'function') {
-          showAdminInfoPanel();
-        }
-      };
-    } else {
-      profileButton.hidden = false;
-      profileButtonText.textContent = 'Giriş Yap';
-      profileButton.title = 'Kullanıcı Girişi';
-      
-      profileButtonIcon.className = 'fa-solid fa-sign-in-alt';
-
-      profileButton.onclick = function() {
-        if (adminLoginModal) {
-          adminLoginModal.style.display = 'flex';
-        }
-      };
-    }
-  }
-  
-  checkAuthStatus();
-  
-  window.updateProfileButton = checkAuthStatus;
 }
 
 // Grup kapağının arka planı. "gorsel" teması yalnız yöneticinin cihazından yüklediği grup resmi varken
@@ -776,9 +717,6 @@ window.initializeGroupPage = async function initializeGroupPage() {
     if (canContinue === 'invite') {
       return { ready: true, invite: true, groupId: window.groupid };
     }
-
-    // Profil butonunu başlat
-    initializeProfileButton();
 
     // Title'ı güncelle
     updatePageTitle();

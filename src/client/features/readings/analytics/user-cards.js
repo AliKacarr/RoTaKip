@@ -93,6 +93,19 @@
     return readers.map(guestRowMarkup).join('');
   }
 
+  // Misafir: sıralamanın üstünde bu ayın özeti (okuyan sayısı, toplam, günlük ortalama) ve katıl/giriş düğmeleri.
+  function renderGuestCta(guest, rows) {
+    const card = document.getElementById('okumalarGuestCta');
+    if (!card) return;
+    card.hidden = !guest;
+    if (!guest) return;
+    const readers = rows.filter(row => row.month.amount > 0);
+    const total = readers.reduce((sum, row) => sum + (Number(row.month.amount) || 0), 0);
+    document.getElementById('okumalarGuestReaders').textContent = String(readers.length);
+    document.getElementById('okumalarGuestTotal').textContent = String(Math.round(total));
+    document.getElementById('okumalarGuestAverage').textContent = guestAverage(total / Math.max(1, new Date().getDate()));
+  }
+
   // Misafir kartının altındaki "Yöneticiler" kartı. Grubu ilk açan (en eski) yönetici "Sahip" sayılır.
   function renderGuestAdmins(root, guest) {
     let card = document.getElementById('okumalarGuestAdmins');
@@ -436,6 +449,7 @@
     if (empty) list.innerHTML = `<li class="ok-empty">${empty}</li>`;
     else if (guest) list.innerHTML = guestListMarkup(rows);
     else list.innerHTML = rows.map(row => rowMarkup(row, me && String(me.userId) === String(row.user._id))).join('');
+    renderGuestCta(guest, rows);
     renderGuestAdmins(root, guest);
     if (animateNext) {
       animateNext = false;

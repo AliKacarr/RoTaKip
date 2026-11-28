@@ -324,6 +324,67 @@
   font-size: 14px;
 }
 
+.ok-guest-cta[hidden] {
+  display: none;
+}
+
+.ok-guest-cta {
+  display: grid;
+  gap: 16px;
+}
+
+.ok-guest-cta-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  text-align: center;
+}
+
+.ok-guest-cta-stats dt {
+  color: var(--ok-muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ok-guest-cta-stats dd {
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: var(--ok-text);
+  font-size: 19px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Düğmeler sitenin ortak .ok-btn stilini kullanır (44px, 16px yazı); burada yalnız yan yana dizilir. */
+.ok-guest-cta-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+/* Giriş Yap: soluk değil, indigo çerçeveli ve yazılı (Gruba Katıl dolu, bu çerçeveli). */
+.ok-guest-cta-login {
+  border: 2px solid var(--ok-accent);
+  background: var(--ok-surface);
+  color: var(--ok-accent);
+}
+
+.ok-guest-cta-login:hover {
+  background: var(--ok-accent-tint);
+}
+
+@media (max-width: 480px) {
+  .ok-guest-cta-stats dt {
+    font-size: 14px;
+  }
+
+  .ok-guest-cta-stats dd {
+    font-size: 17px;
+  }
+}
+
 .ok-guest-admins {
   padding: 0;
   overflow: hidden;

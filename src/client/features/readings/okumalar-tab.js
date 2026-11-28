@@ -287,13 +287,6 @@
 
   // ---- Grup bilgisi, Bildir ve Gruptan ayrıl -----------------------------------
 
-  const REPORT_REASONS = [
-    ['uygunsuz', 'Uygunsuz içerik'],
-    ['sahte', 'Yanıltıcı veya sahte grup'],
-    ['spam', 'Spam / istenmeyen paylaşım'],
-    ['diger', 'Diğer']
-  ];
-
   function openGroupInfoSheet() {
     if (!window.RoTaKipBottomSheet) return;
     const group = window.currentGroupData || {};
@@ -309,38 +302,52 @@
     });
   }
 
-  function openReportSheet() {
-    const content = document.createElement('form');
-    content.innerHTML = `
-      <fieldset class="ok-report-reasons">
-        ${REPORT_REASONS.map(([value, label], index) => `<label class="ok-report-reason"><input type="radio" name="reason" value="${value}"${index === 0 ? ' checked' : ''}><span>${label}</span></label>`).join('')}
-      </fieldset>
-      <button type="submit" class="ok-report-submit">Bildir</button>`;
-    const sheet = window.RoTaKipBottomSheet.open({
-      title: 'Grubu bildir',
-      subtitle: 'Bildirimin yöneticilere iletilir',
-      className: 'ok-sheet',
-      content
+  // Bildir: tek adımlık onay penceresi; sebep seçtirilmez, sunucuya "uygunsuz" gider.
+  function openReportDialog() {
+    if (document.querySelector('.ok-report-dialog-backdrop')) return;
+    const backdrop = document.createElement('div');
+    backdrop.className = 'ok-report-dialog-backdrop';
+    backdrop.innerHTML = `
+      <div class="ok-report-dialog" role="alertdialog" aria-modal="true" aria-labelledby="okReportDialogTitle" aria-describedby="okReportDialogText">
+        <h2 id="okReportDialogTitle">Bildir</h2>
+        <p id="okReportDialogText">Bu grupta uygun olmayan isim resim v.s. gibi şeyler olduğunu düşünüyorsanız bildiriniz</p>
+        <div class="ok-report-dialog-actions">
+          <button type="button" class="ok-report-dialog-cancel">Vazgeç</button>
+          <button type="button" class="ok-report-dialog-confirm">Bildir</button>
+        </div>
+      </div>`;
+    const close = () => {
+      document.removeEventListener('keydown', onKeydown);
+      backdrop.remove();
+    };
+    const onKeydown = event => {
+      if (event.key === 'Escape') close();
+    };
+    const confirmButton = backdrop.querySelector('.ok-report-dialog-confirm');
+    backdrop.querySelector('.ok-report-dialog-cancel').addEventListener('click', close);
+    backdrop.addEventListener('click', event => {
+      if (event.target === backdrop) close();
     });
-    content.addEventListener('submit', async event => {
-      event.preventDefault();
-      const submit = content.querySelector('.ok-report-submit');
-      submit.disabled = true;
+    confirmButton.addEventListener('click', async () => {
+      confirmButton.disabled = true;
       try {
         const response = await fetch(`/api/group-reports/${encodeURIComponent(window.groupid || '')}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reason: content.elements.reason.value })
+          body: JSON.stringify({ reason: 'uygunsuz' })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || data.error || 'Bildirim gönderilemedi');
-        sheet.close();
+        close();
         window.showNotification?.('Bildirimin için teşekkürler', 'success');
       } catch (error) {
-        submit.disabled = false;
+        confirmButton.disabled = false;
         window.showNotification?.(error.message || 'Bildirim gönderilemedi', 'error');
       }
     });
+    document.addEventListener('keydown', onKeydown);
+    document.body.appendChild(backdrop);
+    confirmButton.focus();
   }
 
   // Gruptan ayrılmak, kişinin bu gruptaki hesabını silmektir (hesap silme ile aynı uç nokta).
@@ -389,8 +396,7 @@
     const sheet = window.RoTaKipBottomSheet.open({ title: 'Seçenekler', className: 'ok-sheet', content });
     content.querySelector('[data-more="report"]').addEventListener('click', () => {
       sheet.close();
-      // Önceki panel kapanış animasyonunu bitirsin, sonra Bildir paneli açılsın.
-      window.setTimeout(openReportSheet, 300);
+      openReportDialog();
     });
     content.querySelector('[data-more="logout"]')?.addEventListener('click', () => {
       sheet.close();

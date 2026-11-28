@@ -42,14 +42,14 @@
     if (existing.length === visible.length && existing.every((button, index) => button.dataset.theme === visible[index][0])) {
       existing.forEach(button => {
         const active = button.dataset.theme === selected;
-        button.classList.toggle('is-selected', active);
+        button.classList.toggle('is-chosen', active);
         button.setAttribute('aria-checked', String(active));
         button.disabled = saving;
       });
       return;
     }
     picker.innerHTML = visible.map(([key, label]) => `
-      <button type="button" class="hero-theme-option${key === selected ? ' is-selected' : ''}" data-theme="${key}"
+      <button type="button" class="hero-theme-option${key === selected ? ' is-chosen' : ''}" data-theme="${key}"
         role="radio" aria-checked="${key === selected}" ${saving ? 'disabled' : ''}>
         <span class="hero-theme-swatch" data-theme="${key}" aria-hidden="true">${key === 'gorsel' ? '<i class="fa-solid fa-image"></i>' : ''}</span>
         <span class="hero-theme-name">${label}</span>

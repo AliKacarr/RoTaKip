@@ -20,7 +20,12 @@
         activeKey: null,
         status: 'idle',
         viewKey: null,
-        supportsVolume: true
+        supportsVolume: true,
+        // iOS gibi `audio.volume` değişmeyen cihazlarda ses düzeyi Web Audio GainNode ile ayarlanır.
+        useGain: false,
+        audioContext: null,
+        gainNode: null,
+        volume: 1
     };
 
     function queryElements() {
@@ -53,6 +58,49 @@
         }
     }
 
+    function detectGainSupport() {
+        return Boolean(window.AudioContext || window.webkitAudioContext);
+    }
+
+    function applyVolume() {
+        if (state.gainNode) state.gainNode.gain.value = state.volume;
+        else if (state.audio && !state.useGain) state.audio.volume = state.volume;
+    }
+
+    // Ses düzeyi GainNode ile ayarlanacaksa yayın CORS ile açılır; aksi halde Safari sesi sessize alır.
+    // Kullanıcı hareketi içinde (oynat düğmesi) çağrılır.
+    function connectGain(audio) {
+        if (!state.useGain || state.gainNode) return;
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            const context = new AudioContextClass();
+            const source = context.createMediaElementSource(audio);
+            const gain = context.createGain();
+            gain.gain.value = state.volume;
+            source.connect(gain);
+            gain.connect(context.destination);
+            state.audioContext = context;
+            state.gainNode = gain;
+        } catch (error) {
+            console.warn('Ses düzeyi ayarı başlatılamadı:', error);
+            disableGain();
+        }
+    }
+
+    // Yayın CORS'a izin vermiyorsa ya da Web Audio kurulamıyorsa normal çalmaya dönülür (ses düzeyi donanım tuşlarıyla).
+    function disableGain() {
+        state.useGain = false;
+        state.supportsVolume = false;
+        if (state.audioContext) state.audioContext.close().catch(() => null);
+        state.audioContext = null;
+        state.gainNode = null;
+        if (state.audio) {
+            state.audio.pause();
+            state.audio.removeAttribute('src');
+            state.audio = null;
+        }
+    }
+
     function loadRadios() {
         if (!state.radiosPromise) {
             state.radiosPromise = ns.fetchJson('/api/tefekkur/radios')
@@ -72,8 +120,8 @@
         if (state.audio) return state.audio;
         const audio = new Audio();
         audio.preload = 'none';
-        const storedVolume = Number.parseFloat(ns.readStorage(VOLUME_STORAGE_KEY));
-        if (Number.isFinite(storedVolume) && storedVolume >= 0 && storedVolume <= 1) audio.volume = storedVolume;
+        if (state.useGain) audio.crossOrigin = 'anonymous';
+        else audio.volume = state.volume;
         audio.addEventListener('playing', () => setStatus('playing'));
         audio.addEventListener('waiting', () => {
             if (!audio.paused) setStatus('loading');
@@ -86,6 +134,14 @@
         });
         audio.addEventListener('error', () => {
             if (!audio.getAttribute('src')) return;
+            if (state.useGain && state.activeKey) {
+                // CORS'suz yayın: ses düzeyi ayarını bırakıp aynı yayını normal şekilde yeniden dene.
+                const key = state.activeKey;
+                disableGain();
+                render();
+                play(key);
+                return;
+            }
             console.warn('Radyo yayını açılamadı:', audio.error);
             setStatus('error');
         });
@@ -146,6 +202,8 @@
         setStatus('loading');
         // Canlı yayında duraklatıp devam edince eski tampondan değil, güncel yayından başlanır.
         audio.src = radio.streamUrl;
+        connectGain(audio);
+        if (state.audioContext?.state === 'suspended') state.audioContext.resume().catch(() => null);
         try {
             await audio.play();
         } catch (error) {
@@ -211,7 +269,7 @@
         }
 
         elements.volumeRow.hidden = !state.supportsVolume;
-        if (state.audio) elements.volume.value = String(state.audio.volume);
+        elements.volume.value = String(state.volume);
 
         // Bağlantı hatasında ana sayfadaki mini oynatıcı gösterilmez.
         const showMini = Boolean(state.activeKey) && state.status !== 'idle' && state.status !== 'error';
@@ -234,9 +292,9 @@
             if (state.viewKey) toggle(state.viewKey);
         });
         volume.addEventListener('input', () => {
-            const audio = ensureAudio();
-            audio.volume = Number(volume.value);
-            ns.writeStorage(VOLUME_STORAGE_KEY, audio.volume);
+            state.volume = Math.min(1, Math.max(0, Number(volume.value)));
+            applyVolume();
+            ns.writeStorage(VOLUME_STORAGE_KEY, state.volume);
         });
         nowPlayingToggle.addEventListener('click', () => {
             if (state.activeKey) toggle(state.activeKey);
@@ -248,6 +306,12 @@
         init() {
             state.elements = queryElements();
             state.supportsVolume = detectVolumeSupport();
+            if (!state.supportsVolume && detectGainSupport()) {
+                state.useGain = true;
+                state.supportsVolume = true;
+            }
+            const storedVolume = Number.parseFloat(ns.readStorage(VOLUME_STORAGE_KEY));
+            if (Number.isFinite(storedVolume) && storedVolume >= 0 && storedVolume <= 1) state.volume = storedVolume;
             bindEvents();
             render();
         },

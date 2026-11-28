@@ -1,4 +1,4 @@
-/* Grup kapağı: grup resmi arka plan; üstte resmin üzerinde geri / bilgi / ⋮, altta ad ve Davet et / Giriş yap */
+/* Grup kapağı: grup resmi arka plan; üstte resmin üzerinde geri / bilgi / ⋮, altta ad ve Davet et */
 .okumalar-hero {
     position: relative;
     isolation: isolate;
@@ -214,7 +214,7 @@
     outline: 3px solid #fff;
 }
 
-/* Kapağın sağ altındaki eylem: yöneticide "Davet et", misafirde "Giriş Yap" (aynı stil) */
+/* Kapağın sağ altındaki eylem: yalnız yöneticide "Davet et" (misafirin düğmeleri Grubum'daki karttadır) */
 .okumalar-hero-pill {
     display: inline-flex;
     flex: 0 0 auto;
@@ -248,13 +248,6 @@
     transform: scale(0.96);
 }
 
-.profileButtonText {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 110px;
-}
-
 @media (max-width: 480px) {
     .okumalar-hero {
         min-height: 200px;
@@ -274,10 +267,6 @@
 
     .okumalar-hero-bar {
         gap: 2px;
-    }
-
-    .profileButtonText {
-        max-width: 84px;
     }
 }
 
@@ -320,7 +309,7 @@
     background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
     border-radius: 24px;
     width: 90%;
-    max-width: 480px;
+    max-width: 400px;
     position: relative;
     overflow: hidden;
     box-shadow: 0 32px 64px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.05);
@@ -406,7 +395,7 @@
 }
 
 .groups-auth-login-modal-body {
-    padding: 35px;
+    padding: 28px;
     background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
     border-radius: 0 0 24px 24px;
 }
@@ -414,7 +403,7 @@
 .groups-auth-login-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
 }
 
 .groups-auth-form-group {
@@ -440,10 +429,10 @@
 
 .groups-auth-form-input {
     width: 100%;
-    padding: 16px 20px 16px 52px;
+    padding: 12px 16px 12px 48px;
     border: 2px solid #bac5d2;
-    border-radius: 14px;
-    font-size: 20px;
+    border-radius: 12px;
+    font-size: 18px;
     transition: all 0.3s ease;
     background: #ffffff;
     outline: none;
@@ -494,7 +483,7 @@
 }
 
 .groups-auth-login-actions {
-    margin-top: 10px;
+    margin-top: 4px;
 }
 
 .groups-auth-login-btn {
@@ -502,9 +491,9 @@
     background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
     color: white;
     border: none;
-    padding: 18px 25px;
-    border-radius: 16px;
-    font-size: 22px;
+    padding: 13px 20px;
+    border-radius: 14px;
+    font-size: 19px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -535,58 +524,27 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-top: 20px;
-    padding-top: 20px;
+    padding-top: 16px;
     border-top: 1px solid #d8d8d8;
 }
 
 .groups-auth-forgot-password-link {
     display: flex;
     align-items: center;
-    gap: 12px;
-    color: #4b5563;
+    justify-content: center;
+    gap: 8px;
+    color: #3b82f6;
     text-decoration: none;
-    font-size: 19px;
+    font-size: 17px;
     font-weight: 600;
-    padding: 14px 18px;
+    padding: 10px;
     border-radius: 12px;
-    transition: all 0.3s ease;
-    background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
-    border: 2px solid #bac5d2;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: color 0.2s ease, background 0.2s ease;
 }
 
 .groups-auth-forgot-password-link:hover {
-    color: #1f2937;
-    background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%);
-    border-color: #3b82f6;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-decoration: none;
-}
-
-.groups-auth-join-group-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
     color: #1d4ed8;
-    text-decoration: none;
-    font-size: 19px;
-    font-weight: 600;
-    padding: 14px 18px;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
-    border: 2px solid #60a5fa;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-}
-
-.groups-auth-join-group-link:hover {
-    color: #1D4ED8;
-    background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
-    border-color: #3b82f6;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    background: rgba(59, 130, 246, 0.08);
     text-decoration: none;
 }
 
@@ -2148,17 +2106,30 @@
     font-size: 18px;
   }
 
+  .groups-auth-login-modal-content {
+    max-width: 320px;
+  }
+
   .groups-auth-login-modal-body,
   .groups-auth-forgot-modal-body {
-    padding: 16px 18px 18px;
+    padding: 22px 20px 20px;
+  }
+
+  .groups-auth-login-form {
+    gap: 16px;
   }
 
   .groups-auth-form-input,
   .groups-auth-join-form-input,
   .welcome-form-input {
-    padding: 11px 14px 11px 42px;
+    padding: 13px 12px 13px 40px;
     border-radius: 12px;
     font-size: 15px;
+  }
+
+  .groups-auth-login-links {
+    padding-top: 0;
+    border-top: 0;
   }
 
   .groups-auth-input-icon,
@@ -2176,16 +2147,14 @@
   }
 
   .groups-auth-login-btn {
-    padding: 12px 16px;
+    padding: 14px 16px;
     border-radius: 12px;
     font-size: 16px;
   }
 
-  .groups-auth-forgot-password-link,
-  .groups-auth-join-group-link {
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 14px;
+  .groups-auth-forgot-password-link {
+    padding: 8px;
+    font-size: 15px;
   }
 
   .groups-auth-error-message {

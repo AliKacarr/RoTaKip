@@ -315,7 +315,10 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat namaz v
   const routes = readPublic('app/route-config.js');
   const router = readPublic('app/shell-router.js');
 
-  assert.match(groupHeaderFragment, /id="secretAdminLogin"[\s\S]*?id="profileButton"/);
+  assert.match(groupHeaderFragment, /id="secretAdminLogin"/);
+  assert.doesNotMatch(groupHeaderFragment, /id="profileButton"/);
+  assert.doesNotMatch(commonOverlays, /id="groupsAuthJoinGroupLink"/);
+  assert.match(okumalarFragment, /id="okumalarGuestCta"[^>]*hidden[\s\S]*?Gruba Katıl[\s\S]*?Giriş Yap[\s\S]*?class="ok-card ok-ranking-card"/);
   assert.match(commonOverlays, /groups-auth-join-image-source-picker[\s\S]*?Cihazdan yükle[\s\S]*?avatar-picker-sparkle[^>]*>✨<[\s\S]*?Avatar seç/);
   assert.equal((commonOverlays.match(/✨/g) || []).length, 1);
   assert.match(adminModalStyles, /\.groups-auth-join-input-container\.groups-auth-join-image-source-picker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto;[^}]*gap:\s*12px/s);
@@ -1365,13 +1368,13 @@ test('grup sayfası cihaz genişliğinde açılır, Bugün kartları telefonda t
   assert.doesNotMatch(buildAssets, /group-legacy-viewport/);
   assert.ok(!fs.existsSync(path.join(clientDir, 'shell', 'group-legacy-viewport.css')));
   assert.match(todayStyles, /@media \(max-width: 768px\)[\s\S]*?\.ok-today\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)[\s\S]*?\.ok-today \.ok-entry \{ order: 1; \}/);
-  // Grup kapağı: üst çubuk (geri, bilgi, ⋮) resmin üzerindedir ve profil düğmesi içermez;
-  // sağ alttaki eylem yöneticide Davet et, misafirde Giriş Yap'tır.
-  assert.match(hero, /\.okumalar-hero\s*\{[^}]*min-height:\s*232px/);
+  // Grup kapağı: üst çubuk (geri, bilgi, ⋮) resmin üzerindedir; sağ alttaki eylem yalnız yöneticide Davet et'tir
+  // (misafirin Gruba Katıl / Giriş Yap düğmeleri Grubum'da sıralamanın üstündedir).
+  assert.match(hero, /\.okumalar-hero\s*\{[^}]*min-height:\s*220px/);
   assert.match(hero, /\.okumalar-hero-cover\.has-image\s*\{[^}]*opacity/);
   const heroFragment = readPublic('fragments/group-header.html');
-  assert.match(heroFragment, /<header class="okumalar-hero"[\s\S]*?class="okumalar-hero-bar"[\s\S]*?class="showGroups[\s\S]*?id="okumalarAnnouncementsButton"[^>]*hidden[\s\S]*?id="okumalarInfoButton"[\s\S]*?id="okumalarMoreButton"[\s\S]*?id="okumalarInviteButton"[^>]*hidden[\s\S]*?id="profileButton"/);
-  assert.doesNotMatch(heroFragment.match(/class="okumalar-hero-bar"[\s\S]*?<\/div>/)[0], /profileButton/);
+  assert.match(heroFragment, /<header class="okumalar-hero"[\s\S]*?class="okumalar-hero-bar"[\s\S]*?class="showGroups[\s\S]*?id="okumalarAnnouncementsButton"[^>]*hidden[\s\S]*?id="okumalarInfoButton"[\s\S]*?id="okumalarMoreButton"[\s\S]*?id="okumalarInviteButton"[^>]*hidden/);
+  assert.doesNotMatch(heroFragment, /profileButton/);
 });
 
 test('yönetim sayfaları bağımsız paketlenir ve shell tarafından ön yüklenmez', () => {

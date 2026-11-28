@@ -44,23 +44,15 @@ window.initializeAdminModal = function initializeAdminModal() {
         }
     });
 
-    // Profile button click handler
-    const profileButton = document.getElementById('profileButton');
-    if (profileButton) {
-        profileButton.addEventListener('click', function () {
-            // Check if already authenticated
-            if (LocalStorageManager.isUserLoggedIn()) {
-                showAdminInfoPanel();
-            } else {
-                hideInfoMessage(); // Normal giriş için bilgilendirme mesajını gizle
-                showModal(groupsAuthLoginModal);
-                // Normal giriş için de grup bilgilerini güncelle
-                if (typeof updateLoginGroupInfo === 'function') {
-                    updateLoginGroupInfo();
-                }
-            }
-        });
-    }
+    // Misafir kartındaki (Grubum › sıralamanın üstü) "Giriş Yap" düğmesi; "Gruba Katıl" için aşağıdaki openGroupJoin.
+    window.openGroupLogin = function () {
+        if (LocalStorageManager.isUserLoggedIn()) return;
+        hideInfoMessage(); // Normal giriş için bilgilendirme mesajını gizle
+        showModal(groupsAuthLoginModal);
+        if (typeof updateLoginGroupInfo === 'function') {
+            updateLoginGroupInfo();
+        }
+    };
 
     // Modal show/hide functions
     // Global modal fonksiyonları
@@ -153,23 +145,20 @@ window.initializeAdminModal = function initializeAdminModal() {
                     showModal(groupsAuthForgotModal);
                 });
 
-                // Join group link
-                const groupsAuthJoinGroupLink = document.getElementById('groupsAuthJoinGroupLink');
+                // Gruba katılma isteği modalı (misafir kartındaki "Gruba Katıl" düğmesi açar)
                 const groupsAuthJoinModal = document.getElementById('groupsAuthJoinModal');
                 const closeGroupsAuthJoinModal = document.getElementById('closeGroupsAuthJoinModal');
                 const groupsAuthJoinCancelBtn = document.getElementById('groupsAuthJoinCancelBtn');
 
-                if (groupsAuthJoinGroupLink && groupsAuthJoinModal) {
-                    groupsAuthJoinGroupLink.addEventListener('click', async function (e) {
-                        e.preventDefault();
-                        window.hideModal(groupsAuthLoginModal);
-                        clearJoinModalForm();
-                        await updateGroupInfoInModal();
-                        // Join modal açıldığında flag'i false yap
-                        isJoinRequestSuccess = false;
-                        showModal(groupsAuthJoinModal);
-                    });
-                }
+                window.openGroupJoin = async function () {
+                    if (!groupsAuthJoinModal || LocalStorageManager.isUserLoggedIn()) return;
+                    window.hideModal(groupsAuthLoginModal);
+                    clearJoinModalForm();
+                    await updateGroupInfoInModal();
+                    // Join modal açıldığında flag'i false yap
+                    isJoinRequestSuccess = false;
+                    showModal(groupsAuthJoinModal);
+                };
 
                 // Close join modal
                 if (closeGroupsAuthJoinModal) {
@@ -957,11 +946,6 @@ window.initializeAdminModal = function initializeAdminModal() {
                     window.syncGroupManagementVisibility();
                 }
 
-                // Profil butonunu güncelle
-                if (typeof window.updateProfileButton === 'function') {
-                    window.updateProfileButton();
-                }
-
                 // 5. VERİ YÜKLEME VE UI GÜNCELLEMELERİ
                 // Reload data to update UI with admin privileges
                 if (typeof loadTrackerTable === 'function') loadTrackerTable();
@@ -1636,9 +1620,6 @@ async function performLogoutFromProfile() {
         window.loadUserCards();
     }
 
-    if (typeof window.updateProfileButton === 'function') {
-        window.updateProfileButton();
-    }
     return true;
 }
 

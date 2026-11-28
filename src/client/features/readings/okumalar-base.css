@@ -507,31 +507,70 @@ img.rk-fade.is-loaded {
   color: var(--ok-muted);
 }
 
-/* Bildir paneli */
-.ok-report-reasons {
-  display: grid;
-  gap: 8px;
-  margin: 0 0 14px;
-  padding: 0;
-  border: 0;
-}
-
-.ok-report-reason {
+/* Bildir onay penceresi (body seviyesinde; --ok-* değişkenlerine bağlı değil) */
+.ok-report-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px solid var(--ok-border);
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.ok-report-dialog {
+  width: min(100%, 360px);
+  padding: 24px 24px 16px;
+  border-radius: 28px;
+  background: #f0f0f0;
+  color: #1d1f24;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.ok-report-dialog h2 {
+  margin: 0 0 16px;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.ok-report-dialog p {
+  margin: 0;
+  color: #5f6368;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.ok-report-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.ok-report-dialog-actions button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
   border-radius: 12px;
-  color: var(--ok-text);
-  font-size: 15px;
-  font-weight: 600;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.ok-report-reason:has(input:checked) {
-  border-color: var(--ok-accent);
-  background: var(--ok-accent-tint);
+.ok-report-dialog-cancel {
+  color: #1d1f24;
+}
+
+.ok-report-dialog-confirm {
+  color: #c2410c;
+}
+
+.ok-report-dialog-actions button:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .ok-report-submit {
