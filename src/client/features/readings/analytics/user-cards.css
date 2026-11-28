@@ -335,7 +335,8 @@
 
 .ok-guest-cta-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* "Günlük ort." sütunu "2 saat 13 dk." sığsın diye daha geniş. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.7fr);
   gap: 8px;
   margin: 0;
   text-align: center;

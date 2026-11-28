@@ -258,13 +258,13 @@
     content.className = 'ok-invite-sheet';
     content.innerHTML = `
       <button type="button" class="ok-option" data-invite="member">
-        <span class="ok-option-icon" aria-hidden="true"><i class="fa-solid fa-user-plus"></i></span>
-        <span class="ok-option-text"><strong>Üye ekle ve davet linki gönder</strong><small>Kayıt gerektirmez; kişi linkle hesabını kendisi tamamlar.</small></span>
+        <span class="ok-option-icon" aria-hidden="true"><i class="fa-solid fa-paper-plane"></i></span>
+        <span class="ok-option-text"><strong>Giriş bağlantısı gönder</strong><small>Üyeye kendi bağlantısını yolla</small></span>
         <i class="fa-solid fa-chevron-right ok-option-chevron" aria-hidden="true"></i>
       </button>
       <button type="button" class="ok-option" data-invite="share">
         <span class="ok-option-icon" aria-hidden="true"><i class="fa-solid fa-share-nodes"></i></span>
-        <span class="ok-option-text"><strong>Grup bağlantısını paylaş</strong><small>İsteyenler Okumalarım sayfasından katılma isteği gönderebilir.</small></span>
+        <span class="ok-option-text"><strong>Grup bağlantısını paylaş</strong></span>
         <i class="fa-solid fa-chevron-right ok-option-chevron" aria-hidden="true"></i>
       </button>`;
     const sheet = window.RoTaKipBottomSheet.open({
@@ -276,8 +276,8 @@
     content.querySelector('[data-invite="member"]').addEventListener('click', () => {
       sheet.close();
       open('yonetim');
-      // Önceki panel kapanış animasyonunu bitirsin, sonra Üye ekle paneli açılsın.
-      window.setTimeout(() => window.openOkumalarManagePanel?.('add'), 300);
+      // Önceki panel kapanış animasyonunu bitirsin, sonra Giriş bağlantısı paneli açılsın.
+      window.setTimeout(() => window.openOkumalarManagePanel?.('invite'), 300);
     });
     content.querySelector('[data-invite="share"]').addEventListener('click', () => {
       sheet.close();
@@ -381,7 +381,7 @@
     content.className = 'ok-invite-sheet';
     const guest = isGuest();
     content.innerHTML = `
-      ${guest ? '' : `<button type="button" class="ok-option" data-more="logout">
+      ${guest ? '' : `<button type="button" class="ok-option is-logout" data-more="logout">
         <span class="ok-option-icon" aria-hidden="true"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
         <span class="ok-option-text"><strong>Çıkış yap</strong><small>Hesabından çıkış yaparsın, kayıtların silinmez.</small></span>
       </button>`}

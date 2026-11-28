@@ -249,8 +249,9 @@
             const data = { title: `RoTaKip · ${label}` };
             const canShareFile = file && (typeof navigator.canShare !== 'function' || navigator.canShare({ files: [file] }));
             if (canShareFile) {
+                // Görsel hazırsa yalnız görsel gider; yazı yalnızca görsel oluşturulamazsa paylaşılır.
                 data.files = [file];
-                if (text) data.text = text;
+                delete data.title;
             } else if (text) {
                 data.text = text;
             } else {

@@ -493,6 +493,12 @@ img.rk-fade.is-loaded {
   color: #c62828;
 }
 
+/* Çıkış yap seçeneği: Bildir ile karışmasın diye sıcak (amber) ton */
+.ok-option.is-logout .ok-option-icon {
+  background: #fff3e0;
+  color: #e65100;
+}
+
 /* Grup bilgisi paneli */
 .ok-group-info-text {
   margin: 0;
