@@ -4,7 +4,10 @@ let button = null;
 
 function updateButtonVisibility() {
   if (!button) return;
-  const shouldShow = routeEnabled && window.scrollY > 700;
+  // Uzun sayfalarda 700px'ten sonra; kısa sayfalarda ise dibe varınca da gösterilir (700px'e hiç ulaşılamayabilir).
+  const root = document.documentElement;
+  const atBottom = window.scrollY > 160 && window.innerHeight + window.scrollY >= root.scrollHeight - 80;
+  const shouldShow = routeEnabled && (window.scrollY > 700 || atBottom);
   button.hidden = !routeEnabled;
   button.classList.toggle('show', shouldShow);
   button.classList.toggle('hidden', !shouldShow);
@@ -21,6 +24,10 @@ export function initializeScrollManager() {
     updateButtonVisibility();
   };
   window.addEventListener('scroll', () => {
+    if (frame !== null) return;
+    frame = requestAnimationFrame(update);
+  }, { passive: true });
+  window.addEventListener('resize', () => {
     if (frame !== null) return;
     frame = requestAnimationFrame(update);
   }, { passive: true });

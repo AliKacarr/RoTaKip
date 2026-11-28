@@ -156,8 +156,8 @@ body.app-shell-body { padding-left: 132px; }
   bottom: 28px;
   z-index: 101;
   display: flex;
-  width: 84px;
-  height: 84px;
+  width: 56px;
+  height: 56px;
   align-items: center;
   justify-content: center;
   padding: 0;
@@ -178,7 +178,7 @@ body.app-shell-body { padding-left: 132px; }
 .scroll-to-top-btn.hidden { opacity: 0 !important; pointer-events: none; }
 .scroll-to-top-btn:hover { transform: translateY(-3px); box-shadow: 0 11px 28px rgba(78, 84, 200, 0.42); }
 .scroll-to-top-btn:active { transform: none; }
-.scroll-to-top-btn svg { width: 38px; height: 38px; }
+.scroll-to-top-btn svg { width: 26px; height: 26px; }
 .tab-view {
   opacity: 0;
   transform: translateY(16px);
@@ -211,8 +211,6 @@ body.app-shell-body { padding-left: 132px; }
   visibility: hidden;
 }
 .tab-view-okumalar.is-resuming .reading-content-reveal,
-.tab-view-okumalar.is-resuming .tracker-table-layout,
-.tab-view-okumalar.is-resuming .week-navigation,
 .tab-view-okumalar.is-resuming .authenticated-user-areas,
 .tab-view-okumalar.is-resuming .scroll-fade-in {
   transform: none !important;
@@ -424,10 +422,10 @@ body.initial-tab-loading { overflow: hidden; }
   .scroll-to-top-btn {
     right: 25px;
     bottom: calc(80px + env(safe-area-inset-bottom, 0px) + 14px);
-    width: 100px;
-    height: 100px;
+    width: 52px;
+    height: 52px;
   }
-  .scroll-to-top-btn svg { width: 45px; height: 45px; }
+  .scroll-to-top-btn svg { width: 24px; height: 24px; }
   .app-navigation {
     inset: auto 0 -1px 0;
     width: 100%;

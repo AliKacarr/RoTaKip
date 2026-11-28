@@ -18,20 +18,10 @@
   will-change: auto;
 }
 
-.tab-view-okumalar .user-cards-title.reading-scroll-reveal:not(.is-revealed),
-.tab-view-okumalar .leaderboard-sort-bar.reading-scroll-reveal:not(.is-revealed),
-.tab-view-okumalar .user-stats-info-area.reading-scroll-reveal:not(.is-revealed),
-.tab-view-okumalar .league-info-bar.reading-scroll-reveal:not(.is-revealed),
-.tab-view-okumalar .weekly-statistics-section.reading-scroll-reveal:not(.is-revealed),
 .tab-view-okumalar .reading-message-panels-content > .reading-scroll-reveal:not(.is-revealed) {
   transform: translateY(20px);
 }
 
-.tab-view-okumalar .user-cards-title.reading-scroll-reveal.is-revealed,
-.tab-view-okumalar .leaderboard-sort-bar.reading-scroll-reveal.is-revealed,
-.tab-view-okumalar .user-stats-info-area.reading-scroll-reveal.is-revealed,
-.tab-view-okumalar .league-info-bar.reading-scroll-reveal.is-revealed,
-.tab-view-okumalar .weekly-statistics-section.reading-scroll-reveal.is-revealed,
 .tab-view-okumalar .reading-message-panels-content > .reading-scroll-reveal.is-revealed {
   animation-name: reading-viewport-reveal-compact;
 }

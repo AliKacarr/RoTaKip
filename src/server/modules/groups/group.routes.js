@@ -4,6 +4,9 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const path = require('path');
 
+const GROUP_REPORT_COLLECTION = 'grup_bildirimleri';
+const GROUP_REPORT_REASONS = Object.freeze(['uygunsuz', 'sahte', 'spam', 'diger']);
+
 function registerGroupRoutes(app, dependencies) {
   const {
     UserGroup,
@@ -11,6 +14,7 @@ function registerGroupRoutes(app, dependencies) {
     READING_EDIT_POLICY_ALL,
     USER_VISIBILITY_ACTIVE,
     VALID_AMOUNT_TYPES,
+    VALID_HERO_THEMES,
     VALID_INACTIVE_MEMBER_ACTIONS,
     VALID_READING_EDIT_POLICIES,
     accountCreationLimiter,
@@ -24,6 +28,7 @@ function registerGroupRoutes(app, dependencies) {
     dropGroupCollections,
     generateGroupId,
     getGroupCollections,
+    ilahiReportLimiter,
     invalidateGroupSessions,
     isAllowedAvatarPath,
     isDropboxHostedUrl,
@@ -34,6 +39,7 @@ function registerGroupRoutes(app, dependencies) {
     logSiteActivity,
     normalizeAmountType,
     normalizeFileName,
+    normalizeHeroTheme,
     normalizeInactiveMemberAction,
     normalizeReadingEditPolicy,
     publicPath,
@@ -66,6 +72,7 @@ function registerGroupRoutes(app, dependencies) {
         group: {
           ...group,
           amountType: normalizeAmountType(group.amountType),
+          heroTheme: normalizeHeroTheme(group.heroTheme),
           readingEditPolicy: normalizeReadingEditPolicy(group.readingEditPolicy),
           inactiveMemberAction: normalizeInactiveMemberAction(group.inactiveMemberAction)
         }
@@ -76,17 +83,48 @@ function registerGroupRoutes(app, dependencies) {
     }
   });
 
+  // Grup bildirimi: sebep başına sayaç tutulur; aynı grup tekrar bildirilirse yeni kayıt açılmaz.
+  app.post('/api/group-reports/:groupId', ilahiReportLimiter, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const reason = req.body && req.body.reason;
+      if (!isSafeGroupId(groupId) || !GROUP_REPORT_REASONS.includes(reason)) {
+        return res.status(400).json({ error: 'Bildirim gönderilemedi' });
+      }
+      if (!(await UserGroup.exists({ groupId }))) {
+        return res.status(404).json({ error: 'Grup bulunamadı' });
+      }
+      const date = new Date();
+      await UserGroup.db.collection(GROUP_REPORT_COLLECTION).updateOne(
+        { groupId },
+        {
+          $inc: { bildirimSayisi: 1, [`sebepler.${reason}`]: 1 },
+          $set: { sonTarih: date },
+          $setOnInsert: { ilkTarih: date, durum: 'beklemede' }
+        },
+        { upsert: true }
+      );
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Grup bildirimi kaydedilemedi:', error);
+      res.status(500).json({ error: 'Bildirim gönderilemedi' });
+    }
+  });
+
   // Grupları listeleme API'si
   app.get('/api/groups', async (req, res) => {
     try {
-      const { skip = 0, limit = 12, search = '' } = req.query;
+      const { skip = 0, limit = 12 } = req.query;
+      // Arama metni düz metindir: regex özel karakterleri kaçırılır, uzunluk sınırlanır.
+      const search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 60) : '';
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
       // Arama filtresi
       const searchFilter = search ? {
         $or: [
-          { groupName: { $regex: search, $options: 'i' } },
-          { groupId: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } }
+          { groupName: { $regex: escapedSearch, $options: 'i' } },
+          { groupId: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } }
         ]
       } : {};
 
@@ -120,7 +158,18 @@ function registerGroupRoutes(app, dependencies) {
       // Toplam grup sayısını al
       const total = await UserGroup.countDocuments(finalFilter);
 
-      res.json({ groups, total });
+      // Üye sayısı yanıtta gelir; istemci grup başına ayrı istek atmaz.
+      const withCounts = await Promise.all(groups.map(async group => {
+        try {
+          const { users } = getGroupCollections(group.groupId);
+          return { ...group, memberCount: await users.countDocuments(activeUserQuery()) };
+        } catch (error) {
+          console.error(`Üye sayısı alınamadı (${group.groupId}):`, error);
+          return { ...group, memberCount: 0 };
+        }
+      }));
+
+      res.json({ groups: withCounts, total });
     } catch (error) {
       console.error('Error fetching groups:', error);
       res.status(500).json({ error: 'Server error' });
@@ -443,6 +492,31 @@ function registerGroupRoutes(app, dependencies) {
     } catch (error) {
       console.error('Okuma düzenleme aralığı güncellenemedi:', error);
       res.status(500).json({ error: 'Okuma düzenleme aralığı güncellenemedi' });
+    }
+  });
+
+  // Grup kapağının arka planı (yalnız yönetici).
+  app.post('/api/update-group-hero-theme/:groupId', requireGroupAdmin, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { heroTheme } = req.body || {};
+      if (!VALID_HERO_THEMES.has(heroTheme)) {
+        return res.status(400).json({ error: 'Geçersiz kapak arka planı' });
+      }
+
+      const updatedGroup = await UserGroup.findOneAndUpdate(
+        { groupId },
+        { heroTheme },
+        { returnDocument: 'after' }
+      );
+      if (!updatedGroup) {
+        return res.status(404).json({ error: 'Grup bulunamadı' });
+      }
+
+      res.json({ success: true, heroTheme: normalizeHeroTheme(updatedGroup.heroTheme) });
+    } catch (error) {
+      console.error('Kapak arka planı güncellenemedi:', error);
+      res.status(500).json({ error: 'Kapak arka planı güncellenemedi' });
     }
   });
 

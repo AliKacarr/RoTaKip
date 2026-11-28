@@ -1,12 +1,32 @@
-<div class="group-page-header">
-  <button type="button" onclick="window.navigateRoTaKip('/gruplar')" class="showGroups" title="Grupları Görüntüle">
-    <i class="fa-solid fa-user-group" style="font-size: 20px; margin-right: 7px; color: #4e54c8;"></i>
-    Gruplar
-  </button>
-  <div id="secretAdminLogin"></div>
-  <button id="profileButton" class="profileButton" title="Yönetici Girişi">
-    <i id="profileButtonIcon" class="fa-solid fa-sign-in-alt"
-      style="font-size: 20px; margin-right: 7px; color: #0056ff;"></i>
-    <span id="profileButtonText" class="profileButtonText">Giriş Yap</span>
-  </button>
-</div>
+<header class="okumalar-hero" id="okumalarHero">
+  <div class="okumalar-hero-cover" id="okumalarHeroCover" aria-hidden="true"></div>
+  <div class="okumalar-hero-bar">
+    <button type="button" onclick="window.navigateRoTaKip('/gruplar')" class="showGroups okumalar-bar-icon" title="Okumalarım" aria-label="Okumalarım">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+    </button>
+    <span class="okumalar-hero-spacer"></span>
+    <button type="button" id="okumalarAnnouncementsButton" class="okumalar-bar-icon okumalar-announce-button" title="Duyurular" aria-label="Duyurular" aria-haspopup="dialog" hidden>
+      <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+      <span class="okumalar-announce-count" id="okumalarAnnouncementsCount" aria-hidden="true" hidden></span>
+    </button>
+    <button type="button" id="okumalarInfoButton" class="okumalar-bar-icon" title="Grup bilgisi" aria-label="Grup bilgisi" aria-haspopup="dialog">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+    </button>
+    <button type="button" id="okumalarMoreButton" class="okumalar-bar-icon" title="Diğer seçenekler" aria-label="Diğer seçenekler" aria-haspopup="dialog">
+      <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div class="okumalar-hero-content">
+    <div class="okumalar-hero-text">
+      <div id="secretAdminLogin" class="okumalar-hero-title" role="button" tabindex="0" title="Grup profili"></div>
+      <p class="okumalar-hero-meta" id="okumalarHeroMeta"></p>
+    </div>
+    <button type="button" id="okumalarInviteButton" class="okumalar-hero-pill" hidden>
+      <i class="fa-solid fa-user-plus" aria-hidden="true"></i><span>Davet et</span>
+    </button>
+    <button type="button" id="profileButton" class="profileButton okumalar-hero-pill" title="Giriş Yap">
+      <i id="profileButtonIcon" class="fa-solid fa-sign-in-alt" aria-hidden="true"></i>
+      <span id="profileButtonText" class="profileButtonText">Giriş Yap</span>
+    </button>
+  </div>
+</header>

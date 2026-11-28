@@ -244,7 +244,7 @@ function registerUserRoutes(app, dependencies) {
       }
 
       // Dinamik koleksiyonları al
-      const { users, readingStatuses } = getGroupCollections(groupId);
+      const { users, readingStatuses, ceteleEntries } = getGroupCollections(groupId);
 
       // Kullanıcıyı bul ve yetkisini kontrol et
       const user = await users.findById(id).lean();
@@ -282,7 +282,8 @@ function registerUserRoutes(app, dependencies) {
         groupId,
         user,
         users,
-        readingStatuses
+        readingStatuses,
+        ceteleEntries
       });
       if (!deletionResult.applied) {
         return res.status(404).json({ error: 'Kullanıcı bulunamadı' });

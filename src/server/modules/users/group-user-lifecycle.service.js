@@ -12,6 +12,7 @@ async function deleteGroupUser({
   userFilter,
   users,
   readingStatuses,
+  ceteleEntries,
   invalidateSessions,
   deleteInvites,
   deleteProfileImage
@@ -24,7 +25,8 @@ async function deleteGroupUser({
     invalidateSessions(userId),
     readingStatuses.deleteMany({ userId }),
     deleteInvites(userId),
-    deleteProfileImage(user.profileImage)
+    deleteProfileImage(user.profileImage),
+    ceteleEntries ? ceteleEntries.deleteMany({ userId }) : Promise.resolve()
   ]);
 
   return { applied: true, user: deletedUser, cleanupErrors };

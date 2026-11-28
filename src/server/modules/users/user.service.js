@@ -33,12 +33,13 @@ function deleteUserProfileImage(profileImage) {
   return deleteFromDropboxByUrl(profileImage);
 }
 
-function deleteUserWithRelatedData({ groupId, user, users, readingStatuses, userFilter }) {
+function deleteUserWithRelatedData({ groupId, user, users, readingStatuses, ceteleEntries, userFilter }) {
   return deleteGroupUser({
     user,
     userFilter,
     users,
     readingStatuses,
+    ceteleEntries,
     invalidateSessions: userId => invalidateUserSessions(groupId, userId),
     deleteInvites: userId => Invite.deleteMany({ groupId, userId }),
     deleteProfileImage: deleteUserProfileImage

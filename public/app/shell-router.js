@@ -2,7 +2,13 @@ import { ROUTES, ROUTE_ASSETS, canonicalPath, resolveRoute } from './route-confi
 import { describeConnectionError, initializeConnectivityMonitor } from './connectivity.js';
 import { createFragmentView, mountFragment, preloadFragment } from './fragment-loader.js';
 import { loadAssetManifest, loadBundleScripts, loadBundleStyles, preloadBundle } from './asset-loader.js';
-import { invalidateGroupContext, loadGroupData, resolveGroupContext } from './group-context.js';
+import {
+  invalidateGroupContext,
+  loadGroupData,
+  prefetchCeteleEntries,
+  prefetchGroupData,
+  resolveGroupContext
+} from './group-context.js';
 import {
   configureNavigation,
   getRememberedReadingPath,
@@ -17,7 +23,8 @@ import {
 const COMMON_SCRIPTS = ['shell.min.js'];
 const GROUP_COMMON_SCRIPTS = ['group-common.min.js'];
 const GROUP_UI_SCRIPTS = ['group-ui.min.js'];
-const ROUTE_TRANSITION_MIN_VISIBLE_MS = 1000;
+// Hızlı açılışta yükleyicinin göz kırpar gibi görünüp kaybolmaması için kısa bir alt sınır.
+const ROUTE_TRANSITION_MIN_VISIBLE_MS = 400;
 const OKUMALAR_BACKGROUND_ASSETS = {
   statistics: {
     scripts: ['statistics.min.js'],
@@ -317,7 +324,7 @@ async function ensureGroupCommon(route, context, data) {
 function resetOkumalarViewForGroup(nextGroupId) {
   if (!mountedGroupId || mountedGroupId === nextGroupId) return;
 
-  window.resetTrackerTimelineForGroup?.();
+  window.RoTaKipCetele?.reset(nextGroupId);
   const okumalarView = viewCache.get('okumalar');
   if (okumalarView && !(okumalarView instanceof Promise)) {
     lifecycleCache.delete(okumalarView);
@@ -326,90 +333,35 @@ function resetOkumalarViewForGroup(nextGroupId) {
   groupWarmups.clear();
 }
 
-function portalOkumalarOverlays() {
-  ['dailyGiftModal', 'dailyTasksModal'].forEach(id => {
-    const modal = document.getElementById(id);
-    if (modal && modal.parentElement !== overlayRoot) overlayRoot.appendChild(modal);
-  });
-}
-
-function revealLeagueInfoBar(options = {}) {
-  const leagueInfoBar = document.querySelector('.league-info-bar');
-  if (!leagueInfoBar) return;
-
-  const shouldAnimate = !leagueInfoBar.classList.contains('visible');
-  const section = leagueInfoBar.closest('.league-info-section');
-  if (section) section.style.display = 'block';
-  leagueInfoBar.style.display = 'flex';
-  if (shouldAnimate && options.animate !== false) {
-    leagueInfoBar.classList.add('reading-content-reveal');
-  }
-  leagueInfoBar.classList.add('visible');
-  return leagueInfoBar;
-}
-
-function stageReadingPrimaryContent(isAuthenticated) {
-  document.querySelector('.tracker-table-shell')
-    ?.classList.add('is-primary-reveal-pending');
+function stageReadingPrimaryContent() {
   const messagePanels = document.querySelector('.reading-message-panels');
   if (messagePanels) messagePanels.hidden = true;
-  const authenticatedLayoutElements = [
-    document.getElementById('authenticatedUserAreas'),
-    document.getElementById('readingEditModeBar')
-  ].filter(Boolean);
-  authenticatedLayoutElements.forEach(element => {
-    element.classList.toggle('is-initial-reveal-pending', isAuthenticated);
-  });
 }
 
 async function prepareReadingPrimaryContent() {
   const tasks = [
     ['okuma mesajları', () => window.renderReadingMessagePanels?.()],
-    ['okuma yolculuğu', () => window.initializeReadingJourney?.({ reveal: false })]
+    ['bugün', () => window.renderOkumalarToday?.()]
   ];
   await Promise.allSettled(tasks.map(([label, task]) => Promise.resolve()
     .then(task)
     .catch(error => console.warn(`${label} hazırlanamadı:`, error))));
 }
 
-function revealReadingAuthControls(isAuthenticated) {
-  if (typeof window.syncAuthenticatedUserAreas === 'function') {
-    window.syncAuthenticatedUserAreas(isAuthenticated, { immediate: true });
-  }
-  if (isAuthenticated) window.showReadingEditModeBar?.();
-  else window.hideReadingEditModeBar?.();
-
-  const stagedElements = [
-    document.getElementById('authenticatedUserAreas'),
-    document.getElementById('readingEditModeBar')
-  ].filter(element => element?.classList.contains('is-initial-reveal-pending'));
-  stagedElements.forEach(element => element.getBoundingClientRect());
-  stagedElements.forEach(element => element.classList.remove('is-initial-reveal-pending'));
-}
-
-function revealReadingPrimaryContent(isAuthenticated) {
-  const trackerShell = document.querySelector('.tracker-table-shell');
+function revealReadingPrimaryContent() {
   const messagePanels = document.querySelector('.reading-message-panels');
-
-  revealLeagueInfoBar({ animate: false });
-  trackerShell?.classList.remove('is-primary-reveal-pending');
   if (messagePanels) {
     messagePanels.hidden = false;
     messagePanels.classList.remove('reading-content-reveal');
   }
-  revealReadingAuthControls(isAuthenticated);
 }
 
 function replayReadingPrimarySectionReveal(view) {
   if (!view) return;
-  const sections = view.querySelectorAll([
-    '.user-stats-info-area',
-    '.league-info-bar',
-    '.weekly-statistics-section'
-  ].join(', '));
+  // Sayfam kartları (günlük kayıt, Özetim, İstatistiklerim) "görününce yukarı kay" efekti almaz: hepsi bölümle
+  // birlikte tek parça gelir (okumalar-tab.js bölüm geçişi). Yalnız mesaj panelleri bu efekti kullanır.
   const messagePanels = view.querySelectorAll('.reading-message-panels-content > *');
-  [...sections, ...messagePanels]
-    .forEach(element => window.replayReadingContentReveal?.(element));
+  messagePanels.forEach(element => window.replayReadingContentReveal?.(element));
 }
 
 async function initializeGroupUi() {
@@ -536,40 +488,26 @@ async function initOkumalarTab(options = {}) {
 
   await loadOkumalarStyles(ROUTE_ASSETS.okumalar.styles);
   await loadBundleScripts(ROUTE_ASSETS.okumalar.scripts);
-  portalOkumalarOverlays();
   await window.initializeGroupPage();
-  const context = window.__rotakipResolvedGroupContext;
-  const isAuthenticated = context?.isAuthenticated === true;
-  if (typeof window.syncAuthenticatedUserAreas === 'function') {
-    if (!isAuthenticated) window.syncAuthenticatedUserAreas(false);
-  }
-  stageReadingPrimaryContent(isAuthenticated);
-  if (typeof window.initializeTrackerTableInteractions === 'function') window.initializeTrackerTableInteractions();
+  window.RoTaKipOkumalarSections?.init();
+  stageReadingPrimaryContent();
+  if (typeof window.initializeOkumalarCore === 'function') window.initializeOkumalarCore();
   if (typeof window.initializeDailyGift === 'function') window.initializeDailyGift();
   if (typeof window.setupShareModal === 'function') {
     window.setupShareModal('monthShareModal', 'closeMonthShareModal');
     window.setupShareModal('longestSeriesShareModal', 'closeLongestSeriesShareModal');
     window.setupShareModal('readingStatsShareModal', 'closeReadingStatsShareModal');
   }
-  const trackerReady = typeof window.loadTrackerTable === 'function'
-    ? window.loadTrackerTable()
-    : Promise.resolve();
-  await Promise.all([trackerReady, prepareReadingPrimaryContent()]);
-  revealReadingPrimaryContent(isAuthenticated);
+  await prepareReadingPrimaryContent();
+  revealReadingPrimaryContent();
   const readyForPrefetch = runOkumalarBackgroundWork();
   return {
     prepareBeforeReveal: true,
     readyForPrefetch,
     async resume() {
-      const context = window.__rotakipResolvedGroupContext;
-      revealReadingAuthControls(context?.isAuthenticated === true);
-      const trackerRefresh = (async () => {
-        if (typeof window.loadTrackerTable === 'function') await window.loadTrackerTable();
-        if (typeof window.refreshTrackerTableLayout === 'function') {
-          await window.refreshTrackerTableLayout();
-        }
-      })();
-      await Promise.all([trackerRefresh, prepareReadingPrimaryContent()]);
+      window.RoTaKipOkumalarSections?.syncFromUrl();
+      window.updateOkumalarHeroMeta?.();
+      await prepareReadingPrimaryContent();
       this.readyForPrefetch = runOkumalarBackgroundWork({ animateRefresh: true });
     }
   };
@@ -663,11 +601,28 @@ function preloadOkumalarAssets() {
   ]);
 }
 
+// Okumalar açılırken grup bağlamı, okuma verisi, görünüm parçaları ve (giriş yapmış üyede) çetele kayıtları
+// birbirini beklemeden istenir; navigate() aynı önbelleklenmiş istekleri kullanır.
+function warmGroupRoute(route, url) {
+  if (!route?.requiresGroup || !route.groupId || isInviteOnboardingRoute(route, url)) return;
+  prefetchGroupData(route.groupId);
+  preloadFragment(route.fragment);
+  preloadFragment('/fragments/common-overlays.html');
+  const ceteleLoaded = window.RoTaKipCetele?.loaded === true && window.groupid === route.groupId;
+  if (ceteleLoaded) return;
+  resolveGroupContext(route.groupId)
+    .then(context => {
+      if (context.isAuthenticated) prefetchCeteleEntries(route.groupId);
+    })
+    .catch(() => {});
+}
+
 function prepareGroupTab(route) {
   if (!route.requiresGroup || !route.groupId) return Promise.resolve(null);
   const cacheKey = getViewCacheKey(route);
   if (groupWarmups.has(cacheKey)) return groupWarmups.get(cacheKey);
 
+  prefetchGroupData(route.groupId);
   const warmup = Promise.all([
     resolveGroupContext(route.groupId),
     getView(route),
@@ -748,11 +703,11 @@ async function navigate(url, options = {}) {
     return;
   }
   const isInviteOnboarding = isInviteOnboardingRoute(route, url);
-  window.syncRoTaKipViewport?.(url.pathname);
   const leavesMountedGroup = Boolean(mountedGroupId)
     && (!route.requiresGroup || route.groupId !== mountedGroupId);
   if (leavesMountedGroup) window.invalidateRoTaKipGroupCache(mountedGroupId);
   if (route.requiresGroup) resetOkumalarViewForGroup(route.groupId);
+  warmGroupRoute(route, url);
   setScrollToTopEnabled(route.requiresGroup);
   if (!options.fromPopState) history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`);
   if (route.name === 'groups') rememberReadingPath(canonicalPath(route));
@@ -871,12 +826,8 @@ async function navigate(url, options = {}) {
       && typeof activeLifecycle.resume === 'function';
     if (resumeBeforeReveal) {
       if (!keepVisible) activeView.classList.add('is-preparing-return');
-      activeView
-        .querySelector('.tracker-table-layout')
-        ?.classList.add('is-restoring-position');
       await activeLifecycle.resume();
       if (sequence !== navigationSequence) {
-        activeView.querySelector('.tracker-table-layout')?.classList.remove('is-restoring-position');
         activeView.classList.remove('is-preparing-return');
         return;
       }
@@ -886,8 +837,6 @@ async function navigate(url, options = {}) {
     }
 
     if (resumeBeforeReveal) {
-      const trackerLayout = activeView.querySelector('.tracker-table-layout');
-      trackerLayout?.classList.remove('is-restoring-position');
       activeView.classList.remove('is-preparing-return');
       if (sequence !== navigationSequence) return;
     }
@@ -933,22 +882,48 @@ async function navigate(url, options = {}) {
   }
 }
 
-window.navigateRoTaKip = path => navigate(new URL(path, window.location.origin));
+// Aynı grubun Okumalar görünümünde yalnızca ?bolum değişiyorsa sekme yeniden kurulmaz;
+// bölüm geçişini okumalar-tab.js (RoTaKipOkumalarSections) yapar.
+function isSameOkumalarView(url) {
+  if (activeRouteName !== 'okumalar' || !activeView?.isConnected) return false;
+  if (activeView.dataset.privateGroupAccess === 'true') return false;
+  const route = resolveRoute(url.pathname);
+  return route?.name === 'okumalar'
+    && route.groupId === mountedGroupId
+    && !isInviteOnboardingRoute(route, url)
+    && Boolean(window.RoTaKipOkumalarSections);
+}
+
+window.navigateRoTaKip = path => {
+  const url = new URL(path, window.location.origin);
+  if (isSameOkumalarView(url)) return window.RoTaKipOkumalarSections.navigate(url);
+  return navigate(url);
+};
 window.refreshRoTaKipRoute = () => navigate(new URL(window.location.href), { fromPopState: true });
 
 async function start() {
   initializeConnectivityMonitor();
-  await loadAssetManifest();
-  await ensureShellFragments();
-  await loadBundleScripts(COMMON_SCRIPTS);
-  if (typeof window.initializeCookieConsent === 'function') window.initializeCookieConsent();
   const route = resolveRoute(window.location.pathname);
   if (!route) {
     window.location.assign('/');
     return;
   }
+  // Grup istekleri ve sekme parçaları shell hazırlığını beklemeden başlar.
+  warmGroupRoute(route, new URL(window.location.href));
+  await Promise.all([
+    loadAssetManifest().then(() => loadBundleScripts(COMMON_SCRIPTS)),
+    ensureShellFragments()
+  ]);
+  if (typeof window.initializeCookieConsent === 'function') window.initializeCookieConsent();
   configureNavigation(route, target => navigate(target));
-  window.addEventListener('popstate', () => navigate(new URL(window.location.href), { fromPopState: true }));
+  window.addEventListener('popstate', () => {
+    const url = new URL(window.location.href);
+    if (isSameOkumalarView(url)) {
+      window.RoTaKipOkumalarSections.syncFromUrl();
+      return;
+    }
+    navigate(url, { fromPopState: true });
+  });
   await navigate(new URL(window.location.href), { fromPopState: true });
 }
 

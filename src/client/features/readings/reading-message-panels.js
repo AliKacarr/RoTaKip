@@ -46,7 +46,16 @@
     const chip = document.createElement('div');
     chip.className = 'copy-chip';
     chip.innerHTML = 'Kopyala <span class="copy-emoji">👆</span>';
-    panel.appendChild(chip);
+    // "Az da olsa devamlı okumak." gibi kapanış cümlesi Kopyala düğmesinin soluna, aynı satıra konur.
+    const note = panel.querySelector('.streak-tagline, .missed-reminder, .everyone-read-reminder');
+    if (note) {
+      const footer = document.createElement('div');
+      footer.className = 'message-footer';
+      footer.append(note, chip);
+      panel.appendChild(footer);
+    } else {
+      panel.appendChild(chip);
+    }
     return chip;
   }
 
@@ -193,11 +202,84 @@
     revealPanel(panel);
   }
 
+  // Bugün bölümündeki katlanır "Grup mesajları" kartının özet çipleri.
+  function syncMessagesSummary(counts) {
+    const card = document.getElementById('okumalarMessages');
+    const chips = document.getElementById('okumalarMessagesChips');
+    if (!card || !chips) return;
+    const items = [];
+    if (counts.everyoneRead) items.push(['is-success', '🎉 Herkes okudu']);
+    if (counts.promotions) items.push(['is-promotion', `🏅 ${counts.promotions} lig terfisi`]);
+    if (counts.streaks) items.push(['is-streak', `🔗 ${counts.streaks} seri`]);
+    if (counts.missed) items.push(['is-missed', `⏳ ${counts.missed} zayıf halka`]);
+    chips.replaceChildren(...items.map(([className, text]) => {
+      const chip = document.createElement('span');
+      chip.className = `ok-messages-chip ${className}`;
+      chip.textContent = text;
+      return chip;
+    }));
+    card.hidden = items.length === 0;
+  }
+
+  // "Grup mesajları" <details> kartı: native açılış/kapanış anlıktır; içerik yüksekliği animasyonla açılıp kapanır.
+  // Animasyon sürerken tekrar tıklanırsa bulunduğu yükseklikten ters yöne döner.
+  const messagesAnimations = new WeakMap();
+
+  function animateMessagesCard(card) {
+    const body = card.querySelector(':scope > .reading-message-panels');
+    const running = messagesAnimations.get(card);
+    const opening = !card.open || card.classList.contains('is-closing');
+    const fromHeight = card.open && body ? body.getBoundingClientRect().height : 0;
+    const fromOpacity = body ? Number(getComputedStyle(body).opacity) : 1;
+    if (running) running.cancel();
+    card.classList.toggle('is-closing', !opening);
+    if (opening) card.open = true;
+    if (!body || body.hidden) {
+      if (!opening) card.open = false;
+      return;
+    }
+    const toHeight = opening ? body.scrollHeight : 0;
+    body.style.overflow = 'hidden';
+    const animation = body.animate([
+      { height: `${fromHeight}px`, opacity: fromOpacity },
+      { height: `${toHeight}px`, opacity: opening ? 1 : 0 }
+    ], { duration: 260, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+    messagesAnimations.set(card, animation);
+    const finish = () => {
+      if (messagesAnimations.get(card) !== animation) return;
+      messagesAnimations.delete(card);
+      body.style.overflow = '';
+      card.classList.remove('is-closing');
+      if (!opening) card.open = false;
+    };
+    animation.onfinish = finish;
+    animation.oncancel = () => {
+      if (messagesAnimations.get(card) === animation) return;
+      body.style.overflow = '';
+    };
+  }
+
+  document.addEventListener('click', event => {
+    const summary = event.target instanceof Element ? event.target.closest('.ok-messages-summary') : null;
+    if (!summary || typeof Element.prototype.animate !== 'function') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const card = summary.closest('.ok-messages');
+    if (!card) return;
+    event.preventDefault();
+    animateMessagesCard(card);
+  });
+
   window.renderReadingMessagePanels = async function renderReadingMessagePanels() {
     const container = document.querySelector('.reading-message-panels-content');
     const store = window.globalDataStore;
     if (!container || !store) return;
     container.replaceChildren();
+    // Misafire grup mesajları yüklenmez; giriş yapınca yeniden çizilir.
+    if (typeof LocalStorageManager === 'undefined' || !LocalStorageManager.getCurrentUserInfo()) {
+      const card = document.getElementById('okumalarMessages');
+      if (card) card.hidden = true;
+      return;
+    }
     const { users = [], stats = [] } = store.getAllData();
     const grouped = statsByUser(stats);
     const today = new Date();
@@ -254,6 +336,13 @@
       return todayStat && todayStat.status === 'okudum';
     });
     if (everyoneRead) renderEveryonePanel(container);
+
+    syncMessagesSummary({
+      promotions: promotionsToday.length + promotionsBacklog.length,
+      streaks: streaks.length,
+      missed: missed.length,
+      everyoneRead
+    });
 
     const routeView = container.closest('.tab-view');
     if (routeView?.classList.contains('visible')) {

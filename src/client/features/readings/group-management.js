@@ -74,7 +74,7 @@ function processMessageQueue() {
     }, 3000);
 }
 
-newUserForm.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonksiyonu
+document.getElementById('newUserForm')?.addEventListener('submit', async (e) => {  //Kullanıcı ekleme fonksiyonu
     e.preventDefault();
     if (typeof window.logActionForAudit === 'function') {
         window.logActionForAudit('gruba_yeni_kullanıcı_ekleme');
@@ -1276,7 +1276,7 @@ function performRenderUserList() {
                 const safeUserName = window.escapeHtml(user.name);
                 const lastLogin = getLastLoginDisplay(user.lastLoginDate);
                 const lastLoginClass = lastLogin.isEmpty ? ' is-empty' : '';
-                const liHTML = `<div class="kullanıcı-item"><img src="${window.escapeHtml(userProfileImage)}" alt="${safeUserName}" class="user-profile-image user-profile-image-loading" loading="lazy" decoding="async" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${safeUserName}</span><input type="text" class="edit-name-input" value="${safeUserName}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
+                const liHTML = `<div class="kullanıcı-item"><img src="${window.escapeHtml(userProfileImage)}" alt="${safeUserName}" class="user-profile-image user-profile-image-loading ${window.photoFadeClass(userProfileImage)}" loading="lazy" decoding="async" onclick="changeUserImage('${user._id}')" onload="this.classList.remove('user-profile-image-loading')" onerror="this.classList.remove('user-profile-image-loading'); this.src='/images/default.png'"/><span class="profil-image-user-name">${safeUserName}</span><input type="text" class="edit-name-input" value="${safeUserName}" style="display:none;"><button class="edit-name-button" onclick="editUserName('${user._id}')" alt="Düzenle" title="İsmi Düzenle"><i class="fa-solid fa-pen"></i></button><button class="save-name-button" onclick="saveUserName('${user._id}')" alt="Onayla" title="İsmi Onayla" style="display:none; justify-content:center;"><i class="fa-solid fa-check"></i></button><button class="cancel-edit-button" onclick="cancelEditUserName('${user._id}')" alt="İptal" title="Düzenlemeyi İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div><div class="user-actions"><button class="settings-button" onclick="toggleDeleteButton('${user._id}')"><i class="fa-solid fa-user-minus"></i></button><button class="delete-button" style="display:none;" onclick="deleteUser('${user._id}')"><i class="fa-solid fa-trash-can"></i></button><button class="cancel-settings-button" onclick="cancelSettings('${user._id}')" alt="İptal" title="Ayarları İptal Et" style="display:none;"><i class="fa-solid fa-times"></i></button></div>`;
 
                 // Kullanıcı container'ı oluştur
                 const userContainer = document.createElement('div');
@@ -1816,11 +1816,8 @@ async function updateGroupImageFromAvatar(avatarPath) {
         if (response.ok) {
             const result = await response.json();
 
-            // secretAdminLogin resmini de güncelle
-            const secretAdminLoginImages = document.querySelectorAll('.secretAdminLoginImage');
-            secretAdminLoginImages.forEach(img => {
-                img.src = result.imageUrl;
-            });
+            // Kapak arka planını güncelle (hazır avatar kapakta kullanılmaz; renk teması görünür)
+            window.setGroupHeroImage?.(result.imageUrl);
 
             showSuccessMessage('Grup resmi başarıyla güncellendi!');
         } else {
@@ -1994,15 +1991,8 @@ async function changeGroupImage() {
             groupImage.src = data.imageUrl;
             document.querySelector('.group-image-remove-btn').style.display = 'flex';
 
-            // secretAdminLogin'deki grup resmini de güncelle
-            const secretAdminImage = document.querySelector('.secretAdminLogin img');
-            const secretAdminLoginImage = document.querySelector('.secretAdminLoginImage');
-            if (secretAdminImage) {
-                secretAdminImage.src = data.imageUrl;
-            }
-            if (secretAdminLoginImage) {
-                secretAdminLoginImage.src = data.imageUrl;
-            }
+            // Cihazdan yüklenen resim kapağın arka planı olur
+            window.setGroupHeroImage?.(data.imageUrl);
 
             showSuccessMessage('Grup resmi başarıyla güncellendi!');
         } else {
@@ -2045,15 +2035,7 @@ async function removeGroupImage() {
             document.getElementById('currentGroupImage').src = '/images/open-book.webp';
             document.querySelector('.group-image-remove-btn').style.display = 'none';
 
-            // secretAdminLogin'deki grup resmini de güncelle
-            const secretAdminImage = document.querySelector('.secretAdminLogin img');
-            const secretAdminLoginImage = document.querySelector('.secretAdminLoginImage');
-            if (secretAdminImage) {
-                secretAdminImage.src = '/images/open-book.webp';
-            }
-            if (secretAdminLoginImage) {
-                secretAdminLoginImage.src = '/images/open-book.webp';
-            }
+            window.setGroupHeroImage?.(null);
 
             showSuccessMessage('Grup resmi başarıyla kaldırıldı!');
         } else {
@@ -2195,14 +2177,9 @@ window.syncGroupManagementVisibility = function syncGroupManagementVisibility() 
     }
     if (!isAdmin) return;
 
-    if (typeof window.initScrollFadeInElements === 'function') {
-        window.initScrollFadeInElements();
-    }
     renderUserList();
     loadGroupSettings();
-    managementRoot
-        .querySelectorAll('.group-settings, .automation-section, .user-onboarding-column, .user-management-column')
-        .forEach(panel => window.observeReadingScrollReveal?.(panel));
+    window.renderOkumalarManage?.();
 };
 
 // Event listener'ları shell fragmenti sonradan eklendiğinde de bağla.
@@ -2402,7 +2379,8 @@ function displayJoinRequests(requests) {
             <div class="join-request-item" data-request-id="${request._id}">
                 <img src="${window.escapeHtml(window.safeImageSrc(request.profileImage))}"
                      alt="${window.escapeHtml(request.userName)}"
-                     class="join-request-avatar"
+                     class="join-request-avatar ${window.photoFadeClass(window.safeImageSrc(request.profileImage))}"
+                     decoding="async"
                      onerror="this.src='/images/default.png'">
                 <div class="join-request-info">
                     <div class="join-request-name">${window.escapeHtml(request.name)}</div>

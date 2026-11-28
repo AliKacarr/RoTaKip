@@ -56,6 +56,11 @@ window.initializeCookieConsent = function initializeCookieConsent() {
 
         cookieConsentBanner.style.display = 'none';
 
+        // Onay verilir verilmez Google Analytics yüklenir (reddedenlerde hiç yüklenmez).
+        if (typeof window.scheduleGoogleAnalyticsLoad === 'function') {
+            window.scheduleGoogleAnalyticsLoad();
+        }
+
         if (typeof logPageVisit === 'function') {
             logPageVisit();
         }

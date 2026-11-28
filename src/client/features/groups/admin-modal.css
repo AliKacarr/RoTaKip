@@ -1,132 +1,284 @@
-.group-page-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-#secretAdminLogin {
-    cursor: pointer;
-    max-width: 500px;
-    min-height: 55px;
-    margin: auto;
-    text-align: center;
-    padding: 19px;
-    margin: 0 auto;
-    font-size: 38px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 25px;
-    justify-content: center;
-    flex-wrap: nowrap;
-}
-
-#secretAdminLogin h2 {
-    max-width: 390px;
-    word-wrap: break-word;
-    white-space: normal;
-    line-height: 1.3;
-    flex: 1;
-    min-width: 0;
-    font-size: 38px;
-}
-
-#secretAdminLogin img {
-    flex-shrink: 0;
-    align-self: center;
-    height: 1.6em;
-    width: 1.6em;
-    border-radius: 6px;
+/* Grup kapağı: grup resmi arka plan; üstte resmin üzerinde geri / bilgi / ⋮, altta ad ve Davet et / Giriş yap */
+.okumalar-hero {
     position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 220px;
+    margin: 0 auto;
+    max-width: 960px;
+    padding: 56px 20px 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 22px;
+    color: #fff;
+    background: linear-gradient(135deg, #4e54c8 0%, #6a6fe0 55%, #8f94fb 100%);
 }
 
-.showGroups {
-    background: #b1e5f1;
-    border: 1px solid #c9c9c9;
-    border-radius: 8px;
-    padding: 13px 22px;
+.okumalar-hero-cover {
+    position: absolute;
+    inset: -24px;
+    z-index: -2;
+    background-position: center;
+    background-size: cover;
+    opacity: 0;
+    filter: blur(18px) saturate(1.15);
+    transform: scale(1.08);
+    transition: opacity 0.7s ease;
+}
+
+.okumalar-hero-cover.has-image {
+    opacity: 1;
+    inset: 0;
+    filter: none;
+    transform: none;
+}
+
+/* Cihazdan yüklenen grup resmi keskin kalır; okunabilirlik için alt kısım daha koyu */
+.okumalar-hero[data-hero-photo="true"]::after {
+    background: linear-gradient(180deg, rgba(10, 12, 30, 0.42) 0%, rgba(10, 12, 30, 0.08) 32%, rgba(10, 12, 30, 0.74) 100%);
+}
+
+.okumalar-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, rgba(20, 22, 60, 0.36) 0%, rgba(20, 22, 60, 0.12) 32%, rgba(20, 22, 60, 0.62) 100%);
+}
+
+/* Yönetici kapak arka planı: grup resmi (gorsel) ya da sabit renk geçişi */
+:root {
+    --hero-grad-indigo: linear-gradient(135deg, #4e54c8 0%, #6a6fe0 55%, #8f94fb 100%);
+    --hero-grad-zumrut: linear-gradient(135deg, #0f766e 0%, #14b8a6 55%, #5eead4 100%);
+    --hero-grad-gunbatimi: linear-gradient(135deg, #ea580c 0%, #f472b6 60%, #fbbf24 100%);
+    --hero-grad-okyanus: linear-gradient(135deg, #0369a1 0%, #0ea5e9 55%, #7dd3fc 100%);
+    --hero-grad-gul: linear-gradient(135deg, #be185d 0%, #ec4899 55%, #f9a8d4 100%);
+    --hero-grad-gece: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #475569 100%);
+}
+
+.okumalar-hero[data-hero-theme="indigo"] { background: var(--hero-grad-indigo); }
+.okumalar-hero[data-hero-theme="zumrut"] { background: var(--hero-grad-zumrut); }
+.okumalar-hero[data-hero-theme="gunbatimi"] { background: var(--hero-grad-gunbatimi); }
+.okumalar-hero[data-hero-theme="okyanus"] { background: var(--hero-grad-okyanus); }
+.okumalar-hero[data-hero-theme="gul"] { background: var(--hero-grad-gul); }
+.okumalar-hero[data-hero-theme="gece"] { background: var(--hero-grad-gece); }
+
+.okumalar-hero[data-hero-theme]:not([data-hero-theme="gorsel"]) .okumalar-hero-cover {
+    opacity: 0;
+}
+
+.okumalar-hero-content {
     display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.okumalar-hero-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+#secretAdminLogin.okumalar-hero-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 30px;
+    min-width: 0;
+    cursor: pointer;
+    border-radius: 14px;
+    outline-offset: 4px;
+}
+
+
+#secretAdminLogin .okumalar-hero-name {
+    margin: 0;
+    color: #fff;
+    text-align: left;
+    min-width: 0;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+    text-shadow: 0 2px 10px rgba(10, 12, 40, 0.35);
+}
+
+.okumalar-hero-meta {
+    margin: 0;
+    min-height: 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+/* Üst çubuk referanstaki gibi resmin üzerindedir: yalın beyaz simgeler (geri, bilgi, ⋮) */
+.okumalar-hero-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: max(10px, env(safe-area-inset-top, 0px)) 10px 0;
+}
+
+.okumalar-hero-spacer {
+    flex: 1;
+}
+
+.okumalar-bar-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
+    transition: background 0.2s ease, transform 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.okumalar-bar-icon:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.okumalar-bar-icon:active {
+    transform: scale(0.94);
+}
+
+.okumalar-bar-icon[hidden] {
+    display: none;
+}
+
+/* Duyurular (megafon): okunmamış duyuru sayısı sağ üstte kırmızı rozettir. */
+.okumalar-announce-button {
+    position: relative;
+    font-size: 20px;
+}
+
+.okumalar-announce-count {
+    position: absolute;
+    top: 3px;
+    right: 1px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #e53935;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.okumalar-announce-count[hidden] {
+    display: none;
+}
+
+.okumalar-announce-button.has-unread i {
+    transform-origin: 60% 50%;
+    animation: okumalar-announce-ring 1.4s ease-in-out 0.4s 2;
+}
+
+@keyframes okumalar-announce-ring {
+    0%, 60%, 100% { transform: rotate(0); }
+    10%, 30% { transform: rotate(-12deg); }
+    20%, 40% { transform: rotate(10deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .okumalar-announce-button.has-unread i {
+        animation: none;
+    }
+}
+
+.okumalar-bar-icon:focus-visible,
+.okumalar-hero-pill:focus-visible,
+#secretAdminLogin.okumalar-hero-title:focus-visible {
+    outline: 3px solid #fff;
+}
+
+/* Kapağın sağ altındaki eylem: yöneticide "Davet et", misafirde "Giriş Yap" (aynı stil) */
+.okumalar-hero-pill {
+    display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    height: 42px;
+    max-width: 180px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 999px;
+    background: #4e54c8;
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
     cursor: pointer;
-    font-size: 24px;
-    font-weight: 600;
-    color: #4e54c8;
-    box-shadow: 0 2px 8px rgba(78, 84, 200, 0.08);
-    margin-left: 20px;
-    margin-top: 5px;
-    letter-spacing: 0.4px;
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.showGroups:hover {
-    background: #a8dce5;
-    border-color: #c0c0c0;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(78, 84, 200, 0.15);
+.okumalar-hero-pill[hidden] {
+    display: none;
 }
 
-.showGroups:active {
-    background: #9dd8e8;
-    border-color: #b8b8b8;
-    transform: translateY(0px);
-    box-shadow: 0 2px 4px rgba(78, 84, 200, 0.1);
+.okumalar-hero-pill:hover {
+    background: #3f44b0;
 }
 
-.profileButton {
-    background: #e1cff7;
-    border: 1px solid #d4bfed;
-    border-radius: 8px;
-    padding: 13px 22px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 24px;
-    font-weight: 600;
-    color: #373fd6;
-    box-shadow: 0 2px 8px rgba(78, 84, 200, 0.08);
-    margin-top: 5px;
-    margin-right: 20px;
-    max-width: 200px;
-    height: 52px;
-    min-height: 52px;
-    max-height: 52px;
-    flex-shrink: 0;
-    letter-spacing: 0.4px;
-    transition: all 0.3s ease;
-}
-
-.profileButton:hover {
-    background: #d7c3f4;
-    border-color: #d0b7ea;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(78, 84, 200, 0.15);
-}
-
-.profileButton:active {
-    background: #d1b5f0;
-    border-color: #c4a8e6;
-    transform: translateY(0px);
-    box-shadow: 0 2px 4px rgba(78, 84, 200, 0.1);
+.okumalar-hero-pill:active {
+    transform: scale(0.96);
 }
 
 .profileButtonText {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 150px !important;
-    display: inline-block !important;
-    line-height: 1 !important;
-    height: auto !important;
-    flex-shrink: 1 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
 }
 
-.showGroups > i,
-.profileButton > i {
-    font-size: 24px !important;
+@media (max-width: 480px) {
+    .okumalar-hero {
+        min-height: 200px;
+        padding: 52px 16px 16px;
+        border-radius: 18px;
+    }
+
+
+    #secretAdminLogin .okumalar-hero-name {
+        font-size: 23px;
+    }
+
+    .okumalar-hero-pill {
+        padding: 0 13px;
+        font-size: 14px;
+    }
+
+    .okumalar-hero-bar {
+        gap: 2px;
+    }
+
+    .profileButtonText {
+        max-width: 84px;
+    }
 }
 
 .error-message {
@@ -1387,15 +1539,6 @@
   overflow-y: auto;
 }
 
-@media (max-width: 1023px) {
-  .welcome-invite-modal-content,
-  .groups-auth-login-modal-content,
-  .groups-auth-join-success-modal-content,
-  .groups-auth-forgot-modal-content,
-  .groups-auth-join-modal-content {  
-    scale: 1.3;
-  }
-}
 
 .welcome-invite-modal-content::before {
   content: '';
@@ -1953,4 +2096,376 @@
   justify-content: flex-start;
   padding: 0 15px;
   margin: 0;
+}
+
+/* ==================== Mobil: giriş / üye ol / şifre / hoş geldin pencereleri ====================
+   Eski scale: 1.3 kaldırıldı; pencereler gerçek boyutuyla, kompakt ölçülerle çizilir. */
+@media (max-width: 768px) {
+  .groups-auth-login-modal-content,
+  .groups-auth-forgot-modal-content,
+  .groups-auth-join-modal-content,
+  .groups-auth-join-success-modal-content,
+  .welcome-invite-modal-content {
+    width: calc(100% - 24px);
+    max-width: 420px;
+    max-height: calc(100dvh - 96px);
+    margin: 0;
+    border-radius: 20px;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .groups-auth-login-modal-header,
+  .groups-auth-forgot-modal-header {
+    padding: 16px 18px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .groups-auth-login-modal-icon,
+  .groups-auth-forgot-modal-icon {
+    width: 38px;
+    height: 38px;
+    margin-right: 12px;
+    border-radius: 12px;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .groups-auth-login-modal-title,
+  .groups-auth-forgot-modal-title {
+    font-size: 20px;
+    line-height: 1.25;
+  }
+
+  .groups-auth-login-close-btn,
+  .groups-auth-forgot-close-btn,
+  .groups-auth-join-close-btn,
+  .groups-auth-join-success-close-btn,
+  .welcome-invite-close-btn {
+    width: 34px;
+    height: 34px;
+    padding: 6px;
+    font-size: 18px;
+  }
+
+  .groups-auth-login-modal-body,
+  .groups-auth-forgot-modal-body {
+    padding: 16px 18px 18px;
+  }
+
+  .groups-auth-form-input,
+  .groups-auth-join-form-input,
+  .welcome-form-input {
+    padding: 11px 14px 11px 42px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
+
+  .groups-auth-input-icon,
+  .groups-auth-join-input-icon,
+  .welcome-input-icon {
+    left: 14px;
+    font-size: 16px;
+  }
+
+  .groups-auth-password-toggle,
+  .groups-auth-join-password-toggle,
+  .welcome-password-toggle {
+    right: 10px;
+    font-size: 16px;
+  }
+
+  .groups-auth-login-btn {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+
+  .groups-auth-forgot-password-link,
+  .groups-auth-join-group-link {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+
+  .groups-auth-error-message {
+    font-size: 14px;
+  }
+
+  .groups-auth-login-info-message {
+    padding: 10px 12px;
+  }
+
+  .groups-auth-info-text p {
+    font-size: 14px;
+  }
+
+  /* Şifremi unuttum */
+  .groups-auth-forgot-description {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .groups-auth-forgot-option {
+    gap: 12px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .groups-auth-forgot-option-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .groups-auth-forgot-option-content h3 {
+    width: 100%;
+    padding-bottom: 6px;
+    font-size: 16px !important;
+    line-height: 1.3;
+  }
+
+  .groups-auth-forgot-option-content p,
+  .groups-auth-support-email {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  /* Gruba üye ol */
+  .groups-auth-join-modal-body {
+    padding: 0;
+  }
+
+  .groups-auth-join-info-section {
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .groups-auth-join-form-content {
+    padding: 14px 16px 16px;
+  }
+
+  .groups-auth-join-group-avatar {
+    width: 46px;
+    height: 46px;
+  }
+
+  .groups-auth-join-group-details h3 {
+    font-size: 18px !important;
+  }
+
+  .groups-auth-join-group-details p {
+    font-size: 13px;
+  }
+
+  .groups-auth-join-section-title {
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    font-size: 16px !important;
+  }
+
+  .groups-auth-join-file-input-text {
+    font-size: 14px;
+  }
+
+  .groups-auth-join-file-input-icon {
+    font-size: 16px;
+  }
+
+  .groups-auth-join-form-group {
+    margin-bottom: 12px;
+  }
+
+  .groups-auth-join-form-group label,
+  .groups-auth-join-form-label {
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+
+  .groups-auth-join-file-input-label,
+  .groups-auth-join-avatar-btn {
+    min-width: 0;
+    min-height: 44px;
+    height: 44px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+
+  .groups-auth-join-file-input-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .groups-auth-join-actions {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .groups-auth-join-cancel-btn,
+  .groups-auth-join-submit-btn {
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
+
+  /* İstek gönderildi */
+  .groups-auth-join-success-modal-content {
+    height: auto;
+  }
+
+  .groups-auth-join-success-modal-header {
+    padding: 14px 16px;
+  }
+
+  .groups-auth-join-success-modal-body {
+    padding: 0 16px 16px;
+  }
+
+  .groups-auth-join-success-modal-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+
+  .groups-auth-join-success-modal-title {
+    font-size: 19px;
+  }
+
+  .groups-auth-join-success-message {
+    padding: 14px;
+  }
+
+  .groups-auth-join-success-message p {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .groups-auth-join-success-actions {
+    gap: 8px;
+  }
+
+  .groups-auth-join-success-cancel-btn,
+  .groups-auth-join-success-view-btn {
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
+
+  /* Hoş geldin / davet */
+  .welcome-invite-modal-content {
+    margin: 0;
+  }
+
+  .welcome-invite-modal-body {
+    padding: 0;
+  }
+
+  .welcome-invite-group-info {
+    flex-direction: row;
+    padding: 14px 50px 14px 16px;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .welcome-invite-group-details {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .welcome-invite-group-avatar {
+    width: 56px;
+    height: 56px;
+    margin-left: 0;
+  }
+
+  .welcome-invite-group-details h3 {
+    max-width: 100% !important;
+    margin-bottom: 4px;
+    font-size: 18px !important;
+  }
+
+  .welcome-user-name {
+    margin: 2px 0 4px;
+    font-size: 16px;
+  }
+
+  .welcome-invite-form-content {
+    padding: 14px;
+  }
+
+  .welcome-invite-form {
+    padding: 14px 14px 2px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+  }
+
+  .welcome-form-group {
+    margin-bottom: 12px;
+  }
+
+  .welcome-form-group label,
+  .welcome-form-label {
+    margin: 0 0 5px;
+    font-size: 14px;
+  }
+
+  .welcome-info-text p {
+    font-size: 12.5px;
+  }
+
+  .welcome-info-icon {
+    font-size: 13px;
+  }
+
+  .welcome-profile-section {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .welcome-profile-preview {
+    width: 64px;
+    height: 64px;
+  }
+
+  .welcome-profile-buttons {
+    flex: 1 1 140px;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .welcome-button-row {
+    gap: 6px;
+  }
+
+  .welcome-upload-btn,
+  .welcome-remove-btn,
+  .welcome-avatar-btn {
+    min-width: 0;
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .welcome-invite-actions {
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .welcome-invite-join-btn,
+  .welcome-invite-cancel-btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    padding: 11px 10px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
 }

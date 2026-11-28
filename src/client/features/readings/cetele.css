@@ -1,0 +1,671 @@
+/* Günlük çetele: diğer alanların hap seçimleri, ortak anahtarlar ve Yönetim › Günlük alanlar */
+
+.ct-loading {
+  margin: 6px 0;
+  color: var(--ok-muted);
+  font-size: 15px;
+}
+
+/* İki-üç seçenekli anahtarlar (Sıralama ölçütü, İstatistik görünümü) */
+.ct-segment {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #f1f2f6;
+}
+
+.ct-segment[hidden] {
+  display: none;
+}
+
+.ct-segment-btn {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ok-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.ct-segment-btn:active {
+  transform: scale(0.96);
+}
+
+.ct-segment-btn.is-active {
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  box-shadow: 0 1px 4px rgba(36, 50, 70, 0.14);
+}
+
+.ct-segment-btn:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 1px;
+}
+
+.ct-segment-small .ct-segment-btn {
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.ct-field {
+  padding: 12px 0;
+}
+
+.ct-field + .ct-field {
+  border-top: 1px solid var(--ok-border);
+}
+
+.ct-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ct-field-label {
+  color: var(--ok-text);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ct-field-value {
+  color: var(--ok-muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.ct-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  margin: 0 -2px;
+  scrollbar-width: none;
+}
+
+.ct-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.ct-chip {
+  flex: 0 0 auto;
+  min-width: 46px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--ok-border);
+  border-radius: 999px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.ct-chip:active {
+  transform: scale(0.94);
+}
+
+.ct-chip:hover {
+  border-color: var(--ok-accent);
+}
+
+.ct-chip.is-selected {
+  border-color: var(--ok-accent);
+  background: var(--ok-accent);
+  color: #fff;
+}
+
+.ct-chip:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+.ct-chip-add {
+  color: var(--ok-muted);
+  font-size: 18px;
+}
+
+.ct-chip-ok {
+  border-color: var(--ok-accent);
+  color: var(--ok-accent);
+}
+
+.ct-custom {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  animation: ct-custom-in 0.22s ease-out both;
+}
+
+@keyframes ct-custom-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ct-custom input {
+  width: 86px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--ok-accent);
+  border-radius: 999px;
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+
+.ct-custom input:focus {
+  outline: 3px solid var(--ok-accent-tint);
+}
+
+.ct-field-text textarea {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--ok-border);
+  border-radius: 12px;
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 15px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.ct-field-text textarea:focus {
+  border-color: var(--ok-accent);
+  outline: 3px solid var(--ok-accent-tint);
+}
+
+
+/* ---- Yönetim › Günlük alanlar ------------------------------------------------------ */
+.ct-settings {
+  margin: 0 auto 16px;
+  max-width: 960px;
+}
+
+.ct-settings[hidden] {
+  display: none;
+}
+
+.ct-settings-fields {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-settings-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.ct-settings-field + .ct-settings-field {
+  border-top: 1px solid var(--ok-border);
+}
+
+.ct-settings-field-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--ok-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ct-settings-field-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ct-settings-field-main strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.ct-settings-field-main small {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--ok-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ct-settings-field-main:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.ct-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ok-muted);
+}
+
+.ct-settings-row {
+  margin-top: 10px;
+}
+
+.ct-form-row input,
+.ct-form-row select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--ok-border);
+  border-radius: 12px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+.ct-form-row input:focus,
+.ct-form-row select:focus {
+  border-color: var(--ok-accent);
+  outline: 3px solid var(--ok-accent-tint);
+}
+
+.ct-form-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ct-number-settings[hidden],
+.ct-custom-limits[hidden] {
+  display: none;
+}
+
+.ct-form-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 15px;
+}
+
+.ct-form-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ok-accent);
+}
+
+.ct-form-error {
+  margin: 0 0 12px;
+  color: var(--ok-danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ct-settings-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.ct-settings-actions .ok-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+
+.ct-settings-intro {
+  margin: 0 0 10px;
+  color: var(--ok-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.ct-settings-field-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f1f2f6;
+  color: var(--ok-muted);
+  font-size: 16px;
+}
+
+.ct-settings-field.is-read .ct-settings-field-icon {
+  background: #fff4e5;
+  color: #c2570c;
+}
+
+.ct-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #c2570c;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.ct-settings-field-tools {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.ct-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ok-muted);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.ct-icon-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.ct-icon-btn:hover:not(:disabled) {
+  background: #f1f2f6;
+  color: var(--ok-text);
+}
+
+.ct-icon-btn.is-danger:hover:not(:disabled) {
+  background: var(--ok-danger-tint);
+  color: var(--ok-danger);
+}
+
+.ct-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.ct-icon-btn:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 1px;
+}
+
+.ct-settings > .ok-btn-block {
+  margin-top: 4px;
+}
+
+.ct-archived {
+  margin-top: 12px;
+  color: var(--ok-muted);
+  font-size: 14px;
+}
+
+.ct-archived summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ct-archived ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-archived li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.ct-settings-actions[hidden] {
+  display: none;
+}
+
+.ct-settings-actions {
+  position: sticky;
+  bottom: 12px;
+  z-index: 2;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--ok-surface);
+  box-shadow: 0 6px 20px rgba(36, 50, 70, 0.14);
+}
+
+/* Alan ekleme paneli: hazır alanlar */
+.ct-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ct-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--ok-border);
+  border-radius: 14px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ct-preset i {
+  margin-bottom: 4px;
+  color: var(--ok-accent);
+  font-size: 18px;
+}
+
+.ct-preset strong {
+  font-size: 15px;
+}
+
+.ct-preset small {
+  color: var(--ok-muted);
+  font-size: 12px;
+}
+
+.ct-preset {
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.ct-preset:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ct-preset:hover:not(:disabled) {
+  border-color: var(--ok-accent);
+  background: var(--ok-accent-tint);
+}
+
+.ct-preset:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ct-preset:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+.ct-form-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff4e5;
+  color: #8a3d06;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.ct-form-row small {
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .ct-chip {
+    min-width: 42px;
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  .ct-settings-field-icon {
+    display: none;
+  }
+}
+
+/* Zorunlu alan işareti ve boş bırakılan zorunlu alan vurgusu */
+.ct-required {
+  margin-left: 3px;
+  color: var(--ok-danger);
+  font-weight: 800;
+}
+
+.ct-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ct-field.is-invalid {
+  animation: ct-shake 0.36s ease-in-out;
+  margin: 0 -10px;
+  padding-right: 10px;
+  padding-left: 10px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px var(--ok-danger);
+  background: var(--ok-danger-tint);
+}
+
+.ct-field.is-invalid .ct-field-label {
+  color: var(--ok-danger);
+}
+
+.ct-badge.ct-badge-required {
+  background: var(--ok-danger-tint);
+  color: var(--ok-danger);
+}
+
+/* Alışkanlık satırı: düzenle ikonu ve ayrıntı panelindeki sil düğmesi */
+.ct-settings-field-edit {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--ok-accent-tint);
+  color: var(--ok-accent);
+  font-size: 13px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ct-settings-field-main:hover .ct-settings-field-edit {
+  background: var(--ok-accent);
+  color: #fff;
+}
+
+.ct-delete-btn {
+  margin-top: 8px;
+  color: var(--ok-danger);
+}
+
+.ct-delete-btn.is-confirm {
+  background: var(--ok-danger);
+  color: #fff;
+}
+
+.ct-delete-note {
+  margin: 8px 0 0;
+  color: var(--ok-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ct-delete-note[hidden] {
+  display: none;
+}
+
+@keyframes ct-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-field.is-invalid {
+    animation: none;
+  }
+
+  .ct-custom {
+    animation: none;
+  }
+
+  .ct-segment-btn:active,
+  .ct-chip:active,
+  .ct-icon-btn:active:not(:disabled),
+  .ct-preset:active:not(:disabled) {
+    transform: none;
+  }
+}

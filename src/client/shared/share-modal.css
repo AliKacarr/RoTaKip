@@ -427,3 +427,94 @@
         width: 100%;
     }
 }
+
+/* Aylık takvim paylaşım penceresi: resim dikeydir, bu yüzden pencere dar, başlık ve düğmeler küçük tutulur
+   ve resim ekrana sığacak kadar büyür (kaydırma gerekmez). Diğer paylaşım pencerelerini etkilemez. */
+.month-share-modal .month-share-modal-content {
+    width: 440px;
+}
+
+.month-share-modal .month-share-modal-header {
+    gap: 12px;
+    padding: 14px 18px;
+}
+
+.month-share-modal .month-share-modal-header .month-share-modal-title {
+    min-width: 0;
+    font-size: 19px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.month-share-modal .month-share-modal-close {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    font-size: 26px;
+}
+
+.month-share-modal .month-share-modal-body {
+    min-height: 0;
+    padding: 14px;
+}
+
+.month-share-modal .month-share-image-container {
+    padding: 8px;
+}
+
+.month-share-modal .month-share-image {
+    width: auto;
+    max-height: calc(90vh - 200px);
+    margin: 0 auto;
+}
+
+.month-share-modal .month-share-modal-footer {
+    flex-direction: row;
+    gap: 10px;
+    padding: 12px 14px;
+}
+
+.month-share-modal .table-share-btn {
+    width: auto;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 17px;
+}
+
+.month-share-modal .table-share-btn i {
+    font-size: 17px;
+}
+
+@media (max-width: 768px) {
+    .month-share-modal .month-share-modal-content {
+        width: min(440px, 94%);
+        max-height: 94vh;
+    }
+
+    .month-share-modal .month-share-modal-header {
+        padding: 12px 14px;
+    }
+
+    .month-share-modal .month-share-modal-header .month-share-modal-title {
+        font-size: 17px;
+    }
+
+    .month-share-modal .month-share-modal-body {
+        padding: 10px;
+    }
+
+    .month-share-modal .month-share-image {
+        max-height: calc(94vh - 180px);
+    }
+
+    .month-share-modal .month-share-modal-footer {
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .month-share-modal .table-share-btn {
+        padding: 11px 10px;
+        font-size: 16px;
+    }
+}

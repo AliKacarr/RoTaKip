@@ -1,0 +1,382 @@
+/* Grup duyuruları: Sayfam'ın üstündeki "Yeni duyuru" şeridi ve Duyurular paneli.
+   Kapaktaki megafon simgesi ve rozeti features/groups/admin-modal.css içindedir. */
+
+/* ---- Sayfam şeridi ---------------------------------------------------------- */
+.ok-announce-banner {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  margin: 0 0 14px;
+  border: 1px solid #f6d58a;
+  border-radius: var(--ok-radius);
+  background: linear-gradient(135deg, #fff8e6 0%, #fff3d6 100%);
+  box-shadow: var(--ok-shadow);
+  overflow: hidden;
+  animation: ok-announce-in 0.32s ease-out;
+}
+
+.ok-announce-banner[hidden] {
+  display: none;
+}
+
+.ok-announce-banner-body {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 4px 14px 14px;
+  border: 0;
+  background: none;
+  color: var(--ok-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ok-announce-banner-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ffb020;
+  color: #fff;
+  font-size: 17px;
+}
+
+.ok-announce-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ok-announce-banner-text strong {
+  color: #8a5300;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ok-announce-banner-more {
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #ffb020;
+  color: #fff;
+  font-size: 12px;
+}
+
+.ok-announce-banner-message {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.ok-announce-banner-text small {
+  color: var(--ok-muted);
+  font-size: 13px;
+}
+
+.ok-announce-banner-close {
+  flex-shrink: 0;
+  width: 44px;
+  border: 0;
+  background: none;
+  color: #8a5300;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.ok-announce-banner-body:focus-visible,
+.ok-announce-banner-close:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: -3px;
+  border-radius: 12px;
+}
+
+@keyframes ok-announce-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- Duyurular paneli --------------------------------------------------------- */
+.ok-announce-form {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--ok-border);
+  border-radius: 14px;
+  background: var(--ok-bg);
+}
+
+.ok-announce-field {
+  display: grid;
+  gap: 6px;
+}
+
+.ok-announce-label {
+  color: var(--ok-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ok-announce-field textarea {
+  width: 100%;
+  min-height: 84px;
+  padding: 10px 12px;
+  border: 1px solid var(--ok-border);
+  border-radius: 12px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.45;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.ok-announce-field textarea:focus,
+.ok-announce-date input:focus {
+  border-color: var(--ok-accent);
+  outline: 2px solid var(--ok-accent-tint);
+}
+
+.ok-announce-form-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ok-announce-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ok-announce-date {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: var(--ok-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ok-announce-date input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--ok-border);
+  border-radius: 10px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.ok-announce-hint {
+  color: var(--ok-muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.ok-announce-counter {
+  color: var(--ok-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ok-announce-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ok-announce-cancel {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--ok-border);
+  border-radius: 12px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ok-announce-cancel[hidden] {
+  display: none;
+}
+
+.ok-announce-list-title {
+  margin: 0 0 8px;
+  color: var(--ok-muted);
+  font-size: 14px !important;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ok-announce-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ok-announce-item {
+  padding: 12px 14px;
+  border: 1px solid var(--ok-border);
+  border-radius: 14px;
+  background: var(--ok-surface);
+}
+
+.ok-announce-item.is-new {
+  border-color: #f6d58a;
+  background: #fffaf0;
+}
+
+.ok-announce-item.is-expired {
+  opacity: 0.65;
+}
+
+.ok-announce-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.ok-announce-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ffb020;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ok-announce-chip.is-info {
+  background: var(--ok-accent-tint);
+  color: var(--ok-accent);
+}
+
+.ok-announce-item.is-scheduled {
+  border-style: dashed;
+}
+
+.ok-announce-chip.is-muted {
+  background: var(--ok-border);
+  color: var(--ok-muted);
+}
+
+.ok-announce-meta {
+  color: var(--ok-muted);
+  font-size: 13px;
+}
+
+.ok-announce-text {
+  margin: 0;
+  color: var(--ok-text);
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ok-announce-expiry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: var(--ok-muted);
+  font-size: 13px;
+}
+
+.ok-announce-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ok-announce-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--ok-border);
+  border-radius: 10px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ok-announce-actions button.is-danger {
+  color: var(--ok-danger);
+}
+
+.ok-announce-actions button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.ok-announce-empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 22px 8px;
+  color: var(--ok-muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+.ok-announce-empty i {
+  color: #ffb020;
+  font-size: 28px;
+}
+
+.ok-announce-empty p {
+  margin: 0;
+  color: var(--ok-text);
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .ok-announce-form-row {
+    flex-wrap: wrap;
+  }
+
+  .ok-announce-dates {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ok-announce-banner {
+    animation: none;
+  }
+}

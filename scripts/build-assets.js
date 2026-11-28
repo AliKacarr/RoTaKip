@@ -40,8 +40,7 @@ const bundles = {
       'shared/footer.css',
       'shared/cookies.css',
       'shared/share-modal.css',
-      'shell/shell.css',
-      'shell/group-legacy-viewport.css'
+      'shell/shell.css'
     ],
     js: ['shared/third-party.js', 'shared/cookies.js'],
     html: ['app-shell.html']
@@ -54,6 +53,7 @@ const bundles = {
     ],
     js: [
       'features/groups/league-config.js',
+      'features/groups/reading-metrics.js',
       'features/groups/group-bootstrap.js',
       'shared/share-utils.js'
     ]
@@ -65,43 +65,47 @@ const bundles = {
   },
   okumalar: {
     sourceRoot: clientSourcePath,
+    // Sıra önemlidir: temel → ortak yardımcılar → çetele verisi → Bugün → bölüm yönetimi.
     css: [
+      'shared/bottom-sheet.css',
+      'features/readings/okumalar-base.css',
       'features/readings/reading-reveal.css',
-      'features/readings/league-info.css',
-      'features/readings/statistics-layout.css',
-      'features/readings/tracker-table.css',
+      'features/readings/okumalar-dialogs.css',
       'features/readings/reading-message-panels.css',
-      'features/readings/reading-journey.css',
+      'features/readings/okumalar-today.css',
+      'features/readings/cetele.css',
+      'features/readings/okumalar-announcements.css',
       'features/daily-gift/daily-gift.css'
     ],
     js: [
+      'shared/bottom-sheet.js',
       'features/readings/reading-reveal.js',
-      'features/readings/reading-edit-mode.js',
-      'features/readings/reading-journey.js',
       'features/daily-gift/daily-gift.js',
-      'features/readings/weekly-table-image.js',
-      'features/readings/tracker-table.js',
-      'features/readings/reading-message-panels.js'
+      'features/readings/okumalar-core.js',
+      'features/readings/reading-message-panels.js',
+      'features/readings/cetele-store.js',
+      'features/readings/cetele-settings.js',
+      'features/readings/okumalar-celebration.js',
+      'features/readings/okumalar-today.js',
+      'features/readings/okumalar-announcements.js',
+      'features/readings/okumalar-tab.js'
     ]
   },
   management: {
     sourceRoot: clientSourcePath,
     css: ['features/readings/group-management.css'],
-    js: ['features/readings/group-management.js']
+    js: ['features/readings/group-management.js', 'features/readings/hero-theme-settings.js', 'features/readings/okumalar-manage.js']
   },
   statistics: {
     sourceRoot: clientSourcePath,
+    // Grup bölümü: Sıralama ve İstatistik; satır temeli okumalar-stats.css içindedir.
     css: [
-      'features/readings/analytics/user-cards.css',
-      'features/readings/analytics/longest-series.css',
-      'features/readings/analytics/stats-section.css',
-      'features/readings/analytics/monthly.css'
+      'features/readings/analytics/okumalar-stats.css',
+      'features/readings/analytics/user-cards.css'
     ],
     js: [
-      'features/readings/analytics/user-cards.js',
-      'features/readings/analytics/longest-series.js',
-      'features/readings/analytics/stats-section.js',
-      'features/readings/analytics/monthly.js'
+      'features/readings/analytics/okumalar-stats.js',
+      'features/readings/analytics/user-cards.js'
     ]
   },
   tesbihat: {

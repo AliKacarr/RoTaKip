@@ -86,7 +86,6 @@ test('shell tek navigasyonu taşır ve grup dizini yalnız görünüm içeriği 
   assert.doesNotMatch(shell, /id="routeStatus"/);
   assert.doesNotMatch(shell, /initial-group-route-loading/);
   assert.match(groupsFragment, /<h1 class="header-title">Okuma Grupları<\/h1>/);
-  assert.match(groupsFragment, /Kitap okuma hedeflerinizi belirleyin ve ilerlemenizi takip edin/);
   assert.doesNotMatch(groupsFragment, /<!DOCTYPE|<html(?:\s|>)|<head(?:\s|>)|<body(?:\s|>)|id="appNavigation"|<script(?:\s|>)|class="site-footer"/i);
   assert.doesNotMatch(shell, /document\.documentElement\.classList\.add\('initial-group-route-loading'\)/);
   assert.match(shell, /shell\.min\.css\?v=/);
@@ -205,16 +204,8 @@ test('ilk dört sekme ve ortak alanlar mobilde taşmadan kompakt düzene geçer'
   assert.doesNotMatch(footer, /@media \(min-width:\s*769px\)/);
   assert.doesNotMatch(footerHtml, /wa\.me|>Bize Ulaşın</);
   assert.match(cookies, /@media \(max-width:\s*640px\)[\s\S]*?\.cookie-consent-banner\s*\{[^}]*max-height:\s*calc\(100dvh - 96px - env\(safe-area-inset-bottom, 0px\)\);[^}]*overflow-y:\s*auto;/);
-  assert.match(cookies, /@media \(max-width:\s*640px\)[\s\S]*?\.cookie-button\s*\{[^}]*min-height:\s*44px;[^}]*flex:\s*1 1 0;[^}]*font-size:\s*16px;/);
+  assert.match(cookies, /@media \(max-width:\s*640px\)[\s\S]*?\.cookie-button\s*\{[^}]*min-height:\s*36px;[^}]*flex:\s*1 1 0;[^}]*font-size:\s*14px;/);
   assert.match(shell, /@media \(max-width:\s*640px\)[\s\S]*?\.route-loader-star\s*\{[^}]*font-size:\s*30px;[\s\S]*?\.route-loader-line\s*\{[^}]*width:\s*27px;[\s\S]*?\.route-loader-line span\s*\{[^}]*font-size:\s*16px;/);
-});
-
-test('geçmiş günler kaydırma ipucu hesaplanan merkezi kendi üzerinde kullanır', () => {
-  const tracker = readClient('features/readings/tracker-table.js');
-
-  assert.match(tracker, /swipeGuide\.style\.top = `\$\{Math\.max\(0, centeredTop\)\}px`/);
-  assert.match(tracker, /swipeGuide\.style\.left = `\$\{centeredLeft\}px`/);
-  assert.doesNotMatch(tracker, /timelineScrollHint\.style\.(?:top|left)\s*=/);
 });
 
 test('uygulama kabuğundaki yukarı çık butonunu yalnız shell stillendirir', () => {
@@ -228,12 +219,12 @@ test('uygulama kabuğundaki yukarı çık butonunu yalnız shell stillendirir', 
   assert.doesNotMatch(groupCommonStyles, /\.scroll-to-top-btn\b/);
   assert.doesNotMatch(groupBootstrap, /scrollToTopBtn/);
   assert.match(scrollManager, /setScrollToTopEnabled\(isEnabled\)[\s\S]*?routeEnabled = Boolean\(isEnabled\)/);
-  assert.match(scrollManager, /shouldShow = routeEnabled && window\.scrollY > 700/);
+  assert.match(scrollManager, /shouldShow = routeEnabled && \(window\.scrollY > 700 \|\| atBottom\)/);
   assert.match(scrollManager, /button\.hidden = !routeEnabled/);
   assert.match(router, /setScrollToTopEnabled\(route\.requiresGroup\)/);
 });
 
-test('son Okumalar konumu grup ve grup dizini arasında kalıcı tutulur', () => {
+test('Okumalar sekmesi son açılan grubu açar, hiç grup yoksa grup dizinine gider', () => {
   const navigation = readPublic('app/navigation.js');
   const router = readPublic('app/shell-router.js');
 
@@ -249,7 +240,9 @@ test('son Okumalar konumu grup ve grup dizini arasında kalıcı tutulur', () =>
   assert.match(navigation, /function setNavigationSelection\(nav, selectedRoute\)[\s\S]*?nav\.dataset\.activeRoute === selectedRoute\) return;[\s\S]*?classList\.toggle\('is-active', active\)[\s\S]*?nav\.dataset\.activeRoute = selectedRoute/);
   assert.doesNotMatch(navigation.match(/function setNavigationSelection\(nav, selectedRoute\)[\s\S]*?\n}/)?.[0] || '', /fa-solid|fa-regular/);
   assert.match(navigation, /setNavigationSelection\(nav, route\.navigationName \|\| route\.name\)/);
-  assert.match(navigation, /const leavesLegacyGroupViewport = document\.documentElement\.classList\.contains\('group-legacy-viewport'\)[\s\S]*?setNavigationSelection\(nav, link\.dataset\.route\)[\s\S]*?if \(leavesLegacyGroupViewport\)[\s\S]*?window\.setTimeout\([\s\S]*?onNavigate\(url\)[\s\S]*?, 180\)[\s\S]*?return;[\s\S]*?onNavigate\(url\)/);
+  assert.match(navigation, /setNavigationSelection\(nav, link\.dataset\.route\);\s*onNavigate\(url\);/);
+  assert.doesNotMatch(navigation, /group-legacy-viewport|leavesLegacyGroupViewport|pendingNavigationTimer/);
+  assert.match(router, /schedulePrefetch[\s\S]*?resolveRoute\(getRememberedReadingPath\(\)\)/);
   assert.doesNotMatch(navigation, /updateNavigationSelection|deferSelectionUntilViewportPaint/);
   assert.doesNotMatch(navigation, /originClass|targetIndex|activeIndex|activeLink|is-tap-feedback-from-(?:left|right)/);
   assert.match(navigation, /classList\.add\('is-tap-feedback'\)/);
@@ -292,13 +285,20 @@ test('asset manifesti shell ve sekme paketlerini ayrı tutar', () => {
   const okumalarBundle = buildAssets.slice(okumalarStart, managementStart);
   const managementBundle = buildAssets.slice(managementStart, statisticsStart);
   assert.ok(groupCommonStart >= 0 && groupUiStart > groupCommonStart && okumalarStart > groupUiStart && managementStart > okumalarStart && statisticsStart > managementStart);
-  assert.doesNotMatch(groupCommonBundle, /reading-journey|daily-gift/);
+  assert.doesNotMatch(groupCommonBundle, /reading-journey|daily-gift|okumalar-/);
   assert.doesNotMatch(groupCommonBundle, /admin-modal\.js/);
+  assert.match(groupCommonBundle, /'features\/groups\/league-config\.js',\s*'features\/groups\/reading-metrics\.js',\s*'features\/groups\/group-bootstrap\.js'/);
   assert.match(groupUiBundle, /admin-modal\.js/);
-  assert.match(okumalarBundle, /reading-journey\.css/);
-  assert.match(okumalarBundle, /reading-journey\.js/);
+  assert.doesNotMatch(okumalarBundle, /reading-journey|league-info\.css/);
+  assert.match(okumalarBundle, /'shared\/bottom-sheet\.css',\s*'features\/readings\/okumalar-base\.css'/);
+  // Haftalık tablo kaldırıldı; ortak pencereler okumalar-dialogs.css'tedir.
+  assert.doesNotMatch(okumalarBundle, /tracker-table|reading-edit-mode|weekly-table-image|cetele-card|cetele-summary|cetele-insights/);
+  assert.match(okumalarBundle, /'features\/readings\/okumalar-dialogs\.css'/);
+  assert.match(okumalarBundle, /okumalar-today\.css/);
   assert.match(okumalarBundle, /daily-gift\.css/);
   assert.match(okumalarBundle, /daily-gift\.js/);
+  // Bölüm yöneticisi en sonda yüklenir; Bugün ve kutlama ondan önce hazırdır.
+  assert.match(okumalarBundle, /'shared\/bottom-sheet\.js'[\s\S]*?'features\/readings\/okumalar-core\.js'[\s\S]*?'features\/readings\/cetele-store\.js'[\s\S]*?'features\/readings\/okumalar-celebration\.js',\s*'features\/readings\/okumalar-today\.js',\s*'features\/readings\/okumalar-announcements\.js',\s*'features\/readings\/okumalar-tab\.js'\s*\]/);
   assert.doesNotMatch(okumalarBundle, /group-management\.js/);
   assert.doesNotMatch(okumalarBundle, /group-management\.css/);
   assert.match(managementBundle, /group-management\.js/);
@@ -326,50 +326,52 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat namaz v
   assert.match(adminModalStyles, /\.groups-auth-join-avatar-btn\s*\{[^}]*justify-content:\s*flex-start;[^}]*position:\s*static/s);
   assert.match(adminModal, /function setGroupsAuthJoinAvatarButtonState\(isSelected\)[\s\S]*?Avatar seçildi[\s\S]*?classList\.toggle\('is-selected', isSelected\)/);
   assert.doesNotMatch(adminModal, /fileInputText\.textContent = 'Avatar seçildi'/);
-  assert.match(groupHeaderFragment, /<button type="button" onclick="window\.navigateRoTaKip\('\/gruplar'\)" class="showGroups"/);
+  assert.match(groupHeaderFragment, /<button type="button" onclick="window\.navigateRoTaKip\('\/gruplar'\)" class="showGroups[ "]/);
   assert.doesNotMatch(groupHeaderFragment, /window\.location\.href='\/gruplar'/);
   assert.doesNotMatch(okumalarFragment, /id="secretAdminLogin"|id="profileButton"/);
   assert.match(commonOverlays, /id="groupsAuthLoginModal"/);
   assert.doesNotMatch(commonOverlays, /class="league-info-bar"|id="authenticatedUserAreas"|id="dailyGiftModal"|id="dailyTasksModal"/);
 
-  assert.match(okumalarFragment, /class="tracker-table-shell"/);
-  assert.match(okumalarFragment, /Haftalık İstatistikler[\s\S]*?id="readingEditModeBar"/);
-  assert.match(okumalarFragment, /id="readingEditModeBar" class="reading-edit-mode-bar" aria-hidden="true"[\s\S]*?class="reading-edit-mode-bar-content"/);
+  // Haftalık tablo ve düzenleme çubuğu yoktur; günlük kayıt Bugün bölümündeki giriş kartından yapılır.
+  assert.doesNotMatch(okumalarFragment, /tracker-table|readingEditModeBar|weekly-statistics-section|week-navigation|timelineScrollHint/);
   assert.match(okumalarFragment, /class="reading-message-panels"/);
-  assert.match(okumalarFragment, /class="main-area"/);
+  assert.match(okumalarFragment, /class="main-area ok-manage"/);
   assert.doesNotMatch(okumalarFragment, /settings-section|onesignal-customlink-container/);
   assert.doesNotMatch(okumalarFragment, /Günün Vecizeleri|home-tefekkur-window|quote-section-image/);
   assert.match(routes, /fragment:\s*\['\/fragments\/group-header\.html', '\/fragments\/okumalar\.html'\]/);
 
-  assert.match(okumalarFragment, /class="league-info-section"[\s\S]*?id="authenticatedUserAreas"[\s\S]*?class="league-info-bar"[\s\S]*?<\/section>/);
-  assert.match(okumalarFragment, /id="authenticatedUserAreas" class="authenticated-user-areas"/);
-  assert.doesNotMatch(okumalarFragment, /(?:authenticatedUserAreas|readingEditModeBar)[^>]*is-initial-reveal-pending/);
-  assert.match(okumalarFragment, /id="dailyGiftModal"[\s\S]*?id="dailyTasksModal"/);
+  // Bölüm sekmeleri ve sırası; Yönetim sekmesi varsayılan olarak gizlidir (yalnız yönetici).
+  const sectionTabs = Array.from(okumalarFragment.matchAll(/class="okumalar-section-tab[^"]*" role="tab" id="[^"]+" data-bolum="([a-z]+)"/g), match => match[1]);
+  assert.deepEqual(sectionTabs, ['bugun', 'grup', 'yonetim']);
+  assert.match(okumalarFragment, /id="okumalarTabYonetim"[^>]*hidden/);
+  // Davet yalnız yöneticiler içindir: düğme yalnız yöneticiye görünür, panel üyede açılmaz.
+  const okumalarTabSource = readClient('features/readings/okumalar-tab.js');
+  assert.match(okumalarTabSource, /inviteButton\.hidden = !isAdmin\(\)/);
+  assert.match(okumalarTabSource, /function openInviteSheet\(\) \{\s*if \(!isAdmin\(\)\) return;/);
+  const sectionPanels = Array.from(okumalarFragment.matchAll(/class="okumalar-bolum" id="[^"]+" data-okumalar-bolum="([a-z]+)"[^>]*>/g), match => match[0]);
+  assert.deepEqual(sectionPanels.map(panel => panel.match(/data-okumalar-bolum="([a-z]+)"/)[1]), sectionTabs);
+  assert.doesNotMatch(sectionPanels[0], /hidden/);
+  sectionPanels.slice(1).forEach(panel => assert.match(panel, /hidden>$/));
+  // Sayfam kartları: günlük kayıt, Özetim ve altında kişi grafikleri (grup mesajları ve grubun bugünü Grup sekmesindedir).
+  // Misafir için ayrı "giriş yap" kartı yoktur; giriş düğmesi kapaktadır.
+  assert.match(okumalarFragment, /data-okumalar-bolum="bugun"[\s\S]*?class="ok-today-col ok-today-main"[\s\S]*?id="okumalarEntry"[^>]*hidden[\s\S]*?class="ok-today-col ok-today-side"[\s\S]*?id="okumalarMine"[\s\S]*?id="okumalarMyStats" hidden>[\s\S]*?id="okumalarStatsPersonal"[\s\S]*?data-okumalar-bolum="grup"/);
+  const todaySection = okumalarFragment.slice(okumalarFragment.indexOf('data-okumalar-bolum="bugun"'), okumalarFragment.indexOf('data-okumalar-bolum="grup"'));
+  assert.doesNotMatch(todaySection, /okumalarMessages|reading-message-panels/);
+  assert.doesNotMatch(okumalarFragment, /okumalarGroupToday|ok-group-today/);
+  assert.doesNotMatch(okumalarFragment, /okumalarCheckin|ok-checkin|okumalarTasks|okumalarProgress|okumalarLeague/);
+  assert.doesNotMatch(okumalarFragment, /league-info-section|league-info-bar|authenticatedUserAreas|dailyGiftModal|dailyTasksModal|dailyGiftButton/);
 
-  assert.match(okumalarFragment, /class="user-cards-section"/);
-  assert.match(okumalarFragment, /class="user-cards-container"/);
-  assert.match(okumalarFragment, /class="monthly-calendar-section"/);
-  assert.match(okumalarFragment, /class="longest-series-section"/);
-  assert.match(okumalarFragment, /class="stats-section"/);
+  // Grup: önce Sıralama (Bugün/Bu ay/Geçmiş aylar/Toplam/Seri/En uzun seri), sonra Grup mesajları, en altta grup istatistiği (Grup/Kişi anahtarı yoktur).
+  assert.match(okumalarFragment, /data-okumalar-bolum="grup"[\s\S]*?id="okumalarRanking" hidden>[\s\S]*?data-rank-mode="today"[\s\S]*?data-rank-mode="month"[\s\S]*?data-rank-mode="past"[\s\S]*?data-rank-mode="total"[\s\S]*?id="okumalarRankingMonth"[\s\S]*?id="okumalarRankingList"[\s\S]*?<details class="ok-card ok-messages" id="okumalarMessages" hidden>[\s\S]*?class="reading-message-panels"[\s\S]*?id="okumalarStats" hidden>[\s\S]*?id="okumalarStatsGroup"/);
+  assert.doesNotMatch(okumalarFragment, /data-stats-scope|ok-stats-scope/);
+  assert.doesNotMatch(okumalarFragment, /user-cards-section|monthly-calendar-section|stats-section|longest-series-section|readingStatsChart|leaderboard-sort-bar/);
   assert.doesNotMatch(okumalarFragment, /id="readingMessagesPlaceholder"|reading-message-placeholder|message-placeholder-/);
   assert.doesNotMatch(okumalarFragment, /Placeholder|placeholder-|reading-chart-placeholder|tracker-table-placeholder/);
-  assert.match(okumalarFragment, /class="monthly-calendar-section" style="display: none;"/);
-  assert.match(okumalarFragment, /class="stats-section" style="display: none;"/);
-  assert.match(okumalarFragment, /class="longest-series-section" style="display: none;"/);
-  assert.match(okumalarFragment, /class="user-cards-section" style="display: none;"/);
-  assert.match(okumalarFragment, /class="monthly-calendar-section"[\s\S]*?class="stats-section"[\s\S]*?class="longest-series-section"[\s\S]*?class="user-cards-section"/);
   assert.doesNotMatch(okumalarFragment, /user-cards-message-panels/);
-  const orderedRouteMarkup = okumalarFragment;
-  const orderedSections = [
-    'tracker-table-shell',
-    'monthly-calendar-section',
-    'stats-section',
-    'longest-series-section',
-    'user-cards-section',
-    'main-area'
-  ].map(className => orderedRouteMarkup.indexOf(`class="${className}`));
+  const orderedSections = ['okumalarEntry', 'okumalarMyStats', 'okumalarRanking', 'okumalarMessages', 'okumalarStats', 'okumalarTrackingSettings', 'userManagementLists']
+    .map(id => okumalarFragment.indexOf(`id="${id}"`));
   assert.ok(orderedSections.every((position, index) => position >= 0 && (index === 0 || position > orderedSections[index - 1])));
-  assert.doesNotMatch(tesbihat, /tracker-table-shell|user-cards-section|main-area|monthly-calendar-section|stats-section/);
+  assert.doesNotMatch(tesbihat, /ok-entry|ok-ranking|main-area|ok-stats-view/);
   assert.doesNotMatch(tesbihat, /section-heading|fa-calendar|tesbihatHeroNextLabel|tesbihat-hero-location|tesbihatHeroSky/);
   assert.doesNotMatch(readClient('features/tesbihat/tesbihat-home.css'), /\.tesbihat-hero-dates\s*\{[^}]*border-top/s);
   const tesbihatViews = Array.from(tesbihat.matchAll(/class="tesbihat-view" data-view="([a-z]+)"/g), match => match[1]);
@@ -400,13 +402,14 @@ test('Okumalar haftalık ve analiz bileşenlerini birleştirir, Tesbihat namaz v
   assert.match(readClient('features/tesbihat/tesbihat-utils.js'), /ns\.confirmDialog[\s\S]*?role="alertdialog"[\s\S]*?document\.body\.appendChild\(backdrop\)/);
   assert.doesNotMatch(tesbihat, /<select|tesbihat-preparation|çok yakında/);
   assert.doesNotMatch(commonOverlays, /readingEditModeBar/);
-  assert.match(readClient('features/readings/reading-edit-mode.js'), /modeBar\.classList\.add\('show'\)[\s\S]*?aria-hidden', 'false'/);
-  assert.match(readClient('features/readings/reading-edit-mode.js'), /modeBar\.classList\.remove\('show'\)[\s\S]*?aria-hidden', 'true'/);
-  assert.match(readClient('features/readings/tracker-table.css'), /\.reading-edit-mode-bar\s*\{[^}]*grid-template-rows:\s*0fr;[^}]*clip-path:\s*inset\(0 0 100% 0\);[^}]*grid-template-rows var\(--reading-auth-toggle-duration, 0\.8s\)/s);
-  assert.match(readClient('features/readings/tracker-table.css'), /\.reading-edit-mode-bar\.show\s*\{[^}]*grid-template-rows:\s*1fr;[^}]*clip-path:\s*inset\(0\)/s);
-  assert.match(readClient('features/readings/tracker-table.css'), /\.reading-edit-mode-bar\.is-initial-reveal-pending,[\s\S]*?grid-template-rows:\s*1fr;[^}]*opacity:\s*0;[^}]*transition:\s*none/s);
-  assert.doesNotMatch(readClient('features/readings/reading-edit-mode.js'), /revealReadingEditModeBarInitial/);
-  assert.match(router, /function revealReadingAuthControls\(isAuthenticated\)[\s\S]*?syncAuthenticatedUserAreas\(isAuthenticated, \{ immediate: true \}\)[\s\S]*?showReadingEditModeBar[\s\S]*?getBoundingClientRect\(\)[\s\S]*?classList\.remove\('is-initial-reveal-pending'\)/);
+  ['tracker-table.js', 'tracker-table.css', 'tracker-table-mobile.css', 'reading-edit-mode.js', 'weekly-table-image.js']
+    .forEach(fileName => assert.equal(fs.existsSync(path.join(clientDir, 'features', 'readings', fileName)), false, fileName));
+  assert.doesNotMatch(router, /revealReadingAuthControls|showReadingEditModeBar|tracker-table|loadTrackerTable/);
+  // Düzenleme kısıtı ve oturum zaman aşımı pencereleri tablo olmadan da çalışır.
+  const core = readClient('features/readings/okumalar-core.js');
+  assert.match(core, /window\.isReadingDateEditableForCurrentUser = function[\s\S]*?policy === 'today_yesterday'/);
+  assert.match(core, /window\.showReadingEditRestrictionInfo = function[\s\S]*?window\.checkSessionTimeout = function/);
+  assert.match(readClient('features/readings/okumalar-dialogs.css'), /\.reading-edit-restriction-panel\s*\{[\s\S]*?\.session-timeout-modal\s*\{/);
   assert.doesNotMatch(
     readClient('features/readings/analytics/user-cards.js'),
     /league-promotion-message|reading-streak-message|weak-link-message|everyone-read-message/
@@ -589,7 +592,10 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(router, /if \(!keepVisible\) activeView\.classList\.add\('is-preparing-return'\)/);
   assert.match(readClient('features/videos/videos-tab.js'), /keepVisibleInTab: true/);
   assert.match(readClient('shell/shell.css'), /\.tab-view\.is-preparing-return\s*\{[^}]*visibility:\s*hidden/s);
-  assert.match(router, /window\.navigateRoTaKip = path => navigate\(new URL\(path, window\.location\.origin\)\)/);
+  assert.match(router, /window\.navigateRoTaKip = path => \{\s*const url = new URL\(path, window\.location\.origin\);\s*if \(isSameOkumalarView\(url\)\) return window\.RoTaKipOkumalarSections\.navigate\(url\);\s*return navigate\(url\);/);
+  // Aynı grubun Okumalar görünümünde yalnız ?bolum değişirse sekme yeniden kurulmaz (yükleyici gösterilmez).
+  assert.match(router, /function isSameOkumalarView\(url\)[\s\S]*?activeRouteName !== 'okumalar'[\s\S]*?privateGroupAccess[\s\S]*?route\.groupId === mountedGroupId[\s\S]*?!isInviteOnboardingRoute\(route, url\)/);
+  assert.match(router, /addEventListener\('popstate', \(\) => \{[\s\S]*?if \(isSameOkumalarView\(url\)\) \{\s*window\.RoTaKipOkumalarSections\.syncFromUrl\(\);\s*return;\s*\}\s*navigate\(url, \{ fromPopState: true \}\);/);
   assert.match(router, /window\.refreshRoTaKipRoute = \(\) => navigate\(new URL\(window\.location\.href\), \{ fromPopState: true \}\)/);
   assert.match(navigation, /route\.navigationName \|\| route\.name/);
   assert.doesNotMatch(navigation, /missingGroup === 'true'/);
@@ -603,7 +609,9 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(directoryStyles, /\.groups-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(directoryStyles, /@media \(max-width:\s*768px\)[\s\S]*?\.groups-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
   assert.match(directoryStyles, /\/\* ==================== Viewport layout refinements ==================== \*\/[\s\S]*?@media \(max-width:\s*768px\)[\s\S]*?\.group-card\s*\{[^}]*min-height:\s*226px;[^}]*\}[\s\S]*?\.user-group-badge\s*\{[^}]*width:\s*32px;[^}]*height:\s*32px;[^}]*\}[\s\S]*?\.user-group-badge i\s*\{[^}]*font-size:\s*12px;/s);
-  assert.match(directoryStyles, /\.user-group-badge i\s*\{\s*font-size:\s*14px;\s*\}/);
+  // Grup kur paneli telefonda alttan açılır; Gruba katıl penceresi her ekranda ortadaki dikdörtgen penceredir.
+  assert.match(directoryStyles, /@media \(max-width: 768px\)\s*\{\s*\.tab-view-groups #createGroupModal\s*\{[^}]*align-items:\s*flex-end;[\s\S]*?\.tab-view-groups \.group-modal-content\s*\{[^}]*border-radius:\s*24px 24px 0 0;/);
+  assert.doesNotMatch(directoryStyles, /\.tab-view-groups \.join-modal-content(?:::before)?\s*[,{][^}]*(?:border-radius:\s*24px 24px 0 0|mg-sheet-up)/);
   assert.match(directoryStyles, /@media \(max-width:\s*1023px\)[\s\S]*?bottom:\s*calc\(81px \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(directoryStyles, /@media \(max-width:\s*640px\)[\s\S]*?bottom:\s*calc\(59px \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(directoryHtml, /class="groups-directory-ready-images-btn"[\s\S]*?avatar-picker-sparkle[^>]*>✨<[\s\S]*?Avatar seç/);
@@ -622,7 +630,7 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.match(directoryStyles, /\.input-container \.file-input-label\s*\{[^}]*height:\s*52px/s);
   assert.match(directoryStyles, /\.tab-view-groups \.groups-directory-ready-images-btn,[\s\S]*?min-width:\s*132px;[\s\S]*?justify-content:\s*flex-start;[\s\S]*?position:\s*static;/);
   assert.match(directoryStyles, /@media \(max-width:\s*480px\)[\s\S]*?\.input-container\.image-source-picker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
-  assert.match(managementStyles, /\.tab-view-okumalar \.ready-images-btn\s*\{[\s\S]*?width:\s*100%;/);
+  assert.match(managementStyles, /\.group-image-actions \.ok-btn,/);
   assert.doesNotMatch(managementStyles, /^\.ready-images-btn/m);
   assert.match(managementStyles, /#overlayRoot \.ready-images-modal\s*\{/);
   const directoryClassNames = collectCssClasses(directoryStyles);
@@ -645,7 +653,7 @@ test('grup dizini shell içinde önbellekte tutularak sekmeler arasında yeniden
   assert.doesNotMatch(router, /activeLifecycle = null;\s*setOkumalarStylesEnabled\(route\.requiresGroup\)/);
   assert.match(router, /const criticalStyles = isInviteOnboarding[\s\S]*?: \['group-common\.min\.css', \.\.\.ROUTE_ASSETS\[route\.name\]\.styles\][\s\S]*?loadOkumalarStyles\(criticalStyles\)/);
   assert.match(router, /loadAssetGroup[\s\S]*?loadOkumalarStyles\(assets\.styles\)/);
-  assert.match(router, /function resetOkumalarViewForGroup\(nextGroupId\)[\s\S]*?resetTrackerTimelineForGroup\?\.\(\)[\s\S]*?viewCache\.get\('okumalar'\)[\s\S]*?lifecycleCache\.delete\(okumalarView\)[\s\S]*?groupWarmups\.clear\(\)/);
+  assert.match(router, /function resetOkumalarViewForGroup\(nextGroupId\)[\s\S]*?RoTaKipCetele\?\.reset\(nextGroupId\)[\s\S]*?viewCache\.get\('okumalar'\)[\s\S]*?lifecycleCache\.delete\(okumalarView\)[\s\S]*?groupWarmups\.clear\(\)/);
   assert.match(router, /if \(route\.requiresGroup\) resetOkumalarViewForGroup\(route\.groupId\)/);
   assert.match(router, /const groupChanged = Boolean\(mountedGroupId && mountedGroupId !== route\.groupId\)[\s\S]*?resetRoTaKipGroupBootstrap\?\.\(route\.groupId\)/);
   assert.match(router, /window\.invalidateRoTaKipGroupCache = function[\s\S]*?invalidateGroupContext\(groupId\)[\s\S]*?groupWarmups\.clear\(\)[\s\S]*?leavesMountedGroup[\s\S]*?invalidateRoTaKipGroupCache\(mountedGroupId\)/);
@@ -1039,7 +1047,7 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(router, /useOkumalarTransitionLoader[\s\S]*?!isInitialNavigation[\s\S]*?route\.name === 'okumalar'/);
   assert.match(router, /useGroupsTransitionLoader = !useInitialTabLoader[\s\S]*?&& !isInitialNavigation[\s\S]*?route\.name === 'groups'/);
   assert.match(router, /useGroupsTransitionLoader \? 'Gruplar hazırlanıyor' : 'Okumalar hazırlanıyor'/);
-  assert.match(router, /ROUTE_TRANSITION_MIN_VISIBLE_MS = 1000[\s\S]*?waitBeforeFade[\s\S]*?loader\.classList\.add\('is-leaving'\)/);
+  assert.match(router, /ROUTE_TRANSITION_MIN_VISIBLE_MS = 400[\s\S]*?waitBeforeFade[\s\S]*?loader\.classList\.add\('is-leaving'\)/);
   assert.match(router, /loader\.dataset\.minimumVisibleMs[\s\S]*?minimumVisibleMs - elapsed[\s\S]*?minimumVisibleMs: targetWasReady \? 0 : ROUTE_TRANSITION_MIN_VISIBLE_MS/);
   assert.match(router, /function keepInitialTabLoaderVisible\(\)[\s\S]*?classList\.remove\('is-leaving'\)[\s\S]*?function hideInitialTabLoader\(expectedSequence = null\)[\s\S]*?expectedSequence !== navigationSequence[\s\S]*?keepInitialTabLoaderVisible\(\)[\s\S]*?resolve\(false\)/);
   assert.match(router, /async function revealRouteAfterLoader\(view, options = \{\}\)[\s\S]*?hideInitialTabLoader\(options\.sequence\)[\s\S]*?options\.sequence !== navigationSequence[\s\S]*?await revealRouteContent\(view\)/);
@@ -1048,58 +1056,53 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(router, /if \(revealAfterLifecycle\)\s*\{\s*await revealRouteAfterLoader\(activeView, \{ useInitialTabLoader, transitionLoader, sequence \}\);\s*\}/);
   assert.match(router, /runOkumalarBackgroundWork\(\{ animateRefresh: true \}\)/);
   assert.match(router, /const refreshOptions = options\.animateRefresh === true \? \{ animateRefresh: true \} : undefined;[\s\S]*?loadUserCards\(refreshOptions\)[\s\S]*?loadMonthlyCalendar\(refreshOptions\)[\s\S]*?renderLongestSeries\(refreshOptions\)[\s\S]*?loadReadingStats\(refreshOptions\)/);
-  assert.match(router, /function replayReadingPrimarySectionReveal\(view\)[\s\S]*?'\.user-stats-info-area'[\s\S]*?'\.league-info-bar'[\s\S]*?'\.weekly-statistics-section'[\s\S]*?\.reading-message-panels-content > \*[\s\S]*?window\.replayReadingContentReveal\?\.\(element\)/);
+  assert.match(router, /function replayReadingPrimarySectionReveal\(view\)[\s\S]*?\.reading-message-panels-content > \*[\s\S]*?window\.replayReadingContentReveal\?\.\(element\)/);
+  assert.doesNotMatch(router, /\.ok-today \.ok-card:not\(\[hidden\]\)/);
   assert.match(router, /if \(revealAfterLifecycle\)[\s\S]*?await revealRouteAfterLoader[\s\S]*?revealPendingReadingMessagePanels\?\.\(activeView\)[\s\S]*?route\.name === 'okumalar' && !isInviteOnboarding[\s\S]*?replayReadingPrimarySectionReveal\(activeView\)/);
   assert.doesNotMatch(router, /is-refresh-revealing/);
-  assert.match(readClient('features/readings/reading-reveal.css'), /\.user-stats-info-area\.reading-scroll-reveal:not\(\.is-revealed\),[\s\S]*?\.league-info-bar\.reading-scroll-reveal:not\(\.is-revealed\),[\s\S]*?\.reading-message-panels-content > \.reading-scroll-reveal:not\(\.is-revealed\)[^}]*translateY\(20px\)[\s\S]*?animation-name:\s*reading-viewport-reveal-compact/);
+  assert.match(readClient('features/readings/reading-reveal.css'), /\.reading-message-panels-content > \.reading-scroll-reveal:not\(\.is-revealed\)[^}]*translateY\(20px\)[\s\S]*?animation-name:\s*reading-viewport-reveal-compact/);
   assert.match(readClient('features/readings/reading-message-panels.js'), /panel\.classList\.add\('message-fade-in'\);[\s\S]*?!panel\.classList\.contains\('reading-scroll-reveal'\)[\s\S]*?panel\.classList\.add\('reading-content-reveal'\)/);
   assert.doesNotMatch(router, /Promise\.all\(\[revealPromise, hide(?:InitialTabLoader|RouteTransitionLoader)/);
   assert.doesNotMatch(router, /CACHED_ROUTE_STATUS_DELAY_MS|scheduleStatus|routeStatusShowTimer/);
   assert.match(router, /window\.waitForRoutePlaceholder\s*=\s*async function/);
   assert.doesNotMatch(router, /prepareRoutePlaceholders/);
   assert.match(router, /deferOkumalarResumeReveal[\s\S]*?lifecycleCache\.has\(activeView\)[\s\S]*?!warmedViews\.has\(activeView\)[\s\S]*?if \(!deferOkumalarResumeReveal && !revealAfterLifecycle\)/);
-  assert.match(router, /if \(resumeBeforeReveal\)[\s\S]*?is-preparing-return[\s\S]*?is-restoring-position[\s\S]*?await activeLifecycle\.resume\(\)[\s\S]*?revealRouteContent\(activeView, !resumeBeforeReveal\)[\s\S]*?classList\.remove\('is-restoring-position'\)[\s\S]*?classList\.remove\('is-preparing-return'\)/);
-  assert.doesNotMatch(router, /requestAnimationFrame\(\(\) => requestAnimationFrame\(resolve\)\)[\s\S]*?refreshTrackerTableLayout/);
-  assert.match(readClient('features/readings/tracker-table.css'), /\.tracker-table-layout\.is-restoring-position\s*\{[\s\S]*?visibility:\s*hidden/);
+  assert.match(router, /if \(resumeBeforeReveal\)[\s\S]*?is-preparing-return[\s\S]*?await activeLifecycle\.resume\(\)[\s\S]*?revealRouteContent\(activeView, !resumeBeforeReveal\)[\s\S]*?classList\.remove\('is-preparing-return'\)/);
+  assert.doesNotMatch(router, /is-restoring-position|tracker-table-layout/);
   assert.match(router, /activeLifecycle\?\.prepareBeforeReveal === true[\s\S]*?await activeLifecycle\.resume\(\)[\s\S]*?if \(!revealAfterLifecycle && !activeView\.classList\.contains\('visible'\)\)/);
   assert.match(router, /isReturningToOkumalar[\s\S]*?lifecycleCache\.has\(view\)[\s\S]*?classList\.toggle\('is-resuming', isReturningToOkumalar\)/);
-  assert.match(shellStyles, /\.tab-view-okumalar\.is-resuming\.visible[\s\S]*?animation:\s*none[\s\S]*?\.tracker-table-layout[\s\S]*?\.week-navigation[\s\S]*?transition:\s*none !important/);
+  assert.match(shellStyles, /\.tab-view-okumalar\.is-resuming\.visible[\s\S]*?animation:\s*none[\s\S]*?\.reading-content-reveal[\s\S]*?transition:\s*none !important/);
+  assert.doesNotMatch(shellStyles, /tracker-table-layout|week-navigation/);
   assert.match(shellStyles, /\.tab-view\.is-preparing-return\s*\{[^}]*visibility:\s*hidden/s);
   assert.doesNotMatch(router, /querySelectorAll\(['"]\.scroll-fade-in/);
   assert.match(commonStyles, /\.scroll-fade-in\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*none;[^}]*transition:\s*none;/s);
-  assert.match(userCardStyles, /\.user-card\s*\{[^}]*transform:\s*none;[^}]*opacity:\s*1;/s);
-  assert.match(userCardStyles, /\.user-card\.reading-scroll-reveal\s*\{[^}]*opacity \.5s ease-out[^}]*transform \.6s ease-out[^}]*will-change:\s*transform, opacity/s);
-  assert.match(userCardStyles, /\.user-card\.reading-scroll-reveal:not\(\.is-revealed\)\s*\{[^}]*opacity:\s*0;[^}]*translateY\(100px\)[^}]*animation:\s*none/s);
-  assert.match(userCardStyles, /\.user-card\.reading-scroll-reveal\.is-revealed\s*\{[^}]*opacity:\s*1;[^}]*translateY\(0\)[^}]*animation:\s*none/s);
-  assert.match(userCardStyles, /prefers-reduced-motion:\s*reduce[\s\S]*?\.user-card\.reading-scroll-reveal[\s\S]*?transition:\s*none/);
+  // Sıralama: yapışık "Senin sıran" paneli yoktur; kendi satırı listede vurgulanır.
+  assert.doesNotMatch(userCardStyles, /ok-ranking-me/);
   assert.match(messagePanelStyles, /\.league-promotion-message,[\s\S]*?opacity:\s*1;[\s\S]*?transform:\s*none;/);
   assert.doesNotMatch(readClient('features/readings/analytics/user-cards.js'), /userCardScrollObserver|cardScrollObserver/);
-  assert.match(readClient('features/readings/analytics/stats-section.js'), /readingStatsVisibilityObserver/);
-  assert.match(readClient('features/readings/analytics/stats-section.js'), /animateReadingStatsWhenVisible/);
-  assert.match(readClient('features/readings/analytics/longest-series.js'), /IntersectionObserver|barsToAnimate|initialBarWidth/);
+  // İstatistik Chart.js kullanmaz; grafikler yalın SVG/CSS'tir.
+  const stats = readClient('features/readings/analytics/okumalar-stats.js');
+  assert.doesNotMatch(stats, /new Chart\(|ensureChartLibraries/);
+  assert.doesNotMatch(readClient('shared/third-party.js') + readClient('features/groups/group-bootstrap.js'), /chart\.js|ensureChartLibraries/);
+  ['stats-section', 'monthly', 'longest-series'].forEach(name => {
+    assert.ok(!fs.existsSync(path.join(clientDir, 'features', 'readings', 'analytics', name + '.js')));
+  });
+  assert.match(stats, /<svg class="ok-line"[\s\S]*?ok-line-path/);
   assert.doesNotMatch(okumalarInit, /window\.initializeHomeTefekkurWindow/);
-  assert.match(okumalarInit, /portalOkumalarOverlays\(\)/);
-  assert.match(router, /function portalOkumalarOverlays\(\)[\s\S]*?dailyGiftModal[\s\S]*?dailyTasksModal[\s\S]*?overlayRoot\.appendChild\(modal\)/);
+  assert.doesNotMatch(router, /portalOkumalarOverlays|revealLeagueInfoBar|syncAuthenticatedUserAreas|initializeReadingJourney/);
+  assert.match(okumalarInit, /await window\.initializeGroupPage\(\);[\s\S]*?window\.RoTaKipOkumalarSections\?\.init\(\);[\s\S]*?stageReadingPrimaryContent\(\);[\s\S]*?initializeOkumalarCore\(\)/);
+  assert.match(okumalarInit, /resume\(\)[\s\S]*?window\.RoTaKipOkumalarSections\?\.syncFromUrl\(\)/);
+  assert.match(router, /async function prepareReadingPrimaryContent\(\)[\s\S]*?renderReadingMessagePanels[\s\S]*?renderOkumalarToday/);
   assert.match(okumalarInit, /resume\(\)[\s\S]*?runOkumalarBackgroundWork\(\{ animateRefresh: true \}\)/);
-  assert.match(okumalarInit, /prepareBeforeReveal:\s*true[\s\S]*?resume\(\)[\s\S]*?await window\.loadTrackerTable\(\)[\s\S]*?await window\.refreshTrackerTableLayout\(\)/);
-  assert.match(okumalarInit, /resume\(\)[\s\S]*?revealReadingAuthControls[\s\S]*?Promise\.all\(\[trackerRefresh, prepareReadingPrimaryContent\(\)\]\)/);
+  assert.match(okumalarInit, /prepareBeforeReveal:\s*true[\s\S]*?resume\(\)[\s\S]*?await prepareReadingPrimaryContent\(\)/);
   assert.doesNotMatch(okumalarInit, /captureTrackerTableScrollPosition/);
-  assert.doesNotMatch(readClient('features/readings/tracker-table.js'), /timelineSavedScrollLeft|timelineRestoreReleaseTimer|captureTrackerTableScrollPosition/);
-  assert.match(readClient('features/readings/tracker-table.js'), /refreshTrackerTableLayout[\s\S]*?timelineIsRestoringPosition = true[\s\S]*?scrollTimelineDateIntoRightEdge\(todayKey, false\)[\s\S]*?timelineIsRestoringPosition = false/);
-  assert.match(readClient('features/readings/tracker-table.js'), /resetTrackerTimelineForGroup[\s\S]*?timelineStartDate = null[\s\S]*?timelineEndDate = null[\s\S]*?timelineReferenceDate = null[\s\S]*?timelineHasPositioned = false[\s\S]*?weekOffset = 0[\s\S]*?tableArea\.scrollLeft = 0/);
-  assert.doesNotMatch(readClient('features/readings/tracker-table.js'), /refreshTrackerTableLayout[\s\S]*?setTimeout\([\s\S]*?150/);
-  assert.match(readClient('features/readings/tracker-table.js'), /addEventListener\('scroll'[\s\S]*?timelineIsRestoringPosition\) return/);
   assert.match(router, /function runOkumalarBackgroundWork\(options = \{\}\)[\s\S]*?window\.loadUserCards[\s\S]*?window\.loadMonthlyCalendar[\s\S]*?window\.renderLongestSeries[\s\S]*?window\.loadReadingStats/);
   assert.match(router, /OKUMALAR_BACKGROUND_ASSETS[\s\S]*?statistics:[\s\S]*?management:[\s\S]*?groupUi:/);
   assert.match(router, /loadAssetGroup[\s\S]*?Promise\.allSettled\(\[[\s\S]*?loadBundleStyles/);
-  assert.match(router, /function prepareReadingPrimaryContent\(\)[\s\S]*?window\.renderReadingMessagePanels[\s\S]*?window\.initializeReadingJourney\?\.\(\{ reveal: false \}\)/);
-  assert.match(router, /function revealReadingPrimaryContent\(isAuthenticated\)[\s\S]*?revealLeagueInfoBar\(\{ animate: false \}\)[\s\S]*?messagePanels\.hidden = false[\s\S]*?revealReadingAuthControls\(isAuthenticated\)/);
-  assert.match(readClient('features/readings/tracker-table.js'), /deferPrimaryReveal[\s\S]*?weekNav\.classList\.add\('visible'\)[\s\S]*?isRestoringBeforeRouteReveal[\s\S]*?if \(deferPrimaryReveal \|\| isRestoringBeforeRouteReveal\) revealTrackerLayout\(\)/);
-  assert.match(readClient('features/readings/tracker-table.js'), /await new Promise\(resolve => \{[\s\S]*?requestAnimationFrame[\s\S]*?updateTimelineSummaries[\s\S]*?resolve\(\)/);
-  assert.match(readClient('features/readings/tracker-table.css'), /\.tracker-table-layout\s*\{[\s\S]*?transform:\s*translateY\(20px\)[\s\S]*?\.week-navigation\s*\{[\s\S]*?transform:\s*translateY\(20px\)/);
+  assert.match(router, /function revealReadingPrimaryContent\(\)[\s\S]*?messagePanels\.hidden = false/);
   assert.doesNotMatch(router, /function runOkumalarBackgroundWork\(options = \{\}\)[\s\S]*?\['okuma mesajları'/);
   assert.match(router, /Promise\.allSettled\(tasks\.map/);
-  assert.match(okumalarInit, /Promise\.all\(\[trackerReady, prepareReadingPrimaryContent\(\)\]\)[\s\S]*?revealReadingPrimaryContent\(isAuthenticated\)[\s\S]*?const readyForPrefetch = runOkumalarBackgroundWork\(\)/);
+  assert.match(okumalarInit, /await prepareReadingPrimaryContent\(\);\s*revealReadingPrimaryContent\(\);\s*const readyForPrefetch = runOkumalarBackgroundWork\(\)/);
   assert.match(router, /activeLifecycle\?\.readyForPrefetch[\s\S]*?schedulePrefetch\(route\)/);
   assert.match(okumalarInit, /monthShareModal/);
   assert.match(routeConfig, /tesbihat:\s*\{ scripts:\s*\['tesbihat\.min\.js'\], styles:\s*\['tesbihat\.min\.css'\] \}/);
@@ -1115,58 +1118,58 @@ test('Okumalar tüm grup bileşenlerini başlatır, Tesbihat yükleme animasyonu
   assert.match(readClient('shell/shell.css'), /\.tab-view-tesbihat\.visible\s*\{[^}]*transform:\s*none;[^}]*animation:\s*none;/);
   assert.match(readClient('features/tesbihat/tesbihat-base.css'), /\.tab-view-tesbihat\.visible \.tesbihat-page \.tesbihat-view:not\(\[hidden\]\)\s*\{[^}]*tesbihat-view-in 0.4s ease-out both/);
   assert.match(readClient('features/tesbihat/tesbihat-base.css'), /@keyframes tesbihat-view-in\s*\{[\s\S]*?translateY\(16px\)/);
-  assert.match(readClient('features/readings/tracker-table.js'), /schedulePostToggleUiRefresh[\s\S]*?window\.renderReadingMessagePanels/);
-  assert.match(readClient('features/readings/tracker-table.js'), /allTimeAmountsByUser[\s\S]*?seasonAmountsByUser/);
-  assert.doesNotMatch(readClient('features/readings/tracker-table.js'), /function calculateStreak\(userStats\)\s*\{\s*const allDates = Object\.keys\(userStats\)\.sort\(\)/);
-  const statisticsFragment = readPublic('fragments/okumalar.html');
-  assert.match(statisticsFragment, /En\s+Uzun\s+Okuma\s+Serisi/i);
-  assert.match(statisticsFragment, /Okuma\s+İstatistikleri/i);
-  assert.match(readClient('features/readings/analytics/monthly.js'), /window\.loadMonthlyCalendar = function/);
-  assert.doesNotMatch(readClient('features/readings/reading-journey.js'), /window\.LEAGUES/);
+  // Eski giriş noktaları korunur; hepsi tek çizimi zamanlar, bölüm gizliyken çizim ertelenir.
+  assert.match(stats, /window\.loadReadingStats = scheduleRender;[\s\S]*?window\.loadMonthlyCalendar = scheduleRender;[\s\S]*?window\.renderLongestSeries = scheduleRender;[\s\S]*?window\.refreshMonthlyCalendarForUser = scheduleRender;/);
+  assert.match(stats, /if \(!groupVisible && !ownVisible\) \{\s*state\.dirty = true;\s*return;/);
+  assert.match(stats, /openOkumalarDaySheet\?\.\(date, \{ userId: view\.userId \}\)/);
+  // Alışkanlık takvimi tek bileşendir: Sayfam'da üye sabit, Grup'ta üye de seçilir; ikisinde de alışkanlık seçilir.
+  assert.match(stats, /\$\{habitCalendarCard\(habitConfig\)\}[\s\S]*?bindHabitCalendar\(container\.querySelector\('\.ok-habit-calendar'\), habitConfig\)/);
+  assert.match(stats, /\$\{habitCalendarCard\(groupHabitConfig\)\}[\s\S]*?bindHabitCalendar\(panel\.querySelector\('\.ok-habit-calendar'\), groupHabitConfig\)/);
+  assert.match(stats, /const habitConfig = \{ view: ctx\.habit, pickUser: false, user, share: true/);
+  assert.match(stats, /const groupHabitConfig = \{[\s\S]*?pickUser: true/);
+  assert.match(stats, /data-habit-pick="user"[\s\S]*?data-habit-pick="field"/);
+  // Son 63 gün çetele deposundan, daha eski aylar /api/cetele'den ay ay alınır.
+  assert.match(stats, /const CETELE_STORE_DAYS = 63;/);
+  assert.match(stats, /\/api\/cetele\/\$\{encodeURIComponent\(groupId\)\}\?from=\$\{monthKey\}-01&to=\$\{monthEndKey\(monthKey\)\}/);
+  assert.doesNotMatch(stats, /function calendarCard|data-month-step|ok-calendar-share/);
+  assert.match(stats, /function canEditCalendar\(userId\)[\s\S]*?String\(userId\) === String\(me\.userId\) \|\| me\.userAuthority === 'admin'/);
+  assert.doesNotMatch(stats, /isCeteleGroup/);
+  // Eski tek kaynaklı yenileme: okuma değişince sıralama ve istatistik birlikte yenilenir.
+  assert.match(readClient('features/readings/okumalar-core.js'), /function refreshViews\(\)[\s\S]*?renderReadingMessagePanels[\s\S]*?renderOkumalarToday[\s\S]*?loadUserCards\?\.\(\{ animateRefresh: true \}\)[\s\S]*?loadReadingStats\?\.\(\{ animateRefresh: true \}\)/);
+  // Lig ve gün hesabının tek kaynağı reading-metrics.js'tir.
+  const readingMetrics = readClient('features/groups/reading-metrics.js');
+  assert.match(readingMetrics, /window\.RoTaKipReadingMetrics = Object\.freeze\(\{[\s\S]*?leagueFor[\s\S]*?leagueProgress[\s\S]*?badgesFor/);
   assert.doesNotMatch(router, /İçerik yükleniyor|Grup erişimi doğrulanıyor|Bölüm hazırlanıyor/);
   assert.doesNotMatch(readPublic('app-shell.html'), /<span>İçerik yükleniyor/);
-  assert.match(router, /refreshTrackerTableLayout/);
-  assert.match(readClient('features/readings/tracker-table.js'), /window\.refreshTrackerTableLayout/);
   assert.match(readPublic('fragments/okumalar.html'), /class="reading-message-panels"[^>]*hidden/);
-  assert.match(readClient('features/readings/tracker-table.css'), /\.tracker-table-shell\.is-primary-reveal-pending[\s\S]*?max-height:\s*0[\s\S]*?visibility:\s*hidden/);
   assert.doesNotMatch(readPublic('fragments/okumalar.html'), /longest-series-loading|stats-loading/);
   assert.doesNotMatch(readPublic('fragments/okumalar.html'), /Placeholder|placeholder-|tracker-table-placeholder/);
-  assert.match(readClient('features/readings/statistics-layout.css'), /\.chart-container\s*\{[\s\S]*?position:\s*relative[\s\S]*?height:\s*500px/);
-  assert.match(readClient('features/readings/statistics-layout.css'), /#longestSeriesChart\s*\{[\s\S]*?min-height:\s*370px[\s\S]*?border:\s*1px solid #dfdfdf/);
+  assert.ok(!fs.existsSync(path.join(clientDir, 'features', 'readings', 'statistics-layout.css')));
   assert.match(readClient('features/readings/reading-message-panels.js'), /container\.replaceChildren\(\)/);
-  assert.match(readClient('features/readings/analytics/monthly.js'), /shouldRevealMonthlyContent[\s\S]*?monthlyCalendarSection\.style\.display = 'block'[\s\S]*?observeReadingScrollReveal/);
-  assert.match(readClient('features/readings/analytics/stats-section.js'), /shouldRevealReadingStats[\s\S]*?statsSection\.style\.display = 'block'[\s\S]*?observeReadingScrollReveal/);
-  assert.match(readClient('features/readings/analytics/longest-series.js'), /chart\.innerHTML = ''/);
   assert.doesNotMatch(readClient('features/readings/analytics/user-cards.js'), /userCardsPlaceholder/);
   assert.doesNotMatch(readClient('features/readings/analytics/user-cards.js'), /leagueInfoPlaceholder/);
-  assert.match(router, /function revealLeagueInfoBar\(options = \{\}\)[\s\S]*?shouldAnimate[\s\S]*?options\.animate !== false[\s\S]*?reading-content-reveal/);
   const readingRevealStyles = readClient('features/readings/reading-reveal.css');
   assert.match(readingRevealStyles, /\.reading-content-reveal\s*\{[^}]*reading-content-reveal 0\.6s ease-out both/);
   assert.match(readingRevealStyles, /\.reading-scroll-reveal:not\(\.is-revealed\)\s*\{[^}]*translateY\(50px\)/);
-  assert.match(readingRevealStyles, /\.user-cards-title\.reading-scroll-reveal:not\(\.is-revealed\)[\s\S]*?\.leaderboard-sort-bar\.reading-scroll-reveal:not\(\.is-revealed\),[\s\S]*?\{[^}]*translateY\(20px\)/);
-  assert.match(readingRevealStyles, /\.weekly-statistics-section\.reading-scroll-reveal:not\(\.is-revealed\)[\s\S]*?\{[^}]*translateY\(20px\)/);
-  assert.match(readingRevealStyles, /\.weekly-statistics-section\.reading-scroll-reveal\.is-revealed,[\s\S]*?\{[^}]*animation-name:\s*reading-viewport-reveal-compact/);
+  assert.doesNotMatch(readingRevealStyles, /user-cards-title|leaderboard-sort-bar|user-stats-info-area|league-info-bar/);
   assert.match(readingRevealStyles, /@keyframes reading-content-reveal\s*\{[\s\S]*?from\s*\{[^}]*translateY\(20px\)/);
   assert.match(readClient('features/readings/reading-reveal.css'), /\.reading-scroll-reveal\.is-revealed\s*\{[^}]*reading-viewport-reveal 0\.6s ease-out both/s);
   assert.doesNotMatch(readClient('features/readings/reading-reveal.css'), /0\.7s/);
   assert.match(messagePanelStyles, /\.reading-message-panel-pending\s*\{[^}]*translateY\(20px\)/);
-  assert.doesNotMatch(readClient('features/readings/reading-journey.css'), /\.authenticated-user-areas\s*\{[^}]*translateY/);
   assert.match(readingRevealStyles, /\.tab-view-okumalar\s*\{[^}]*--reading-auth-toggle-duration:\s*0\.8s/);
   const readingRevealManager = readClient('features/readings/reading-reveal.js');
   assert.match(readingRevealManager, /MAX_REVEAL_VISIBLE_PIXELS = 120[\s\S]*?getVisibleViewportBottom[\s\S]*?querySelector\('\.app-navigation'\)[\s\S]*?navigationRect\.top > 0[\s\S]*?navigationRect\.bottom >= viewportHeight - 1[\s\S]*?viewportBottom = getVisibleViewportBottom\(viewportHeight\)[\s\S]*?requiredHeight = Math\.min\([\s\S]*?\* 0\.1, MAX_REVEAL_VISIBLE_PIXELS\)/);
   assert.match(readingRevealManager, /!entry\.isIntersecting[\s\S]*?resetReveal\(entry\.target\)[\s\S]*?threshold:\s*0[\s\S]*?rootMargin:\s*'0px'[\s\S]*?observeReadingScrollReveal[\s\S]*?replayReadingContentReveal/);
-  assert.match(readClient('features/readings/analytics/longest-series.js'), /shouldRevealLongestSeries[\s\S]*?longestSeriesSection\.style\.display = 'block'[\s\S]*?observeReadingScrollReveal/);
-  assert.match(readClient('features/readings/analytics/user-cards.js'), /container\.appendChild\(card\)[\s\S]*?observeReadingScrollReveal\?\.\(card\)/);
-  assert.match(readClient('features/readings/analytics/user-cards.js'), /observeReadingScrollReveal\?\.\(sortBar\)[\s\S]*?querySelector\('\.user-cards-title'\)[\s\S]*?observeReadingScrollReveal\?\.\(userCardsTitle\)/);
-  assert.match(readClient('features/readings/tracker-table.js'), /loadUserCards\(\{ animateRefresh: true \}\)[\s\S]*?loadReadingStats\(\{ animateRefresh: true \}\)[\s\S]*?renderLongestSeries\(\{ animateRefresh: true \}\)/);
-  assert.doesNotMatch(readClient('features/readings/tracker-table.js'), /replayReadingContentReveal\?\.\(document\.querySelector\('\.tracker-table-shell'\)\)/);
-  assert.match(readClient('features/readings/group-management.js'), /querySelectorAll\('\.group-settings, \.automation-section, \.user-onboarding-column, \.user-management-column'\)[\s\S]*?observeReadingScrollReveal/);
+  const ranking = readClient('features/readings/analytics/user-cards.js');
+  assert.match(ranking, /window\.loadUserCards = scheduleRender;/);
+  assert.match(ranking, /const LEGACY_MODES = \{ league: 'total'[\s\S]*?month: 'month'/);
+  assert.doesNotMatch(ranking, /watchMyRow|okumalarRankingMe/);
+  assert.match(readClient('features/readings/group-management.js'), /syncGroupManagementVisibility[\s\S]*?renderUserList\(\);\s*loadGroupSettings\(\);\s*window\.renderOkumalarManage\?\.\(\);/);
   assert.match(readClient('features/readings/group-management.js'), /if \(!document\.body\.classList\.contains\('app-shell-body'\)\)/);
   assert.match(readClient('features/groups/group-bootstrap.js'), /if \(!Object\.hasOwn\(window, 'initialAllData'\)\) window\.initialAllData = null;/);
   assert.doesNotMatch(readClient('features/groups/group-bootstrap.js'), /this\._rebuildIndexes\(\);\s*await this\._buildLongestStreaks\(\)/);
   assert.match(readClient('features/groups/group-bootstrap.js'), /ensureLongestStreaks\(\)[\s\S]*?longestStreaksPromise/);
-  assert.doesNotMatch(readClient('features/readings/analytics/longest-series.js'), /waitForRoutePlaceholder|longest-series-loading/);
-  assert.doesNotMatch(readClient('features/readings/analytics/stats-section.js'), /waitForRoutePlaceholder|stats-loading/);
+  assert.doesNotMatch(stats, /waitForRoutePlaceholder/);
   assert.doesNotMatch(readClient('features/videos/videos-feed.js'), /waitForRoutePlaceholder/);
   assert.match(readClient('features/articles/articles.js'), /await this\.waitForImages\(entry\.articles\)/);
   assert.doesNotMatch(readClient('features/articles/articles.js'), /waitForRoutePlaceholder/);
@@ -1233,38 +1236,63 @@ test('gizli grup okuma verilerini yüklemeden mevcut giriş panelini açar', () 
   assert.match(router, /if \(!groupContext\.canRead\)[\s\S]*?return;[\s\S]*?loadGroupData\(groupContext\)/);
 });
 
-test('Okumalardaki avatar pencereleri gizli ve kartlar iki sütunludur', () => {
+test('Okumalardaki avatar pencereleri gizli ve üye özeti iki sütunludur', () => {
   const commonStyles = readClient('features/groups/admin-modal.css');
   const cardStyles = readClient('features/readings/analytics/user-cards.css');
   assert.match(commonStyles, /\.ready-images-modal:not\(\.show\)\s*\{[^}]*display:\s*none\s*!important/s);
-  assert.match(cardStyles, /\.user-card\s*\{[^}]*width:\s*min\(430px,\s*calc\(\(100% - 30px\) \/ 2\)\)/s);
-  assert.match(cardStyles, /@media screen and \(max-width:\s*1023px\)[\s\S]*?\.user-card\s*\{[^}]*width:\s*min\(400px,\s*100%\)/s);
+  assert.doesNotMatch(cardStyles, /\.user-card\b/);
+  assert.match(cardStyles, /\.ok-member-facts\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
 });
 
-test('Okuma yolculuğu Okumalar sekmesinde oturuma bağlıdır', () => {
-  const commonStyles = readClient('features/groups/admin-modal.css');
-  const journeyStyles = readClient('features/readings/reading-journey.css');
-  const trackerStyles = readClient('features/readings/tracker-table.css');
-  const tracker = readClient('features/readings/tracker-table.js');
-  const journey = readClient('features/readings/reading-journey.js');
-  const editMode = readClient('features/readings/reading-edit-mode.js');
-  const router = readPublic('app/shell-router.js');
-  assert.doesNotMatch(commonStyles, /\.authenticated-user-areas\s*\{/);
-  assert.match(journeyStyles, /\.authenticated-user-areas\s*\{[^}]*visibility:\s*hidden/s);
-  assert.match(journeyStyles, /\.authenticated-user-areas\.is-initial-reveal-pending,[\s\S]*?grid-template-rows:\s*1fr;[^}]*opacity:\s*0;[^}]*transition:\s*none/s);
-  assert.match(journeyStyles, /\.authenticated-user-areas\s*\{[^}]*grid-template-rows:\s*0fr;[^}]*clip-path:\s*inset\(0 0 100% 0\);[^}]*grid-template-rows var\(--reading-auth-toggle-duration, 0\.8s\)[\s\S]*?\.authenticated-user-areas\.show\s*\{[^}]*grid-template-rows:\s*1fr;[^}]*clip-path:\s*inset\(0\)/s);
-  assert.doesNotMatch(trackerStyles, /\.authenticated-user-areas\s*\{/);
-  assert.match(journey, /window\.syncAuthenticatedUserAreas/);
-  assert.doesNotMatch(editMode, /window\.showAuthenticatedUserAreas\s*=/);
-  assert.match(tracker, /class="user-stats-progress-current"/);
-  assert.doesNotMatch(tracker, /currentProgressObserver|MutationObserver\(emphasizeCurrentProgress\)/);
-  assert.match(journey, /initializeReadingJourney\(options = \{\}\)[\s\S]*?options\.reveal !== false/);
-  assert.match(journeyStyles, /\.authenticated-user-areas\s*\{[^}]*grid-template-rows:\s*0fr[\s\S]*?\.authenticated-user-areas\.show\s*\{[^}]*grid-template-rows:\s*1fr/s);
-  assert.doesNotMatch(journey, /isVisible && areas\.classList\.contains\('is-initial-reveal-pending'\)/);
-  assert.match(router, /function revealReadingAuthControls\(isAuthenticated\)[\s\S]*?stagedElements[\s\S]*?getBoundingClientRect\(\)[\s\S]*?classList\.remove\('is-initial-reveal-pending'\)/);
-  assert.match(router, /function stageReadingPrimaryContent\(isAuthenticated\)[\s\S]*?authenticatedUserAreas[\s\S]*?readingEditModeBar[\s\S]*?classList\.toggle\('is-initial-reveal-pending', isAuthenticated\)/);
-  assert.match(router, /stageReadingPrimaryContent\(isAuthenticated\)/);
-  assert.match(router, /syncAuthenticatedUserAreas\(isAuthenticated, \{ immediate: true \}\)/);
+test('Bugün bölümü oturuma bağlıdır; okuma alanı tek dokunuşla girilir ve çetele deposundan yazılır', () => {
+  const today = readClient('features/readings/okumalar-today.js');
+  const store = readClient('features/readings/cetele-store.js');
+  const sections = readClient('features/readings/okumalar-tab.js');
+  const bootstrap = readClient('features/groups/group-bootstrap.js');
+  const dailyGift = readClient('features/daily-gift/daily-gift.js');
+  const core = readClient('features/readings/okumalar-core.js');
+
+  // Misafir için ayrı giriş kartı yoktur (giriş düğmesi kapaktadır); Sayfam'da grup bugünü kartı da yoktur.
+  assert.doesNotMatch(today, /is-guest|ok-checkin|data-action="login"/);
+  assert.match(today, /if \(entry\) entry\.hidden = !user;\s*if \(mine\) mine\.hidden = !user;/);
+  assert.doesNotMatch(today, /renderGroupToday|okumalarGroupToday/);
+  assert.match(today, /window\.openOkumalarMemberEntry = /);
+  // Okuma alanı diğer günlük alanlarla aynı hap düğmelerle (5, 10, 20… ve Okumadım) tek kartta yazılır; ayrı sayı girişi yoktur.
+  assert.match(today, /fields\.map\(\(field, index\)[\s\S]*?numberFieldMarkup\(form, field, values\[field\.key\]\)/);
+  assert.match(today, /ct-chip-unread[\s\S]*?data-value="0"/);
+  assert.doesNotMatch(today, /data-main-input|data-step=|data-quick=|ok-main/);
+  // Değişiklikler taslakta tutulur; "Kaydet" hepsini tek seferde yazar, "Temizle" tüm alanları boşaltır.
+  assert.match(today, /function setNumberField\(form, field, value\) \{\s*if \(!canWrite\(form\.date\)\) return;\s*setDraft\(form, field, value\);/);
+  assert.match(today, /function saveForm\(form\)[\s\S]*?missingRequired\(displayValues\(form, date\)\)[\s\S]*?cetele\(\)\.setValues\(form\.userId, date, changes\)[\s\S]*?celebrate\(form, before, date\)/);
+  assert.match(today, /function clearForm\(form\)[\s\S]*?setDraft\(form, field, null\)/);
+  assert.match(today, /data-action="clear"[\s\S]*?data-action="save"/);
+  assert.doesNotMatch(today, /cetele\(\)\.setValue\(/);
+  // Yeşil/kırmızı zemin yalnız kaydedilmiş okuma durumundan gelir (taslak anında boyamaz).
+  assert.match(today, /area\.classList\.toggle\('is-read', reading\?\.status === 'okudum'\)/);
+  // Yazma yetkisi ve tarih politikası ortak kuraldan gelir; yalnız düzenlenebilen günler seçilebilir.
+  assert.match(today, /function canWrite\(date\)[\s\S]*?checkSessionTimeout[\s\S]*?showReadingEditRestrictionInfo\?\.\('future'\)[\s\S]*?isEditable\(date\)/);
+  assert.match(today, /function editableDays\(\)[\s\S]*?if \(isEditable\(date\)\) days\.push\(date\)/);
+  // Yönetici bir üyeye dokunup onun gününü alttan açılan panelde doldurur.
+  assert.match(today, /function openMemberEntry\(userId, date\)[\s\S]*?RoTaKipBottomSheet\.open/);
+  assert.match(readClient('features/readings/analytics/user-cards.js'), /isAdmin\(\) && window\.openOkumalarMemberEntry[\s\S]*?data-action="entry"/);
+  // Okuma alanının değeri globalDataStore'a hemen yansır; lig, seri ve sıralama oradan hesaplanır.
+  assert.match(store, /function applyValue\(userId, date, fieldKey, value\)[\s\S]*?fieldKey === readField\(\)\.key[\s\S]*?applyReadingLocally\(userId, date, readingForValue/);
+  assert.match(store, /function setValues\(userId, date, changes\)[\s\S]*?applyValue[\s\S]*?return flush\(String\(userId\), date\)/);
+  assert.match(store, /function applyReadingLocally[\s\S]*?store\.applyLocalUpdate[\s\S]*?schedulePostToggleUiRefresh/);
+  assert.match(store, /\/api\/cetele\/\$\{encodeURIComponent\(state\.groupId\)\}\/entry/);
+  assert.match(core, /window\.schedulePostToggleUiRefresh = function[\s\S]*?refreshViews\(\)/);
+  // Kutlama: lig atlama, seri eşiği ya da günün ilk okuması.
+  assert.match(today, /nextLeague\.name !== previousLeague\.name[\s\S]*?MILESTONES\.includes\(after\.streak\)[\s\S]*?autoClose: 2400/);
+  // Yönetim bölümü yalnız yöneticiye açılır; oturum değişince sekmeler yenilenir.
+  assert.match(sections, /if \(requested === 'yonetim' && !isAdmin\(\)\) return DEFAULT_SECTION;/);
+  assert.match(sections, /adminTab\.hidden = !isAdmin\(\)/);
+  assert.match(sections, /addEventListener\('rotakip:auth-changed'/);
+  assert.match(sections, /const LEGACY_SECTIONS = \{ tablo: 'grup', istatistik: 'grup', siralama: 'grup' \};/);
+  assert.match(bootstrap, /static loginUser[\s\S]*?dispatchEvent\(new Event\('rotakip:auth-changed'\)\)[\s\S]*?static logoutUser[\s\S]*?dispatchEvent\(new Event\('rotakip:auth-changed'\)\)/);
+  assert.match(sections, /history\[options\.replace \? 'replaceState' : 'pushState'\]\(\{ rotakipOkumalarSection: target \}/);
+  // Günün görevleri cihazda gün bazında tutulur; hediye alttan açılan panelde gösterilir.
+  assert.match(dailyGift, /window\.RoTaKipDailyTasks = Object\.freeze\(\{[\s\S]*?localStorage\.setItem\(DAILY_TASKS_KEY, JSON\.stringify\(\{ \[today\]: todayTasks \}\)\)/);
+  assert.match(dailyGift, /window\.openDailyGift = async function[\s\S]*?RoTaKipBottomSheet\.open/);
 });
 
 test('route çözücü kanonik grup ve global adresleri ayırır', async () => {
@@ -1324,38 +1352,26 @@ test('tüm bağımsız sayfalar güvenli alan destekli mobil viewport tanımlar'
   });
 });
 
-test('yalnız grup detay rotaları geçici eski viewport düzenini kullanır', () => {
+test('grup sayfası cihaz genişliğinde açılır, Bugün kartları telefonda tek sütuna geçer', () => {
   const shell = readPublic('app-shell.html');
   const router = readPublic('app/shell-router.js');
-  const legacyNavigation = readClient('shell/group-legacy-viewport.css');
   const buildAssets = fs.readFileSync(path.join(projectRoot, 'scripts', 'build-assets.js'), 'utf8');
+  const todayStyles = readClient('features/readings/okumalar-today.css');
+  const hero = readClient('features/groups/admin-modal.css');
 
-  assert.match(shell, /const responsiveViewport = 'width=device-width, initial-scale=1, viewport-fit=cover'/);
-  assert.match(shell, /const legacyGroupViewport = 'width=980'/);
-  assert.match(shell, /const usesLegacyGroupLayout = normalizedPath\.startsWith\('\/grup\/'\)/);
-  assert.doesNotMatch(shell, /normalizedPath === '\/gruplar'/);
-  assert.match(shell, /const legacyViewportWidth = 980[\s\S]*?const legacyScale = Math\.min\(1, Math\.max\(0\.25, renderedViewportWidth \/ legacyViewportWidth\)\)/);
-  assert.match(shell, /rootStyle\.setProperty\('--group-legacy-nav-height', scaledPixels\(59\)\)/);
-  assert.match(shell, /rootStyle\.setProperty\('--group-legacy-item-height', scaledPixels\(58\)\)/);
-  assert.match(shell, /rootStyle\.setProperty\('--group-legacy-font-size', scaledPixels\(11\)\)/);
-  assert.match(shell, /rootStyle\.setProperty\('--group-legacy-loader-star-size', scaledPixels\(30\)\)/);
-  assert.match(shell, /rootStyle\.setProperty\('--group-legacy-loader-line-width', scaledPixels\(27\)\)/);
-  assert.match(shell, /rootStyle\.setProperty\('--group-legacy-loader-text-size', scaledPixels\(16\)\)/);
-  assert.match(shell, /document\.documentElement\.classList\.toggle\('group-legacy-viewport', usesLegacyGroupLayout\)/);
-  assert.doesNotMatch(shell, /group-legacy-viewport\.min\.css/);
-  assert.match(shell, /window\.syncRoTaKipViewport = syncViewport;\s*syncViewport\(path\)/);
-  assert.match(router, /window\.syncRoTaKipViewport\?\.\(url\.pathname\)/);
-  assert.match(buildAssets, /shell:\s*\{[\s\S]*?'shell\/shell\.css',[\s\S]*?'shell\/group-legacy-viewport\.css'[\s\S]*?html: \['app-shell\.html'\]/);
-  assert.match(legacyNavigation, /@media \(max-width:\s*1023px\)/);
-  assert.match(legacyNavigation, /html\.group-legacy-viewport body\.app-shell-body\s*\{[^}]*--group-legacy-body-padding/);
-  assert.match(legacyNavigation, /html\.group-legacy-viewport \.app-navigation\s*\{[^}]*--group-legacy-nav-height/);
-  assert.match(legacyNavigation, /html\.group-legacy-viewport \.app-navigation-item\s*\{[^}]*--group-legacy-item-height[^}]*--group-legacy-font-size/s);
-  assert.match(legacyNavigation, /html\.group-legacy-viewport \.app-navigation-icon\s*\{[^}]*--group-legacy-icon-size/);
-  assert.doesNotMatch(legacyNavigation, /grid-template-columns/);
-  assert.match(legacyNavigation, /html\.group-legacy-viewport \.route-loader-star\s*\{[^}]*--group-legacy-loader-star-size[^}]*--group-legacy-loader-shadow-blur/s);
-  assert.match(legacyNavigation, /html\.group-legacy-viewport \.route-loader-line\s*\{[^}]*--group-legacy-loader-line-width[^}]*--group-legacy-loader-line-height[^}]*group-legacy-route-loader-line-bounce/s);
-  assert.match(legacyNavigation, /@keyframes group-legacy-route-loader-line-bounce[\s\S]*?--group-legacy-loader-bounce/);
-  assert.doesNotMatch(legacyNavigation, /^(?:body|\.app-navigation)/m);
+  assert.match(shell, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/);
+  assert.doesNotMatch(shell, /width=980|legacyGroupViewport|group-legacy-viewport|syncRoTaKipViewport/);
+  assert.doesNotMatch(router, /syncRoTaKipViewport/);
+  assert.doesNotMatch(buildAssets, /group-legacy-viewport/);
+  assert.ok(!fs.existsSync(path.join(clientDir, 'shell', 'group-legacy-viewport.css')));
+  assert.match(todayStyles, /@media \(max-width: 768px\)[\s\S]*?\.ok-today\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)[\s\S]*?\.ok-today \.ok-entry \{ order: 1; \}/);
+  // Grup kapağı: üst çubuk (geri, bilgi, ⋮) resmin üzerindedir ve profil düğmesi içermez;
+  // sağ alttaki eylem yöneticide Davet et, misafirde Giriş Yap'tır.
+  assert.match(hero, /\.okumalar-hero\s*\{[^}]*min-height:\s*232px/);
+  assert.match(hero, /\.okumalar-hero-cover\.has-image\s*\{[^}]*opacity/);
+  const heroFragment = readPublic('fragments/group-header.html');
+  assert.match(heroFragment, /<header class="okumalar-hero"[\s\S]*?class="okumalar-hero-bar"[\s\S]*?class="showGroups[\s\S]*?id="okumalarAnnouncementsButton"[^>]*hidden[\s\S]*?id="okumalarInfoButton"[\s\S]*?id="okumalarMoreButton"[\s\S]*?id="okumalarInviteButton"[^>]*hidden[\s\S]*?id="profileButton"/);
+  assert.doesNotMatch(heroFragment.match(/class="okumalar-hero-bar"[\s\S]*?<\/div>/)[0], /profileButton/);
 });
 
 test('yönetim sayfaları bağımsız paketlenir ve shell tarafından ön yüklenmez', () => {
@@ -1381,33 +1397,26 @@ test('yönetim sayfaları bağımsız paketlenir ve shell tarafından ön yükle
   assert.doesNotMatch(router, /access-logs|login-logs|site-activity-admin|admin\.html/);
 });
 
-test('grup yönetimi kutuları dar ekranda sarılır ve tek sütuna iner', () => {
-  const css = fs.readFileSync(
-    path.join(projectRoot, 'src', 'client', 'features', 'readings', 'group-management.css'),
-    'utf8'
-  );
-
-  assert.match(css, /\.top-section\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
-  assert.match(css, /\.top-section\s*\{[\s\S]*?justify-content:\s*space-between;[\s\S]*?gap:\s*24px;/);
-  assert.match(css, /\.bottom-section\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
-  assert.match(css, /\.group-top-section\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
-  assert.match(css, /\.group-left-sub-column,[\s\S]*?\.group-right-sub-column\s*\{[\s\S]*?flex:\s*1 1 415px;[\s\S]*?width:\s*415px;/);
-  assert.match(css, /\.automation-settings-column,[\s\S]*?\.automation-actions-column\s*\{[\s\S]*?flex:\s*1 1 415px;[\s\S]*?width:\s*415px;/);
-  assert.match(css, /\.group-actions\s*\{[\s\S]*?width:\s*415px;[\s\S]*?max-width:\s*100%;/);
-  assert.match(css, /\.group-settings\s*\{[\s\S]*?box-sizing:\s*content-box;[\s\S]*?width:\s*415px;[\s\S]*?max-width:\s*calc\(100% - 50px\);/);
-  assert.match(css, /\.automation-settings\s*\{[\s\S]*?width:\s*415px;[\s\S]*?max-width:\s*calc\(100% - 50px\);[\s\S]*?box-sizing:\s*content-box;/);
-  assert.match(css, /\.group-settings\s*\{[\s\S]*?margin:\s*0;/);
-  assert.match(css, /\.automation-section\s*\{[\s\S]*?flex:\s*0 1 auto;[\s\S]*?max-width:\s*100%;/);
-  assert.match(css, /\.automation-settings\s*\{[\s\S]*?margin:\s*0;/);
-  assert.match(css, /@media \(max-width: 768px\)[\s\S]*?\.automation-settings-column,[\s\S]*?\.automation-actions-column[\s\S]*?width:\s*100%;/);
-  assert.match(css, /@media \(max-width: 768px\)[\s\S]*?\.group-settings,[\s\S]*?\.automation-settings\s*\{[\s\S]*?max-width:\s*calc\(100% - 34px\);/);
+test('grup yönetimi satır listesi ve alttan açılan panellerle çalışır', () => {
+  const css = readClient('features/readings/group-management.css');
   const okumalar = readPublic('fragments/okumalar.html');
-  assert.match(okumalar, /<div class="top-section">[\s\S]*?<div class="group-settings scroll-fade-in">[\s\S]*?<div class="automation-section scroll-fade-in">[\s\S]*?<!-- Alt Bölüm:/);
-  assert.doesNotMatch(okumalar, /<section class="automation-section/);
-  assert.match(okumalar, /class="bottom-section scroll-fade-in"[\s\S]*?class="user-onboarding-column"[\s\S]*?class="user-management-column"/);
-  assert.doesNotMatch(okumalar, /class="(?:left|right)-column"/);
-  assert.match(css, /@media \(max-width: 768px\)[\s\S]*?\.user-management-column,[\s\S]*?\.user-onboarding-column,[\s\S]*?width:\s*100%;/);
+  const manage = readClient('features/readings/okumalar-manage.js');
+  const buildAssets = fs.readFileSync(path.join(projectRoot, 'scripts', 'build-assets.js'), 'utf8');
+
+  // Satırlar paneli açar; formlar group-management.js'in bildiği kimliklerle gizli kapsayıcıda durur.
+  const panels = Array.from(okumalar.matchAll(/data-manage-panel="([a-z]+)"/g), match => match[1]);
+  assert.deepEqual(panels, ['info', 'rules', 'add', 'invite', 'requests', 'logs']);
+  panels.forEach(name => assert.match(okumalar, new RegExp('data-manage-body="' + name + '"')));
+  assert.match(okumalar, /class="ok-manage-panels" hidden>[\s\S]*?id="groupName"[\s\S]*?id="readingEditPolicySelect"[\s\S]*?id="newUserForm"[\s\S]*?id="userSelectForInvite"[\s\S]*?id="joinRequestsList"/);
+  assert.match(okumalar, /class="ok-card ok-manage-members"[\s\S]*?id="userList"[\s\S]*?<details class="managed-user-section passive-user-section">[\s\S]*?id="passiveUserList"/);
+  assert.doesNotMatch(okumalar, /class="top-section"|class="bottom-section|scroll-fade-in/);
+  assert.match(manage, /RoTaKipBottomSheet\.open\(\{[\s\S]*?content: body,[\s\S]*?onClose:[\s\S]*?body\.parentElement === sheet\.body\) holder\(\)\?\.appendChild\(body\)/);
+  assert.doesNotMatch(okumalar, /groupAmountTypeSelect|Okuma birimi/);
+  assert.doesNotMatch(manage, /isCetele|groupAmountTypeSelect|tracking-mode-changed/);
+  assert.match(buildAssets, /js: \['features\/readings\/group-management\.js', 'features\/readings\/hero-theme-settings\.js', 'features\/readings\/okumalar-manage\.js'\]/);
   assert.match(css, /\.main-area\s*\{[\s\S]*?max-width:\s*100%;[\s\S]*?overflow-x:\s*clip;/);
+  assert.match(css, /#overlayRoot \.ready-images-modal,\s*#overlayRoot #addUserAvatarModal\s*\{[^}]*z-index:\s*10060/);
+  assert.match(css, /@media \(max-width: 640px\)[\s\S]*?\.managed-user-card-column\s*\{[^}]*display:\s*contents/);
 });
 
 test('gizli grupta oturumsuz istemci okuma verisini istemez', async () => {
@@ -1440,4 +1449,65 @@ test('gizli grupta oturumsuz istemci okuma verisini istemez', async () => {
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test('her grup tek günlük çetele kullanır: ilk alan okuma (lig) alanıdır, yönetici yeni alan ekler', () => {
+  const fragment = readPublic('fragments/okumalar.html');
+  const buildAssets = fs.readFileSync(path.join(projectRoot, 'scripts', 'build-assets.js'), 'utf8');
+  const sections = readClient('features/readings/okumalar-tab.js');
+  const store = readClient('features/readings/cetele-store.js');
+  const settings = readClient('features/readings/cetele-settings.js');
+  const stats = readClient('features/readings/analytics/okumalar-stats.js');
+  const bootstrap = readClient('features/groups/group-bootstrap.js');
+  const readingRoutes = fs.readFileSync(path.join(projectRoot, 'src', 'server', 'modules', 'readings', 'reading.routes.js'), 'utf8');
+  const allClient = ['features/readings/okumalar-today.js', 'features/readings/okumalar-tab.js', 'features/readings/cetele-store.js',
+    'features/readings/cetele-settings.js', 'features/readings/okumalar-manage.js', 'features/groups/group-bootstrap.js',
+    'features/readings/analytics/okumalar-stats.js'].map(readClient).join('\n');
+
+  // Takip türü ayrımı yoktur.
+  assert.doesNotMatch(allClient, /trackingMode|isCeteleGroup|setCurrentGroupTracking|tracking-mode-changed|update-group-tracking/);
+  assert.doesNotMatch(bootstrap, /isCeteleGroup/);
+  assert.doesNotMatch(readingRoutes, /trackingMode|CETELE_MODE/);
+  ['cetele-card.js', 'cetele-summary.js', 'cetele-insights.js']
+    .forEach(fileName => assert.equal(fs.existsSync(path.join(clientDir, 'features', 'readings', fileName)), false, fileName));
+
+  // Yönetim'de günlük alanlar kartı; paketler.
+  assert.match(fragment, /data-okumalar-bolum="yonetim"[^>]*>\s*<div class="ok-card ct-settings" id="okumalarTrackingSettings" hidden>/);
+  assert.match(buildAssets, /'features\/readings\/okumalar-today\.css',\s*'features\/readings\/cetele\.css'/);
+  assert.match(buildAssets, /'features\/readings\/cetele-store\.js',\s*'features\/readings\/cetele-settings\.js',\s*'features\/readings\/okumalar-celebration\.js'/);
+  assert.match(sections, /section === 'grup'\) \{\s*window\.renderOkumalarRanking\?\.\(\);[\s\S]*?if \(!isGuest\(\)\) \{\s*window\.renderOkumalarStats\?\.\(\);[\s\S]*?section === 'yonetim'\) \{\s*window\.renderOkumalarTrackingSettings\?\.\(\);\s*window\.renderOkumalarManage/);
+  assert.match(sections, /addEventListener\('rotakip:cetele-config-changed'/);
+
+  // İlk açık alan okuma alanıdır; yoksa başa "Kitap okuma" gelir (sunucuyla aynı kural).
+  assert.match(store, /function derivedConfig\(\)[\s\S]*?if \(!isReadFieldCandidate\(fields\.find\(field => !field\.archived\)\)\) fields\.unshift\(defaultReadField\(\)\)/);
+  assert.match(store, /label: 'Kitap okuma'/);
+  assert.match(store, /function readField\(\) \{\s*return activeFields\(\)\[0\];/);
+  // Okuma değeri okuma kayıtlarından okunur; eski okuma grubu geçmişi aynen görünür.
+  assert.match(store, /function readValueOf\(userId, date\)[\s\S]*?reading\.status === 'okumadım' \? 0 : reading\.amount/);
+  // Otomatik kayıt: kısa bir beklemeyle günün değerleri PUT edilir; okuma alanı yalnız değiştiyse gönderilir.
+  assert.match(store, /const SAVE_DELAY_MS = 700;/);
+  assert.match(store, /if \(hasRead\) values\[field\.key\] = state\.pendingReads\.get\(key\);[\s\S]*?method: 'PUT'[\s\S]*?JSON\.stringify\(\{ userId, date, values \}\)/);
+  assert.match(store, /READING_EDIT_DATE_RESTRICTED[\s\S]*?applyReadingLocally\(userId, date, state\.readSnapshots\.get\(key\)\)/);
+
+  // Ayarlar: ilk alan kapatılamaz/taşınamaz, birimi sayfa ya da dakikadır; hazır alanlar (Kur'an, Cevşen…) eklenir.
+  assert.match(settings, /PUT[\s\S]*?\/api\/cetele\/\$\{encodeURIComponent\(window\.groupid\)\}\/config[\s\S]*?JSON\.stringify\(\{ fields: draft\.fields \}\)/);
+  assert.doesNotMatch(settings, /visibility|ceteleVisibility/);
+  assert.match(settings, /const READ_UNITS = \[\['sayfa', 'sayfa'\], \['dakika', 'dakika'\]\];/);
+  assert.match(settings, /key: 'kuran'[\s\S]*?key: 'cevsen'[\s\S]*?key: 'namaz'/);
+  // Satırda düzenle ikonu vardır; alışkanlık silme ayrıntı panelindedir (okuma alışkanlığı silinemez).
+  assert.match(settings, /ct-settings-field-edit[\s\S]*?fa-pen/);
+  assert.doesNotMatch(settings, /data-remove=/);
+  assert.match(settings, /\$\{isNew \|\| isRead \? '' : \x60[\s\S]*?data-action="delete-field"[\s\S]*?Alışkanlığı sil/);
+  assert.match(settings, /deleteButton\?\.addEventListener\('click'[\s\S]*?commit\(\(\) => \{ field\.archived = true; \}, \{ inline: true \}\);[\s\S]*?sheet\.close\(\);/);
+  // Her değişiklik hemen kaydedilir; ayrı "Değişiklikleri kaydet / Vazgeç" adımı yoktur.
+  assert.match(settings, /function commit\(mutate, options = \{\}\)[\s\S]*?saveChain\.then\(\(\) => persist\(options\)\)/);
+  assert.doesNotMatch(settings, /Değişiklikleri kaydet|data-action="reset"|isDirty/);
+  assert.match(readClient('features/readings/okumalar-today.js'), /<div class="ok-entry-greeting">\s*<button type="button" class="ok-entry-avatar" data-action="open-profile"[\s\S]*?<p class="ok-entry-greeting-text"><strong>\$\{esc\(name\)\}<\/strong><button type="button" class="ok-entry-edit" data-action="open-profile"/);
+  assert.match(readClient('features/readings/okumalar-today.js'), /class="ok-entry-streak" data-slot="streak">\$\{streakBadgeMarkup\(form\)\}/);
+  assert.match(settings, /if \(index <= 0 \|\| target <= 0/);
+  assert.match(settings, /setCurrentAmountType\?\.\(data\.group && data\.group\.amountType\)/);
+
+  // Grup istatistiğinde diğer alanların aylık toplamları, ayrıntıyı görme yetkisi varsa gösterilir.
+  assert.match(stats, /function fieldTotalsCard\(list, options = \{\}\)[\s\S]*?!cetele\.loaded\) return ''/);
+  assert.doesNotMatch(stats, /canViewAll/);
 });

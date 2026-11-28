@@ -16,10 +16,29 @@ function registerReadingRoutes(app, dependencies) {
     normalizeReadingEditPolicy,
     requireGroupAdmin,
     requireReadableGroup,
+    readingSummaryService,
     requireSelfOrAdmin,
     safeUser,
+    saveSession,
     syncErpReadingsOnDemand
   } = dependencies;
+
+  // Okumalarım ana sayfası: oturumdaki grupların bugünkü durumu, son 7 günü ve serisi.
+  app.get('/api/my-groups/summary', async (req, res) => {
+    try {
+      const memberships = req.session.memberships || {};
+      const { groups, staleGroupIds, today } = await readingSummaryService.summarizeMemberships(memberships);
+      if (staleGroupIds.length) {
+        staleGroupIds.forEach(groupId => { delete req.session.memberships[groupId]; });
+        await saveSession(req);
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ today: today || null, groups });
+    } catch (error) {
+      console.error('Okumalarım özeti alınamadı:', error);
+      res.status(500).json({ error: 'Okumalarım özeti alınamadı' });
+    }
+  });
 
   // 3.3. OKUMA İSTATİSTİKLERİ
   // ============================================================================
@@ -75,16 +94,20 @@ function registerReadingRoutes(app, dependencies) {
       // Dinamik koleksiyonları al
       const { users, readingStatuses } = getGroupCollections(groupId);
 
-      const usersData = await users.find(activeUserQuery())
-        .select('_id name profileImage authority visibility loginStreak lastLoginDate lastCongratulatedLeague')
-        .sort({ name: 1 })
-        .lean();
-      const activeUserIds = usersData.map(user => String(user._id));
-      const statsData = activeUserIds.length > 0
-        ? await readingStatuses.find({ userId: { $in: activeUserIds } })
+      // Üyeler ve okuma kayıtları aynı anda okunur (iki sıralı veritabanı gidiş-dönüşü yerine bir);
+      // pasif üyelerin kayıtları bellekte ayıklanır. Büyük ilk paket, ek getMore turlarını önler.
+      const [usersData, allStats] = await Promise.all([
+        users.find(activeUserQuery())
+          .select('_id name profileImage authority visibility loginStreak lastLoginDate lastCongratulatedLeague')
+          .sort({ name: 1 })
+          .lean(),
+        readingStatuses.find({})
           .select('userId date status amount -_id')
+          .batchSize(50000)
           .lean()
-        : [];
+      ]);
+      const activeUserIds = new Set(usersData.map(user => String(user._id)));
+      const statsData = allStats.filter(stat => activeUserIds.has(String(stat.userId)));
 
       res.json({
         users: usersData.map(user => safeUser(user)),
@@ -346,6 +369,7 @@ function registerReadingRoutes(app, dependencies) {
       const { readingStatuses } = getGroupCollections(groupId);
 
       if (status) {
+        const updatedAt = new Date();
         if (hasAmount) {
           await readingStatuses.findOneAndUpdate(
             { userId, date },
@@ -354,7 +378,8 @@ function registerReadingRoutes(app, dependencies) {
                 userId,
                 date,
                 status: status || 'okudum',
-                amount: amountNum
+                amount: amountNum,
+                updatedAt
               }
             },
             { upsert: true }
@@ -363,7 +388,7 @@ function registerReadingRoutes(app, dependencies) {
           await readingStatuses.findOneAndUpdate(
             { userId, date },
             {
-              $set: { userId, date, status },
+              $set: { userId, date, status, updatedAt },
               $unset: { amount: 1 }
             },
             { upsert: true }

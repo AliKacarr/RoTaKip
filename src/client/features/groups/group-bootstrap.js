@@ -28,17 +28,6 @@ window.loadExternalScriptOnce = function loadExternalScriptOnce(src, isReady) {
   return loadPromise;
 };
 
-window.ensureChartLibraries = async function ensureChartLibraries() {
-  await window.loadExternalScriptOnce(
-    'https://cdn.jsdelivr.net/npm/chart.js',
-    () => typeof window.Chart !== 'undefined'
-  );
-  await window.loadExternalScriptOnce(
-    'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0',
-    () => typeof window.ChartDataLabels !== 'undefined'
-  );
-};
-
 window.ensureHtml2Canvas = async function ensureHtml2Canvas() {
   await window.loadExternalScriptOnce(
     'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
@@ -87,13 +76,13 @@ window.showStreakNotification = function showStreakNotification(name, streak) {
   const toast = document.createElement('div');
   toast.className = 'toast toast-streak';
   toast.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="width: 35px; height: 35px;">
+    <div style="display: flex; align-items: center; gap: 9px;">
+      <div style="width: 24px; height: 24px; flex: 0 0 auto;">
         <img src="/images/fire.webp" alt="Fire" style="width: 100%; height: 100%; object-fit: contain;">
       </div>
       <div>
-        <div style="font-weight: bold; font-size: 23px;">Hoş geldin ${window.escapeHtml(name)}!</div>
-        <div style="font-size: 23px;">Giriş serin ${window.escapeHtml(streak)} oldu.</div>
+        <div style="font-weight: bold; font-size: 15px; line-height: 1.25;">Hoş geldin ${window.escapeHtml(name)}!</div>
+        <div style="font-size: 13px; line-height: 1.25;">Giriş serin ${window.escapeHtml(streak)} oldu.</div>
       </div>
     </div>
   `;
@@ -110,7 +99,7 @@ window.showStreakNotification = function showStreakNotification(name, streak) {
   document.body.appendChild(toast);
   
   
-  // Bildirim azcık daha uzun (6 saniye) kalsın
+  // Bildirim azcık daha uzun (5 saniye) kalsın
   setTimeout(() => {
     toast.classList.add('toast-hide');
     setTimeout(() => {
@@ -121,7 +110,7 @@ window.showStreakNotification = function showStreakNotification(name, streak) {
         style.parentNode.removeChild(style);
       }
     }, 300);
-  }, 6000);
+  }, 5000);
 }
 
 // Yetki bilgisi yalnızca sunucu oturumundan gelir; bu sınıf sadece sayfa içi UI durumunu tutar.
@@ -146,10 +135,13 @@ class LocalStorageManager {
   static loginUser(groupId, userId, userAuthority, userName, groupName, name) {
     this.currentUser = { groupId, userId: String(userId), userAuthority, userName, groupName, name: name || '' };
     if (typeof window.updateProfileButton === 'function') window.updateProfileButton();
+    window.dispatchEvent(new Event('rotakip:auth-changed'));
   }
 
   static logoutUser() {
+    const wasLoggedIn = Boolean(this.currentUser);
     this.currentUser = null;
+    if (wasLoggedIn) window.dispatchEvent(new Event('rotakip:auth-changed'));
   }
 
   static clearCookies() {
@@ -548,16 +540,16 @@ function initializeProfileButton() {
       const username = userInfo.userName || 'Kullanıcı';
       const userAuthority = userInfo.userAuthority;
       
+      // Giriş yapmış kullanıcı profilini Sayfam'daki profil başlığından açar; düğme yalnız misafire görünür.
+      profileButton.hidden = true;
       profileButtonText.textContent = 'Profilim';
       
       if (userAuthority === 'admin') {
         profileButton.title = 'Yönetici Profili: ' + username;
-        profileButtonIcon.className = 'fa-solid fa-user-circle';
-        profileButtonIcon.style.color = '#4e54c8';
+        profileButtonIcon.className = 'fa-solid fa-user-shield';
       } else {
         profileButton.title = 'Üye Profili: ' + username;
         profileButtonIcon.className = 'fa-solid fa-user';
-        profileButtonIcon.style.color = '#4e54c8';
       }
       
       profileButton.onclick = function() {
@@ -566,12 +558,12 @@ function initializeProfileButton() {
         }
       };
     } else {
+      profileButton.hidden = false;
       profileButtonText.textContent = 'Giriş Yap';
       profileButton.title = 'Kullanıcı Girişi';
       
       profileButtonIcon.className = 'fa-solid fa-sign-in-alt';
-      profileButtonIcon.style.color = '#007bff';
-      
+
       profileButton.onclick = function() {
         if (adminLoginModal) {
           adminLoginModal.style.display = 'flex';
@@ -584,6 +576,63 @@ function initializeProfileButton() {
   
   window.updateProfileButton = checkAuthStatus;
 }
+
+// Grup kapağının arka planı. "gorsel" teması yalnız yöneticinin cihazından yüklediği grup resmi varken
+// o resmi (keskin) arka plan yapar; hazır avatarlar ve resimsiz gruplar için sabit renk geçişi (indigo) görünür.
+const HERO_THEMES = ['gorsel', 'indigo', 'zumrut', 'gunbatimi', 'okyanus', 'gul', 'gece'];
+const DEFAULT_GROUP_IMAGE = '/images/open-book.webp';
+
+window.isCustomGroupImage = function isCustomGroupImage(src) {
+  return Boolean(src) && !String(src).startsWith('/groupAvatars/') && src !== DEFAULT_GROUP_IMAGE;
+};
+
+window.applyGroupHeroTheme = function applyGroupHeroTheme(theme, group) {
+  const hero = document.getElementById('okumalarHero');
+  if (!hero) return;
+  const wanted = HERO_THEMES.includes(theme) ? theme : 'gorsel';
+  const source = group || window.currentGroupData || {};
+  const photo = wanted === 'gorsel' && window.isCustomGroupImage(source.groupImage);
+  hero.dataset.heroTheme = wanted === 'gorsel' && !photo ? 'indigo' : wanted;
+  hero.dataset.heroPhoto = String(photo);
+  const cover = document.getElementById('okumalarHeroCover');
+  if (cover) {
+    const imgSrc = photo ? window.safeImageSrc(source.groupImage, DEFAULT_GROUP_IMAGE) : '';
+    setHeroCoverImage(cover, imgSrc);
+  }
+};
+
+// Resim önce arka planda yüklenir; hazır olunca kapak yumuşakça (opacity geçişiyle) açılır, şak diye belirmez.
+function setHeroCoverImage(cover, imgSrc) {
+  if (!imgSrc) {
+    cover.dataset.heroSrc = '';
+    cover.classList.remove('has-image');
+    cover.style.backgroundImage = '';
+    return;
+  }
+  if (cover.dataset.heroSrc === imgSrc) return;
+  cover.dataset.heroSrc = imgSrc;
+  cover.classList.remove('has-image');
+  const loader = new Image();
+  const show = () => {
+    if (cover.dataset.heroSrc !== imgSrc) return;
+    cover.style.backgroundImage = `url("${imgSrc.replace(/"/g, '%22')}")`;
+    window.requestAnimationFrame(() => {
+      if (cover.dataset.heroSrc === imgSrc) cover.classList.add('has-image');
+    });
+  };
+  loader.onload = () => (typeof loader.decode === 'function' ? loader.decode().catch(() => {}).then(show) : show());
+  loader.onerror = () => {
+    if (cover.dataset.heroSrc === imgSrc) cover.dataset.heroSrc = '';
+  };
+  loader.src = imgSrc;
+}
+
+// Yönetici grup resmini değiştirince/kaldırınca kapağı ve tema seçiciyi tazeler.
+window.setGroupHeroImage = function setGroupHeroImage(url) {
+  window.currentGroupData = { ...(window.currentGroupData || {}), groupImage: url || null };
+  window.applyGroupHeroTheme(window.currentGroupData.heroTheme);
+  window.renderHeroThemePicker?.();
+};
 
 // Title'ı grup adına göre güncelleme fonksiyonu
 async function updatePageTitle() {
@@ -609,14 +658,13 @@ async function updatePageTitle() {
       const groupName = group.groupName;
       
       if (secretAdminLogin) {
-        const groupImage = group.groupImage;
-        const imgSrc = window.safeImageSrc(groupImage, '/images/open-book.webp');
-        
-        secretAdminLogin.innerHTML = `
-          <img src="${window.escapeHtml(imgSrc)}" class="secretAdminLoginImage" alt="Grup Resmi" style="border-radius: 6px;" onerror="this.src='/images/open-book.webp'">
-          <h2 style="margin: 0; font-size: inherit; font-weight: inherit;">${window.escapeHtml(groupName)}</h2>
-        `;
+        const title = document.createElement('h1');
+        title.className = 'okumalar-hero-name';
+        title.textContent = groupName;
+        secretAdminLogin.replaceChildren(title);
       }
+      window.applyGroupHeroTheme(group.heroTheme, group);
+      if (typeof window.updateOkumalarHeroMeta === 'function') window.updateOkumalarHeroMeta();
     }
   } catch (error) {
     console.error('Grup bilgisi alınamadı:', error);
@@ -631,6 +679,26 @@ function cleanUrlFromRefreshParam() {
     // URL'yi temizle ama sayfa yenileme yapma
     window.history.replaceState({}, '', url.toString());
   }
+}
+
+// ERP senkronu veritabanını değiştirdiğinde sayfa yenilenmez: okuma verisi ve çetele yeniden alınır,
+// görünümler eldeki bölümde yerinde yeniden çizilir.
+async function refreshGroupDataInPlace(groupId) {
+  // Shell'in önbellekteki eski verisi sonraki bir yeniden kurulumda tazesinin üzerine yazılmasın.
+  window.invalidateRoTaKipGroupCache?.(groupId);
+  const response = await fetch(`/api/all-data/${encodeURIComponent(groupId)}`, {
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin'
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Grup verileri alınamadı (${response.status})`);
+  const store = window.globalDataStore;
+  if (window.groupid !== groupId || !store || store.groupId !== groupId) return;
+  store.replaceData(groupId, data);
+  await store.ensureLongestStreaks();
+  if (window.RoTaKipCetele?.loaded) await window.RoTaKipCetele.load({ force: true }).catch(() => {});
+  window.updateOkumalarHeroMeta?.();
+  window.schedulePostToggleUiRefresh?.();
 }
 
 async function startErpReadingsSyncInBackground(groupId) {
@@ -650,7 +718,7 @@ async function startErpReadingsSyncInBackground(groupId) {
 
     const result = await response.json();
     if (result.changed === true) {
-      window.location.reload();
+      await refreshGroupDataInPlace(groupId);
       return;
     }
     if (Number.isSafeInteger(result.changeVersion) && result.changeVersion >= 0) {
@@ -669,22 +737,13 @@ window.initializeGroupPage = async function initializeGroupPage() {
   window.rotakipGroupBootstrapPromise = (async function bootstrapGroupPage() {
   try {
     
-    // Oturum kontrolü: Eğer son oturum 2 dakikadan eskiyse → sayfayı tamamen yenile
+    // Sayfa oturumu (okumalar-core.js'teki 20 dakikalık süre) yoksa ya da dolmuşsa yeniden başlar.
+    // Veriler bu açılışta zaten sunucudan taze alındığı için sayfayı yenilemeye gerek yoktur.
     const sessionStartTimeKey = 'pageSessionStartTime';
     const lastSession = parseInt(localStorage.getItem(sessionStartTimeKey), 10);
     const now = Date.now();
     const maxSessionDuration = 20 * 60 * 1000; // 20 dakika
-    
-    // Eğer son oturum 2 dakikadan eskiyse → sayfayı tamamen yenile
-    if (lastSession && (now - lastSession) > maxSessionDuration) {
-      console.log('⏰ Oturum süresi dolmuş, sayfa yeniden yükleniyor...');
-      localStorage.removeItem(sessionStartTimeKey);
-      location.reload(); // Hard reload (true parametresi deprecated)
-      return; // reload beklenirken kalan kodu çalıştırma
-    }
-    
-    // Sadece yeni oturum başlatılıyorsa (lastSession yoksa) zamanı kaydet
-    if (!lastSession) {
+    if (!lastSession || (now - lastSession) > maxSessionDuration) {
       localStorage.setItem(sessionStartTimeKey, now.toString());
     }
     
@@ -1231,12 +1290,6 @@ window.observeScrollFadeIn = function observeScrollFadeInSelector(selector) {
 window.initScrollFadeInElements = function initScrollFadeInElements() {
   [
     '#articlesContainer',
-    '.group-settings',
-    '.automation-section',
-    '.bottom-section',
-    '#longestSeriesChart',
-    '.monthly-calendar-share-container',
-    '.chart-container',
     '.quote-section',
     '.quote-section-image',
     '.video-card:not(.loading-card)'

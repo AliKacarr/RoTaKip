@@ -1,0 +1,1349 @@
+/* Okumalar › Bugün: giriş kartı, Özetim, mesajlar, Ligler paneli ve kutlama */
+.ok-today {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.ok-today-col {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* Sayfam: günlük kayıt ve Özetim üstte, kişi grafikleri altta. */
+#okumalarBolumBugun:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+/* ---- Giriş kartı ------------------------------------------------------------ */
+.ok-entry {
+  padding: 18px;
+}
+
+.ok-entry[hidden] {
+  display: none;
+}
+
+.ok-entry-sheet {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.ok-entry-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Profil başlığı: lig halkalı avatar, ad + seri hapı, alt satırda lig · okuma günü · günlük ortalama */
+.ok-entry-greeting {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ok-border);
+  color: var(--ok-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Avatar halkası: /images/daire.webp (bronz çerçeve) arka plan, fotoğraf içine oturur */
+.ok-entry-avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 50%;
+  background: url('/images/daire.webp') center / contain no-repeat;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease;
+}
+
+.ok-entry-avatar:active {
+  transform: scale(0.95);
+}
+
+.ok-entry-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-sizing: border-box;
+  object-fit: cover;
+}
+
+.ok-entry-avatar:focus-visible,
+.ok-entry-edit:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+.ok-entry-edit {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f2f6;
+  color: var(--ok-muted);
+  font-size: 12px;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.ok-entry-edit:active {
+  transform: scale(0.9);
+}
+
+.ok-entry-edit:hover {
+  background: var(--ok-accent-tint);
+  color: var(--ok-accent);
+}
+
+.ok-entry-greeting-main {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ok-entry-greeting-top {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ok-entry-greeting-text {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  color: var(--ok-text);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.ok-entry-greeting-text strong {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ok-entry-greeting-text .ok-entry-edit {
+  flex: 0 0 auto;
+}
+
+.ok-entry-greeting-sub {
+  margin: 0;
+  color: var(--ok-muted);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.ok-entry-streak {
+  justify-self: start;
+  margin-top: 3px;
+}
+
+.ok-entry-streak:empty {
+  display: none;
+}
+
+.ok-entry-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #f1f2f6;
+  color: #c2410c;
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Seri artınca (kayıttan sonra) rozet yeniden belirir; sayfa kurulurken değil. */
+.ok-entry-streak-badge.is-new {
+  animation: ok-pop-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ok-entry-streak-badge small {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.ok-entry-status {
+  flex: 0 0 auto;
+  min-height: 24px;
+  margin-left: auto;
+}
+
+.ok-entry-status:empty {
+  display: none;
+}
+
+.ok-entry-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f2f6;
+  color: var(--ok-muted);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  animation: ok-pop-in 0.24s ease-out both;
+}
+
+.ok-entry-state.is-saved {
+  background: var(--ok-success-tint);
+  color: var(--ok-success);
+}
+
+.ok-entry-state.is-dirty {
+  background: #fff4dc;
+  color: #9a6700;
+}
+
+.ok-entry-state.is-error {
+  background: var(--ok-danger-tint);
+  color: var(--ok-danger);
+  cursor: pointer;
+}
+
+/* Zincir şeridi: haftanın günleri (Pzt–Paz) */
+/* Hafta başlığı: ay/yıl ve tarih aralığı, iki yanda önceki/sonraki hafta okları */
+.ok-week-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ok-week-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  color: var(--ok-text);
+  font-size: 16px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.ok-week-title strong {
+  font-weight: 800;
+}
+
+.ok-week-title small {
+  color: var(--ok-accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ok-week-nav {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ok-accent-tint);
+  color: var(--ok-accent);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+}
+
+.ok-week-nav:hover:not(:disabled) {
+  background: #e2e5ff;
+}
+
+.ok-week-nav:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.ok-week-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ok-week-nav:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+.ok-days {
+  position: relative;
+  display: flex;
+  margin: 6px 0 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.ok-days::-webkit-scrollbar {
+  display: none;
+}
+
+/* Her hafta tam genişlikte bir sayfadır; seçili gün halkası kırpılmasın diye iç boşluk var */
+.ok-week {
+  display: grid;
+  flex: 0 0 100%;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px 8px;
+  box-sizing: border-box;
+  padding: 4px 4px 6px;
+  scroll-snap-align: start;
+}
+
+.ok-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ok-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ok-day:disabled {
+  cursor: default;
+}
+
+.ok-day-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ok-day.is-today .ok-day-name {
+  color: var(--ok-text);
+  font-weight: 800;
+}
+
+.ok-day-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  max-width: 48px;
+  aspect-ratio: 1 / 1.05;
+  border-radius: 14px;
+  color: var(--ok-text);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.ok-day:not(:disabled):not(.is-selected):not(.is-read):hover .ok-day-box {
+  background: #eceef5;
+}
+
+.ok-day:not(:disabled):active .ok-day-box {
+  transform: scale(0.92);
+}
+
+.ok-day-num {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.ok-day-check {
+  display: none;
+  font-size: 12px;
+}
+
+.ok-day.is-read .ok-day-box {
+  background: var(--ok-success);
+  color: #fff;
+}
+
+.ok-day.is-read .ok-day-num {
+  font-size: 15px;
+}
+
+.ok-day.is-read .ok-day-check {
+  display: block;
+}
+
+.ok-day.is-future .ok-day-box {
+  color: #9aa0ad;
+}
+
+/* Nokta kutunun içinde, sayının altında sabit konumdadır; sayı kutuda ortalı kalır */
+.ok-day-dot {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  transform: translateX(-50%);
+  transition: background 0.2s ease;
+}
+
+.ok-day.is-read .ok-day-dot {
+  display: none;
+}
+
+.ok-day.is-future .ok-day-dot {
+  background: #4a4f5c;
+}
+
+.ok-day.is-missed .ok-day-dot {
+  background: var(--ok-danger);
+}
+
+.ok-day.is-filled .ok-day-dot {
+  background: var(--ok-accent);
+}
+
+.ok-day.is-selected .ok-day-box {
+  box-shadow: 0 0 0 2px var(--ok-surface), 0 0 0 4px var(--ok-accent);
+}
+
+.ok-day.is-selected:not(.is-read) .ok-day-box {
+  background: #eceef5;
+}
+
+.ok-day:focus-visible .ok-day-box {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 3px;
+}
+
+.ok-week-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--ok-muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ok-week-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.ok-week-state .is-read {
+  color: var(--ok-success);
+}
+
+.ok-week-state .is-missed {
+  color: var(--ok-danger);
+}
+
+.ok-week-state i {
+  font-size: 20px;
+}
+
+/* Tek alan: okuma girişi (büyük sayı) + diğer günlük alanlar */
+.ok-extras {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f6f7fb;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Gün değişince form yeniden kurulur; içerik yumuşakça belirir (okumalar-today.js is-switching ekler). */
+.ok-extras.is-switching,
+.ok-entry-head.is-switching,
+.ok-week-foot.is-switching {
+  animation: ok-fade-up 0.26s ease-out both;
+}
+
+.ok-extras.is-read {
+  background: var(--ok-success-tint);
+}
+
+.ok-extras.is-missed {
+  background: var(--ok-danger-tint);
+}
+
+/* Temizle / Kaydet */
+.ok-entry-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ok-entry-actions .ok-btn {
+  flex: 1 1 0;
+}
+
+.ok-entry-actions .ok-btn:first-child {
+  flex: 0 0 auto;
+}
+
+.ok-entry-actions .ok-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Okuma alanı dahil tüm günlük alanlar aynı kartta, aynı hap düğmelerle */
+.ok-extras .ct-field:first-of-type {
+  padding-top: 0;
+}
+
+.ok-extras .ct-field:last-child {
+  padding-bottom: 0;
+}
+
+.ok-extras .ct-chips {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.ok-extras .ct-loading + .ct-field {
+  border-top: 1px solid var(--ok-border);
+}
+
+/* ---- Özetim ---------------------------------------------------------------- */
+.ok-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+  border-top: 1px solid var(--ok-border);
+}
+
+.ok-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 4px 0;
+  text-align: center;
+}
+
+.ok-stat + .ok-stat {
+  border-left: 1px solid var(--ok-border);
+}
+
+.ok-stat-label {
+  color: var(--ok-muted);
+  font-size: 16px;
+}
+
+.ok-stat-value {
+  color: var(--ok-text);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.ok-stat-value small {
+  color: var(--ok-muted);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ok-stat-sub {
+  color: #3f4856;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+
+.ok-mine .ok-stats {
+  margin-top: 4px;
+}
+
+/* Lig satırı */
+.ok-league-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--ok-border);
+  border-radius: 14px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.ok-league-row:hover {
+  border-color: var(--ok-accent);
+  box-shadow: 0 4px 14px rgba(78, 84, 200, 0.12);
+}
+
+.ok-league-row:active {
+  transform: scale(0.99);
+}
+
+.ok-league-row-chevron {
+  transition: transform 0.2s ease;
+}
+
+.ok-league-row:hover .ok-league-row-chevron {
+  transform: translateX(3px);
+}
+
+.ok-league-row:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+.ok-league-row img {
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.ok-league-row-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ok-league-row-name {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.ok-league-row-text small {
+  color: var(--ok-muted);
+  font-size: 15px;
+}
+
+.ok-league-row-chevron {
+  color: var(--ok-muted);
+}
+
+/* Son 30 gün */
+.ok-spark {
+  margin: 16px 0 0;
+}
+
+.ok-spark-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--ok-muted);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ok-spark-head strong {
+  color: var(--ok-text);
+  font-size: 16px;
+}
+
+.ok-spark svg {
+  display: block;
+  width: 100%;
+  height: 84px;
+}
+
+.ok-spark-bar.is-read {
+  fill: var(--ok-success);
+}
+
+.ok-spark-bar.is-read-plain {
+  fill: #9bd7b8;
+}
+
+.ok-spark-bar.is-missed {
+  fill: var(--ok-danger);
+}
+
+.ok-spark-bar.is-empty {
+  fill: #e3e6ee;
+}
+
+.ok-spark-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  color: var(--ok-muted);
+  font-size: 12px;
+}
+
+/* Günün hediyesi ve videosu */
+.ok-daily-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ok-daily {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--ok-border);
+  border-radius: 12px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.ok-daily:hover {
+  border-color: var(--ok-accent);
+}
+
+.ok-daily:active {
+  transform: scale(0.97);
+}
+
+.ok-daily i {
+  color: var(--ok-accent);
+}
+
+.ok-daily.is-done {
+  background: var(--ok-success-tint);
+  border-color: transparent;
+}
+
+.ok-daily.is-done i {
+  color: var(--ok-success);
+}
+
+.ok-daily:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+/* ---- Grup mesajları (Zinciri Kırma / Zayıf Halka / lig terfileri) ---------------- */
+.ok-messages {
+  padding: 0;
+}
+
+.ok-messages[hidden] {
+  display: none;
+}
+
+.ok-messages-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  list-style: none;
+  cursor: pointer;
+  border-radius: var(--ok-radius);
+  transition: background 0.2s ease;
+}
+
+.ok-messages-summary:hover {
+  background: #fafbff;
+}
+
+.ok-messages-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ok-messages-summary:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: -3px;
+  border-radius: var(--ok-radius);
+}
+
+.ok-messages-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.ok-messages-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.ok-messages-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ok-messages-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f2f6;
+  color: var(--ok-muted);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ok-messages-chip.is-success,
+.ok-messages-chip.is-streak {
+  background: var(--ok-success-tint);
+  color: var(--ok-success);
+}
+
+.ok-messages-chip.is-promotion {
+  background: #fff4dc;
+  color: #a86a00;
+}
+
+.ok-messages-chip.is-missed {
+  background: var(--ok-danger-tint);
+  color: var(--ok-danger);
+}
+
+.ok-messages-chevron {
+  flex-shrink: 0;
+  color: var(--ok-muted);
+  transition: transform 0.2s ease;
+}
+
+.ok-messages[open]:not(.is-closing) .ok-messages-chevron {
+  transform: rotate(180deg);
+}
+
+/* Açılış/kapanış (yükseklik + solma) reading-message-panels.js içinde animate edilir;
+   hareket azaltma tercihinde native <details> davranışı anlık kalır. */
+
+.ok-messages .reading-message-panels-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+/* Kart açıldığında mesajlar yukarı kayarak belirmesin (scroll-reveal / fade-in iptal) */
+.tab-view-okumalar .ok-messages .reading-message-panels-content > * {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+/* Mesaj panelleri: kart içinde düz, renk tonlu satırlar (kurdele/zincir bantları ve GIF emojiler kaldırıldı). */
+.ok-messages .league-promotion-message,
+.ok-messages .league-promotion-backlog,
+.ok-messages .everyone-read-message,
+.ok-messages .reading-streak-message,
+.ok-messages .weak-link-message {
+  --msg-tint: var(--ok-success-tint);
+  --msg-accent: var(--ok-success);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  max-width: none;
+  margin: 0;
+  padding: 14px 16px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 14px;
+  background: var(--msg-tint);
+  box-shadow: none;
+  color: var(--ok-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.ok-messages .league-promotion-message,
+.ok-messages .league-promotion-backlog {
+  --msg-tint: #fff4dc;
+  --msg-accent: #a86a00;
+}
+
+.ok-messages .weak-link-message {
+  --msg-tint: var(--ok-danger-tint);
+  --msg-accent: var(--ok-danger);
+}
+
+.ok-messages .league-promotion-message:focus-visible,
+.ok-messages .league-promotion-backlog:focus-visible,
+.ok-messages .everyone-read-message:focus-visible,
+.ok-messages .reading-streak-message:focus-visible,
+.ok-messages .weak-link-message:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+.ok-messages .league-promotion-message::before,
+.ok-messages .league-promotion-backlog::before,
+.ok-messages .everyone-read-message::before,
+.ok-messages .reading-streak-message::before,
+.ok-messages .weak-link-message::before,
+.ok-messages .left-emoji {
+  display: none;
+}
+
+/* Başlık bantları: küçük renkli etiket */
+.ok-messages .reading-streak-message .chain-text,
+.ok-messages .weak-link-message .weak-link-banner {
+  position: static;
+  height: auto;
+  padding: 0;
+  background: none;
+  color: var(--msg-accent);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  transform: none;
+}
+
+.ok-messages .league-promotion-message .promotion-message-content,
+.ok-messages .league-promotion-backlog .promotion-message-content,
+.ok-messages .reading-streak-message .streak-panel-body,
+.ok-messages .weak-link-message .weak-link-body,
+.ok-messages .everyone-read-message .everyone-read-body {
+  align-items: flex-start;
+  gap: 4px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.ok-messages .promotion-panel-title,
+.ok-messages .streak-section-title,
+.ok-messages .missed-title,
+.ok-messages .everyone-read-title {
+  font-weight: 800;
+}
+
+.ok-messages .promoted-username,
+.ok-messages .promoted-league,
+.ok-messages .streak-username,
+.ok-messages .missed-username {
+  color: var(--ok-text);
+  font-style: normal;
+}
+
+.ok-messages .promotion-subtitle,
+.ok-messages .streak-tagline,
+.ok-messages .missed-reminder,
+.ok-messages .everyone-read-reminder {
+  color: var(--ok-muted);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Kapanış cümlesi solda, Kopyala düğmesi sağda; dar ekranda düğme alt satıra iner. */
+.ok-messages .message-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+
+.ok-messages .message-footer > :first-child {
+  min-width: 0;
+}
+
+/* Kopyala: satır sonunda küçük hap düğme */
+.ok-messages .copy-chip {
+  position: static;
+  align-self: flex-end;
+  margin-left: auto;
+  padding: 4px 10px !important;
+  border: 1px solid var(--ok-border);
+  border-radius: 999px !important;
+  background: var(--ok-surface);
+  color: var(--ok-muted);
+  font-size: 13px !important;
+  font-weight: 700;
+}
+
+/* ---- Ligler paneli ------------------------------------------------------------ */
+.ok-ladder-intro {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #f4f5fb;
+  color: var(--ok-muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.ok-ladder-list {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ok-ladder-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 8px;
+  border-radius: 14px;
+}
+
+.ok-ladder-item + .ok-ladder-item::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 24px;
+  width: 2px;
+  height: 24px;
+  background: var(--ok-border);
+}
+
+.ok-ladder-step {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--ok-border);
+  border-radius: 50%;
+  background: var(--ok-surface);
+  color: var(--ok-muted);
+  font-size: 14px;
+  font-weight: 800;
+  box-sizing: border-box;
+}
+
+.ok-ladder-item img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.ok-ladder-name {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.ok-ladder-range {
+  color: var(--ok-muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.ok-ladder-range em {
+  color: var(--ok-accent);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.ok-ladder-item.is-passed .ok-ladder-step {
+  border-color: var(--ok-success);
+  background: var(--ok-success);
+  color: #fff;
+}
+
+.ok-ladder-item.is-current {
+  background: var(--ok-accent-tint);
+  box-shadow: inset 0 0 0 2px var(--ok-accent);
+}
+
+.ok-ladder-item.is-current .ok-ladder-step {
+  border-color: var(--ok-accent);
+  background: var(--ok-accent);
+  color: #fff;
+}
+
+/* ---- Kutlama --------------------------------------------------------------------- */
+.ok-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 10080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(17, 20, 38, 0);
+  font-family: inherit;
+  transition: background 0.22s ease;
+}
+
+.ok-celebration.is-open {
+  background: rgba(17, 20, 38, 0.5);
+}
+
+.ok-celebration.is-toast {
+  align-items: flex-start;
+  padding-top: max(24px, env(safe-area-inset-top, 0px));
+  background: transparent;
+  pointer-events: none;
+}
+
+.ok-celebration.is-toast.is-open {
+  background: transparent;
+}
+
+.ok-celebration-card {
+  position: relative;
+  z-index: 1;
+  width: min(380px, 100%);
+  box-sizing: border-box;
+  padding: 28px 24px 22px;
+  border-radius: 24px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(17, 20, 38, 0.3);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.ok-celebration.is-open .ok-celebration-card {
+  opacity: 1;
+  transform: none;
+}
+
+.ok-celebration.is-toast .ok-celebration-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+  width: min(420px, 100%);
+  padding: 14px 18px;
+  border: 1px solid #bfe8d2;
+  text-align: left;
+  pointer-events: auto;
+  transform: translateY(-12px);
+}
+
+.ok-celebration.is-toast.is-open .ok-celebration-card {
+  transform: none;
+}
+
+.ok-celebration-visual {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.ok-celebration.is-toast .ok-celebration-visual {
+  grid-row: span 2;
+  margin: 0;
+}
+
+.ok-celebration-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3d6 0%, #ffe0a3 100%);
+  box-shadow: 0 0 0 10px #fff8e8;
+  font-size: 46px;
+}
+
+.ok-celebration.is-daily .ok-celebration-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--ok-success);
+  box-shadow: none;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.ok-celebration-image {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(17, 20, 38, 0.25));
+}
+
+.ok-celebration-title {
+  margin: 0 0 6px;
+  color: var(--ok-accent);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.ok-celebration.is-toast .ok-celebration-title {
+  margin: 0;
+  color: var(--ok-text);
+  font-size: 17px;
+}
+
+.ok-celebration-message {
+  margin: 0 0 18px;
+  color: var(--ok-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.ok-celebration.is-toast .ok-celebration-message {
+  margin: 2px 0 0;
+  font-size: 14px;
+}
+
+.ok-confetti {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ok-confetti-piece {
+  position: absolute;
+  top: -12px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0.9;
+  animation-name: ok-confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+@keyframes ok-confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(540deg); opacity: 0; }
+}
+
+
+/* ---- Duyarlı düzen --------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .ok-today {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Telefonda sütunlar kalkar; kartlar akışa göre sıralanır. */
+  .ok-today-col {
+    display: contents;
+  }
+
+  .ok-today .ok-entry { order: 1; }
+  .ok-today .ok-mine { order: 2; }
+}
+
+@media (max-width: 480px) {
+  .ok-entry {
+    padding: 16px 14px;
+  }
+
+  .ok-extras {
+    padding: 14px 12px;
+  }
+
+  .ok-stat-value {
+    font-size: 20px;
+  }
+
+  .ok-ladder-item {
+    grid-template-columns: 30px 34px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .ok-ladder-item + .ok-ladder-item::before {
+    left: 22px;
+  }
+
+  .ok-ladder-item img {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ok-celebration,
+  .ok-celebration-card,
+  .ok-bar-fill,
+  .ok-extras {
+    transition: none;
+  }
+}
+
+/* ---- Ortak giriş efektleri ----------------------------------------------------- */
+@keyframes ok-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ok-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ok-extras.is-switching,
+  .ok-entry-head.is-switching,
+  .ok-week-foot.is-switching,
+  .ok-entry-streak-badge.is-new,
+  .ok-entry-state {
+    animation: none;
+  }
+
+  .ok-day:not(:disabled):active .ok-day-box,
+  .ok-week-nav:active:not(:disabled),
+  .ok-daily:active,
+  .ok-league-row:active,
+  .ok-entry-avatar:active,
+  .ok-entry-edit:active {
+    transform: none;
+  }
+}

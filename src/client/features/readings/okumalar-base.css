@@ -1,0 +1,596 @@
+/* Okumalar tasarım değişkenleri ve bölüm iskeleti.
+   Değişkenler yalnızca okumalar görünümü ve onun açtığı paneller kapsamında tanımlıdır. */
+.tab-view-okumalar,
+.rk-sheet,
+.ok-celebration {
+  --ok-bg: #f4f5f9;
+  --ok-surface: #ffffff;
+  --ok-text: #1d2433;
+  --ok-muted: #5b6472;
+  --ok-border: #e3e6ee;
+  --ok-accent: #4e54c8;
+  --ok-accent-dark: #3d42a8;
+  --ok-accent-tint: #eef0ff;
+  --ok-success: #1f9d63;
+  --ok-success-tint: #e5f6ee;
+  --ok-danger: #d9534f;
+  --ok-danger-tint: #fdecec;
+  --ok-warm: #ff8a3d;
+  --ok-radius: 18px;
+  --ok-shadow: 0 8px 24px rgba(36, 50, 70, 0.08);
+}
+
+.tab-view-okumalar {
+  color: var(--ok-text);
+}
+
+/* Tarayıcı varsayılanı `bolder`, kalın üst öğede 900'e kadar çıkar; <strong> her yerde 700 olsun. */
+:where(.tab-view-okumalar, .rk-sheet, .ok-celebration) strong {
+  font-weight: 700;
+}
+
+/* Profil fotoğrafı tamamen inene kadar #ffebeb zeminde bekler (parça parça çizim olmaz), inince tek seferde görünür.
+   Görsel içeriği kutunun dışına itilir; zemin (ve yuvarlak kenar) yerinde kalır.
+   Sınıfı `window.photoFadeClass(src)` verir; `is-loaded`ı yükleme olayı ekler (shared/third-party.js). */
+img.rk-fade {
+  background: #ffebeb;
+  object-fit: cover;
+  object-position: -9999px 0;
+}
+
+img.rk-fade.is-loaded {
+  object-position: center;
+}
+
+/* ---- Bölüm sekmeleri --------------------------------------------------- */
+.okumalar-sections {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  max-width: 960px;
+  margin: 12px auto 0;
+  padding: 8px 0;
+  background: linear-gradient(180deg, rgba(244, 244, 249, 0.96) 70%, rgba(244, 244, 249, 0));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.okumalar-sections-track {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border: 1px solid var(--ok-border);
+  border-radius: 999px;
+  background: var(--ok-surface);
+  box-shadow: 0 4px 14px rgba(36, 50, 70, 0.06);
+  position: relative;
+  isolation: isolate;
+}
+
+/* Seçili sekmenin arkasında kayan gösterge: konum/genişlik okumalar-tab.js'ten (--ok-tab-x / --ok-tab-w) gelir. */
+.okumalar-sections-track::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  z-index: 0;
+  width: var(--ok-tab-w, 0px);
+  border-radius: 999px;
+  background: var(--ok-accent);
+  box-shadow: 0 4px 12px rgba(78, 84, 200, 0.3);
+  opacity: 0;
+  transform: translateX(var(--ok-tab-x, 0px));
+  pointer-events: none;
+}
+
+.okumalar-sections-track.has-indicator::before {
+  opacity: 1;
+}
+
+.okumalar-sections-track.is-animated::before {
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), width 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.okumalar-sections-track::-webkit-scrollbar {
+  display: none;
+}
+
+.okumalar-section-tab {
+  flex: 1 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ok-muted);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.okumalar-section-tab:active {
+  transform: scale(0.97);
+}
+
+.okumalar-section-tab[hidden] {
+  display: none;
+}
+
+.okumalar-section-tab:hover {
+  color: var(--ok-accent);
+  background: var(--ok-accent-tint);
+}
+
+.okumalar-section-tab.is-active {
+  background: var(--ok-accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(78, 84, 200, 0.3);
+}
+
+/* Metin rengi göstergenin varışıyla birlikte değişir; gösterge gelmeden beyaza dönen etiket kaybolmasın. */
+.okumalar-sections-track.has-indicator .okumalar-section-tab {
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.okumalar-sections-track.has-indicator .okumalar-section-tab.is-active {
+  transition: color 0.2s ease 0.1s, transform 0.15s ease;
+}
+
+/* Gösterge hazırsa seçili sekmenin kendi zemini şeffaflaşır; zemini gösterge taşır. */
+.okumalar-sections-track.has-indicator .okumalar-section-tab.is-active {
+  background: transparent;
+  box-shadow: none;
+}
+
+.okumalar-section-tab:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+.okumalar-section-tab i {
+  font-size: 16px;
+}
+
+/* ---- Bölüm kapsayıcısı -------------------------------------------------- */
+.okumalar-bolum {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 0 24px;
+  font-size: 16px;
+}
+
+.okumalar-bolum[hidden] {
+  display: none !important;
+}
+
+/* Sekme değişince yeni bölüm, sekmenin yönünden hafifçe kayarak belirir (okumalar-tab.js is-entering ekler). */
+.okumalar-bolum.is-entering {
+  animation: ok-section-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Yatay kayma sayfa genişliğini taşırmasın. */
+.tab-view-okumalar {
+  overflow-x: clip;
+}
+
+@keyframes ok-section-enter {
+  from {
+    opacity: 0;
+    transform: translateX(var(--ok-enter-x, 0px));
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Ortak kart ve düğmeler --------------------------------------------- */
+.ok-card {
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid var(--ok-border);
+  border-radius: var(--ok-radius);
+  background: var(--ok-surface);
+  box-shadow: var(--ok-shadow);
+}
+
+.ok-card[hidden] {
+  display: none;
+}
+
+.ok-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tab-view-okumalar h3.ok-card-title,
+.rk-sheet h3.ok-card-title {
+  display: block;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ok-text);
+  font-size: 18px !important;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.ok-card-aside {
+  color: var(--ok-muted);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ok-card-aside strong {
+  color: var(--ok-text);
+}
+
+.ok-card-eyebrow {
+  display: block;
+  color: var(--ok-muted);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ok-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.ok-btn:active {
+  transform: scale(0.97);
+}
+
+.ok-btn:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+}
+
+.ok-btn-primary {
+  background: var(--ok-accent);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(78, 84, 200, 0.28);
+}
+
+.ok-btn-primary:hover {
+  background: var(--ok-accent-dark);
+}
+
+.ok-btn-soft {
+  background: var(--ok-accent-tint);
+  color: var(--ok-accent);
+}
+
+.ok-btn-soft:hover {
+  background: #e2e5ff;
+}
+
+.ok-btn-ghost {
+  background: transparent;
+  color: var(--ok-muted);
+}
+
+.ok-btn-ghost:hover {
+  color: var(--ok-text);
+  background: #f1f2f6;
+}
+
+.ok-btn-pill {
+  min-height: 38px;
+  padding: 0 16px;
+  border-color: var(--ok-accent);
+  background: var(--ok-surface);
+  color: var(--ok-accent);
+  font-size: 15px;
+}
+
+.ok-btn-pill:hover {
+  background: var(--ok-accent-tint);
+}
+
+.ok-btn-large {
+  min-height: 52px;
+  padding: 0 26px;
+  font-size: 18px;
+}
+
+.ok-btn-block {
+  width: 100%;
+}
+
+.ok-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 0;
+  background: none;
+  color: var(--ok-accent);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ok-link i {
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.ok-link {
+  transition: color 0.2s ease;
+}
+
+.ok-link:hover {
+  color: var(--ok-accent-dark);
+}
+
+.ok-link:hover i {
+  transform: translateX(3px);
+}
+
+.ok-link:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.ok-link-block {
+  margin-top: 6px;
+}
+
+.ok-bar {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eceef4;
+}
+
+.ok-bar-thin {
+  height: 6px;
+}
+
+.ok-bar-fill {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ok-accent);
+  transition: width 0.6s ease;
+}
+
+/* Dolu çubuğun üzerinden geçen ışıltı (eski kullanıcı kartı ilerleme çubuğundaki "shine" efekti). */
+.ok-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 100%);
+  animation: ok-bar-shine 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ok-bar-shine {
+  0% {
+    left: -50%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.ok-bar-fill-soft {
+  background: #8f94fb;
+}
+
+/* Alttan açılan seçenek satırı (davet paneli vb.) */
+.ok-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--ok-border);
+  background: none;
+  color: var(--ok-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ok-option:last-child {
+  border-bottom: 0;
+}
+
+.ok-option:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.ok-option-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--ok-accent-tint);
+  color: var(--ok-accent);
+  font-size: 18px;
+}
+
+.ok-option-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ok-option-text strong {
+  font-size: 16px;
+}
+
+.ok-option-text small {
+  color: var(--ok-muted);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.ok-option-chevron {
+  color: #a3a9b6;
+  font-size: 13px;
+}
+
+/* Tehlikeli seçenek (Gruptan ayrıl) */
+.ok-option.is-danger .ok-option-icon {
+  background: #fdecea;
+  color: #c62828;
+}
+
+.ok-option.is-danger .ok-option-text strong {
+  color: #c62828;
+}
+
+/* Grup bilgisi paneli */
+.ok-group-info-text {
+  margin: 0;
+  color: var(--ok-text);
+  font-size: 17px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ok-group-info-text.is-empty {
+  color: var(--ok-muted);
+}
+
+/* Bildir paneli */
+.ok-report-reasons {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+}
+
+.ok-report-reason {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--ok-border);
+  border-radius: 12px;
+  color: var(--ok-text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ok-report-reason:has(input:checked) {
+  border-color: var(--ok-accent);
+  background: var(--ok-accent-tint);
+}
+
+.ok-report-submit {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ok-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ok-report-submit:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .okumalar-sections {
+    margin-top: 10px;
+  }
+
+  .okumalar-section-tab {
+    padding: 0 13px;
+    font-size: 16px;
+  }
+
+  .ok-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .okumalar-section-tab i {
+    display: none;
+  }
+
+  .okumalar-section-tab {
+    padding: 0 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .okumalar-sections-track::before,
+  .okumalar-sections-track.is-animated::before {
+    transition: none;
+  }
+
+  .okumalar-bolum.is-entering {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ok-bar-fill::after {
+    animation: none;
+    display: none;
+  }
+}

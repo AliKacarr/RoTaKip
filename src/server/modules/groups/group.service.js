@@ -14,6 +14,10 @@ async function createIndexesForGroup(groupId) {
     { userId: 1, date: 1 },
     { unique: true, name: 'uniq_user_date' }
   );
+  await db.collection(`cetele_${groupId}`).createIndex(
+    { userId: 1, date: 1 },
+    { unique: true, name: 'uniq_user_date' }
+  );
   await db.collection(`users_${groupId}`).createIndex(
     { name: 1 },
     { name: 'idx_name' }
@@ -85,7 +89,9 @@ async function rollbackGroupCreation({
 async function dropGroupCollections(groupId) {
   const collectionNames = [
     `users_${groupId}`,
-    `readingstatuses_${groupId}`
+    `readingstatuses_${groupId}`,
+    `cetele_${groupId}`,
+    `announcements_${groupId}`
   ];
   const dropErrors = [];
 

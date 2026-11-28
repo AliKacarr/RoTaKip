@@ -1,0 +1,737 @@
+/* Okumalar istatistikleri: Grup'ta grup grafikleri, Sayfam'da kişi grafikleri. Değişkenler okumalar-base.css'ten gelir. */
+#okumalarBolumGrup:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.ok-stats-view {
+  display: grid;
+  gap: 14px;
+}
+
+.ok-stats-view[hidden],
+.ok-stats-panel[hidden] {
+  display: none;
+}
+
+/* Sıralamanın / İstatistiklerim kartının altındaki grafik alanı */
+.okumalar-bolum .ok-stats-view {
+  margin-top: 10px;
+}
+
+/* Diğer alanların bu ayki toplamları */
+.ok-field-totals {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ok-field-totals li {
+  display: grid;
+  gap: 6px;
+}
+
+.ok-field-totals li > small {
+  color: var(--ok-muted);
+  font-size: 15px;
+}
+
+.ok-field-total-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.ok-field-total-head strong {
+  font-size: 19px;
+}
+
+.ok-field-total-head small {
+  color: var(--ok-muted);
+  font-size: 15px;
+}
+
+.ok-stats-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.ok-stats-panel > .ok-stats-wide {
+  grid-column: 1 / -1;
+}
+
+/* Üye alt panelinde kartlar tek sütundur. */
+.ok-stats-panel.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ok-stats-card {
+  min-width: 0;
+}
+
+.ok-stats-card .ok-card-head {
+  margin-bottom: 6px;
+}
+
+.ok-empty {
+  margin: 0;
+  padding: 24px 0;
+  color: var(--ok-muted);
+  text-align: center;
+}
+
+.ok-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---- Özet kutuları ---------------------------------------------------------- */
+.ok-stats-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ok-stats-compare {
+  margin: 0 0 4px;
+  color: var(--ok-muted);
+  font-size: 16px;
+}
+
+.ok-stats-compare strong {
+  color: var(--ok-text);
+}
+
+.ok-stats-compare .is-up {
+  color: var(--ok-success);
+}
+
+.ok-stats-compare .is-down {
+  color: var(--ok-danger);
+}
+
+/* ---- Sütun grafikleri ------------------------------------------------------ */
+.ct-chart {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  height: 150px;
+}
+
+.ct-bar {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  padding-bottom: 22px;
+  border-radius: 8px;
+  background: #f1f2f6;
+}
+
+.ct-bar-fill {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  background: #b9bcf0;
+  transition: height 0.3s ease;
+}
+
+.ct-bar.is-today .ct-bar-fill {
+  background: var(--ok-accent);
+}
+
+.ct-bar-label {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  left: 0;
+  color: var(--ok-muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ct-bar.is-today .ct-bar-label {
+  color: var(--ok-accent);
+}
+
+.ok-chart {
+  height: 150px;
+  margin-top: 12px;
+  padding-top: 20px;
+  gap: 8px;
+}
+
+.ok-chart .ct-bar-fill {
+  position: relative;
+}
+
+.ok-chart .ct-bar.is-missed {
+  background: var(--ok-danger-tint);
+}
+
+.ok-bar-value {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: 3px;
+  color: var(--ok-muted);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.ct-bar.is-today .ok-bar-value {
+  color: var(--ok-accent);
+}
+
+/* ---- Aylık takvim ---------------------------------------------------------- */
+.ok-calendar-head {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.ok-calendar-head .ok-card-title {
+  min-width: 130px;
+  text-align: center;
+}
+
+.ok-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ok-muted);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+
+.ok-icon-btn:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.ok-icon-btn:hover:not(:disabled) {
+  background: var(--ok-accent-tint);
+  color: var(--ok-accent);
+}
+
+.ok-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ok-icon-btn:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 1px;
+}
+
+.ok-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.ok-cal-weekdays {
+  margin: 4px 0 6px;
+  color: var(--ok-muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ok-cal-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f2f6;
+  color: var(--ok-text);
+  font: inherit;
+  line-height: 1.1;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+button.ok-cal-cell {
+  cursor: pointer;
+}
+
+button.ok-cal-cell:hover {
+  transform: scale(1.07);
+}
+
+button.ok-cal-cell:active {
+  transform: scale(0.94);
+}
+
+/* Ay okları takvimi yeniden kurar; ızgara ve başlık gidilen yönden kayarak gelir (okumalar-stats.js is-stepping ekler). */
+@keyframes ok-cal-step {
+  from {
+    opacity: 0;
+    transform: translateX(var(--ok-step-x, 0px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+button.ok-cal-cell:focus-visible {
+  outline: 3px solid var(--ok-accent);
+  outline-offset: 1px;
+}
+
+.ok-cal-cell.is-pad {
+  background: transparent;
+}
+
+.ok-cal-cell.is-future {
+  background: transparent;
+  color: #b4b9c4;
+}
+
+.ok-cal-day {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ok-cal-amount {
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.ok-cal-cell.is-today {
+  box-shadow: inset 0 0 0 2px var(--ok-accent);
+}
+
+.ok-cal-cell.is-missed {
+  background: var(--ok-danger-tint);
+  color: #a33c39;
+}
+
+.ok-cal-cell.lv-1,
+.ok-legend .lv-1,
+.ok-heat-grid .lv-1 {
+  background: #dfe1fb;
+}
+
+.ok-cal-cell.lv-2,
+.ok-legend .lv-2,
+.ok-heat-grid .lv-2 {
+  background: #b5b9f5;
+}
+
+.ok-cal-cell.lv-3,
+.ok-legend .lv-3,
+.ok-heat-grid .lv-3 {
+  background: #8288e6;
+}
+
+.ok-cal-cell.lv-4,
+.ok-legend .lv-4,
+.ok-heat-grid .lv-4 {
+  background: var(--ok-accent);
+}
+
+.ok-cal-cell.lv-3,
+.ok-cal-cell.lv-4 {
+  color: #fff;
+}
+
+.ok-cal-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--ok-muted);
+  font-size: 15px;
+}
+
+.ok-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 14px;
+}
+
+.ok-legend i {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.ok-legend i:first-of-type {
+  margin-left: 4px;
+}
+
+.ok-legend i:last-of-type {
+  margin-right: 4px;
+}
+
+/* ---- Alışkanlık takvimi (Sayfam ve Grup) ------------------------------------ */
+.ok-habit-calendar .ok-card-head {
+  align-items: center;
+}
+
+/* Paylaşılan resimde görünen "üye · alışkanlık" satırı; ekranda gizlidir. */
+.ok-habit-caption {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.ok-habit-pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ok-habit-select {
+  flex: 1 1 160px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--ok-border);
+  border-radius: 999px;
+  background: var(--ok-surface);
+  color: var(--ok-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.ok-habit-select:hover,
+.ok-habit-select:focus-visible {
+  border-color: var(--ok-accent);
+}
+
+.ok-habit-body {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.ok-habit-month {
+  justify-content: center;
+}
+
+.ok-habit-calendar.is-loading .ok-cal-grid:not(.ok-cal-weekdays) {
+  opacity: 0.45;
+}
+
+.ok-habit-calendar.is-stepping .ok-cal-grid:not(.ok-cal-weekdays),
+.ok-habit-calendar.is-stepping .ok-habit-month-label {
+  animation: ok-cal-step 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ok-habit-retry {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ok-accent);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---- Yıllık görünüm --------------------------------------------------------- */
+.ok-heat-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.ok-heat {
+  width: max-content;
+}
+
+.ok-heat-months,
+.ok-heat-grid {
+  display: grid;
+  grid-template-columns: repeat(53, 12px);
+  column-gap: 3px;
+}
+
+.ok-heat-months {
+  height: 16px;
+  color: var(--ok-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ok-heat-months span {
+  grid-row: 1;
+  white-space: nowrap;
+}
+
+.ok-heat-week {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  row-gap: 3px;
+}
+
+.ok-heat-week i {
+  border-radius: 3px;
+  background: #eceef3;
+}
+
+.ok-heat-week i.is-missed {
+  background: #f6d9d8;
+}
+
+.ok-heat-week i.is-future {
+  background: transparent;
+}
+
+/* ---- Rozetler -------------------------------------------------------------- */
+.ok-badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ok-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px;
+  border-radius: 14px;
+  background: #f4f5f9;
+  color: var(--ok-muted);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ok-badge-icon {
+  font-size: 26px;
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.ok-badge.is-earned {
+  background: var(--ok-accent-tint);
+  color: var(--ok-text);
+}
+
+.ok-badge.is-earned .ok-badge-icon {
+  filter: none;
+  opacity: 1;
+}
+
+/* ---- Çizgi grafik ---------------------------------------------------------- */
+.ok-line {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 8px;
+  overflow: visible;
+}
+
+.ok-line-grid {
+  stroke: var(--ok-border);
+  stroke-width: 1;
+}
+
+.ok-line-axis {
+  fill: var(--ok-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ok-line-area {
+  fill: var(--ok-accent-tint);
+}
+
+.ok-line-path {
+  fill: none;
+  stroke: var(--ok-accent);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.ok-line-dot {
+  fill: #fff;
+  stroke: var(--ok-accent);
+  stroke-width: 2;
+}
+
+.ok-line-dot.is-last {
+  fill: var(--ok-accent);
+}
+
+/* ---- Sıralı listeler (En uzun seriler ve Sıralama) ------------------------- */
+.ok-rank-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ok-rank-row {
+  display: grid;
+  grid-template-columns: 30px 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 6px;
+  border-radius: 12px;
+}
+
+.ok-rank-row + .ok-rank-row {
+  border-top: 1px solid var(--ok-border);
+}
+
+.ok-rank-row.is-me {
+  background: var(--ok-accent-tint);
+}
+
+.ok-rank-row.is-me + .ok-rank-row,
+.ok-rank-row + .ok-rank-row.is-me {
+  border-top-color: transparent;
+}
+
+.ok-rank-pos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ok-muted);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.ok-rank-pos img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.ok-rank-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.ok-rank-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ok-text);
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ok-rank-name small {
+  overflow: hidden;
+  color: var(--ok-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.ok-rank-value {
+  color: var(--ok-text);
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ok-rank-value small {
+  color: var(--ok-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .ok-stats-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .ok-stats-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ok-stats-4 .ok-stat {
+    padding-bottom: 12px;
+  }
+
+  .ok-stats-4 .ok-stat:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .ok-stats-4 .ok-stat:nth-child(n + 3) {
+    border-top: 1px solid var(--ok-border);
+  }
+
+  .ok-cal-grid {
+    gap: 4px;
+  }
+
+  .ok-cal-cell {
+    border-radius: 8px;
+  }
+
+  .ok-cal-day {
+    font-size: 15px;
+  }
+
+  .ok-cal-amount {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ok-habit-calendar.is-stepping .ok-cal-grid:not(.ok-cal-weekdays),
+  .ok-habit-calendar.is-stepping .ok-habit-month-label {
+    animation: none;
+  }
+
+  button.ok-cal-cell:hover,
+  button.ok-cal-cell:active,
+  .ok-icon-btn:active:not(:disabled) {
+    transform: none;
+  }
+}

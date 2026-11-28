@@ -21,9 +21,13 @@ const { createUploadMiddleware } = require('./middleware/uploads');
 const activityModels = require('./modules/activity/activity.models');
 const { registerActivityRoutes } = require('./modules/activity/activity.routes');
 const { createActivityService } = require('./modules/activity/activity.service');
+const { registerAnnouncementRoutes } = require('./modules/announcements/announcement.routes');
+const { createAnnouncementService } = require('./modules/announcements/announcement.service');
 const { createAuthMiddleware } = require('./modules/auth/auth.middleware');
 const { registerAdminAuthRoutes } = require('./modules/auth/admin-auth.routes');
 const { registerAuthRoutes } = require('./modules/auth/auth.routes');
+const { registerCeteleRoutes } = require('./modules/cetele/cetele.routes');
+const { createCeteleService } = require('./modules/cetele/cetele.service');
 const { handleLoginStreak } = require('./modules/auth/login-streak.service');
 const { registerContentRoutes } = require('./modules/content/content.routes');
 const { getContentCollection } = require('./modules/content/content-db');
@@ -51,6 +55,7 @@ const {
 } = require('./modules/pages/page.routes');
 const readingEditPolicy = require('./modules/readings/reading-edit-policy');
 const { registerReadingRoutes } = require('./modules/readings/reading.routes');
+const { createReadingSummaryService } = require('./modules/readings/reading-summary.service');
 const { registerHealthRoutes } = require('./modules/system/health.routes');
 const { createReverseGeocoder } = require('./integrations/geocoding/reverse-geocoder');
 const { registerTesbihatRoutes } =require('./modules/tesbihat/tesbihat.routes');
@@ -92,11 +97,33 @@ const tesbihatService = createTesbihatService({ reverseGeocode: createReverseGeo
 const tefekkurService = createTefekkurService({ models: inspirationModels, publicPath });
 const ilahiService = createIlahiService({ getCollection: getContentCollection });
 const videoService = createVideoService({ getCollection: getContentCollection });
+const ceteleService = createCeteleService({
+  UserGroup: groupModels.UserGroup,
+  activeUserQuery: userVisibility.activeUserQuery,
+  getGroupCollections: groupModels.getGroupCollections
+});
+const announcementService = createAnnouncementService({
+  getGroupCollections: groupModels.getGroupCollections,
+  istanbulDateKey: dateTime.istanbulDateKey
+});
+
+const readingSummaryService = createReadingSummaryService({
+  UserGroup: groupModels.UserGroup,
+  activeUserQuery: userVisibility.activeUserQuery,
+  getGroupCollections: groupModels.getGroupCollections,
+  isActiveUser: userVisibility.isActiveUser,
+  istanbulDateKey: dateTime.istanbulDateKey,
+  normalizeAmountType: groupSettings.normalizeAmountType,
+  normalizeReadingEditPolicy: readingEditPolicy.normalizeReadingEditPolicy,
+  shiftDateKey: dateTime.shiftDateKey
+});
 
 const routeDependencies = {
   ...activityModels,
   ...activityService,
+  ...announcementService,
   ...authMiddleware,
+  ...ceteleService,
   ...dateTime,
   ...dropboxService,
   ...groupModels,
@@ -110,6 +137,7 @@ const routeDependencies = {
   ...joinRequestModel,
   ...rateLimiters,
   ...readingEditPolicy,
+  ...readingSummaryService,
   ...tefekkurService,
   ...tesbihatService,
   ...uploadMiddleware,
@@ -139,6 +167,8 @@ registerGroupRoutes(app, routeDependencies);
 registerAuthRoutes(app, routeDependencies);
 registerUserRoutes(app, routeDependencies);
 registerReadingRoutes(app, routeDependencies);
+registerCeteleRoutes(app, routeDependencies);
+registerAnnouncementRoutes(app, routeDependencies);
 registerInvitationRoutes(app, routeDependencies);
 registerAdminAuthRoutes(app, routeDependencies);
 registerActivityRoutes(app, routeDependencies);

@@ -133,7 +133,8 @@ h3 {
     padding: 15px 24px;
     border-radius: 10px;
     color: #fff;
-    z-index: 10000;
+    /* Alttan açılan paneller (10050) ve hazır görsel pencereleri (10060) üstünde görünür */
+    z-index: 10100;
     font-size: 23px;
     font-weight: 500;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -154,19 +155,23 @@ h3 {
 .toast-info,
 .notification-info { background: #007bff; }
 
-.toast-streak { 
+.toast-streak {
+  top: 16px;
+  right: 16px;
+  padding: 9px 14px;
+  border-radius: 12px;
   background: linear-gradient(90deg, #ff9f0f 0%, #ff9800 100%);
   color: #fff;
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 8px 32px rgba(255, 152, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.2);
 }
 
 .toast.private-group-logout-toast {
-  z-index: 10020;
+  z-index: 10100;
 }
 
 .toast.profile-settings-toast {
-  z-index: 10020;
+  z-index: 10100;
 }
 
 
@@ -194,6 +199,10 @@ h3 {
     font-size: 16px;
     text-align: center;
     animation: toastSlideUp 0.3s ease;
+  }
+
+  .toast.toast-streak {
+    text-align: left;
   }
 
   .toast-hide,

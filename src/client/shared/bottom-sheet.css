@@ -1,0 +1,150 @@
+/* Alttan açılan panel (bottom sheet) */
+body.rk-sheet-open {
+  overflow: hidden;
+}
+
+.rk-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(17, 20, 38, 0);
+  transition: background 0.25s ease;
+}
+
+.rk-sheet-backdrop.is-open {
+  background: rgba(17, 20, 38, 0.48);
+}
+
+.rk-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(480px, 100%);
+  max-height: min(86vh, 760px);
+  box-sizing: border-box;
+  border-radius: 22px;
+  background: #fff;
+  color: #1d2433;
+  font-family: inherit;
+  box-shadow: 0 24px 60px rgba(17, 20, 38, 0.28);
+  opacity: 0;
+  transform: translateY(16px) scale(0.98);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  will-change: transform, opacity;
+}
+
+.rk-sheet-backdrop.is-open .rk-sheet {
+  opacity: 1;
+  transform: none;
+}
+
+.rk-sheet.is-dragging {
+  transition: none;
+}
+
+.rk-sheet-handle {
+  display: none;
+  width: 44px;
+  height: 5px;
+  margin: 10px auto 0;
+  border-radius: 999px;
+  background: #d4d8df;
+  touch-action: none;
+  cursor: grab;
+}
+
+.rk-sheet-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 20px 8px;
+}
+
+.rk-sheet-headings {
+  flex: 1;
+  min-width: 0;
+}
+
+.rk-sheet-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #1d2433;
+}
+
+.rk-sheet-subtitle {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: #5b6472;
+}
+
+.rk-sheet-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f2f6;
+  color: #3b4252;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.rk-sheet-close:hover {
+  background: #e6e8ef;
+}
+
+.rk-sheet-close:focus-visible {
+  outline: 3px solid #4e54c8;
+  outline-offset: 2px;
+}
+
+.rk-sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  transition: opacity 0.25s ease;
+}
+
+/* Panel önce tam boyuyla açılır, içerik sonra gelir. */
+.rk-sheet:not(.is-ready) .rk-sheet-body {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .rk-sheet-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .rk-sheet {
+    width: 100%;
+    max-height: 88vh;
+    border-radius: 22px 22px 0 0;
+    transform: translateY(100%);
+  }
+
+  .rk-sheet-handle {
+    display: block;
+  }
+
+  .rk-sheet-header {
+    padding-top: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-sheet,
+  .rk-sheet-body,
+  .rk-sheet-backdrop {
+    transition: none;
+  }
+}

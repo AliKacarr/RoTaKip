@@ -27,6 +27,19 @@
         }
     };
 
+    // Profil fotoğrafları (Dropbox) parça parça çizilmesin: `rk-fade` sınıfı yüklenene kadar görseli gizler,
+    // tamamen inince yumuşakça gösterir. Daha önce yüklenmiş adresler baştan `is-loaded` alır (yeniden çizimde titreme olmaz).
+    const loadedPhotos = new Set();
+    window.photoFadeClass = function photoFadeClass(src) {
+        return loadedPhotos.has(src) ? 'rk-fade is-loaded' : 'rk-fade';
+    };
+    document.addEventListener('load', event => {
+        const image = event.target;
+        if (!image || image.tagName !== 'IMG' || !image.classList.contains('rk-fade')) return;
+        loadedPhotos.add(image.getAttribute('src'));
+        image.classList.add('is-loaded');
+    }, true);
+
     window.safeExternalUrl = function safeExternalUrl(value, fallback = '') {
         if (typeof value !== 'string' || !value.trim()) return fallback;
         try {
@@ -67,17 +80,6 @@ window.ensureHtml2Canvas = window.ensureHtml2Canvas || async function ensureHtml
         () => typeof window.html2canvas !== 'undefined'
     );
     return window.html2canvas;
-};
-
-window.ensureChartLibraries = window.ensureChartLibraries || async function ensureChartLibraries() {
-    await window.loadExternalScriptOnce(
-        'https://cdn.jsdelivr.net/npm/chart.js',
-        () => typeof window.Chart !== 'undefined'
-    );
-    await window.loadExternalScriptOnce(
-        'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0',
-        () => typeof window.ChartDataLabels !== 'undefined'
-    );
 };
 
 const deferredScriptLoads = new Map();
@@ -123,8 +125,18 @@ function runAfterPageLoadWhenIdle(task, timeout = 4000) {
     }
 }
 
+// Google Analytics yalnızca çerezleri kabul eden ziyaretçilerde yüklenir (cookies.js `cookieConsent` değerini yazar).
+function hasAnalyticsConsent() {
+    try {
+        return localStorage.getItem('cookieConsent') === 'accepted';
+    } catch (_) {
+        return false;
+    }
+}
+
 window.loadGoogleAnalytics = async function loadGoogleAnalytics() {
     if (window.googleAnalyticsInitialized) return;
+    if (!hasAnalyticsConsent()) return;
     window.googleAnalyticsInitialized = true;
 
     const measurementId = 'G-VDTE86G15P';

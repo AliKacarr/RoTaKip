@@ -1090,6 +1090,10 @@ async function openProfileModal() {
     const profileModal = document.getElementById('profileModal');
     if (!profileModal) return;
 
+    // Başlık simgesi: yöneticide kalkanlı kullanıcı
+    const titleIcon = document.getElementById('profileModalTitleIcon');
+    if (titleIcon) titleIcon.className = LocalStorageManager.isAdmin() ? 'fa-solid fa-user-shield' : 'fa-solid fa-user';
+
     // Önce modalı aç
     profileModal.style.display = 'flex';
     

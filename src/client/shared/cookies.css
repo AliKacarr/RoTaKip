@@ -121,41 +121,42 @@
     }
 
     .cookie-content {
-        padding: 18px 16px 16px;
+        padding: 14px 14px 12px;
     }
 
     .cookie-header {
-        margin-bottom: 9px;
+        margin-bottom: 6px;
     }
 
     .cookie-icon {
-        margin-right: 10px;
-        font-size: 26px;
+        margin-right: 8px;
+        font-size: 22px;
         line-height: 1;
     }
 
     .cookie-header h3 {
-        font-size: 20px !important;
+        font-size: 17px !important;
         line-height: 1.25;
     }
 
     .cookie-content p {
-        margin-bottom: 14px;
-        font-size: 15px;
-        line-height: 1.5;
+        margin-bottom: 10px;
+        font-size: 13px;
+        line-height: 1.45;
     }
 
     .cookie-buttons {
-        gap: 10px;
+        gap: 8px;
         margin-top: 0;
     }
 
     .cookie-button {
         min-width: 0;
-        min-height: 44px;
+        min-height: 36px;
         flex: 1 1 0;
-        padding: 10px 12px;
-        font-size: 16px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 14px;
         line-height: 1.2;
     }
 }

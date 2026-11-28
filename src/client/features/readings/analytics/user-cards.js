@@ -1,427 +1,513 @@
-window.addEventListener('rotakip:amount-type-changed', function () {
-  if (typeof window.loadUserCards === 'function') {
-    window.loadUserCards();
+/*
+ * Okumalar › Grup bölümünün başındaki Sıralama (okuma alanına göre).
+ * "Bugün" (bugün kim ne kadar okudu, okumayanlar altta), "Bu ay" (her ay sıfırlanır: okunan gün, eşitlikte miktar),
+ * "Geçmiş aylar" (ay seçilir, aynı ölçüt), ve "Toplam" (lig: toplam okuma günü) anahtarları. İlk üçte madalya, giriş yapan üyenin satırı vurgulanır.
+ * Satıra dokununca üyenin özeti alttan açılır; yönetici oradan üyenin gününü doldurabilir.
+ * Eski giriş noktası window.loadUserCards korunur.
+ */
+(function initializeOkumalarRanking() {
+  const metrics = () => window.RoTaKipReadingMetrics;
+  const MODES = [
+    ['today', 'Bugün'],
+    ['month', 'Bu ay'],
+    ['past', 'Geçmiş aylar'],
+    ['total', 'Toplam']
+  ];
+  const MODE_KEYS = MODES.map(([key]) => key);
+  const LEGACY_MODES = { league: 'total', promotion: 'total', total: 'total', month: 'month', percentage: 'total', name: 'total' };
+  const MEDALS = { 1: 'birincilik.webp', 2: 'ikincilik.webp', 3: 'üçüncülük.webp' };
+  let frame = null;
+  let dirty = true;
+  let bound = false;
+  // Kullanıcı ölçüt/ay değiştirdiğinde bir sonraki çizim animasyonla gelir (veri tazelemelerinde animasyon yok).
+  let animateNext = false;
+
+  function esc(value) {
+    return typeof window.escapeHtml === 'function'
+      ? window.escapeHtml(String(value ?? ''))
+      : String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
   }
-});
 
-window.loadUserCards = async function loadUserCards(options = {}) {
-  console.log('🔍 User Cards Loading...');
-  const container = document.querySelector('.user-cards-container');
-  if (!container) return;
-  const section = document.querySelector('.user-cards-section');
-
-  function observeRevealToggle(el) {
-    if (el) el.classList.add('visible');
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString('tr-TR', { maximumFractionDigits: 1 });
   }
 
-  try {
-    // Global store'dan tüm kullanıcı ve okuma verilerini çek
-    const allData = window.globalDataStore ? window.globalDataStore.getAllData() : { users: [], stats: [] };
-    const { users = [], stats = [] } = allData;
-    const streaks = window.globalDataStore ? window.globalDataStore.getLongestStreaks() : [];
-    const monthNamesTr = [
-      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-    ];
-    const nowTr = new Date();
-    nowTr.setHours(nowTr.getHours() + 3);
-    const currentMonthKey = nowTr.getFullYear() + '-' + String(nowTr.getMonth() + 1).padStart(2, '0');
-    const currentMonthLabel = monthNamesTr[nowTr.getMonth()];
-    const amountType = typeof window.getCurrentAmountType === 'function'
-      ? window.getCurrentAmountType()
-      : 'sayfa';
-    const amountTypeLabel = typeof window.getCurrentAmountTypeLabel === 'function'
-      ? window.getCurrentAmountTypeLabel()
-      : 'Sayfa';
+  function avatarSrc(user) {
+    return typeof window.safeImageSrc === 'function'
+      ? window.safeImageSrc(user && user.profileImage, '/images/default.png')
+      : '/images/default.png';
+  }
 
-    // Giriş yapılan kullanıcı bilgisi
-    const currentUserInfo = LocalStorageManager.getCurrentUserInfo();
-    const sortBar = document.querySelector('.leaderboard-sort-bar');
-    const sortButtons = sortBar ? Array.from(sortBar.querySelectorAll('.leaderboard-sort-button')) : [];
-    const validSortModes = ['league', 'promotion', 'total', 'month', 'percentage', 'name'];
-    const groupSortKey = `leaderboardSort:${window.groupid || 'default'}`;
-    let sortMode = localStorage.getItem(groupSortKey) || 'league';
-    if (!validSortModes.includes(sortMode)) sortMode = 'league';
-    const monthSortLabel = sortBar ? sortBar.querySelector('.leaderboard-current-month-label') : null;
-    const totalSortLabel = sortBar ? sortBar.querySelector('.leaderboard-total-amount-label') : null;
-    if (totalSortLabel) totalSortLabel.textContent = `Toplam ${amountTypeLabel}`;
-    if (monthSortLabel) monthSortLabel.textContent = `${currentMonthLabel} ${amountTypeLabel}`;
+  function amountUnit() {
+    return typeof window.getCurrentAmountType === 'function' ? window.getCurrentAmountType() : 'sayfa';
+  }
 
-    function applySortControlState(mode) {
-      sortButtons.forEach(button => {
-        const isActive = button.dataset.sort === mode;
-        button.classList.toggle('is-active', isActive);
-        button.setAttribute('aria-pressed', String(isActive));
-      });
+  function currentUser() {
+    return typeof LocalStorageManager !== 'undefined' ? LocalStorageManager.getCurrentUserInfo() : null;
+  }
+
+  // Giriş yapmamış ziyaretçi yalnız "Bu ayın sıralaması" kartını görür (en çok okuyandan başlayarak).
+  function isGuest() {
+    return !currentUser();
+  }
+
+  const GUEST_LIMIT = 10;
+
+  function guestAmount(value) {
+    const amount = Math.round(Number(value) || 0);
+    return amountUnit() === 'dakika' ? `${amount} dk` : `${amount} ${amountUnit()}`;
+  }
+
+  // Günlük ortalama: dakikada "2 saat 13 dk." biçimi, sayfada "12 sayfa".
+  function guestAverage(value) {
+    const amount = Math.round(Number(value) || 0);
+    if (amountUnit() !== 'dakika') return `${amount} ${amountUnit()}`;
+    if (amount < 60) return `${amount} dk.`;
+    const hours = Math.floor(amount / 60);
+    const rest = amount % 60;
+    return rest ? `${hours} saat ${rest} dk.` : `${hours} saat`;
+  }
+
+  function guestRowMarkup(row, index) {
+    const position = MEDALS[row.position]
+      ? `<img src="/images/${MEDALS[row.position]}" alt="${row.position}." width="26" height="26">`
+      : row.position;
+    const league = row.league;
+    const small = league ? esc(league.name) : '';
+    const avatar = avatarSrc(row.user);
+    const average = row.month.amount / Math.max(1, new Date().getDate());
+    return `
+      <li class="ok-rank-row ok-ranking-row">
+        <span class="ok-rank-pos">${position}</span>
+        <span class="ok-rank-ring"><img class="ok-rank-avatar ${window.photoFadeClass(avatar)}" src="${esc(avatar)}" alt="" width="36" height="36" loading="lazy" decoding="async" onerror="this.src='/images/default.png'"></span>
+        <span class="ok-rank-name"><span class="ok-rank-label">${esc(row.user.name)}</span>
+          <small>${small}</small>
+        </span>
+        <span class="ok-rank-score"><strong class="ok-rank-value">${esc(guestAmount(row.month.amount))}</strong><span class="ok-rank-sub">${index === 0 ? 'Günlük ' : ''}${esc(guestAverage(average))}</span></span>
+      </li>`;
+  }
+
+  function guestListMarkup(rows) {
+    const readers = rows.filter(row => row.month.amount > 0).slice(0, GUEST_LIMIT);
+    if (!readers.length) return '<li class="ok-empty">Bu ay henüz okuma kaydı yok.</li>';
+    return readers.map(guestRowMarkup).join('');
+  }
+
+  // Misafir kartının altındaki "Yöneticiler" kartı. Grubu ilk açan (en eski) yönetici "Sahip" sayılır.
+  function renderGuestAdmins(root, guest) {
+    let card = document.getElementById('okumalarGuestAdmins');
+    const admins = guest
+      ? window.globalDataStore.getUsers().filter(user => user.authority === 'admin')
+        .sort((a, b) => String(a._id).localeCompare(String(b._id)))
+      : [];
+    if (!admins.length) {
+      card?.remove();
+      return;
     }
-
-    function selectSortMode(mode) {
-      if (!validSortModes.includes(mode) || localStorage.getItem(groupSortKey) === mode) return;
-      localStorage.setItem(groupSortKey, mode);
-      applySortControlState(mode);
-      window.loadUserCards();
+    if (!card) {
+      card = document.createElement('article');
+      card.className = 'ok-card ok-guest-admins';
+      card.id = 'okumalarGuestAdmins';
+      root.appendChild(card);
     }
+    card.innerHTML = `
+      <h3 class="ok-guest-admins-title">Yöneticiler <span>· ${admins.length}</span></h3>
+      <ul class="ok-guest-admin-list">${admins.map((user, index) => {
+        const avatar = avatarSrc(user);
+        return `<li class="ok-guest-admin">
+          <span class="ok-guest-admin-ring"><img class="${window.photoFadeClass(avatar)}" src="${esc(avatar)}" alt="" width="36" height="36" loading="lazy" decoding="async" onerror="this.src='/images/default.png'"></span>
+          <span class="ok-guest-admin-text"><strong>${esc(user.name)}</strong>${index === 0 ? '<em class="is-owner">Sahip</em>' : '<em>Yönetici</em>'}</span>
+        </li>`;
+      }).join('')}</ul>`;
+  }
 
-    applySortControlState(sortMode);
-    if (sortBar && sortBar.dataset.sortBound !== '1') {
-      sortBar.dataset.sortBound = '1';
-      sortButtons.forEach(button => {
-        button.addEventListener('click', () => selectSortMode(button.dataset.sort));
-      });
+  function storageKey() {
+    return `leaderboardSort:${window.groupid || 'default'}`;
+  }
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey());
+      return MODE_KEYS.includes(saved) ? saved : (LEGACY_MODES[saved] || 'month');
+    } catch (_error) {
+      return 'month';
     }
+  }
 
-    const readDayCounts = new Map();
-    const totalReadAmounts = new Map();
-    const monthlyReadAmounts = new Map();
-    const readingStatsByUser = new Map();
-    stats.forEach(stat => {
-      const userId = String(stat.userId);
-      if (stat.status === 'okudum' || stat.status === 'okumadım') {
-        if (!readingStatsByUser.has(userId)) readingStatsByUser.set(userId, []);
-        readingStatsByUser.get(userId).push(stat);
-      }
-      if (stat.status === 'okudum') {
-        readDayCounts.set(userId, (readDayCounts.get(userId) || 0) + 1);
-      }
-      const amount = typeof parseFiniteAmount === 'function'
-        ? parseFiniteAmount(stat.amount)
-        : Number(stat.amount);
-      if (Number.isFinite(amount) && amount > 0) {
-        totalReadAmounts.set(userId, (totalReadAmounts.get(userId) || 0) + amount);
-        if (String(stat.date || '').slice(0, 7) === currentMonthKey) {
-          monthlyReadAmounts.set(userId, (monthlyReadAmounts.get(userId) || 0) + amount);
-        }
-      }
-    });
-    const getReadDayCount = user => readDayCounts.get(String(user._id)) || 0;
-    const getTotalReadAmount = user => totalReadAmounts.get(String(user._id)) || 0;
-    const getMonthlyReadAmount = user => monthlyReadAmounts.get(String(user._id)) || 0;
-    const getReadPercentage = user => {
-      const userStats = readingStatsByUser.get(String(user._id)) || [];
-      return userStats.length > 0 ? getReadDayCount(user) / userStats.length : 0;
+  function saveMode(mode) {
+    try {
+      localStorage.setItem(storageKey(), mode);
+    } catch (_error) {
+      // Depolama kapalıysa seçim yalnız bu oturumda kalır.
+    }
+  }
+
+  let mode = null;
+  let modeGroup = null;
+  let pastMonth = null; // "YYYY-MM"; Geçmiş aylar görünümünde seçili ay
+
+  function sectionVisible() {
+    const section = document.getElementById('okumalarBolumGrup');
+    return Boolean(section && !section.hidden);
+  }
+
+  function shortDate(key) {
+    if (!key) return '–';
+    const date = metrics().parseKey(key);
+    return `${date.getDate()} ${metrics().MONTH_NAMES[date.getMonth()].slice(0, 3)}`;
+  }
+
+  function longDate(key) {
+    if (!key) return '–';
+    const date = metrics().parseKey(key);
+    return `${date.getDate()} ${metrics().MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  function relativeDay(key) {
+    if (!key) return '';
+    const today = metrics().todayKey();
+    if (key === today) return 'bugün';
+    if (key === metrics().addDays(today, -1)) return 'dün';
+    const diff = Math.round((metrics().parseKey(today) - metrics().parseKey(key)) / 86400000);
+    return `${diff} gün önce`;
+  }
+
+  function isAdmin() {
+    const user = currentUser();
+    return Boolean(user && user.userAuthority === 'admin');
+  }
+
+  // Bugünün durumu: okudum (miktar) / çetelenin diğer alanları doldu / okumadım / boş.
+  function todayState(user, records) {
+    const today = metrics().todayKey();
+    const record = records.find(item => item.date === today);
+    const read = Boolean(record && record.status === 'okudum');
+    const missed = Boolean(record && record.status === 'okumadım');
+    const cetele = window.RoTaKipCetele;
+    const filled = Boolean(cetele && cetele.loaded && cetele.getEntry(user._id, today));
+    const amount = read && record.amount != null && Number.isFinite(Number(record.amount)) ? Number(record.amount) : null;
+    return { read, missed, filled, amount, rank: read ? 0 : filled ? 1 : missed ? 2 : 3 };
+  }
+
+  function todayExtras(userId) {
+    const cetele = window.RoTaKipCetele;
+    if (!cetele || !cetele.loaded) return '';
+    const values = cetele.getEntry(userId, metrics().todayKey())?.values;
+    if (!values) return '';
+    return cetele.extraFields()
+      .filter(field => field.type === 'sayi' && Number.isFinite(Number(values[field.key])) && Number(values[field.key]) > 0)
+      .slice(0, 3)
+      .map(field => `${esc(field.label)} ${formatNumber(values[field.key])}${field.unit ? ` ${esc(field.unit)}` : ''}`)
+      .join(' · ');
+  }
+
+  function summarize(user) {
+    const records = window.globalDataStore ? window.globalDataStore.getStatsForUser(String(user._id)) : [];
+    const total = metrics().totalReadDays(records);
+    const missed = records.filter(record => record.status === 'okumadım').length;
+    const month = metrics().monthSummary(records);
+    const best = metrics().longestStreak(records);
+    const lastRead = records.reduce((latest, record) => (record.status === 'okudum' && record.date > latest ? record.date : latest), '');
+    return {
+      user,
+      records,
+      today: todayState(user, records),
+      past: pastMonth ? metrics().monthSummary(records, `${pastMonth}-01`) : { days: 0, amount: 0 },
+      total,
+      missed,
+      rate: total + missed > 0 ? Math.round((total / (total + missed)) * 100) : 0,
+      month,
+      amount: metrics().totalAmount(records),
+      streak: metrics().currentStreak(records),
+      best,
+      lastRead,
+      league: metrics().leagueFor(total)
     };
-    const longestStreakDetailsByUser = new Map();
-    (streaks || []).forEach(item => {
-      const userId = item.userId || item._id;
-      if (userId != null) {
-        longestStreakDetailsByUser.set(String(userId), item);
-      }
-    });
-    const leagues = window.ROTAKIP_LEAGUES;
-    const nextLeagueLimits = leagues.slice(1).map(league => league.min);
-    const daysUntilNextLeague = user => {
-      const count = getReadDayCount(user);
-      const nextLimit = nextLeagueLimits.find(limit => count < limit);
-      return nextLimit == null ? Number.POSITIVE_INFINITY : nextLimit - count;
-    };
-    const turkishCollator = new Intl.Collator('tr-TR', { sensitivity: 'base' });
-    const compareByName = (a, b) => turkishCollator.compare(a.name || '', b.name || '');
-
-    // Global store dizisini değiştirmeden yalnızca kartların gösterim sırasını oluştur.
-    const orderedUsers = [...users].sort((user1, user2) => {
-      if (sortMode === 'name') {
-        return compareByName(user1, user2) || getReadDayCount(user2) - getReadDayCount(user1);
-      }
-      if (sortMode === 'promotion') {
-        return daysUntilNextLeague(user1) - daysUntilNextLeague(user2)
-          || getReadDayCount(user2) - getReadDayCount(user1)
-          || compareByName(user1, user2);
-      }
-      if (sortMode === 'total') {
-        return getTotalReadAmount(user2) - getTotalReadAmount(user1)
-          || getReadDayCount(user2) - getReadDayCount(user1)
-          || compareByName(user1, user2);
-      }
-      if (sortMode === 'month') {
-        return getMonthlyReadAmount(user2) - getMonthlyReadAmount(user1)
-          || getTotalReadAmount(user2) - getTotalReadAmount(user1)
-          || compareByName(user1, user2);
-      }
-      if (sortMode === 'percentage') {
-        return getReadPercentage(user2) - getReadPercentage(user1)
-          || getReadDayCount(user2) - getReadDayCount(user1)
-          || compareByName(user1, user2);
-      }
-      return getReadDayCount(user2) - getReadDayCount(user1) || compareByName(user1, user2);
-    });
-
-    // Mevcut kartları bir Map olarak tut
-    const existingCards = new Map();
-    container.querySelectorAll('.user-card[data-user-id]').forEach(card => {
-      existingCards.set(card.getAttribute('data-user-id'), card);
-    });
-    // Güncel kullanıcı ID'lerini tut
-    const currentUserIds = orderedUsers.map(u => u._id);
-
-    // Artık olmayan kullanıcıların kartlarını kaldır
-    existingCards.forEach((card, userId) => {
-      if (!currentUserIds.includes(userId)) {
-        card.remove();
-      }
-    });
-
-    /** Bugünden geriye ardışık "okudum" gün sayısı (kart ve lig tebriği için ortak) */
-    function calculateStreakForUser(stats) {
-      if (!stats || stats.length === 0) return 0;
-      const statMap = {};
-      stats.forEach(s => { statMap[s.date] = s.status; });
-
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      const todayKey = `${year}-${month}-${day}`;
-      const todayStatus = statMap[todayKey];
-      let streak = 0;
-      let currentDate;
-
-      if (todayStatus === 'okudum') {
-        currentDate = todayKey;
-      } else if (todayStatus === 'okumadım') {
-        return 0;
-      } else {
-        const d = new Date(todayKey);
-        d.setDate(d.getDate() - 1);
-        const prevYear = d.getFullYear();
-        const prevMonth = String(d.getMonth() + 1).padStart(2, '0');
-        const prevDay = String(d.getDate()).padStart(2, '0');
-        currentDate = `${prevYear}-${prevMonth}-${prevDay}`;
-      }
-
-      while (true) {
-        if (statMap[currentDate] === 'okudum') {
-          streak++;
-          const d = new Date(currentDate);
-          d.setDate(d.getDate() - 1);
-          const prevYear = d.getFullYear();
-          const prevMonth = String(d.getMonth() + 1).padStart(2, '0');
-          const prevDay = String(d.getDate()).padStart(2, '0');
-          currentDate = `${prevYear}-${prevMonth}-${prevDay}`;
-        } else {
-          break;
-        }
-      }
-      return streak;
-    }
-
-    function formatDateTurkish(dateStr) {
-      if (!dateStr) return '-';
-      const [year, month, day] = dateStr.split('-').map(Number);
-      const date = new Date(year, (month || 1) - 1, day || 1);
-      return date.toLocaleDateString('tr-TR', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-    }
-
-    function getRelativeReadText(dateStr) {
-      if (!dateStr) return '';
-      const [year, month, day] = dateStr.split('-').map(Number);
-      const readDate = new Date(year, (month || 1) - 1, day || 1);
-      readDate.setHours(0, 0, 0, 0);
-
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const diffMs = now - readDate;
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-      if (diffDays <= 0) return 'Bugün';
-      if (diffDays === 1) return 'Dün';
-      return `${diffDays} gün önce`;
-    }
-
-    orderedUsers.forEach(user => {
-      const userId = String(user._id);
-      const userStats = readingStatsByUser.get(userId) || [];
-      const okudumStats = userStats.filter(s => s.status === 'okudum');
-      const totalDays = userStats.length;
-      const okudumDays = okudumStats.length;
-      const amountTotal = totalReadAmounts.get(userId) || 0;
-      const amountThisMonth = monthlyReadAmounts.get(userId) || 0;
-      const amountSummaryHtml = amountTotal > 0
-        ? `<span class="progress-summary progress-summary-amount">
-          <span class="summary-count"><span class="progress-summary-amount-count">${amountTotal}</span><span class="progress-summary-amount-mark">✔</span></span>
-          <span class="summary-label"> Toplam ${amountType}</span>
-        </span>`
-        : '';
-      const lastReadDate = okudumStats.length > 0
-        ? okudumStats.reduce((latest, stat) => (stat.date > latest ? stat.date : latest), okudumStats[0].date)
-        : '';
-
-      // Lig belirle
-      const league = leagues.find(l => okudumDays >= l.min && okudumDays < l.max) || leagues[leagues.length - 1];
-
-      const streak = calculateStreakForUser(userStats);
-
-      // Progress bar
-      const percent = totalDays > 0 ? Math.round((okudumDays / totalDays) * 100) : 0;
-
-      // En uzun seri
-      const userStreak = longestStreakDetailsByUser.get(userId);
-      const longestStreakDays = userStreak && userStreak.streak > 0 ? userStreak.streak : 0;
-      let longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span>-`;
-      if (userStreak && userStreak.streak > 0) {
-        const start = userStreak.startDate ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
-        const end = userStreak.endDate ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '';
-        longestStreakText = `<span class="streak-icon">⚡</span><span class="streak-icon-label">En uzun seri: </span><span class="streak-range">${start} - ${end}</span>`;
-      }
-      // Lig bilgisi için gösterim
-      const leagueProgressText = `${okudumDays}/${league.max}`;
-      const headerBg = league.bg || "#fff";
-
-
-      // Section'ı göster
-      if (section) {
-        section.style.display = 'block';
-        section.classList.add('visible');
-      }
-
-      if (sortBar) {
-        sortBar.style.display = 'flex';
-        observeRevealToggle(sortBar);
-        window.observeReadingScrollReveal?.(sortBar);
-      }
-
-      // User cards header'ı da göster
-      const userCardsHeader = document.querySelector('.user-cards-header');
-      if (userCardsHeader) {
-        userCardsHeader.style.display = 'block';
-        userCardsHeader.classList.add('visible');
-      }
-      const userCardsTitle = document.querySelector('.user-cards-title');
-      window.observeReadingScrollReveal?.(userCardsTitle);
-
-      container.style.display = 'flex';
-
-      // Kart zaten varsa, içeriğini güncelle
-      let card = container.querySelector(`.user-card[data-user-id="${user._id}"]`);
-      if (!card) {
-        card = document.createElement('div');
-        card.className = 'user-card';
-        card.setAttribute('data-user-id', user._id);
-
-        // Giriş yapılan kullanıcı için özel class ekle
-        if (currentUserInfo && currentUserInfo.userId === user._id) {
-          card.classList.add('current-user-card');
-        }
-
-        card.classList.add('card-fade-in');
-      } else {
-        // Giriş yapılan kullanıcı için özel class ekle
-        if (currentUserInfo && currentUserInfo.userId === user._id) {
-          card.classList.add('current-user-card');
-        } else {
-          card.classList.remove('current-user-card');
-        }
-
-        card.classList.add('card-fade-in');
-      }
-
-      // Kullanıcılar sıralandıktan sonra kartların DOM sırasını da güncelle.
-      // appendChild mevcut bir elementi sona taşıdığı için yeniden sıralama sağlar.
-      container.appendChild(card);
-
-      card.innerHTML = `
-      <div class="user-card-header" style="background: ${headerBg};">
-        <div class="profile-img-wrapper">
-          <img class="profile-img profile-img-loading" src="${window.escapeHtml(window.safeImageSrc(user.profileImage))}" alt="${window.escapeHtml(user.name)}" loading="lazy" decoding="async" onload="this.classList.remove('profile-img-loading')" onerror="this.classList.remove('profile-img-loading'); this.src='/images/default.png'">
-        </div>
-        <div class="user-card-header-content">
-          <div class="user-card-user-name">${window.escapeHtml(user.name)}</div>
-          <div class="user-league">${league.name}</div>
-        </div>
-        <button type="button" class="share-icon-wrapper" aria-label="${window.escapeHtml(user.name)} kullanıcısının okuma bilgilerini paylaş">
-          <img class="share-icon" src="/images/share.webp" alt="Paylaş">
-        </button>
-        <div class="league-badge-group">
-          <div class="league-badge" title="${league.name} Ligi:  ${league.min} - ${league.max - 1} gün arası okuma">
-            <img src="/images/${league.img}" alt="${league.name}">
-          </div>
-          <div class="league-progress-text">${leagueProgressText}</div>
-        </div>
-      </div>
-      <div class="progress-summary-row">
-        <div class="progress-summary-column">
-          ${amountSummaryHtml}
-          <span class="progress-summary progress-summary-days">
-            <span class="summary-count"><span class="progress-summary-okudum-count">${okudumDays}</span><span class="progress-summary-total-count">/${totalDays}</span><span class="progress-summary-days-star" aria-hidden="true">🌟</span></span>
-            <span class="summary-label"> Gün okuma</span>
-          </span>
-        </div>
-        <div class="streak-info">
-          <span class="user-card-fire-emoji">⭐</span>
-          <span class="user-card-fire-label">${streak}</span>
-        </div>
-      </div>
-      <div class="progress-bar-container">
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" style="width:${percent}%;"></div>
-        </div>
-        <span class="progress-percent">%${percent}</span>
-      </div>
-      <div class="user-card-last-read">📅 <span class="last-read-label">Son okuma:</span> ${lastReadDate ? formatDateTurkish(lastReadDate) : '-'}</div>
-      <div class="user-card-longest-streak">${longestStreakText}</div>
-    `;
-      // Paylaşım ikonu click event ekle
-      const shareIconWrapper = card.querySelector('.share-icon-wrapper');
-      if (shareIconWrapper) {
-        shareIconWrapper.addEventListener('click', function () {
-          const okunmayanGun = totalDays - okudumDays;
-          const basariOrani = percent;
-          let sonOkumaMetni = '-';
-          if (lastReadDate) {
-            sonOkumaMetni = `${formatDateTurkish(lastReadDate)} (${getRelativeReadText(lastReadDate)})`;
-          }
-          let longestStreakShare = '-';
-          if (longestStreakDays > 0) {
-            const start = userStreak.startDate
-              ? new Date(userStreak.startDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
-              : '';
-            const end = userStreak.endDate
-              ? new Date(userStreak.endDate).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
-              : '';
-            longestStreakShare = `${longestStreakDays} gün${start && end ? ` (${start} - ${end})` : ''}`;
-          }
-          let amountShareBlock = '';
-          if (amountThisMonth > 0 || amountTotal > 0) {
-            const amountLines = [];
-            if (amountTotal > 0) {
-              amountLines.push(`*Toplam okumanız:* ${amountTotal} ${amountType},`);
-            }
-            if (amountThisMonth > 0) {
-              amountLines.push(`*${currentMonthLabel} ayı okumanız:* ${amountThisMonth} ${amountType},`);
-            }
-            amountShareBlock = amountLines.join('\n') + '\n\n';
-          }
-          const shareMessage = `*Genel okuma durumunuz:*\n\n${amountShareBlock}*Okunan gün:* ${okudumDays},\n*Okunmayan gün:* ${okunmayanGun},\n*Başarı oranı:* %${basariOrani},\n\n*Mevcut seri:* ${streak} gün,\n*En uzun seri:* ${longestStreakShare},\n*Son okuma:* ${sonOkumaMetni}`;
-
-          // Web Share API veya panoya kopyala
-          if (navigator.share) {
-            navigator.share({
-              title: 'Kullanıcının Okuma Bilgileri',
-              text: shareMessage,
-            }).catch(() => {});
-          } else {
-            navigator.clipboard.writeText(shareMessage).then(() => {
-              alert('Paylaşım metni panoya kopyalandı!');
-            }).catch(err => {
-              console.error('Kopyalama hatası:', err);
-              alert('Metin panoya kopyalanamadı.');
-            });
-          }
-        });
-      }
-
-      if (options.animateRefresh === true) {
-        window.replayReadingContentReveal?.(card);
-      } else {
-        window.observeReadingScrollReveal?.(card);
-      }
-    });
-
-  } catch (error) {
-    console.error('Kullanıcı kartları yüklenirken hata oluştu:', error);
   }
-}
+
+  const collator = new Intl.Collator('tr-TR', { sensitivity: 'base' });
+
+  function compare(a, b) {
+    if (mode === 'guest') {
+      return b.month.amount - a.month.amount || b.month.days - a.month.days || b.total - a.total;
+    }
+    if (mode === 'today') {
+      return a.today.rank - b.today.rank || (b.today.amount || 0) - (a.today.amount || 0);
+    }
+    if (mode === 'past') {
+      return b.past.days - a.past.days || b.past.amount - a.past.amount || b.total - a.total;
+    }
+    if (mode === 'month') {
+      return b.month.days - a.month.days || b.month.amount - a.month.amount || b.total - a.total;
+    }
+    return b.total - a.total || b.amount - a.amount;
+  }
+
+  // Eşit skorlar aynı sırayı paylaşır (1, 2, 2, 4).
+  function rank(rows) {
+    const sorted = rows.slice().sort((a, b) => compare(a, b) || collator.compare(a.user.name || '', b.user.name || ''));
+    let position = 0;
+    return sorted.map((row, index) => {
+      if (index === 0 || compare(sorted[index - 1], row) !== 0) position = index + 1;
+      // Bugün: okumayanlar eşit sayılmaz, numaralandırma kesintisiz devam eder.
+      if (mode === 'today' && !row.today.read) return { ...row, position: index + 1 };
+      return { ...row, position };
+    });
+  }
+
+  function valueMarkup(row) {
+    const unit = amountUnit();
+    if (mode === 'today') {
+      const state = row.today;
+      const text = state.read
+        ? (state.amount !== null ? `${formatNumber(state.amount)}<small> ${esc(unit)}</small>` : 'Okudu')
+        : state.filled ? 'Doldurdu' : state.missed ? 'Okumadı' : `0<small> ${esc(unit)}</small>`;
+      return `<strong class="ok-rank-value">${text}</strong>`;
+    }
+    if (mode === 'past') {
+      return `<strong class="ok-rank-value">${row.past.days}<small> gün</small></strong>${row.past.amount > 0 ? `<span class="ok-rank-sub">${formatNumber(row.past.amount)} ${esc(unit)}</span>` : ''}`;
+    }
+    if (mode === 'month') {
+      return `<strong class="ok-rank-value">${row.month.days}<small> gün</small></strong>${row.month.amount > 0 ? `<span class="ok-rank-sub">${formatNumber(row.month.amount)} ${esc(unit)}</span>` : ''}`;
+    }
+    return `<strong class="ok-rank-value">${row.total}<small> gün</small></strong>${row.amount > 0 ? `<span class="ok-rank-sub">${formatNumber(row.amount)} ${esc(unit)}</span>` : ''}`;
+  }
+
+  function rowMarkup(row, isMe) {
+    const league = row.league;
+    const idle = mode === 'today' && !row.today.read;
+    const position = !idle && MEDALS[row.position]
+      ? `<img src="/images/${MEDALS[row.position]}" alt="${row.position}." width="26" height="26">`
+      : row.position;
+    const extras = mode === 'today' ? todayExtras(row.user._id) : '';
+    const small = extras || (league ? `<img src="/images/${esc(league.img)}" alt="" width="14" height="14"> ${esc(league.name)}` : '');
+    const avatar = avatarSrc(row.user);
+    const stateClass = idle ? ` is-idle${row.today.missed ? ' is-missed' : ''}` : '';
+    return `
+      <li class="ok-rank-row ok-ranking-row${isMe ? ' is-me' : ''}${stateClass}">
+        <button type="button" class="ok-ranking-hit" data-user-id="${esc(row.user._id)}" aria-label="${esc(row.user.name)} özetini aç"></button>
+        <span class="ok-rank-pos">${position}</span>
+        <span class="ok-rank-ring"><img class="ok-rank-avatar ${window.photoFadeClass(avatar)}" src="${esc(avatar)}" alt="" width="36" height="36" loading="lazy" decoding="async" onerror="this.src='/images/default.png'"></span>
+        <span class="ok-rank-name"><span class="ok-rank-label">${esc(row.user.name)}${isMe ? ' <em>(sen)</em>' : ''}</span>
+          <small>${small}</small>
+        </span>
+        <span class="ok-rank-score">${valueMarkup(row)}</span>
+      </li>`;
+  }
+
+  function openMemberSheet(row) {
+    if (!window.RoTaKipBottomSheet) return;
+    const unit = amountUnit();
+    const progress = metrics().leagueProgress(row.total);
+    const content = document.createElement('div');
+    content.className = 'ok-member-sheet';
+    content.innerHTML = `
+      <div class="ok-member-league">
+        ${row.league ? `<img src="/images/${esc(row.league.img)}" alt="" width="52" height="52">` : ''}
+        <div>
+          <strong>${row.league ? esc(row.league.name) : ''}</strong>
+          <span>${progress && progress.next ? `${esc(progress.next.name)} ligine ${progress.remaining} gün` : 'En üst lig'}</span>
+        </div>
+      </div>
+      <dl class="ok-member-facts">
+        <div><dt>Okunan gün</dt><dd>${row.total}<small> / ${row.total + row.missed}</small></dd></div>
+        <div><dt>Okuma oranı</dt><dd>%${row.rate}</dd></div>
+        <div><dt>Bu ay</dt><dd>${row.month.days}<small> gün${row.month.amount > 0 ? ` · ${formatNumber(row.month.amount)} ${esc(unit)}` : ''}</small></dd></div>
+        <div><dt>Toplam ${esc(unit)}</dt><dd>${formatNumber(row.amount)}</dd></div>
+        <div><dt>Seri</dt><dd>${row.streak}<small> gün</small></dd></div>
+        <div><dt>En uzun seri</dt><dd>${row.best.streak}<small> gün${row.best.streak ? ` · ${esc(shortDate(row.best.startDate))} – ${esc(shortDate(row.best.endDate))}` : ''}</small></dd></div>
+        <div class="is-wide"><dt>Son okuma</dt><dd>${row.lastRead ? `${esc(longDate(row.lastRead))} <small>(${esc(relativeDay(row.lastRead))})</small>` : '–'}</dd></div>
+      </dl>
+      <div class="ok-member-actions">
+        <button type="button" class="ok-btn ok-btn-soft" data-action="stats"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i> İstatistikler</button>
+        ${isAdmin() && window.openOkumalarMemberEntry ? '<button type="button" class="ok-btn ok-btn-soft" data-action="entry"><i class="fa-solid fa-pen" aria-hidden="true"></i> Günlük kayıt</button>' : ''}
+        <button type="button" class="ok-btn ok-btn-ghost" data-action="share"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> Paylaş</button>
+      </div>`;
+    const sheet = window.RoTaKipBottomSheet.open({
+      title: row.user.name,
+      subtitle: `${row.position}. sıra · ${MODES.find(([key]) => key === mode)[1]}`,
+      className: 'ok-sheet',
+      content
+    });
+    content.querySelector('[data-action="stats"]').addEventListener('click', () => {
+      sheet.close();
+      window.openOkumalarStatsFor?.(row.user._id);
+    });
+    content.querySelector('[data-action="entry"]')?.addEventListener('click', () => {
+      sheet.close();
+      window.openOkumalarMemberEntry(row.user._id);
+    });
+    content.querySelector('[data-action="share"]').addEventListener('click', () => shareSummary(row));
+  }
+
+  function shareSummary(row) {
+    const unit = amountUnit();
+    const lines = [`*${row.user.name} · okuma özeti*`, ''];
+    if (row.amount > 0) lines.push(`*Toplam:* ${formatNumber(row.amount)} ${unit}`);
+    if (row.month.amount > 0) lines.push(`*${metrics().MONTH_NAMES[new Date().getMonth()]} ayı:* ${formatNumber(row.month.amount)} ${unit}`);
+    lines.push(
+      `*Okunan gün:* ${row.total}`,
+      `*Okunmayan gün:* ${row.missed}`,
+      `*Başarı oranı:* %${row.rate}`,
+      '',
+      `*Mevcut seri:* ${row.streak} gün`,
+      `*En uzun seri:* ${row.best.streak} gün${row.best.streak ? ` (${shortDate(row.best.startDate)} – ${shortDate(row.best.endDate)})` : ''}`,
+      `*Son okuma:* ${row.lastRead ? `${longDate(row.lastRead)} (${relativeDay(row.lastRead)})` : '–'}`
+    );
+    const text = lines.join('\n');
+    if (navigator.share) {
+      navigator.share({ title: 'Okuma özeti', text }).catch(() => {});
+      return;
+    }
+    navigator.clipboard?.writeText(text)
+      .then(() => window.showNotification?.('Özet kopyalandı', 'success'))
+      .catch(() => window.showNotification?.('Özet kopyalanamadı', 'error'));
+  }
+
+  function bind(root) {
+    if (bound) return;
+    bound = true;
+    root.addEventListener('change', event => {
+      const select = event.target.closest('#okumalarRankingMonth');
+      if (!select) return;
+      pastMonth = select.value;
+      animateNext = true;
+      render();
+    });
+    root.addEventListener('click', event => {
+      const modeButton = event.target.closest('[data-rank-mode]');
+      if (modeButton) {
+        if (modeButton.dataset.rankMode === mode) return;
+        mode = modeButton.dataset.rankMode;
+        saveMode(mode);
+        animateNext = true;
+        render();
+        return;
+      }
+      if (event.target.closest('[data-action="ladder"]')) {
+        window.openOkumalarLadderSheet?.();
+        return;
+      }
+      const hit = event.target.closest('.ok-ranking-hit');
+      if (hit) {
+        const row = (root._rows || []).find(item => String(item.user._id) === hit.dataset.userId);
+        if (row) openMemberSheet(row);
+      }
+    });
+  }
+
+  function render() {
+    const root = document.getElementById('okumalarRanking');
+    if (!root || !window.globalDataStore || !metrics()) return;
+    if (!sectionVisible()) {
+      dirty = true;
+      return;
+    }
+    dirty = false;
+    const guest = isGuest();
+    if (guest) {
+      mode = 'guest';
+    } else if (!mode || mode === 'guest' || modeGroup !== window.groupid) {
+      mode = readMode();
+      modeGroup = window.groupid;
+      pastMonth = null;
+    }
+    root.classList.toggle('is-guest', guest);
+    document.getElementById('okumalarBolumGrup')?.classList.toggle('is-guest', guest);
+    bind(root);
+    root.hidden = false;
+    root.querySelectorAll('[data-rank-mode]').forEach(button => {
+      const active = button.dataset.rankMode === mode;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+
+    const me = currentUser();
+    const users = window.globalDataStore.getUsers();
+    const months = mode === 'past' ? pastMonths(users) : [];
+    if (mode === 'past' && !months.includes(pastMonth)) pastMonth = months[0] || null;
+    const rows = rank(users.map(summarize));
+    root._rows = rows;
+    renderMonthPicker(months);
+    const list = document.getElementById('okumalarRankingList');
+    const caption = document.getElementById('okumalarRankingCaption');
+    if (caption) caption.innerHTML = captionMarkup(rows);
+    const empty = !rows.length ? 'Henüz üye yok.' : mode === 'past' && !pastMonth ? 'Geçmiş aylara ait okuma kaydı yok.' : '';
+    if (empty) list.innerHTML = `<li class="ok-empty">${empty}</li>`;
+    else if (guest) list.innerHTML = guestListMarkup(rows);
+    else list.innerHTML = rows.map(row => rowMarkup(row, me && String(me.userId) === String(row.user._id))).join('');
+    renderGuestAdmins(root, guest);
+    if (animateNext) {
+      animateNext = false;
+      animateRanking(list);
+    }
+  }
+
+  function animateRanking(list) {
+    const card = list.closest('.ok-ranking-card');
+    if (!card) return;
+    Array.from(list.children).forEach((item, index) => item.style.setProperty('--i', String(Math.min(index, 10))));
+    card.classList.remove('is-switching');
+    void card.offsetWidth;
+    card.classList.add('is-switching');
+    window.setTimeout(() => card.classList.remove('is-switching'), 900);
+  }
+
+  // Okuma kaydı olan geçmiş aylar (bu ay hariç), yeniden eskiye.
+  function pastMonths(users) {
+    const current = metrics().monthKey();
+    const months = new Set();
+    users.forEach(user => {
+      window.globalDataStore.getStatsForUser(String(user._id)).forEach(record => {
+        const month = String(record.date || '').slice(0, 7);
+        if (record.status === 'okudum' && month && month < current) months.add(month);
+      });
+    });
+    return Array.from(months).sort().reverse();
+  }
+
+  function renderMonthPicker(months) {
+    const select = document.getElementById('okumalarRankingMonth');
+    if (!select) return;
+    select.hidden = !(mode === 'past' && months.length);
+    if (select.hidden) return;
+    select.innerHTML = months.map(month => `<option value="${month}"${month === pastMonth ? ' selected' : ''}>${esc(metrics().monthLabel(`${month}-01`))}</option>`).join('');
+  }
+
+  function captionMarkup(rows) {
+    if (mode === 'guest') return `<strong>Bu ayın sıralaması</strong><span class="ok-ranking-unit">${esc(amountUnit())}</span>`;
+    if (mode === 'today') {
+      const readers = rows.filter(row => row.today.read);
+      const total = readers.reduce((sum, row) => sum + (row.today.amount || 0), 0);
+      const sum = total > 0 ? ` · toplam ${formatNumber(total)} ${esc(amountUnit())}` : '';
+      return `Bugün · <strong>${readers.length}</strong>/${rows.length} okudu${sum}`;
+    }
+    if (mode === 'month') return `${esc(metrics().monthLabel())} · okunan gün`;
+    if (mode === 'past') return pastMonth ? `${esc(metrics().monthLabel(`${pastMonth}-01`))} · okunan gün` : 'Geçmiş aylar';
+    return 'Toplam okuma günü · lig';
+  }
+
+  function scheduleRender() {
+    if (frame !== null) return Promise.resolve();
+    return new Promise(resolve => {
+      frame = window.requestAnimationFrame(() => {
+        frame = null;
+        try {
+          render();
+        } catch (error) {
+          console.error('Sıralama çizilemedi:', error);
+        }
+        resolve();
+      });
+    });
+  }
+
+  window.renderOkumalarRanking = function renderOkumalarRanking() {
+    if (dirty || sectionVisible()) return scheduleRender();
+    return Promise.resolve();
+  };
+  window.loadUserCards = scheduleRender;
+  window.addEventListener('rotakip:amount-type-changed', scheduleRender);
+  window.addEventListener('rotakip:auth-changed', scheduleRender);
+  window.addEventListener('rotakip:cetele-changed', scheduleRender);
+})();

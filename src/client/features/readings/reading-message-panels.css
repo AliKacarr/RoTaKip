@@ -296,12 +296,7 @@
     }
 }
 
-/* Copy Chip Hover Effects */
-.reading-streak-message:hover .copy-chip,
-.weak-link-message:hover .copy-chip,
-.everyone-read-message:hover .copy-chip,
-.league-promotion-message:hover .copy-chip,
-.league-promotion-backlog:hover .copy-chip {
+.copy-chip {
     transform: scale(1.05);
 }
 
